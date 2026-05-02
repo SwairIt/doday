@@ -23,6 +23,20 @@ async def test_today_view_renders_for_logged_in(
     assert "Inbox" in response.text  # sidebar item
 
 
+async def test_htmx_toggle_completes_task(logged_in_client: AsyncClient) -> None:
+    create = await logged_in_client.post("/api/tasks", json={"title": "X"})
+    task_id = create.json()["id"]
+
+    toggle = await logged_in_client.post(f"/htmx/tasks/{task_id}/toggle")
+    assert toggle.status_code == 200
+    assert "task-row" in toggle.text  # rendered partial
+    assert "line-through" in toggle.text  # completed styling
+
+    second = await logged_in_client.post(f"/htmx/tasks/{task_id}/toggle")
+    assert second.status_code == 200
+    assert "line-through" not in second.text  # un-completed
+
+
 async def test_today_view_anonymous_blocked(client: AsyncClient) -> None:
     response = await client.get("/app/today")
     assert response.status_code == 401

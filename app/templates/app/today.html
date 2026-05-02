@@ -1,0 +1,51 @@
+{% extends "app_base.html" %}
+{% block title %}Сегодня — Doday{% endblock %}
+{% block view_title %}Сегодня{% endblock %}
+{% block content %}
+<div class="mb-8">
+  <h1 class="text-3xl md:text-4xl font-bold mb-1">Сегодня</h1>
+  <p class="text-[var(--text-muted)]">{{ today_label }}</p>
+</div>
+
+{% if not overdue and not today %}
+  <div class="card p-12 text-center">
+    <div class="w-16 h-16 mx-auto mb-4 rounded-2xl grad-bg flex items-center justify-center shadow-glow">
+      <svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+      </svg>
+    </div>
+    <h2 class="text-xl font-semibold mb-1">Сегодня всё чисто</h2>
+    <p class="text-[var(--text-muted)]">Можешь отдохнуть или <a href="/app/upcoming" class="text-[var(--accent)] hover:underline">запланировать что-нибудь</a>.</p>
+  </div>
+{% endif %}
+
+{% if overdue %}
+  <section class="mb-8">
+    <h2 class="flex items-center gap-2 text-sm uppercase tracking-wider font-semibold text-rose-400 mb-3">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+      Просрочено
+      <span class="text-[var(--text-muted)] font-medium">· {{ overdue|length }}</span>
+    </h2>
+    <div class="space-y-2">
+      {% for task in overdue %}
+        {% include "_partials/task_row.html" %}
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
+
+{% if today %}
+  <section>
+    <h2 class="flex items-center gap-2 text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-3">
+      Сегодня
+      <span class="font-medium">· {{ today|length }}</span>
+    </h2>
+    <div class="space-y-2">
+      {% for task in today %}
+        {% include "_partials/task_row.html" %}
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
