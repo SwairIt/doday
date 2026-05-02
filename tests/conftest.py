@@ -18,9 +18,13 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from app.auth import models as _auth_models  # noqa: F401  register tables with Base.metadata
 from app.config import get_settings
 from app.db import Base, get_session
+from app.labels import models as _labels_models  # noqa: F401
 from app.main import app
+from app.projects import models as _projects_models  # noqa: F401
+from app.tasks import models as _tasks_models  # noqa: F401
 
 _settings = get_settings()
 
