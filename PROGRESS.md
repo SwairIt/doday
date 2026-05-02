@@ -18,11 +18,13 @@
 - ✅ Дизайн-документ написан: `docs/superpowers/specs/2026-05-02-school-todo-design.md`.
 
 **Что в работе:**
-- 🟡 Ждём ревью пользователем дизайн-документа.
+- 🟡 Plan 1 (Foundation + Auth) написан, ждёт ревью пользователя и выбора режима выполнения.
 
 **Что следующее:**
-- ⏳ После approve — invoke `superpowers:writing-plans` для детального плана реализации MVP.
-- ⏳ После плана — invoke `superpowers:executing-plans` для реализации, шаг за шагом.
+- ⏳ После approve Plan 1 — пользователь выбирает режим: subagent-driven (рекомендуется) или inline executing-plans.
+- ⏳ После выполнения Plan 1 — пишем Plan 2 (DiarySource + sync).
+- ⏳ После Plan 2 — Plan 3 (UI + геймификация).
+- ⏳ После Plan 3 — Plan 4 (deploy + политика + регистрация ПДн).
 
 ---
 
