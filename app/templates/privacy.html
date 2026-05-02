@@ -1,10 +1,50 @@
 {% extends "base.html" %}
-{% block title %}Политика конфиденциальности — SchoolTodo{% endblock %}
-{% block content %}
-<h1 class="text-2xl font-bold mb-4">Политика конфиденциальности</h1>
-<p class="text-slate-700">
-    Финальный текст политики появится здесь перед публичным запуском.
-    Кратко: мы храним почту и токен дневника, никому не передаём,
-    в любой момент можно удалить аккаунт со всеми данными.
-</p>
+{% block title %}Политика конфиденциальности — Doday{% endblock %}
+{% block layout %}
+<div class="min-h-screen flex flex-col">
+  <header class="px-6 py-4">
+    <a href="/" class="inline-flex items-center gap-2.5 font-bold text-xl">
+      <span class="grad-bg w-9 h-9 rounded-xl flex items-center justify-center text-white font-extrabold shadow-glow">D</span>
+      <span class="grad-text">Doday</span>
+    </a>
+  </header>
+
+  <main class="flex-1 flex items-start justify-center px-6 py-12">
+    <article class="w-full max-w-2xl animate-fade-in">
+      <h1 class="text-4xl font-bold mb-3">Политика конфиденциальности</h1>
+      <p class="text-[var(--text-muted)] mb-10">Краткая версия. Финальный юридический текст появится перед публичным запуском.</p>
+
+      <div class="card p-8 space-y-6 leading-relaxed">
+        <section>
+          <h2 class="text-xl font-semibold mb-2">Что мы храним</h2>
+          <p class="text-[var(--text-muted)]">Только то, что нужно для работы сервиса: email, хеш пароля (argon2 — реальный пароль не хранится), твои задачи, проекты, лейблы и связанные с ними даты.</p>
+        </section>
+
+        <section>
+          <h2 class="text-xl font-semibold mb-2">Кому мы передаём данные</h2>
+          <p class="text-[var(--text-muted)]">Никому. Никаких рекламных сетей, никаких аналитических сторонних трекеров.</p>
+        </section>
+
+        <section>
+          <h2 class="text-xl font-semibold mb-2">Как удалить аккаунт</h2>
+          <p class="text-[var(--text-muted)]">В настройках профиля одна кнопка «Удалить аккаунт». Подтверждаешь email — и все данные удаляются необратимо вместе с аккаунтом.</p>
+        </section>
+
+        <section>
+          <h2 class="text-xl font-semibold mb-2">Если ты несовершеннолетний</h2>
+          <p class="text-[var(--text-muted)]">До 14 лет — регистрация только с согласия родителя или опекуна. Юридически — в момент создания аккаунта ты подтверждаешь, что согласие получено.</p>
+        </section>
+
+        <section>
+          <h2 class="text-xl font-semibold mb-2">Контакт</h2>
+          <p class="text-[var(--text-muted)]">Вопросы и просьбы по данным — на адрес поддержки (появится здесь до публичного запуска).</p>
+        </section>
+      </div>
+
+      <div class="mt-8 text-sm text-[var(--text-muted)]">
+        <a href="/" class="text-[var(--accent)] hover:underline">← На главную</a>
+      </div>
+    </article>
+  </main>
+</div>
 {% endblock %}

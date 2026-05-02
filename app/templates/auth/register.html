@@ -1,27 +1,49 @@
 {% extends "base.html" %}
-{% block title %}Регистрация — SchoolTodo{% endblock %}
-{% block content %}
-<h1 class="text-2xl font-bold mb-4">Регистрация</h1>
-{% if error %}
-<div class="bg-red-100 text-red-800 p-3 rounded mb-4">{{ error }}</div>
-{% endif %}
-<form method="post" action="/auth/register" class="space-y-3">
-    <input type="email" name="email" required placeholder="Почта"
-           class="w-full p-3 border rounded">
-    <input type="password" name="password" required minlength="8"
-           placeholder="Пароль (от 8 символов)"
-           class="w-full p-3 border rounded">
-    <label class="flex items-start gap-2 text-sm text-slate-700">
-        <input type="checkbox" name="agree_privacy" required class="mt-1">
-        <span>Согласен с обработкой персональных данных и
-            <a href="/privacy" class="text-indigo-600 underline">политикой конфиденциальности</a>.
-        </span>
-    </label>
-    <button type="submit" class="w-full p-3 bg-indigo-600 text-white rounded font-semibold">
-        Зарегистрироваться
-    </button>
-</form>
-<p class="mt-4 text-sm text-slate-600">
-    Уже есть аккаунт? <a href="/auth/login" class="text-indigo-600 underline">Войти</a>
-</p>
+{% block title %}Регистрация — Doday{% endblock %}
+{% block layout %}
+<div class="min-h-screen flex flex-col">
+  <header class="px-6 py-4">
+    <a href="/" class="inline-flex items-center gap-2.5 font-bold text-xl">
+      <span class="grad-bg w-9 h-9 rounded-xl flex items-center justify-center text-white font-extrabold shadow-glow">D</span>
+      <span class="grad-text">Doday</span>
+    </a>
+  </header>
+
+  <main class="flex-1 flex items-center justify-center px-6 py-12">
+    <div class="w-full max-w-md animate-pop-in">
+      <div class="card p-8 relative overflow-hidden">
+        <div class="absolute -top-20 -right-20 w-48 h-48 grad-bg rounded-full blur-3xl opacity-25"></div>
+
+        <h1 class="text-3xl font-bold mb-2 relative">Создать аккаунт</h1>
+        <p class="text-[var(--text-muted)] mb-7 relative">Полминуты — и можно начинать.</p>
+
+        {% if error %}
+          <div class="mb-5 px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-sm relative animate-fade-in">
+            {{ error }}
+          </div>
+        {% endif %}
+
+        <form method="post" action="/auth/register" class="space-y-4 relative">
+          <label class="block">
+            <span class="text-sm font-medium block mb-1.5">Email</span>
+            <input type="email" name="email" required placeholder="ты@example.com" class="input">
+          </label>
+          <label class="block">
+            <span class="text-sm font-medium block mb-1.5">Пароль</span>
+            <input type="password" name="password" required minlength="8" placeholder="минимум 8 символов" class="input">
+          </label>
+          <label class="flex items-start gap-3 text-sm text-[var(--text-muted)] cursor-pointer pt-2">
+            <input type="checkbox" name="agree_privacy" required class="mt-0.5 accent-[var(--accent)] w-4 h-4">
+            <span>Согласен с <a href="/privacy" class="text-[var(--accent)] hover:underline">политикой конфиденциальности</a> и обработкой персональных данных.</span>
+          </label>
+          <button type="submit" class="btn-primary w-full mt-3">Зарегистрироваться</button>
+        </form>
+
+        <p class="mt-6 text-sm text-center text-[var(--text-muted)] relative">
+          Уже есть аккаунт? <a href="/auth/login" class="text-[var(--accent)] hover:underline font-medium">Войти</a>
+        </p>
+      </div>
+    </div>
+  </main>
+</div>
 {% endblock %}
