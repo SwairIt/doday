@@ -8,6 +8,8 @@ from app.config import get_settings
 from app.logging_setup import configure_logging
 from app.pages.router import router as pages_router
 from app.projects.router import router as projects_router
+from app.tasks.router import reorder_router as tasks_reorder_router
+from app.tasks.router import router as tasks_router
 
 _settings = get_settings()
 configure_logging(_settings.log_level)
@@ -27,6 +29,8 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(pages_router)
 app.include_router(projects_router)
+app.include_router(tasks_router)
+app.include_router(tasks_reorder_router)
 
 
 @app.get("/health")
