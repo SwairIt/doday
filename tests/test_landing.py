@@ -13,7 +13,8 @@ async def test_landing_anonymous_shows_login_links(client: AsyncClient) -> None:
     response = await client.get("/")
     assert response.status_code == 200
     assert "Войти" in response.text
-    assert "Зарегистрироваться" in response.text
+    assert "Создать аккаунт" in response.text  # primary CTA
+    assert "Doday" in response.text
 
 
 async def test_landing_logged_in_shows_email(client: AsyncClient, db_session: AsyncSession) -> None:
