@@ -1,105 +1,93 @@
-# SchoolTodo — Progress tracker
+# Doday — Progress tracker
 
-**Purpose of this file:** session-spanning progress tracker. New sessions should read this and `claude.md` first to understand where we left off.
-
----
-
-## Status as of 2026-05-02 (end of Plan 1)
-
-**Current phase:** Plan 1 (Foundation + Auth) implemented. Awaiting end-to-end verification by user before starting Plan 2.
-
-**Done:**
-- ✅ Brainstorm + design doc.
-- ✅ Memory and `claude.md` translated to English; user collaboration rules saved.
-- ✅ GitHub remote `origin → https://github.com/SwairIt/SchoolProject.git`. Pushing to `master` directly per user instruction.
-- ✅ `.gitignore` protects `.env`.
-- ✅ **Plan 1 — Foundation + Auth** delivered in 4 chunks (5th was just docs polish):
-  - **Chunk 1 (`bd2cf85`)** — pyproject (ruff strict + mypy --strict + pytest-asyncio mode=auto), `app/{config,db,logging_setup,main}.py`, `app/auth/models.py`, alembic + migration `0001_create_users`, `tests/conftest.py` (TRUNCATE between functions), `test_health.py`, `test_user_model.py`, README, `.env.example`.
-  - **Chunk 2 (`f296346`)** — `app/auth/{security,schemas,service}.py` (argon2, RegisterIn/LoginIn, register_user, EmailAlreadyExists, email-verification tokens via itsdangerous). Tests: 7 security + 5 schemas + 2 register-service.
-  - **Chunk 3 (`08a566f`)** — `app/auth/{email,router}.py` + `app/pages/router.py` + 4 templates (base, register, verify_pending, privacy). SMTP via aiosmtplib (mocked in tests). 1 email test + 7 register-endpoint tests.
-  - **Chunk 4 (`271464c`)** — `mark_email_verified` + `authenticate` in service.py + `TokenInvalid`/`InvalidCredentials`/`EmailNotVerified` exceptions. `app/auth/deps.py` with `get_current_user`/`require_user`. Endpoints `/auth/verify`, `/auth/login`, `/auth/logout`. Landing page in `app/pages/router.py`. login.html + landing.html templates. 8 service tests + 6 endpoint tests + 2 landing tests.
-- ✅ All static checks green at every chunk: `ruff check`, `ruff format --check`, `mypy --strict` on 31 source files.
-
-**In progress:**
-- 🟡 User runs `uv sync && uv run alembic upgrade head && uv run pytest` and reports green/red.
-- 🟡 User does the end-to-end manual flow described in README (register → verify email → login → logout).
-
-**Next (Plan 2 — DiarySource + sync):**
-- ⏳ Write Plan 2 covering `DiarySource` Protocol, `MosregSource` implementation (authedu.mosreg.ru), Homework + Schedule + Subject ORM models + migrations, encrypted token storage, Dramatiq workers + Redis for periodic sync, sync triggered from UI button.
-- ⏳ Then Plan 3 (UI + gamification: progress bars, animations, dark theme, mobile-first).
-- ⏳ Then Plan 4 (production deploy: switch Tailwind to build, real SMTP, hosting on Selectel/Timeweb, full privacy text, Roskomnadzor PD-operator registration).
+**Purpose:** session-spanning progress tracker. Read this first in every session/iteration.
 
 ---
 
-## Test count after Plan 1
+## Current state — 2026-05-03
 
-| Module | # tests | Needs DB |
-|---|---|---|
-| `test_health.py` | 1 | no |
-| `test_user_model.py` | 2 | yes |
-| `test_auth/test_security.py` | 7 | no |
-| `test_auth/test_schemas.py` | 5 | no |
-| `test_auth/test_email.py` | 1 | no (SMTP mocked) |
-| `test_auth/test_register_service.py` | 2 | yes |
-| `test_auth/test_register_endpoint.py` | 7 | yes |
-| `test_auth/test_verify_service.py` | 3 | yes |
-| `test_auth/test_authenticate_service.py` | 5 | yes |
-| `test_auth/test_verify_endpoint.py` | 2 | yes |
-| `test_auth/test_login_endpoint.py` | 5 | yes |
-| `test_landing.py` | 2 | yes |
-| **Total** | **42** | |
+**Project pivoted** from "schoolers-only todo" to **"free todo for everyone (kids + adults + companies)"**. Working brand: **Doday**. Diary parsing (МО / МЭШ) demoted to optional integration for later.
+
+**Active spec:** `docs/superpowers/specs/2026-05-03-pivot-design-spec.md`
+**Old spec (historical):** `docs/superpowers/specs/2026-05-02-school-todo-design.md`
+
+**Loop session:** running an autonomous overnight build (cron `*/1 * * * *`). Each iteration reads this file, picks the next pending chunk, implements it, runs ruff+mypy, commits, pushes to master. When all chunks done — appends final duration and stops.
+
+**Local infra (already running from previous session):**
+- Postgres 18 via scoop on `localhost:5432` (user `postgres` / password `postgres`)
+- Databases: `schooltodo` (with users table) + `schooltodo_test`
+- Uvicorn on `127.0.0.1:8000`
+- aiosmtpd debug SMTP on `127.0.0.1:1025`
 
 ---
 
-## Key decisions (with rationale)
+## Chunk progress
 
-| Decision | Date | Why |
-|---|---|---|
-| Reject AI homework auto-completion | 2026-05-02 | Broken business model, legal risk, free alternatives |
-| Web app as the first platform | 2026-05-02 | Lowest entry barrier, any device |
-| Monetize via parent dashboard | 2026-05-02 | Parent is the actual paying customer, not the child |
-| First diary source: authedu.mosreg.ru | 2026-05-02 | User's own school is on this system → he'll be dogfood user |
-| DiarySource abstraction in MVP | 2026-05-02 | Cheap to add new diaries later vs. expensive refactor |
-| Python + FastAPI + HTMX | 2026-05-02 | User's strength is Python; HTMX avoids React (user weak in JS) |
-| Russian hosting | 2026-05-02 | 152-FZ requires localization of Russian citizens' personal data |
-| Manual token paste in MVP | 2026-05-02 | Simple and reliable; browser extension auth-helper later |
-| Parent dashboard after MVP | 2026-05-02 | Without live users there's no one to test the parent flow |
-| Push directly to master | 2026-05-02 | Solo project, no PR overhead |
-| Internal docs in English; chat + commits in Russian | 2026-05-02 | Token efficiency, with explicit per-channel choices |
-| Use user's external Postgres (no Docker) | 2026-05-02 | User already has a Postgres server (SSH-tunneled to localhost:5433) |
-| Strict tooling from day one (ruff strict + mypy --strict + pydantic v2) | 2026-05-02 | "Потом не переделывать" — quality bar set by user |
-| TRUNCATE between test functions, not rollback | 2026-05-02 | App code calls .commit(); rollback wouldn't undo it |
-| Per-feature folders (`app/<feature>/{router,service,schemas,models}.py`) | 2026-05-02 | Per user's structure rule; no global `models.py` |
-| Annotated[X, Depends(...)] FastAPI style | 2026-05-02 | Modern (FastAPI 0.95+), passes ruff B008 |
-| Mock SMTP in tests via `unittest.mock.patch` | 2026-05-02 | Avoids any SMTP server dependency for CI / dev |
+### Plan A — Pivot to Doday (this overnight session)
 
----
-
-## Things still to verify experimentally during implementation
-
-- 🔬 Exact auth scheme of the authedu.mosreg.ru API (Plan 2).
-- 🔬 Session token lifetime in the diary (Plan 2).
-- 🔬 Diary API rate limits (Plan 2).
-- 🔬 Shape of `homework` and `schedule` API responses (Plan 2).
+| # | Chunk | Status | Commit |
+|---|---|---|---|
+| C0 | Pivot spec + memory + claude.md | ⏳ in progress | — |
+| C1 | Brand + design tokens (CSS vars, fonts, themes) | pending | — |
+| C2 | Project + Task + Label models + migration `0002` | pending | — |
+| C3 | Project service + router (CRUD) + tests | pending | — |
+| C4 | Task service + router (CRUD/complete/reorder) + tests | pending | — |
+| C5 | Label service + router + tests | pending | — |
+| C6 | Auto-provision Inbox + 3 sample tasks on verify | pending | — |
+| C7 | Layout: redesigned `base.html`, landing with purple gradient hero | pending | — |
+| C8 | Auth pages redesigned to match | pending | — |
+| C9 | App shell `app_base.html` with sidebar + topbar | pending | — |
+| C10 | Today view + HTMX task toggle | pending | — |
+| C11 | Upcoming view (day-grouped) | pending | — |
+| C12 | Calendar view (month grid + day panel) | pending | — |
+| C13 | Project view | pending | — |
+| C14 | Quick-add with natural-language parsing | pending | — |
+| C15 | Inline edit / delete / schedule / move | pending | — |
+| C16 | Search palette (⌘K, postgres FTS) | pending | — |
+| C17 | Profile (theme, default view, export, delete) | pending | — |
+| C18 | Mobile polish (drawer, FAB, bottom nav) | pending | — |
+| C19 | Tests for new features green; old tests still green | pending | — |
+| C20 | README + final PROGRESS update + report duration | pending | — |
 
 ---
 
-## Session log
+## How the loop iterates
 
-### 2026-05-02 — session 1
-- Brainstormed the idea, cut the AI homework auto-completion feature.
-- Agreed MVP scope, tech stack, monetization.
-- Wrote the design document.
-- Added "UX & visual design" section + gamification (basic in MVP, advanced in phase 1.5).
-- Wrote first draft of Plan 1 in Russian assuming dockerized Postgres.
+Each cron fire (every 1 minute):
 
-### 2026-05-02 — session 2
-- User chose subagent-driven execution mode.
-- User added GitHub PAT to `.env`, requested push-to-master workflow.
-- User has external Postgres server — Plan 1 had to be redesigned (no Docker).
-- User requested all internal documentation in English to save tokens.
-- Translated memory + `claude.md` + `PROGRESS.md` to English.
-- User set hard quality bar (ruff strict, mypy --strict, pydantic v2, per-feature folders, TRUNCATE-between-tests, structlog, Russian commits).
-- User set DB credential isolation rule (never ask for DATABASE_URL/passwords; user runs tests + migrations locally).
-- Implemented Plan 1 directly (without subagents — small enough): 4 feature chunks + this docs chunk.
-- Pushed each chunk to `origin master`.
+1. **Read this file** — find the **first non-completed chunk** in the table above.
+2. **Read the spec section** for that chunk number — the spec has acceptance for each.
+3. **Implement** — write/edit only the files listed for the chunk; nothing else.
+4. **Verify** — `uv run ruff check .` + `uv run ruff format --check .` + `uv run mypy .`. Fix until green. (Tests run only on chunks where new model/service code lands; UI-only chunks skip pytest.)
+5. **Commit** — Russian past-tense message, single-feature scope.
+6. **Push to master** using `TOKEN` from `.env`:
+   ```bash
+   TOKEN=$(grep '^TOKEN=' .env | cut -d= -f2- | tr -d '\r\n')
+   git push "https://x-access-token:${TOKEN}@github.com/SwairIt/SchoolProject.git" master
+   ```
+   Author email is **always** `112168281+SwairIt@users.noreply.github.com`.
+7. **Update this file** — mark the chunk ✅ with the commit SHA.
+8. If all chunks done → compute duration `git log -1 --format=%ad` minus first chunk commit `git log --reverse --format=%ad | head -1`, append "FINISHED" + duration line, **CronDelete** the loop, stop.
+
+---
+
+## Constraints (do NOT violate even under autonomous loop)
+
+- **No verbatim copies** of any specific commercial todo product's code, copy, or unique UI patterns. Use generic industry-standard patterns only.
+- **Never use third-party-service credentials** the user pasted in chat (Gmail / Resend / etc.). The user signs up themselves and adds API keys to `.env`.
+- **Never push with author email other than** `112168281+SwairIt@users.noreply.github.com`.
+- **Never write `.env` with BOM** (use `[System.IO.File]::WriteAllText` with `New-Object System.Text.UTF8Encoding $false`).
+
+---
+
+## Lifetime log
+
+### 2026-05-02 — sessions 1, 2 (Plan 1 — Foundation + Auth)
+- Brainstorm + design + Plan 1 written
+- Auth implemented in 5 chunks (commits up to `5904683`)
+- Fly.io deploy attempted then removed
+- Local Postgres set up (scoop), migrations applied, full e2e confirmed (42 tests green)
+
+### 2026-05-03 — session 3 (Plan A pivot, this overnight loop)
+- C0 (in progress): wrote pivot spec, updated memory + claude.md, refactored PROGRESS to chunk pointer
+- (subsequent chunks logged here as they land)
