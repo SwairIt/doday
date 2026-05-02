@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-3xl font-bold mb-6">SchoolTodo</h1>
+<p class="text-lg mb-8 text-slate-700">Туду-лист для школьников. Подключи дневник — и больше не забывай ДЗ.</p>
+
+{% if user %}
+<div class="bg-white p-4 rounded shadow">
+    <p>Ты зашёл как <strong>{{ user.email }}</strong>.</p>
+    <form method="post" action="/auth/logout" class="mt-3">
+        <button class="px-4 py-2 bg-slate-200 rounded">Выйти</button>
+    </form>
+</div>
+{% else %}
+<div class="space-x-3">
+    <a href="/auth/register" class="px-4 py-2 bg-indigo-600 text-white rounded">Зарегистрироваться</a>
+    <a href="/auth/login" class="px-4 py-2 border border-indigo-600 text-indigo-600 rounded">Войти</a>
+</div>
+{% endif %}
+{% endblock %}

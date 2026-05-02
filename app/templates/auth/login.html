@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Вход — SchoolTodo{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Вход</h1>
+{% if error %}
+<div class="bg-red-100 text-red-800 p-3 rounded mb-4">{{ error }}</div>
+{% endif %}
+<form method="post" action="/auth/login" class="space-y-3">
+    <input type="email" name="email" required placeholder="Почта"
+           class="w-full p-3 border rounded">
+    <input type="password" name="password" required placeholder="Пароль"
+           class="w-full p-3 border rounded">
+    <button type="submit" class="w-full p-3 bg-indigo-600 text-white rounded font-semibold">
+        Войти
+    </button>
+</form>
+<p class="mt-4 text-sm text-slate-600">
+    Нет аккаунта? <a href="/auth/register" class="text-indigo-600 underline">Зарегистрироваться</a>
+</p>
+{% endblock %}
