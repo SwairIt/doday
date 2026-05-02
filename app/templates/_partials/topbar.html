@@ -1,0 +1,46 @@
+{# Topbar shown above main canvas inside app_base. #}
+<header class="sticky top-0 z-20 glass border-b border-[var(--border)] px-4 md:px-6 py-3 flex items-center gap-3">
+  <button
+    type="button"
+    class="md:hidden p-2 rounded-lg hover:bg-[var(--surface-2)] transition"
+    @click="sidebarOpen = true"
+    aria-label="Открыть меню"
+  >
+    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+    </svg>
+  </button>
+
+  <h1 class="text-lg font-semibold flex-1 truncate">{% block view_title %}Doday{% endblock %}</h1>
+
+  <button
+    type="button"
+    class="hidden md:inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--border)]
+           text-[var(--text-muted)] text-sm hover:bg-[var(--surface-2)] transition"
+    onclick="document.dispatchEvent(new CustomEvent('open-search'))"
+    title="Поиск (⌘K)"
+  >
+    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"/>
+    </svg>
+    <span>Поиск</span>
+    <kbd class="ml-2 px-1.5 py-0.5 text-xs rounded bg-[var(--surface-2)] border border-[var(--border)]">⌘K</kbd>
+  </button>
+
+  <button
+    type="button"
+    class="p-2 rounded-lg hover:bg-[var(--surface-2)] transition"
+    title="Переключить тему"
+    onclick="
+      const html = document.documentElement;
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      try { localStorage.setItem('doday-theme', next); } catch(e) {}
+    "
+    aria-label="Переключить тему"
+  >
+    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+    </svg>
+  </button>
+</header>

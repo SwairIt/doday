@@ -1,0 +1,28 @@
+"""Integration tests for the signed-in app shell (sidebar + topbar + content)."""
+
+from httpx import AsyncClient
+
+
+async def test_app_redirect_requires_auth(client: AsyncClient) -> None:
+    response = await client.get("/app", follow_redirects=False)
+    # Anonymous → eventually fails the require_user gate (401)
+    if response.status_code in (302, 307):
+        followed = await client.get(response.headers["location"])
+        assert followed.status_code == 401
+    else:
+        assert response.status_code == 401
+
+
+async def test_today_view_renders_for_logged_in(
+    logged_in_client: AsyncClient,
+) -> None:
+    response = await logged_in_client.get("/app/today")
+    assert response.status_code == 200
+    assert "Сегодня" in response.text  # view title
+    assert "Doday" in response.text  # brand
+    assert "Inbox" in response.text  # sidebar item
+
+
+async def test_today_view_anonymous_blocked(client: AsyncClient) -> None:
+    response = await client.get("/app/today")
+    assert response.status_code == 401
