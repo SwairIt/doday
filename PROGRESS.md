@@ -1,34 +1,53 @@
 # SchoolTodo — Progress tracker
 
-**Purpose of this file:** session-spanning progress tracker. When the context window resets or a new session starts, Claude should read this file and `claude.md` first to understand where we left off.
+**Purpose of this file:** session-spanning progress tracker. New sessions should read this and `claude.md` first to understand where we left off.
 
 ---
 
-## Status as of 2026-05-02
+## Status as of 2026-05-02 (end of Plan 1)
 
-**Current phase:** infrastructure clarification before executing Plan 1.
+**Current phase:** Plan 1 (Foundation + Auth) implemented. Awaiting end-to-end verification by user before starting Plan 2.
 
 **Done:**
-- ✅ Idea trimmed to a sane scope (no AI homework auto-completion).
-- ✅ Platform decision: web first → Telegram bot → MAX.
-- ✅ Monetization decision: child free; parent pays for parent dashboard (~199-299₽/mo, post-MVP).
-- ✅ Diary scope decision: first source is Школьный портал МО (authedu.mosreg.ru); МЭШ added later. DiarySource abstraction from day one.
-- ✅ Tech stack chosen: Python 3.12 + FastAPI + Jinja2 + HTMX + Alpine.js + Tailwind CSS + PostgreSQL + Dramatiq + Redis.
-- ✅ Hosting plan: Russian provider (Selectel/Timeweb), Roskomnadzor PD-operator registration before public launch.
-- ✅ Design document written: `docs/superpowers/specs/2026-05-02-school-todo-design.md` (still in Russian — will be migrated lazily; least-loaded doc).
-- ✅ Plan 1 (Foundation + Auth) written **but in Russian and assumes Docker Postgres** — will be rewritten in English using user's external Postgres server.
-- ✅ Git remote configured: `origin → https://github.com/SwairIt/SchoolProject.git`.
-- ✅ `.gitignore` in place protecting `.env` (which holds the GitHub PAT).
-- ✅ Memory updated to English; `claude.md` and this file translated.
+- ✅ Brainstorm + design doc.
+- ✅ Memory and `claude.md` translated to English; user collaboration rules saved.
+- ✅ GitHub remote `origin → https://github.com/SwairIt/SchoolProject.git`. Pushing to `master` directly per user instruction.
+- ✅ `.gitignore` protects `.env`.
+- ✅ **Plan 1 — Foundation + Auth** delivered in 4 chunks (5th was just docs polish):
+  - **Chunk 1 (`bd2cf85`)** — pyproject (ruff strict + mypy --strict + pytest-asyncio mode=auto), `app/{config,db,logging_setup,main}.py`, `app/auth/models.py`, alembic + migration `0001_create_users`, `tests/conftest.py` (TRUNCATE between functions), `test_health.py`, `test_user_model.py`, README, `.env.example`.
+  - **Chunk 2 (`f296346`)** — `app/auth/{security,schemas,service}.py` (argon2, RegisterIn/LoginIn, register_user, EmailAlreadyExists, email-verification tokens via itsdangerous). Tests: 7 security + 5 schemas + 2 register-service.
+  - **Chunk 3 (`08a566f`)** — `app/auth/{email,router}.py` + `app/pages/router.py` + 4 templates (base, register, verify_pending, privacy). SMTP via aiosmtplib (mocked in tests). 1 email test + 7 register-endpoint tests.
+  - **Chunk 4 (`271464c`)** — `mark_email_verified` + `authenticate` in service.py + `TokenInvalid`/`InvalidCredentials`/`EmailNotVerified` exceptions. `app/auth/deps.py` with `get_current_user`/`require_user`. Endpoints `/auth/verify`, `/auth/login`, `/auth/logout`. Landing page in `app/pages/router.py`. login.html + landing.html templates. 8 service tests + 6 endpoint tests + 2 landing tests.
+- ✅ All static checks green at every chunk: `ruff check`, `ruff format --check`, `mypy --strict` on 31 source files.
 
 **In progress:**
-- 🟡 Waiting for user to confirm Postgres connection details and Docker availability so Plan 1 can be rewritten.
+- 🟡 User runs `uv sync && uv run alembic upgrade head && uv run pytest` and reports green/red.
+- 🟡 User does the end-to-end manual flow described in README (register → verify email → login → logout).
 
-**Next:**
-- ⏳ User answers the open questions (Postgres connection string, Docker availability, Mailhog vs alternative).
-- ⏳ Rewrite Plan 1 in English with the user's actual infrastructure (no Docker Postgres assumption).
-- ⏳ Execute Plan 1 in chunks, pushing to `origin master` at the end of each chunk.
-- ⏳ Then write and execute Plan 2 (DiarySource + sync), Plan 3 (UI + gamification), Plan 4 (deploy + privacy + RKN).
+**Next (Plan 2 — DiarySource + sync):**
+- ⏳ Write Plan 2 covering `DiarySource` Protocol, `MosregSource` implementation (authedu.mosreg.ru), Homework + Schedule + Subject ORM models + migrations, encrypted token storage, Dramatiq workers + Redis for periodic sync, sync triggered from UI button.
+- ⏳ Then Plan 3 (UI + gamification: progress bars, animations, dark theme, mobile-first).
+- ⏳ Then Plan 4 (production deploy: switch Tailwind to build, real SMTP, hosting on Selectel/Timeweb, full privacy text, Roskomnadzor PD-operator registration).
+
+---
+
+## Test count after Plan 1
+
+| Module | # tests | Needs DB |
+|---|---|---|
+| `test_health.py` | 1 | no |
+| `test_user_model.py` | 2 | yes |
+| `test_auth/test_security.py` | 7 | no |
+| `test_auth/test_schemas.py` | 5 | no |
+| `test_auth/test_email.py` | 1 | no (SMTP mocked) |
+| `test_auth/test_register_service.py` | 2 | yes |
+| `test_auth/test_register_endpoint.py` | 7 | yes |
+| `test_auth/test_verify_service.py` | 3 | yes |
+| `test_auth/test_authenticate_service.py` | 5 | yes |
+| `test_auth/test_verify_endpoint.py` | 2 | yes |
+| `test_auth/test_login_endpoint.py` | 5 | yes |
+| `test_landing.py` | 2 | yes |
+| **Total** | **42** | |
 
 ---
 
@@ -40,51 +59,47 @@
 | Web app as the first platform | 2026-05-02 | Lowest entry barrier, any device |
 | Monetize via parent dashboard | 2026-05-02 | Parent is the actual paying customer, not the child |
 | First diary source: authedu.mosreg.ru | 2026-05-02 | User's own school is on this system → he'll be dogfood user |
-| DiarySource abstraction in MVP | 2026-05-02 | Cheap to add new diaries later vs. an expensive refactor |
+| DiarySource abstraction in MVP | 2026-05-02 | Cheap to add new diaries later vs. expensive refactor |
 | Python + FastAPI + HTMX | 2026-05-02 | User's strength is Python; HTMX avoids React (user weak in JS) |
 | Russian hosting | 2026-05-02 | 152-FZ requires localization of Russian citizens' personal data |
-| Manual token paste in MVP | 2026-05-02 | Simple and reliable; browser extension auth-helper comes after MVP |
+| Manual token paste in MVP | 2026-05-02 | Simple and reliable; browser extension auth-helper later |
 | Parent dashboard after MVP | 2026-05-02 | Without live users there's no one to test the parent flow |
 | Push directly to master | 2026-05-02 | Solo project, no PR overhead |
-| Internal docs in English | 2026-05-02 | Token efficiency (Cyrillic ≈ 2-3× cost of ASCII) |
-| Use user's external Postgres (no Docker for DB) | 2026-05-02 | User already has a Postgres server, no point running a second one in Docker |
+| Internal docs in English; chat + commits in Russian | 2026-05-02 | Token efficiency, with explicit per-channel choices |
+| Use user's external Postgres (no Docker) | 2026-05-02 | User already has a Postgres server (SSH-tunneled to localhost:5433) |
+| Strict tooling from day one (ruff strict + mypy --strict + pydantic v2) | 2026-05-02 | "Потом не переделывать" — quality bar set by user |
+| TRUNCATE between test functions, not rollback | 2026-05-02 | App code calls .commit(); rollback wouldn't undo it |
+| Per-feature folders (`app/<feature>/{router,service,schemas,models}.py`) | 2026-05-02 | Per user's structure rule; no global `models.py` |
+| Annotated[X, Depends(...)] FastAPI style | 2026-05-02 | Modern (FastAPI 0.95+), passes ruff B008 |
+| Mock SMTP in tests via `unittest.mock.patch` | 2026-05-02 | Avoids any SMTP server dependency for CI / dev |
 
 ---
 
-## Open questions for user (blocking Plan 1 rewrite)
+## Things still to verify experimentally during implementation
 
-- 🔴 **Postgres connection string** for the user's server (host, port, user, password, db name). User said it exists but didn't put credentials in `.env` yet.
-- 🔴 **Is Docker installed?** Affects how we run Mailhog (for email testing) and Redis (Plan 2 onward).
-- 🔴 **Email-test approach** if no Docker: stub SMTP in tests, real SMTP, or run Mailhog binary natively?
-
----
-
-## Things to verify experimentally during implementation
-
-- 🔬 Exact auth scheme of the authedu.mosreg.ru API.
-- 🔬 Session token lifetime.
-- 🔬 Diary API rate limits.
-- 🔬 Shape of `homework` and `schedule` API responses.
-
-These are resolved during MosregSource implementation (Plan 2). Not blocking now.
+- 🔬 Exact auth scheme of the authedu.mosreg.ru API (Plan 2).
+- 🔬 Session token lifetime in the diary (Plan 2).
+- 🔬 Diary API rate limits (Plan 2).
+- 🔬 Shape of `homework` and `schedule` API responses (Plan 2).
 
 ---
 
 ## Session log
 
 ### 2026-05-02 — session 1
-- Brainstormed the idea.
-- Cut the AI homework feature.
+- Brainstormed the idea, cut the AI homework auto-completion feature.
 - Agreed MVP scope, tech stack, monetization.
 - Wrote the design document.
-- Clarified RKN: PD-operator registration is required only before public launch, not before development.
 - Added "UX & visual design" section + gamification (basic in MVP, advanced in phase 1.5).
-- Wrote Plan 1 (Foundation + Auth) in Russian assuming dockerized Postgres.
+- Wrote first draft of Plan 1 in Russian assuming dockerized Postgres.
 
-### 2026-05-02 — session 2 (still ongoing)
+### 2026-05-02 — session 2
 - User chose subagent-driven execution mode.
-- User added GitHub PAT to `.env`, requested push-to-master workflow on `https://github.com/SwairIt/SchoolProject.git`.
-- User has external Postgres server — Plan 1 needs rewriting (no Docker Postgres).
+- User added GitHub PAT to `.env`, requested push-to-master workflow.
+- User has external Postgres server — Plan 1 had to be redesigned (no Docker).
 - User requested all internal documentation in English to save tokens.
-- Set up `origin` remote, created `.gitignore` protecting `.env`, translated memory + `claude.md` + this file to English.
-- Plan 1 rewrite blocked on user answering Postgres + Docker questions.
+- Translated memory + `claude.md` + `PROGRESS.md` to English.
+- User set hard quality bar (ruff strict, mypy --strict, pydantic v2, per-feature folders, TRUNCATE-between-tests, structlog, Russian commits).
+- User set DB credential isolation rule (never ask for DATABASE_URL/passwords; user runs tests + migrations locally).
+- Implemented Plan 1 directly (without subagents — small enough): 4 feature chunks + this docs chunk.
+- Pushed each chunk to `origin master`.
