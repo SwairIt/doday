@@ -1,14 +1,27 @@
 """FastAPI application entrypoint."""
 
 from fastapi import FastAPI
+from starlette.middleware.sessions import SessionMiddleware
 
+from app.auth.router import router as auth_router
 from app.config import get_settings
 from app.logging_setup import configure_logging
+from app.pages.router import router as pages_router
 
 _settings = get_settings()
 configure_logging(_settings.log_level)
 
 app = FastAPI(title="SchoolTodo")
+
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=_settings.app_secret_key,
+    same_site="lax",
+    https_only=False,  # dev; flip to True behind TLS
+)
+
+app.include_router(auth_router)
+app.include_router(pages_router)
 
 
 @app.get("/health")

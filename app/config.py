@@ -17,6 +17,12 @@ class Settings(BaseSettings):
     database_url: str
     test_database_url: str
 
+    smtp_host: str = "localhost"
+    smtp_port: int = 1025
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_from: str = "noreply@schooltodo.local"
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
