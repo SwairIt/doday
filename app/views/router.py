@@ -1,5 +1,6 @@
 """HTML view endpoints for the signed-in app shell."""
 
+import calendar as cal
 from collections import defaultdict
 from datetime import UTC, date, datetime, timedelta
 from uuid import UUID
@@ -11,18 +12,48 @@ from fastapi.templating import Jinja2Templates
 from app.auth.deps import DbSession, RequiredUser
 from app.projects.service import list_projects
 from app.tasks.models import Task
-from app.tasks.service import list_today, list_upcoming
+from app.tasks.service import list_in_range, list_today, list_upcoming
 
 router = APIRouter(prefix="/app", tags=["app"])
 templates = Jinja2Templates(directory="app/templates")
 
 _RU_WEEKDAYS = [
-    "понедельник", "вторник", "среда", "четверг",
-    "пятница", "суббота", "воскресенье",
+    "понедельник",
+    "вторник",
+    "среда",
+    "четверг",
+    "пятница",
+    "суббота",
+    "воскресенье",
 ]
 _RU_MONTHS_GEN = [
-    "января", "февраля", "марта", "апреля", "мая", "июня",
-    "июля", "августа", "сентября", "октября", "ноября", "декабря",
+    "января",
+    "февраля",
+    "марта",
+    "апреля",
+    "мая",
+    "июня",
+    "июля",
+    "августа",
+    "сентября",
+    "октября",
+    "ноября",
+    "декабря",
+]
+
+_RU_MONTHS_NOM = [
+    "Январь",
+    "Февраль",
+    "Март",
+    "Апрель",
+    "Май",
+    "Июнь",
+    "Июль",
+    "Август",
+    "Сентябрь",
+    "Октябрь",
+    "Ноябрь",
+    "Декабрь",
 ]
 
 
@@ -44,9 +75,7 @@ async def app_root() -> Response:
 
 
 @router.get("/today", response_class=HTMLResponse)
-async def today_view(
-    request: Request, user: RequiredUser, session: DbSession
-) -> HTMLResponse:
+async def today_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
     projects = await list_projects(session, user.id)
     project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
 
@@ -70,10 +99,75 @@ async def today_view(
     )
 
 
-@router.get("/upcoming", response_class=HTMLResponse)
-async def upcoming_view(
-    request: Request, user: RequiredUser, session: DbSession
+@router.get("/calendar", response_class=HTMLResponse)
+async def calendar_view(
+    request: Request,
+    user: RequiredUser,
+    session: DbSession,
+    month: str | None = None,
 ) -> HTMLResponse:
+    """Render a 7×6 month grid with up to 3 task chips per cell."""
+    today_date = datetime.now(UTC).date()
+    if month:
+        try:
+            target = datetime.strptime(month, "%Y-%m").date().replace(day=1)
+        except ValueError:
+            target = today_date.replace(day=1)
+    else:
+        target = today_date.replace(day=1)
+
+    first_weekday = target.weekday()  # Mon=0
+    days_in_month = cal.monthrange(target.year, target.month)[1]
+    grid_start = target - timedelta(days=first_weekday)
+    grid_end = grid_start + timedelta(days=42)  # 6 weeks
+
+    range_start = datetime.combine(grid_start, datetime.min.time(), tzinfo=UTC)
+    range_end = datetime.combine(grid_end, datetime.min.time(), tzinfo=UTC)
+    tasks = await list_in_range(session, user.id, start=range_start, end=range_end)
+
+    by_day: dict[date, list[Task]] = defaultdict(list)
+    for t in tasks:
+        if t.due_at is not None:
+            by_day[t.due_at.date()].append(t)
+
+    cells = []
+    for offset in range(42):
+        d = grid_start + timedelta(days=offset)
+        cells.append(
+            {
+                "day": d.day,
+                "date": d,
+                "in_month": d.month == target.month,
+                "is_today": d == today_date,
+                "is_weekend": d.weekday() >= 5,
+                "tasks": by_day[d],
+            }
+        )
+
+    projects = await list_projects(session, user.id)
+    project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
+
+    prev_target = (target.replace(day=1) - timedelta(days=1)).replace(day=1)
+    next_target = (target.replace(day=28) + timedelta(days=10)).replace(day=1)
+
+    return templates.TemplateResponse(
+        request,
+        "app/calendar.html",
+        {
+            "current_user": user,
+            "current_view": "calendar",
+            "projects": projects,
+            "project_color_map": project_color_map,
+            "month_label": f"{_RU_MONTHS_NOM[target.month - 1]} {target.year}",
+            "cells": cells,
+            "prev_month": prev_target.strftime("%Y-%m"),
+            "next_month": next_target.strftime("%Y-%m"),
+        },
+    )
+
+
+@router.get("/upcoming", response_class=HTMLResponse)
+async def upcoming_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
     projects = await list_projects(session, user.id)
     project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
 
