@@ -1,0 +1,63 @@
+{% extends "app_base.html" %}
+{% block title %}{{ project.name }} — Doday{% endblock %}
+{% block view_title %}{{ project.name }}{% endblock %}
+{% block content %}
+<div class="mb-8 flex items-start gap-4">
+  <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-{{ project.color }}-500/20 shrink-0">
+    <span class="w-3 h-3 rounded-full bg-{{ project.color }}-500"></span>
+  </div>
+  <div class="flex-1 min-w-0">
+    <h1 class="text-3xl md:text-4xl font-bold mb-1 truncate">{{ project.name }}</h1>
+    <p class="text-[var(--text-muted)] text-sm">
+      {{ active|length }} актив{% if active|length != 1 %}ных{% else %}ная{% endif %}
+      {% if completed %}· {{ completed|length }} выполнен{% if completed|length != 1 %}о{% else %}а{% endif %}{% endif %}
+      {% if project.is_inbox %}· системный проект{% endif %}
+    </p>
+  </div>
+</div>
+
+{% if not active and not completed %}
+  <div class="card p-12 text-center">
+    <div class="w-16 h-16 mx-auto mb-4 rounded-2xl grad-bg flex items-center justify-center shadow-glow">
+      <svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+      </svg>
+    </div>
+    <h2 class="text-xl font-semibold mb-1">Пока нет задач</h2>
+    <p class="text-[var(--text-muted)]">Добавь первую через быструю строку (появится в C14).</p>
+  </div>
+{% endif %}
+
+{% if active %}
+  <section class="mb-8">
+    <div class="space-y-2">
+      {% for task in active %}
+        {% include "_partials/task_row.html" %}
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
+
+{% if completed %}
+  <section x-data="{ open: false }">
+    <button
+      @click="open = !open"
+      type="button"
+      class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-3
+             flex items-center gap-2 hover:text-[var(--text)] transition"
+    >
+      <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-90' : ''"
+           fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+      </svg>
+      Выполнено
+      <span class="font-medium">· {{ completed|length }}</span>
+    </button>
+    <div x-show="open" x-transition class="space-y-2">
+      {% for task in completed %}
+        {% include "_partials/task_row.html" %}
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
+{% endblock %}

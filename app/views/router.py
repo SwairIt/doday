@@ -4,14 +4,14 @@ from collections import defaultdict
 from datetime import UTC, date, datetime, timedelta
 from uuid import UUID
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 
 from app.auth.deps import DbSession, RequiredUser
-from app.projects.service import list_projects
+from app.projects.service import ProjectNotFound, get_project_by_slug, list_projects
 from app.tasks.models import Task
-from app.tasks.service import list_in_range, list_today, list_upcoming
+from app.tasks.service import list_in_range, list_tasks, list_today, list_upcoming
 
 router = APIRouter(prefix="/app", tags=["app"])
 templates = Jinja2Templates(directory="app/templates")
@@ -162,6 +162,46 @@ async def calendar_view(
             "next_month": next_target.strftime("%Y-%m"),
         },
     )
+
+
+@router.get("/projects/{slug}", response_class=HTMLResponse)
+async def project_view(
+    slug: str, request: Request, user: RequiredUser, session: DbSession
+) -> HTMLResponse:
+    try:
+        project = await get_project_by_slug(session, user.id, slug)
+    except ProjectNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "проект не найден") from e
+
+    tasks = await list_tasks(session, user.id, project_id=project.id, include_completed=True)
+    active = [t for t in tasks if not t.is_completed]
+    completed = [t for t in tasks if t.is_completed]
+
+    projects = await list_projects(session, user.id)
+    project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
+
+    return templates.TemplateResponse(
+        request,
+        "app/project.html",
+        {
+            "current_user": user,
+            "current_view": "project",
+            "project": project,
+            "projects": projects,
+            "project_color_map": project_color_map,
+            "active": active,
+            "completed": completed,
+        },
+    )
+
+
+@router.get("/inbox", response_class=HTMLResponse, include_in_schema=False)
+async def inbox_view(request: Request, user: RequiredUser, session: DbSession) -> Response:
+    """Inbox is just a normal project under a known slug — redirect to it."""
+    from app.projects.service import ensure_inbox
+
+    inbox = await ensure_inbox(session, user.id)
+    return RedirectResponse(url=f"/app/projects/{inbox.slug}", status_code=302)
 
 
 @router.get("/upcoming", response_class=HTMLResponse)
