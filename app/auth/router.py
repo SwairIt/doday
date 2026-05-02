@@ -35,7 +35,7 @@ async def register_form(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(request, "auth/register.html", {"error": None})
 
 
-@router.post("/register")
+@router.post("/register", response_model=None)
 async def register_submit(
     request: Request,
     session: DbSession,
@@ -83,7 +83,7 @@ async def verify_pending(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(request, "auth/verify_pending.html", {})
 
 
-@router.get("/verify")
+@router.get("/verify", response_model=None)
 async def verify(token: str, session: DbSession) -> Response:
     try:
         user_id = verify_email_verification_token(token)
@@ -101,7 +101,7 @@ async def login_form(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(request, "auth/login.html", {"error": None})
 
 
-@router.post("/login")
+@router.post("/login", response_model=None)
 async def login_submit(
     request: Request,
     session: DbSession,
@@ -128,7 +128,7 @@ async def login_submit(
     return RedirectResponse(url="/", status_code=303)
 
 
-@router.post("/logout")
+@router.post("/logout", response_model=None)
 async def logout(request: Request) -> RedirectResponse:
     request.session.clear()
     return RedirectResponse(url="/", status_code=303)
