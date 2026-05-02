@@ -29,8 +29,13 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# Logs
+# Logs and runtime artifacts
 *.log
+.uvicorn.err
+.uvicorn.log
+.smtp.err
+.smtp.log
+.claude/
 
 # Node (если будем добавлять Tailwind build)
 node_modules/
