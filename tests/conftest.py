@@ -68,3 +68,26 @@ async def client(db_session: AsyncSession) -> AsyncIterator[AsyncClient]:
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+async def logged_in_client(client: AsyncClient, db_session: AsyncSession) -> AsyncClient:
+    """A client with a freshly verified user logged in (cookie set)."""
+    from datetime import UTC, datetime
+
+    from app.auth.schemas import RegisterIn
+    from app.auth.service import register_user
+
+    user = await register_user(
+        db_session,
+        RegisterIn(email="logged-in@example.com", password="strongpass123"),
+    )
+    user.email_verified_at = datetime.now(UTC)
+    await db_session.commit()
+
+    response = await client.post(
+        "/auth/login",
+        data={"email": "logged-in@example.com", "password": "strongpass123"},
+    )
+    assert response.status_code == 303
+    return client
