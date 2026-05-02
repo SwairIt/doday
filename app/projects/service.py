@@ -43,6 +43,18 @@ async def get_project(session: AsyncSession, user_id: UUID, project_id: UUID) ->
     return project
 
 
+async def get_project_by_slug(
+    session: AsyncSession, user_id: UUID, slug: str
+) -> Project:
+    result = await session.execute(
+        select(Project).where(Project.user_id == user_id, Project.slug == slug)
+    )
+    project = result.scalar_one_or_none()
+    if project is None:
+        raise ProjectNotFound(slug)
+    return project
+
+
 async def create_project(
     session: AsyncSession, user_id: UUID, *, name: str, color: str = "violet"
 ) -> Project:
