@@ -13,11 +13,14 @@ configure_logging(_settings.log_level)
 
 app = FastAPI(title="SchoolTodo")
 
+_is_prod = _settings.app_env == "prod"
+
 app.add_middleware(
     SessionMiddleware,
     secret_key=_settings.app_secret_key,
     same_site="lax",
-    https_only=False,  # dev; flip to True behind TLS
+    https_only=_is_prod,  # require Secure cookie in production (HTTPS-only)
+    # httpOnly is True by default in Starlette's SessionMiddleware
 )
 
 app.include_router(auth_router)

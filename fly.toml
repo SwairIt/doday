@@ -1,0 +1,36 @@
+# Fly.io app config. Pick your own app name with `flyctl launch --name <name>`;
+# this file is rewritten with the real name on first launch.
+app = "schooltodo-mvp"
+primary_region = "fra"  # Frankfurt — closest free Fly region to Moscow. "waw" (Warsaw) is fine too.
+
+[build]
+
+[env]
+  APP_ENV = "prod"
+  LOG_LEVEL = "INFO"
+  # APP_BASE_URL is set via `flyctl secrets set APP_BASE_URL=https://<app>.fly.dev`
+  # — it's needed BEFORE the URL is known, but matters for the verification email link.
+
+[http_service]
+  internal_port = 8000
+  force_https = true             # redirect HTTP → HTTPS
+  auto_stop_machines = "stop"    # scale to zero when idle (free-allowance friendly)
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    timeout = "5s"
+    path = "/health"
+
+[deploy]
+  # Runs in a release machine BEFORE the new version starts taking traffic.
+  # If migrations fail, the deploy aborts and the old version keeps serving.
+  release_command = "alembic upgrade head"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256                # fits the free allowance

@@ -15,13 +15,14 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     database_url: str
-    test_database_url: str
+    test_database_url: str = ""  # tests only; empty in production
 
     smtp_host: str = "localhost"
     smtp_port: int = 1025
     smtp_username: str = ""
     smtp_password: str = ""
     smtp_from: str = "noreply@schooltodo.local"
+    smtp_start_tls: bool = False  # set true for real providers like Resend/Brevo on port 587
 
 
 @lru_cache(maxsize=1)

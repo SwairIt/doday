@@ -25,5 +25,5 @@ async def send_verification_email(*, to: str, verification_url: str) -> None:
         port=settings.smtp_port,
         username=settings.smtp_username or None,
         password=settings.smtp_password or None,
-        start_tls=False,
+        start_tls=settings.smtp_start_tls,
     )
