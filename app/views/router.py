@@ -1,6 +1,5 @@
 """HTML view endpoints for the signed-in app shell."""
 
-import calendar as cal
 from collections import defaultdict
 from datetime import UTC, date, datetime, timedelta
 from uuid import UUID
@@ -106,7 +105,7 @@ async def calendar_view(
     session: DbSession,
     month: str | None = None,
 ) -> HTMLResponse:
-    """Render a 7×6 month grid with up to 3 task chips per cell."""
+    """Render a 7-by-6 month grid with up to 3 task chips per cell."""
     today_date = datetime.now(UTC).date()
     if month:
         try:
@@ -117,7 +116,6 @@ async def calendar_view(
         target = today_date.replace(day=1)
 
     first_weekday = target.weekday()  # Mon=0
-    days_in_month = cal.monthrange(target.year, target.month)[1]
     grid_start = target - timedelta(days=first_weekday)
     grid_end = grid_start + timedelta(days=42)  # 6 weeks
 
