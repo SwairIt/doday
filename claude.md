@@ -1,54 +1,67 @@
-# Claude инструкции для проекта SchoolTodo
+# Claude instructions for SchoolTodo
 
-## Первое что нужно сделать в каждой сессии
+## Read first in every session
 
-1. Прочитай **`PROGRESS.md`** в корне проекта — там текущее состояние, что сделано, что следующее.
-2. Прочитай **`docs/superpowers/specs/2026-05-02-school-todo-design.md`** — это главная спецификация проекта.
-3. Прочитай свой `MEMORY.md` — там user/project/feedback memory.
+1. Read **`PROGRESS.md`** at the project root — current state, what's done, what's next.
+2. Read **`docs/superpowers/specs/2026-05-02-school-todo-design.md`** — main project specification.
+3. Read your `MEMORY.md` (in `~/.claude/projects/c--www-Yaroslav-SchoolProject/memory/`) — user/project/feedback memory.
 
-## Используй superpowers всегда
+## Languages
 
-В этом проекте обязательно используй skills из плагина **superpowers** на каждом шаге разработки:
+- **Chat with the user: Russian.** The user writes in Russian and expects Russian responses.
+- **All internal artifacts: English.** This includes: `claude.md`, `MEMORY.md`, all memory files, design docs, plans, subagent prompts, code comments, commit messages, PROGRESS.md. The user explicitly requested this to save tokens (Cyrillic costs ~2-3× more tokens than ASCII).
 
-- **`superpowers:brainstorming`** — для обсуждения новых фич перед написанием кода.
-- **`superpowers:writing-plans`** — для составления детального плана реализации.
-- **`superpowers:executing-plans`** — для пошаговой реализации плана.
-- **`superpowers:test-driven-development`** — обязательно для всего бизнес-критичного кода (синхронизация, биллинг, диари-источники).
-- **`superpowers:systematic-debugging`** — при любой ошибке/баге.
-- **`superpowers:verification-before-completion`** — перед заявлением "готово".
-- **`superpowers:requesting-code-review`** — после крупных кусков работы.
+## Always use superpowers
 
-Если в активной сессии есть skill из superpowers, который применим (даже на 1%) — **обязательно вызывай через Skill tool**.
+In this project, on every step of development use skills from the **superpowers** plugin:
 
-## Язык
+- **`superpowers:brainstorming`** — before any creative work / new feature.
+- **`superpowers:writing-plans`** — to draft an implementation plan.
+- **`superpowers:executing-plans`** OR **`superpowers:subagent-driven-development`** — to execute the plan.
+- **`superpowers:test-driven-development`** — mandatory for all business-critical code (sync, billing, diary sources).
+- **`superpowers:systematic-debugging`** — for any bug or test failure.
+- **`superpowers:verification-before-completion`** — before claiming "done".
+- **`superpowers:requesting-code-review`** — after meaningful chunks of work.
 
-Общение и комментарии в коде/документации — **на русском**. Имена переменных, функций, классов — на английском.
+If a relevant skill exists (even 1% chance it applies) — invoke it via the Skill tool.
 
 ## Tech stack
 
-См. полный список в спецификации. Кратко:
+See full list in the spec. Summary:
 - Backend: Python 3.12 + FastAPI
-- Frontend: Jinja2 + HTMX + Alpine.js + Tailwind CSS (минимум JS!)
-- БД: PostgreSQL + SQLAlchemy + Alembic
-- Очереди: Dramatiq + Redis
-- Деплой: Docker Compose + nginx + Let's Encrypt
-- Хостинг: РФ-провайдер (Selectel/Timeweb)
+- Frontend: Jinja2 + HTMX + Alpine.js + Tailwind CSS (minimum JS!)
+- DB: PostgreSQL (user has an external Postgres server — connection details in `.env`)
+- ORM: SQLAlchemy 2.0 (async) + Alembic
+- Queues: Dramatiq + Redis (Redis location TBD with user before Plan 2)
+- Deploy: TBD in Plan 4 (Russian hosting per 152-FZ)
 
-**Не используем:** React, Vue, Svelte, Celery, Django, MongoDB.
+**Do NOT use:** React, Vue, Svelte, Celery, Django, MongoDB.
 
-## Особенности пользователя
+## Git workflow
 
-Главный разработчик — опытный, **но слабоват в JavaScript**. Объясняй JS-термины простыми словами. Архитектурно избегаем сложного клиентского JS.
+- Repo: `https://github.com/SwairIt/SchoolProject.git` (remote `origin`).
+- Branch: work on `master`. Push directly after each completed chunk.
+- PAT for push is in `.env` (variable `TOKEN`). NEVER write the token into `.git/config`, commit messages, or commands that get logged with their full text. Read it from `.env` at push time only:
+  ```bash
+  TOKEN=$(grep '^TOKEN=' .env | cut -d= -f2)
+  git push https://x-access-token:${TOKEN}@github.com/SwairIt/SchoolProject.git master
+  ```
+- `.env` is in `.gitignore`. Verify before any `git add`.
 
-## Что НЕ делаем в этом проекте
+## User specifics
 
-- ❌ Авто-выполнение ДЗ нейросетью (отказались осознанно).
-- ❌ Не показываем оценки.
-- ❌ Не парсим МЭШ в MVP (только authedu.mosreg.ru).
-- ❌ Не пишем фронт на React/Vue/Svelte.
-- ❌ Не храним пароли пользователей от дневников (только токены сессии, зашифрованные).
+The main developer is experienced overall, **but weak in JavaScript**. Explain JS terms in plain language. Architecturally avoid heavy client-side JS.
 
-## После каждой важной работы
+## Things we deliberately do NOT do
 
-- Обнови `PROGRESS.md` (что сделано, что следующее).
-- При важных архитектурных решениях — обнови или создай project memory в `~/.claude/projects/c--www-Yaroslav-SchoolProject/memory/`.
+- ❌ AI auto-completion of homework (rejected for ethical / business reasons).
+- ❌ Show grades.
+- ❌ Parse МЭШ in MVP (only authedu.mosreg.ru).
+- ❌ Use React/Vue/Svelte for the frontend.
+- ❌ Store users' diary passwords (only session tokens, encrypted).
+
+## After meaningful work
+
+- Update `PROGRESS.md` (what's done, what's next).
+- For important architectural decisions — update or create a project memory file in `~/.claude/projects/c--www-Yaroslav-SchoolProject/memory/`.
+- After each completed chunk — push to `origin master`.
