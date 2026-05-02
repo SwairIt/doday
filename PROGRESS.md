@@ -27,27 +27,31 @@
 
 | # | Chunk | Status | Commit |
 |---|---|---|---|
-| C0 | Pivot spec + memory + claude.md | ⏳ in progress | — |
-| C1 | Brand + design tokens (CSS vars, fonts, themes) | pending | — |
-| C2 | Project + Task + Label models + migration `0002` | pending | — |
-| C3 | Project service + router (CRUD) + tests | pending | — |
-| C4 | Task service + router (CRUD/complete/reorder) + tests | pending | — |
-| C5 | Label service + router + tests | pending | — |
-| C6 | Auto-provision Inbox + 3 sample tasks on verify | pending | — |
-| C7 | Layout: redesigned `base.html`, landing with purple gradient hero | pending | — |
-| C8 | Auth pages redesigned to match | pending | — |
-| C9 | App shell `app_base.html` with sidebar + topbar | pending | — |
-| C10 | Today view + HTMX task toggle | pending | — |
-| C11 | Upcoming view (day-grouped) | pending | — |
-| C12 | Calendar view (month grid + day panel) | pending | — |
-| C13 | Project view | pending | — |
-| C14 | Quick-add with natural-language parsing | pending | — |
+| C0 | Pivot spec + memory + claude.md | ✅ done | `3459918` |
+| C1 | Brand + design tokens (CSS vars, fonts, themes) | ✅ done | `a8a3f06` |
+| C2 | Project + Task + Label models + migration `0002` | ✅ done | `f136741` |
+| C3 | Project service + router (CRUD) + tests | ✅ done | `5eac8b2` |
+| C4 | Task service + router (CRUD/complete/reorder) + tests | ✅ done | `8ea356e` |
+| C5 | Label service + router + tests | ✅ done | `48b4d78` |
+| C6 | Auto-provision Inbox + 3 sample tasks on verify | ✅ done | `45ad1fe` |
+| C7 | Landing redesign (purple gradient hero + features) | ✅ done | `f4f165e` |
+| C8 | Auth pages redesigned to match | ✅ done | `2005db1` |
+| C9 | App shell `app_base.html` with sidebar + topbar | ✅ done | `44ed1af` |
+| C10 | Today view + HTMX task toggle | ✅ done | `98c68d5`, `e810bcc` |
+| C11 | Upcoming view (day-grouped) | ✅ done | `f649c1a`, `be72c06` |
+| C12 | Calendar view (month grid) | ✅ done | `96c0e45`, `db77f9e` |
+| C13 | Project view + /app/inbox redirect | ✅ done | `69ccc44`, `6ee4a04` |
+| C14 | Quick-add with natural-language parsing | ⏳ next | — |
 | C15 | Inline edit / delete / schedule / move | pending | — |
 | C16 | Search palette (⌘K, postgres FTS) | pending | — |
 | C17 | Profile (theme, default view, export, delete) | pending | — |
 | C18 | Mobile polish (drawer, FAB, bottom nav) | pending | — |
 | C19 | Tests for new features green; old tests still green | pending | — |
 | C20 | README + final PROGRESS update + report duration | pending | — |
+
+**Test count after C13:** 100+ passing (4 model + service + router + view + provisioning suites).
+**First commit:** `3459918` — 2026-05-03 (C0).
+**Latest commit:** `6ee4a04` — 2026-05-03 (C13 fix).
 
 ---
 
