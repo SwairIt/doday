@@ -1,0 +1,37 @@
+{# Sticky quick-add input at the top of a list view. #}
+<form
+  hx-post="/htmx/quickadd"
+  hx-target="#quickadd-list"
+  hx-swap="afterbegin swap:240ms"
+  hx-on::after-request="event.detail.successful && this.reset()"
+  class="mb-4"
+>
+  <div class="card flex items-center gap-2 p-2 shadow-sm focus-within:shadow-glow transition">
+    <span class="grad-bg w-7 h-7 rounded-lg flex items-center justify-center text-white shrink-0 ml-1">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+      </svg>
+    </span>
+    <input
+      type="text"
+      name="text"
+      placeholder="Добавить задачу — попробуй «Сходить в зал завтра !!! @спорт»"
+      class="flex-1 bg-transparent border-none outline-none text-sm md:text-base placeholder:text-[var(--text-muted)]"
+      autocomplete="off"
+      required
+    >
+    {% if project %}
+      <input type="hidden" name="project_id" value="{{ project.id }}">
+    {% endif %}
+    <button type="submit" class="btn-primary px-4 py-2 text-sm">Добавить</button>
+  </div>
+  <div class="mt-1.5 text-xs text-[var(--text-muted)] px-2">
+    Подсказки: <code class="px-1 rounded bg-[var(--surface-2)]">сегодня</code>
+    <code class="px-1 rounded bg-[var(--surface-2)]">завтра</code>
+    <code class="px-1 rounded bg-[var(--surface-2)]">пт</code>
+    <code class="px-1 rounded bg-[var(--surface-2)]">25.05</code>
+    · приоритет <code class="px-1 rounded bg-[var(--surface-2)]">!</code>—<code class="px-1 rounded bg-[var(--surface-2)]">!!!!</code>
+    · лейбл <code class="px-1 rounded bg-[var(--surface-2)]">@название</code>
+  </div>
+</form>
+<div id="quickadd-list"></div>
