@@ -5,6 +5,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.auth.router import router as auth_router
 from app.backup.router import router as backup_router
+from app.comments.router import comments_router, task_comments_router
 from app.config import get_settings
 from app.labels.router import router as labels_router
 from app.labels.router import task_labels_router
@@ -45,6 +46,8 @@ app.include_router(htmx_router)
 app.include_router(profile_router)
 app.include_router(sections_router)
 app.include_router(backup_router)
+app.include_router(task_comments_router)
+app.include_router(comments_router)
 
 
 @app.get("/health")

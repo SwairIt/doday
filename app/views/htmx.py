@@ -294,6 +294,58 @@ async def create_section_inline(
     )
 
 
+@router.get("/tasks/{task_id}/comments", response_class=HTMLResponse)
+async def comments_block(
+    request: Request, task_id: UUID, user: RequiredUser, session: DbSession
+) -> Response:
+    """Return the comments block (rows + add-comment form) for inline display."""
+    from app.comments.service import list_comments
+
+    try:
+        comments = await list_comments(session, user.id, task_id)
+    except TaskNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
+    return templates.TemplateResponse(
+        request,
+        "_partials/comments_block.html",
+        {"task_id": task_id, "comments": comments},
+    )
+
+
+@router.post("/tasks/{task_id}/comments", response_class=HTMLResponse)
+async def comment_create(
+    request: Request,
+    task_id: UUID,
+    user: RequiredUser,
+    session: DbSession,
+    body: Annotated[str, Form()],
+) -> Response:
+    """Add a comment and return the refreshed comments block."""
+    from app.comments.service import create_comment, list_comments
+
+    try:
+        await create_comment(session, user.id, task_id=task_id, body=body.strip())
+    except TaskNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
+    comments = await list_comments(session, user.id, task_id)
+    return templates.TemplateResponse(
+        request,
+        "_partials/comments_block.html",
+        {"task_id": task_id, "comments": comments},
+    )
+
+
+@router.delete("/comments/{comment_id}", response_class=HTMLResponse)
+async def comment_delete(comment_id: UUID, user: RequiredUser, session: DbSession) -> Response:
+    from app.comments.service import CommentNotFound, delete_comment
+
+    try:
+        await delete_comment(session, user.id, comment_id)
+    except CommentNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "комментарий не найден") from e
+    return HTMLResponse("", status_code=200)
+
+
 @router.get("/search", response_class=HTMLResponse)
 async def search_endpoint(
     request: Request, user: RequiredUser, session: DbSession, q: str = ""

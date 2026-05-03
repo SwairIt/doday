@@ -7,6 +7,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.comments.models import Comment
 from app.labels.models import Label, task_labels
 from app.projects.models import Project
 from app.projects.service import slugify
@@ -30,6 +31,9 @@ async def export_user_data(session: AsyncSession, user_id: UUID) -> dict[str, An
     )
     tasks = (await session.execute(select(Task).where(Task.user_id == user_id))).scalars().all()
     labels = (await session.execute(select(Label).where(Label.user_id == user_id))).scalars().all()
+    comments = (
+        (await session.execute(select(Comment).where(Comment.user_id == user_id))).scalars().all()
+    )
     task_label_rows = await session.execute(
         select(task_labels.c.task_id, task_labels.c.label_id)
         .join(Task, Task.id == task_labels.c.task_id)
@@ -83,6 +87,15 @@ async def export_user_data(session: AsyncSession, user_id: UUID) -> dict[str, An
         ],
         "labels": [{"id": str(lb.id), "name": lb.name, "color": lb.color} for lb in labels],
         "task_labels": task_label_pairs,
+        "comments": [
+            {
+                "id": str(c.id),
+                "task_id": str(c.task_id),
+                "body": c.body,
+                "created_at": _iso(c.created_at),
+            }
+            for c in comments
+        ],
     }
 
 
@@ -228,6 +241,14 @@ async def import_user_data(
         await session.execute(task_labels.insert().values(task_id=new_t, label_id=new_l))
         label_link_count += 1
 
+    comment_count = 0
+    for c in payload.get("comments", []):
+        new_t = task_id_map.get(c.get("task_id"))
+        if new_t is None:
+            continue
+        session.add(Comment(task_id=new_t, user_id=user_id, body=c.get("body", "")))
+        comment_count += 1
+
     await session.commit()
     return {
         "projects": project_count,
@@ -235,4 +256,5 @@ async def import_user_data(
         "tasks": task_count,
         "labels": label_count,
         "task_labels": label_link_count,
+        "comments": comment_count,
     }
