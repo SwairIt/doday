@@ -198,6 +198,97 @@ async def export_project_to_markdown(session: AsyncSession, user_id: UUID, proje
     return "\n".join(out).rstrip() + "\n"
 
 
+def _ics_escape(value: str) -> str:
+    """Escape iCalendar text per RFC 5545 (backslashes, commas, semicolons, newlines)."""
+    return value.replace("\\", "\\\\").replace("\n", "\\n").replace(",", "\\,").replace(";", "\\;")
+
+
+def _ics_fold(line: str) -> str:
+    """Fold long lines at 75 octets per RFC 5545; continuation starts with a single space."""
+    if len(line.encode("utf-8")) <= 75:
+        return line
+    out: list[str] = []
+    buf = ""
+    buf_len = 0
+    for ch in line:
+        ch_len = len(ch.encode("utf-8"))
+        if buf_len + ch_len > 75:
+            out.append(buf)
+            buf = " " + ch
+            buf_len = 1 + ch_len
+        else:
+            buf += ch
+            buf_len += ch_len
+    if buf:
+        out.append(buf)
+    return "\r\n".join(out)
+
+
+async def export_project_to_ics(session: AsyncSession, user_id: UUID, project_id: UUID) -> str:
+    """Render the project's tasks-with-dates as an iCalendar VCALENDAR string."""
+    from sqlalchemy import select as sa_select
+
+    from app.tasks.models import Task
+
+    project = await get_project(session, user_id, project_id)
+    tasks = (
+        (
+            await session.execute(
+                sa_select(Task).where(
+                    Task.user_id == user_id,
+                    Task.project_id == project.id,
+                    Task.due_at.is_not(None),
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    now_stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    lines: list[str] = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//Doday//Project Export//EN",
+        "CALSCALE:GREGORIAN",
+        "METHOD:PUBLISH",
+        f"X-WR-CALNAME:{_ics_escape(project.name)}",
+    ]
+    for t in tasks:
+        if t.due_at is None:  # guarded by SQL filter, but mypy/ruff don't know that
+            continue
+        lines.append("BEGIN:VEVENT")
+        lines.append(f"UID:{t.id}@doday.app")
+        lines.append(f"DTSTAMP:{now_stamp}")
+        if t.due_date_only:
+            d = t.due_at.date().strftime("%Y%m%d")
+            lines.append(f"DTSTART;VALUE=DATE:{d}")
+        else:
+            lines.append(f"DTSTART:{t.due_at.astimezone(UTC).strftime('%Y%m%dT%H%M%SZ')}")
+        prio_prefix = "" if t.priority.value == "p4" else f"[!{t.priority.value[1:]}] "
+        done_prefix = "[✓] " if t.is_completed else ""
+        lines.append(f"SUMMARY:{_ics_escape(done_prefix + prio_prefix + t.title)}")
+        if t.description:
+            lines.append(f"DESCRIPTION:{_ics_escape(t.description)}")
+        if t.is_completed:
+            lines.append("STATUS:COMPLETED")
+        else:
+            lines.append("STATUS:CONFIRMED")
+        if t.recurrence:
+            freq_map = {
+                "daily": "DAILY",
+                "weekly": "WEEKLY",
+                "monthly": "MONTHLY",
+                "yearly": "YEARLY",
+            }
+            freq = freq_map.get(t.recurrence)
+            if freq:
+                lines.append(f"RRULE:FREQ={freq}")
+        lines.append("END:VEVENT")
+    lines.append("END:VCALENDAR")
+    return "\r\n".join(_ics_fold(line) for line in lines) + "\r\n"
+
+
 async def duplicate_project(
     session: AsyncSession, user_id: UUID, project_id: UUID, *, new_name: str | None = None
 ) -> Project:

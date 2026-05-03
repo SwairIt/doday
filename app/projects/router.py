@@ -15,6 +15,7 @@ from app.projects.service import (
     create_project,
     delete_project,
     duplicate_project,
+    export_project_to_ics,
     export_project_to_markdown,
     list_archived_projects,
     list_projects,
@@ -167,6 +168,19 @@ async def export_md_endpoint(project_id: UUID, user: RequiredUser, session: DbSe
         content=md,
         media_type="text/markdown; charset=utf-8",
         headers={"Content-Disposition": f'attachment; filename="project-{project_id}.md"'},
+    )
+
+
+@router.get("/{project_id}/export.ics", response_class=Response)
+async def export_ics_endpoint(project_id: UUID, user: RequiredUser, session: DbSession) -> Response:
+    try:
+        ics = await export_project_to_ics(session, user.id, project_id)
+    except ProjectNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "проект не найден") from e
+    return Response(
+        content=ics,
+        media_type="text/calendar; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="project-{project_id}.ics"'},
     )
 
 
