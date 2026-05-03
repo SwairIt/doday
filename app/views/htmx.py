@@ -45,6 +45,17 @@ async def toggle_task(
     )
 
 
+@router.delete("/tasks/{task_id}", response_class=HTMLResponse)
+async def delete_task_endpoint(task_id: UUID, user: RequiredUser, session: DbSession) -> Response:
+    from app.tasks.service import delete_task
+
+    try:
+        await delete_task(session, user.id, task_id)
+    except TaskNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
+    return HTMLResponse("", status_code=200)
+
+
 @router.post("/quickadd", response_class=HTMLResponse)
 async def quickadd_endpoint(
     request: Request,

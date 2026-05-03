@@ -8,7 +8,6 @@ from httpx import AsyncClient
 from app.quickadd.parser import parse_quick_add
 from app.tasks.models import TaskPriority
 
-
 _FIXED_NOW = datetime(2026, 5, 3, 12, 0, tzinfo=UTC)  # Sunday
 
 
