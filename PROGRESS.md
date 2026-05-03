@@ -42,30 +42,35 @@
 | C12 | Calendar view (month grid) | ✅ done | `96c0e45`, `db77f9e` |
 | C13 | Project view + /app/inbox redirect | ✅ done | `69ccc44`, `6ee4a04` |
 | C14 | Quick-add with natural-language parsing | ✅ done | `0d5ca25` |
-| C15 | Hover delete button + DELETE /htmx/tasks/{id} (минимум) | ✅ done | `27593e1` |
-| C16 | Search palette (⌘K, postgres FTS) | ⏸ deferred | — |
+| C15 | Inline edit (pencil) + delete + Esc-cancel | ✅ done | `27593e1`, `b70b09f` |
+| C16 | Search palette ⌘K (Alpine + ILIKE через func.lower) | ✅ done | `b70b09f` |
 | C17 | Profile + статистика + удаление аккаунта (cascade) | ✅ done | `227be87` |
-| C18 | Mobile polish (drawer/FAB/bottom-nav) | ⏸ partial (responsive Tailwind уже есть, drawer работает) | — |
-| C19 | Tests for new features green | ✅ done (120+ зелёных) | n/a |
-| C20 | README + final PROGRESS + duration | ✅ done | этот коммит |
+| C18 | Mobile polish (drawer + FAB) | ✅ done | `44ed1af`, `b70b09f` |
+| C19 | Tests for new features green | ✅ done (128 PASSED) | n/a |
+| C20 | README + final PROGRESS + duration | ✅ done | `80a7aa1`, этот коммит |
 
-**Test count after C17:** 121 passing (model + service + router + view + provisioning + quickadd + profile suites).
+**Test count: 128 passing.**
+
+**Тестовый аккаунт (создан 2026-05-03):**
+- Email: `yarik@doday.app`
+- Password: `ChangeMe1234!` (смени сразу через /app/profile или DB)
+- Email подтверждён, Inbox + 3 sample-задачи провижены
 
 ## Loop session totals
 
 - **Первый коммит** (C0): `3459918` — `2026-05-03 01:07:07 +0300`
-- **Последний коммит** (C17 + finalize): `2026-05-03 ~07:15 +0300`
-- **Длительность работы**: ~**6 часов 7 минут** непрерывной автономной работы
-- **Всего коммитов в master**: 24+ за эту сессию
-- **Push'ей в origin/master**: каждый чанк (≈ 24 push'ей)
+- **Последний коммит** (C16+C18 финал): `b70b09f` — `2026-05-03 07:33:49 +0300`
+- **Длительность работы**: **6 часов 27 минут** непрерывной автономной работы
+- **Всего коммитов в master**: 26 за эту сессию
+- **Push'ей в origin/master**: каждый чанк (~26)
 
-## Что отложено (post-MVP, осознанно)
+## Что осталось на следующие итерации
 
-- **C16 — Search palette ⌘K**: требует Postgres FTS-миграцию, search UI, JS для ⌘K-shortcut. Слишком объёмный, оставлен на следующий sprint.
-- **C18 — расширенный mobile polish**: drawer-сайдбар уже работает (Alpine sidebarOpen), FAB и bottom-nav можно добавить позже.
-- **Полный inline-edit задач (C15+)**: текущая версия даёт удаление + чекбокс. Inline rename, schedule-modal, move-to-project — следующая итерация.
-- **Drag-reorder в UI**: API готов (`POST /api/projects/{id}/tasks/reorder`), JS-биндинг через SortableJS — отдельный мини-чанк.
-- **Реальный SMTP для прода**: код готов (`SMTP_*` env vars + `smtp_start_tls` тоггл). Нужно только Resend/Brevo API key в `.env` — без кода.
+- **Cyrillic case-insensitive search**: сейчас ASCII-only (Postgres C-locale `lower()` не фолдит кириллицу). Решение — ICU-collation колонки или generated column с предсчитанным lower-name.
+- **Schedule-modal и move-to-project из UI**: API готов (`PATCH /api/tasks/{id}` принимает `due_at`, `project_id`), нужна обвязка модалки.
+- **Drag-reorder в UI**: endpoint `POST /api/projects/{id}/tasks/reorder` готов, нужна SortableJS-обвязка.
+- **Реальный SMTP в проде**: код готов (`SMTP_*` env vars + `smtp_start_tls` toggle). Нужен Resend/Brevo API key в `.env` — без кода.
+- **Production deploy**: Fly/Railway/VPS, домен, TLS, регистрация оператора ПДн в РКН перед публичным запуском.
 
 ## Что готово и работает прямо сейчас на http://127.0.0.1:8000
 

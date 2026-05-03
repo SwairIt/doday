@@ -43,9 +43,7 @@ async def get_project(session: AsyncSession, user_id: UUID, project_id: UUID) ->
     return project
 
 
-async def get_project_by_slug(
-    session: AsyncSession, user_id: UUID, slug: str
-) -> Project:
+async def get_project_by_slug(session: AsyncSession, user_id: UUID, slug: str) -> Project:
     result = await session.execute(
         select(Project).where(Project.user_id == user_id, Project.slug == slug)
     )
