@@ -34,10 +34,20 @@
 
     {% for group in section_groups %}
       {% set s = group.section %}
-      <div class="w-72 shrink-0 card flex flex-col" data-section-id="{{ s.id }}">
+      <div class="kanban-col w-72 shrink-0 card flex flex-col" data-section-id="{{ s.id }}"
+           x-data="{ editing: false, name: {{ s.name|tojson }} }">
         <div class="px-4 py-3 border-b border-[var(--border)] flex items-center gap-2 group">
+          <span data-section-handle class="cursor-grab active:cursor-grabbing text-[var(--text-muted)] opacity-0 group-hover:opacity-60 hover:opacity-100 -ml-1">
+            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
+          </span>
           <span class="w-2 h-2 rounded-full bg-{{ project.color }}-500"></span>
-          <h2 class="font-semibold flex-1 truncate">{{ s.name }}</h2>
+          <h2 x-show="!editing" @dblclick="editing = true; $nextTick(() => $refs.input.focus())"
+              class="font-semibold flex-1 truncate cursor-text" x-text="name" title="Дважды кликни, чтобы переименовать"></h2>
+          <input x-show="editing" x-cloak x-model="name" x-ref="input"
+                 @blur="editing = false; if(name.trim()) fetch('/api/sections/{{ s.id }}',{method:'PATCH',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({name: name.trim()})})"
+                 @keydown.enter.prevent="$el.blur()"
+                 @keydown.escape="name = {{ s.name|tojson }}; editing = false"
+                 class="font-semibold flex-1 bg-[var(--surface-2)] border border-[var(--accent)] rounded px-2 py-0.5 outline-none">
           <span class="text-xs text-[var(--text-muted)]" data-count>{{ group.tasks|length }}</span>
           <button
             type="button"
@@ -100,6 +110,7 @@
       if (!board || board.dataset.kanbanInit) return;
       board.dataset.kanbanInit = '1';
 
+      // Drag tasks between columns
       board.querySelectorAll('.kanban-column').forEach(function(col) {
         new Sortable(col, {
           group: 'kanban',
@@ -110,7 +121,6 @@
             var newSection = evt.to.dataset.sectionId || null;
             var oldSection = evt.from.dataset.sectionId || null;
             if (newSection === oldSection) return;
-            // Update count badges visually
             [evt.from, evt.to].forEach(function(c) {
               var badge = c.parentElement.querySelector('[data-count]');
               if (badge) badge.textContent = c.children.length;
@@ -123,6 +133,23 @@
             });
           }
         });
+      });
+
+      // Drag to reorder columns themselves (only the user-created ones — "Без секции" stays first)
+      new Sortable(board, {
+        animation: 200,
+        handle: '[data-section-handle]',
+        draggable: '.kanban-col',
+        ghostClass: 'opacity-50',
+        onEnd: function() {
+          var ids = Array.from(board.querySelectorAll('.kanban-col')).map(function(c){return c.dataset.sectionId;}).filter(Boolean);
+          if (!ids.length) return;
+          fetch('/api/sections/reorder', {
+            method: 'POST', credentials: 'include',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({project_id: '{{ project.id }}', ids: ids}),
+          });
+        }
       });
     }
     if (document.readyState === 'loading') {

@@ -39,7 +39,7 @@
   {% set s = group.section %}
   <section
     id="section-{{ s.id }}"
-    x-data="{ open: true }"
+    x-data="{ open: true, editing: false, name: {{ s.name|tojson }} }"
     class="mb-6 animate-fade-in"
   >
     <div class="flex items-center gap-2 mb-2 group">
@@ -54,7 +54,13 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
         </svg>
       </button>
-      <h2 class="font-semibold text-lg flex-1">{{ s.name }}</h2>
+      <h2 x-show="!editing" @dblclick="editing = true; $nextTick(() => $refs.secInput.focus())"
+          class="font-semibold text-lg flex-1 cursor-text" x-text="name" title="Дважды кликни, чтобы переименовать"></h2>
+      <input x-show="editing" x-cloak x-model="name" x-ref="secInput"
+             @blur="editing = false; if(name.trim()) fetch('/api/sections/{{ s.id }}',{method:'PATCH',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({name: name.trim()})})"
+             @keydown.enter.prevent="$el.blur()"
+             @keydown.escape="name = {{ s.name|tojson }}; editing = false"
+             class="font-semibold text-lg flex-1 bg-[var(--surface-2)] border border-[var(--accent)] rounded px-2 py-0.5 outline-none">
       <span class="text-xs text-[var(--text-muted)]">{{ group.tasks|length }}</span>
       <button
         type="button"

@@ -24,3 +24,8 @@ class SectionOut(BaseModel):
     position: int
     created_at: datetime
     updated_at: datetime
+
+
+class SectionReorder(BaseModel):
+    project_id: UUID
+    ids: list[UUID] = Field(min_length=1)

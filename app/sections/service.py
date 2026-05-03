@@ -75,3 +75,24 @@ async def delete_section(session: AsyncSession, user_id: UUID, section_id: UUID)
     section = await get_section(session, user_id, section_id)
     await session.delete(section)
     await session.commit()
+
+
+async def reorder_sections(
+    session: AsyncSession, user_id: UUID, project_id: UUID, ids: list[UUID]
+) -> list[Section]:
+    """Set new positions for sections within one project."""
+    await get_project(session, user_id, project_id)
+    rows = await session.execute(
+        select(Section).where(
+            Section.user_id == user_id,
+            Section.project_id == project_id,
+            Section.id.in_(ids),
+        )
+    )
+    by_id = {s.id: s for s in rows.scalars().all()}
+    if len(by_id) != len(set(ids)):
+        raise SectionNotFound("one or more section ids do not belong to this project")
+    for pos, sid in enumerate(ids):
+        by_id[sid].position = pos
+    await session.commit()
+    return await list_sections(session, user_id, project_id)
