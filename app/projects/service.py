@@ -119,6 +119,85 @@ async def update_project(
     return project
 
 
+async def export_project_to_markdown(session: AsyncSession, user_id: UUID, project_id: UUID) -> str:
+    """Render a project + its sections + tasks as a Markdown checklist."""
+    from sqlalchemy import select as sa_select
+
+    from app.sections.models import Section
+    from app.tasks.models import Task
+
+    project = await get_project(session, user_id, project_id)
+    sections = (
+        (
+            await session.execute(
+                sa_select(Section)
+                .where(Section.user_id == user_id, Section.project_id == project.id)
+                .order_by(Section.position)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    tasks = (
+        (
+            await session.execute(
+                sa_select(Task)
+                .where(Task.user_id == user_id, Task.project_id == project.id)
+                .order_by(Task.position, Task.created_at)
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    by_parent: dict[UUID | None, list[Task]] = {}
+    for t in tasks:
+        by_parent.setdefault(t.parent_task_id, []).append(t)
+    by_section: dict[UUID | None, list[Task]] = {}
+    for t in by_parent.get(None, []):
+        by_section.setdefault(t.section_id, []).append(t)
+
+    def _render_task(t: Task, indent: int) -> list[str]:
+        prefix = "  " * indent
+        check = "x" if t.is_completed else " "
+        bits: list[str] = []
+        if t.priority.value != "p4":
+            bits.append(f"!{t.priority.value[1:]}")
+        if t.due_at:
+            bits.append(t.due_at.strftime("%Y-%m-%d"))
+        if t.recurrence:
+            bits.append(f"↻ {t.recurrence}")
+        meta = f" _({', '.join(bits)})_" if bits else ""
+        lines = [f"{prefix}- [{check}] {t.title}{meta}"]
+        if t.description:
+            for line in t.description.splitlines():
+                lines.append(f"{prefix}  > {line}")
+        for child in by_parent.get(t.id, []):
+            lines.extend(_render_task(child, indent + 1))
+        return lines
+
+    out: list[str] = [f"# {project.name}", ""]
+    if project.description:
+        out.extend([project.description, ""])
+
+    no_sec = by_section.get(None, [])
+    if no_sec:
+        for t in no_sec:
+            out.extend(_render_task(t, 0))
+        out.append("")
+
+    for s in sections:
+        out.append(f"## {s.name}")
+        out.append("")
+        sec_tasks = by_section.get(s.id, [])
+        if not sec_tasks:
+            out.append("_Пусто_")
+        for t in sec_tasks:
+            out.extend(_render_task(t, 0))
+        out.append("")
+    return "\n".join(out).rstrip() + "\n"
+
+
 async def duplicate_project(
     session: AsyncSession, user_id: UUID, project_id: UUID, *, new_name: str | None = None
 ) -> Project:
