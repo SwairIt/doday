@@ -13,6 +13,7 @@ from app.config import get_settings
 from app.db import Base
 from app.labels import models as _labels_models  # noqa: F401
 from app.projects import models as _projects_models  # noqa: F401
+from app.sections import models as _sections_models  # noqa: F401
 from app.tasks import models as _tasks_models  # noqa: F401
 
 config = context.config

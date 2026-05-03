@@ -192,6 +192,29 @@ async def quickadd_endpoint(
     return _row_response(request, task, await _project_color_map(session, user.id))
 
 
+@router.post("/sections", response_class=HTMLResponse)
+async def create_section_inline(
+    request: Request,
+    user: RequiredUser,
+    session: DbSession,
+    project_id: Annotated[UUID, Form()],
+    name: Annotated[str, Form()],
+) -> Response:
+    """Create a section inline from project view. Returns confirmation HTML."""
+    from app.projects.service import ProjectNotFound
+    from app.sections.service import create_section
+
+    try:
+        section = await create_section(
+            session, user.id, project_id=project_id, name=name.strip()
+        )
+    except ProjectNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "проект не найден") from e
+    return HTMLResponse(
+        f'<div class="text-xs text-emerald-400 px-3 py-1">Секция «{section.name}» создана</div>'
+    )
+
+
 @router.get("/search", response_class=HTMLResponse)
 async def search_endpoint(
     request: Request, user: RequiredUser, session: DbSession, q: str = ""
