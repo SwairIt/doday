@@ -74,7 +74,12 @@
 
   <div class="flex-1 min-w-0">
     <div class="flex items-center gap-2 flex-wrap">
-      <span class="{% if task.is_completed %}line-through text-[var(--text-muted)]{% endif %}">{{ task.title }}</span>
+      <button type="button"
+              class="text-left {% if task.is_completed %}line-through text-[var(--text-muted)]{% endif %} hover:text-[var(--accent)] transition"
+              title="Открыть подробности"
+              hx-get="/htmx/tasks/{{ task.id }}/detail"
+              hx-target="#task-detail-slot"
+              hx-swap="innerHTML">{{ task.title }}</button>
       <div x-data="{ open: false }" class="relative">
         <button
           type="button"

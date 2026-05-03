@@ -21,9 +21,14 @@
         <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
       {% endif %}
     </button>
-    <div class="flex-1 min-w-0 text-sm {% if task.is_completed %}line-through text-[var(--text-muted)]{% endif %}">
+    <button type="button"
+            class="flex-1 min-w-0 text-sm text-left hover:text-[var(--accent)] transition {% if task.is_completed %}line-through text-[var(--text-muted)]{% endif %}"
+            title="Открыть подробности"
+            hx-get="/htmx/tasks/{{ task.id }}/detail"
+            hx-target="#task-detail-slot"
+            hx-swap="innerHTML">
       {{ task.title }}
-    </div>
+    </button>
   </div>
 
   {% if task.due_at or task.priority.value != 'p4' or task.recurrence %}

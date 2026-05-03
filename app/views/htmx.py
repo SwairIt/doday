@@ -301,6 +301,61 @@ async def create_section_inline(
     )
 
 
+@router.get("/tasks/{task_id}/detail", response_class=HTMLResponse)
+async def task_detail(
+    request: Request, task_id: UUID, user: RequiredUser, session: DbSession
+) -> Response:
+    """Full task panel: title + description + labels + subtasks + comments."""
+    from app.comments.service import list_comments
+    from app.labels.service import list_labels, list_task_labels
+    from app.projects.service import get_project
+
+    try:
+        task = await get_task(session, user.id, task_id)
+    except TaskNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
+    project = await get_project(session, user.id, task.project_id)
+    subtasks = await list_subtasks(session, user.id, task_id)
+    attached = await list_task_labels(session, user.id, task_id)
+    all_labels = await list_labels(session, user.id)
+    comments = await list_comments(session, user.id, task_id)
+    return templates.TemplateResponse(
+        request,
+        "_partials/task_detail.html",
+        {
+            "task": task,
+            "project": project,
+            "subtasks": subtasks,
+            "attached_labels": attached,
+            "all_labels": all_labels,
+            "attached_label_ids": {lab.id for lab in attached},
+            "comments": comments,
+            "project_color_map": await _project_color_map(session, user.id),
+        },
+    )
+
+
+@router.patch("/tasks/{task_id}/detail", response_class=HTMLResponse)
+async def task_detail_save(
+    request: Request,
+    task_id: UUID,
+    user: RequiredUser,
+    session: DbSession,
+    title: Annotated[str, Form()] = "",
+    description: Annotated[str, Form()] = "",
+) -> Response:
+    """Save title + description from the detail panel; return refreshed panel."""
+    try:
+        task = await get_task(session, user.id, task_id)
+    except TaskNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
+    if title.strip():
+        task.title = title.strip()
+    task.description = description.strip() or None
+    await session.commit()
+    return await task_detail(request, task_id, user, session)
+
+
 @router.get("/tasks/{task_id}/labels-popover", response_class=HTMLResponse)
 async def labels_popover(
     request: Request, task_id: UUID, user: RequiredUser, session: DbSession
