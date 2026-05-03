@@ -78,13 +78,27 @@ async def list_tasks(
     *,
     project_id: UUID | None = None,
     include_completed: bool = False,
+    top_level_only: bool = True,
 ) -> list[Task]:
+    """List tasks. By default hides subtasks (parent_task_id IS NOT NULL)."""
     stmt = select(Task).where(Task.user_id == user_id)
     if project_id is not None:
         stmt = stmt.where(Task.project_id == project_id)
     if not include_completed:
         stmt = stmt.where(Task.is_completed.is_(False))
+    if top_level_only:
+        stmt = stmt.where(Task.parent_task_id.is_(None))
     stmt = stmt.order_by(Task.position, Task.created_at)
+    result = await session.execute(stmt)
+    return list(result.scalars().all())
+
+
+async def list_subtasks(session: AsyncSession, user_id: UUID, parent_id: UUID) -> list[Task]:
+    stmt = (
+        select(Task)
+        .where(Task.user_id == user_id, Task.parent_task_id == parent_id)
+        .order_by(Task.position, Task.created_at)
+    )
     result = await session.execute(stmt)
     return list(result.scalars().all())
 

@@ -1,0 +1,23 @@
+{# Subtask block under a parent task. Lazy-loaded by clicking the expand caret. #}
+<div id="subtasks-of-{{ parent_id }}" class="ml-9 mt-1 space-y-1 border-l-2 border-[var(--border)] pl-3 animate-fade-in">
+  {% for task in subtasks %}
+    {% include "_partials/task_row.html" %}
+  {% endfor %}
+
+  <form
+    hx-post="/htmx/tasks/{{ parent_id }}/subtasks"
+    hx-target="this"
+    hx-swap="beforebegin swap:120ms"
+    hx-on::after-request="event.detail.successful && this.querySelector('input').value = ''"
+    class="flex items-center gap-2 px-3 py-1.5 text-sm"
+  >
+    <span class="text-[var(--text-muted)]">+</span>
+    <input
+      type="text"
+      name="title"
+      placeholder="Подзадача…"
+      class="flex-1 bg-transparent border-none outline-none text-sm placeholder:text-[var(--text-muted)] focus:placeholder:text-[var(--text-muted)]"
+      required
+    >
+  </form>
+</div>

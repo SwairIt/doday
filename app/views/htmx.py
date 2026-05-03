@@ -18,6 +18,7 @@ from app.tasks.service import (
     complete_task,
     create_task,
     get_task,
+    list_subtasks,
     uncomplete_task,
     update_task,
 )
@@ -105,6 +106,48 @@ async def edit_save(
     except TaskNotFound as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
     return _row_response(request, task, await _project_color_map(session, user.id))
+
+
+@router.get("/tasks/{task_id}/subtasks", response_class=HTMLResponse)
+async def subtasks_list(
+    request: Request, task_id: UUID, user: RequiredUser, session: DbSession
+) -> Response:
+    """Return the subtasks block (rows + 'add subtask' inline form)."""
+    try:
+        await get_task(session, user.id, task_id)  # ownership check
+    except TaskNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
+    subs = await list_subtasks(session, user.id, task_id)
+    color_map = await _project_color_map(session, user.id)
+    return templates.TemplateResponse(
+        request,
+        "_partials/subtasks.html",
+        {"parent_id": task_id, "subtasks": subs, "project_color_map": color_map},
+    )
+
+
+@router.post("/tasks/{task_id}/subtasks", response_class=HTMLResponse)
+async def create_subtask(
+    request: Request,
+    task_id: UUID,
+    user: RequiredUser,
+    session: DbSession,
+    title: Annotated[str, Form()],
+) -> Response:
+    """Create a child task under task_id and return the new subtask row."""
+    try:
+        parent = await get_task(session, user.id, task_id)
+    except TaskNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
+    sub = await create_task(
+        session,
+        user.id,
+        title=title.strip() or "(без названия)",
+        project_id=parent.project_id,
+        parent_task_id=parent.id,
+    )
+    color_map = await _project_color_map(session, user.id)
+    return _row_response(request, sub, color_map)
 
 
 @router.post("/quickadd", response_class=HTMLResponse)
