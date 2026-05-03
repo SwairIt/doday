@@ -204,6 +204,24 @@ async def inbox_view(request: Request, user: RequiredUser, session: DbSession) -
     return RedirectResponse(url=f"/app/projects/{inbox.slug}", status_code=302)
 
 
+@router.get("/stats", response_class=HTMLResponse)
+async def stats_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
+    from app.stats.service import compute_user_stats
+
+    stats = await compute_user_stats(session, user.id)
+    projects = await list_projects(session, user.id)
+    return templates.TemplateResponse(
+        request,
+        "app/stats.html",
+        {
+            "current_user": user,
+            "current_view": "stats",
+            "projects": projects,
+            "stats": stats,
+        },
+    )
+
+
 @router.get("/profile", response_class=HTMLResponse)
 async def profile_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
     from sqlalchemy import func

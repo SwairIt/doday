@@ -1,0 +1,79 @@
+{% extends "app_base.html" %}
+{% block title %}Статистика — Doday{% endblock %}
+{% block view_title %}Статистика{% endblock %}
+{% block content %}
+<div class="mb-8">
+  <h1 class="text-3xl md:text-4xl font-bold mb-1">Статистика</h1>
+  <p class="text-[var(--text-muted)] text-sm">
+    Сколько закрыто, сколько подряд — без шейминга и без push'ей «вернись».
+  </p>
+</div>
+
+<div class="grid md:grid-cols-2 gap-4 mb-6">
+  <div class="card p-6 relative overflow-hidden">
+    <div class="absolute -top-12 -right-12 w-40 h-40 grad-bg rounded-full blur-3xl opacity-20"></div>
+    <div class="text-xs uppercase tracking-wider text-[var(--text-muted)] mb-2">Стрик</div>
+    <div class="flex items-baseline gap-3 mb-1">
+      <span class="text-6xl font-bold grad-text leading-none">{{ stats.current_streak }}</span>
+      <span class="text-lg text-[var(--text-muted)]">дн{% if stats.current_streak == 1 %}и{% elif stats.current_streak in (2,3,4) %}я{% else %}ей{% endif %} подряд</span>
+    </div>
+    <p class="text-sm text-[var(--text-muted)] mt-3">
+      🔥 Лучший рекорд: <strong>{{ stats.longest_streak }}</strong>
+    </p>
+  </div>
+
+  <div class="card p-6">
+    <div class="text-xs uppercase tracking-wider text-[var(--text-muted)] mb-3">За периоды</div>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <div class="text-3xl font-bold">{{ stats.done_today }}</div>
+        <div class="text-xs text-[var(--text-muted)] mt-1">сегодня</div>
+      </div>
+      <div>
+        <div class="text-3xl font-bold">{{ stats.done_week }}</div>
+        <div class="text-xs text-[var(--text-muted)] mt-1">за неделю</div>
+      </div>
+      <div>
+        <div class="text-3xl font-bold">{{ stats.done_month }}</div>
+        <div class="text-xs text-[var(--text-muted)] mt-1">за месяц</div>
+      </div>
+      <div>
+        <div class="text-3xl font-bold text-emerald-400">{{ stats.done_total }}</div>
+        <div class="text-xs text-[var(--text-muted)] mt-1">всего</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card p-6 mb-6">
+  <div class="flex items-center justify-between mb-4">
+    <div class="text-xs uppercase tracking-wider text-[var(--text-muted)]">Последние 14 дней</div>
+    <div class="text-xs text-[var(--text-muted)]">Макс: {{ stats.chart_max }} зад.</div>
+  </div>
+  <div class="flex items-end justify-between gap-1 h-32">
+    {% for cell in stats.chart %}
+      {% set pct = (cell.count / stats.chart_max * 100) if stats.chart_max else 0 %}
+      <div class="flex-1 flex flex-col items-center gap-1.5 group cursor-default" title="{{ cell.label }}: {{ cell.count }} зад.">
+        <div class="text-[10px] text-[var(--text-muted)] opacity-0 group-hover:opacity-100 transition">{{ cell.count }}</div>
+        <div class="w-full grad-bg rounded-t-md transition-all" style="height: {{ pct if pct > 0 else 2 }}%; min-height: 2px; opacity: {{ 0.85 if cell.count > 0 else 0.15 }};"></div>
+        <div class="text-[10px] text-[var(--text-muted)] tabular-nums">{{ cell.label }}</div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="grid md:grid-cols-3 gap-4">
+  <div class="card p-5">
+    <div class="text-xs uppercase tracking-wider text-[var(--text-muted)] mb-2">Лучший день недели</div>
+    <div class="text-2xl font-bold">{{ stats.best_weekday }}</div>
+  </div>
+  <div class="card p-5">
+    <div class="text-xs uppercase tracking-wider text-[var(--text-muted)] mb-2">В среднем за активный день</div>
+    <div class="text-2xl font-bold">{{ stats.avg_per_active_day }}</div>
+  </div>
+  <div class="card p-5">
+    <div class="text-xs uppercase tracking-wider text-[var(--text-muted)] mb-2">Активных дней всего</div>
+    <div class="text-2xl font-bold">{{ stats.active_days }}</div>
+  </div>
+</div>
+{% endblock %}
