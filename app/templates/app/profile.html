@@ -55,7 +55,35 @@
 
   <section class="card p-6">
     <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-4">Тема оформления</h2>
-    <p class="text-sm text-[var(--text-muted)] mb-3">Переключатель темы — в правом верхнем углу. По умолчанию — системная.</p>
+    <p class="text-sm text-[var(--text-muted)] mb-4">Светлая/тёмная — иконкой луны в правом верхнем углу. Цветовая палитра — здесь:</p>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3" x-data="{ current: localStorage.getItem('doday-accent') || 'default' }">
+      {% set palettes = [
+        ('default', 'Doday', 'from-violet-600 to-fuchsia-500'),
+        ('sunset',  'Закат', 'from-orange-500 to-pink-500'),
+        ('forest',  'Лес',   'from-emerald-500 to-cyan-500'),
+        ('minimal', 'Минимал', 'from-zinc-500 to-zinc-800'),
+      ] %}
+      {% for theme_id, theme_name, gradient in palettes %}
+        <button
+          type="button"
+          @click="
+            current = '{{ theme_id }}';
+            if ('{{ theme_id }}' === 'default') {
+              document.documentElement.removeAttribute('data-accent');
+              try { localStorage.removeItem('doday-accent'); } catch(e) {}
+            } else {
+              document.documentElement.setAttribute('data-accent', '{{ theme_id }}');
+              try { localStorage.setItem('doday-accent', '{{ theme_id }}'); } catch(e) {}
+            }
+          "
+          :class="current === '{{ theme_id }}' ? 'ring-2 ring-[var(--accent)] shadow-glow' : ''"
+          class="card p-3 text-left transition hover:-translate-y-0.5"
+        >
+          <div class="h-12 rounded-lg bg-gradient-to-br {{ gradient }} mb-2 shadow-sm"></div>
+          <div class="text-sm font-medium">{{ theme_name }}</div>
+        </button>
+      {% endfor %}
+    </div>
   </section>
 
   <section class="card p-6 border-rose-500/40">

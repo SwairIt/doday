@@ -55,6 +55,7 @@
 
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
     <script defer src="https://unpkg.com/alpinejs@3.14.7/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
 
     <script>
       (function() {
@@ -62,6 +63,8 @@
           var saved = localStorage.getItem('doday-theme');
           var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
           document.documentElement.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+          var accent = localStorage.getItem('doday-accent');
+          if (accent) document.documentElement.setAttribute('data-accent', accent);
         } catch (e) {
           document.documentElement.setAttribute('data-theme', 'dark');
         }
@@ -101,6 +104,44 @@
         --shadow:    0 6px 20px -4px rgba(0,0,0,0.5);
         --shadow-lg: 0 24px 60px -12px rgba(124,58,237,0.35);
         --shadow-glow: 0 0 80px -20px rgba(167,139,250,0.55);
+      }
+
+      /* Accent palette variants — override gradient + accent colors. */
+      [data-accent="sunset"] {
+        --accent: #f97316;
+        --accent-2: #fb923c;
+        --grad-from: #f97316;
+        --grad-to: #ec4899;
+        --shadow-glow: 0 0 70px -20px rgba(249, 115, 22, 0.50);
+      }
+      [data-accent="forest"] {
+        --accent: #10b981;
+        --accent-2: #34d399;
+        --grad-from: #10b981;
+        --grad-to: #06b6d4;
+        --shadow-glow: 0 0 70px -20px rgba(16, 185, 129, 0.50);
+      }
+      [data-accent="minimal"] {
+        --accent: #71717a;
+        --accent-2: #a1a1aa;
+        --grad-from: #525252;
+        --grad-to: #18181b;
+        --shadow-glow: 0 0 70px -20px rgba(82, 82, 91, 0.40);
+      }
+      /* Subtle ambient orbs follow the accent. */
+      [data-accent="sunset"] body::before {
+        background:
+          radial-gradient(900px 700px at 100% -10%, rgba(249, 115, 22, 0.16), transparent 60%),
+          radial-gradient(1000px 800px at -10% 110%, rgba(236, 72, 153, 0.14), transparent 60%);
+      }
+      [data-accent="forest"] body::before {
+        background:
+          radial-gradient(900px 700px at 100% -10%, rgba(16, 185, 129, 0.16), transparent 60%),
+          radial-gradient(1000px 800px at -10% 110%, rgba(6, 182, 212, 0.14), transparent 60%);
+      }
+      [data-accent="minimal"] body::before {
+        background:
+          radial-gradient(900px 700px at 100% -10%, rgba(113, 113, 122, 0.10), transparent 60%);
       }
 
       html { color-scheme: dark light; }
