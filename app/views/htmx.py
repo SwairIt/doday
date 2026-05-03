@@ -6,22 +6,39 @@ from uuid import UUID
 from fastapi import APIRouter, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 
 from app.auth.deps import DbSession, RequiredUser
 from app.labels.service import attach_label, find_or_create_by_name
 from app.projects.models import Project
 from app.quickadd.parser import parse_quick_add
+from app.tasks.models import Task
 from app.tasks.service import (
     TaskNotFound,
     complete_task,
     create_task,
     get_task,
     uncomplete_task,
+    update_task,
 )
 
 router = APIRouter(prefix="/htmx", tags=["htmx"])
 templates = Jinja2Templates(directory="app/templates")
+
+
+async def _project_color_map(session: DbSession, user_id: UUID) -> dict[UUID, str]:
+    rows = await session.execute(
+        select(Project.id, Project.color).where(Project.user_id == user_id)
+    )
+    return {pid: color for pid, color in rows.all()}
+
+
+def _row_response(request: Request, task: Task, project_color_map: dict[UUID, str]) -> HTMLResponse:
+    return templates.TemplateResponse(
+        request,
+        "_partials/task_row.html",
+        {"task": task, "project_color_map": project_color_map},
+    )
 
 
 @router.post("/tasks/{task_id}/toggle", response_class=HTMLResponse)
@@ -38,11 +55,7 @@ async def toggle_task(
     else:
         task = await complete_task(session, user.id, task_id)
 
-    return templates.TemplateResponse(
-        request,
-        "_partials/task_row.html",
-        {"task": task, "project_color_map": {}},
-    )
+    return _row_response(request, task, await _project_color_map(session, user.id))
 
 
 @router.delete("/tasks/{task_id}", response_class=HTMLResponse)
@@ -54,6 +67,44 @@ async def delete_task_endpoint(task_id: UUID, user: RequiredUser, session: DbSes
     except TaskNotFound as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
     return HTMLResponse("", status_code=200)
+
+
+@router.get("/tasks/{task_id}/row", response_class=HTMLResponse)
+async def get_row(
+    request: Request, task_id: UUID, user: RequiredUser, session: DbSession
+) -> Response:
+    """Return the read-only row HTML — used to cancel an inline edit."""
+    try:
+        task = await get_task(session, user.id, task_id)
+    except TaskNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
+    return _row_response(request, task, await _project_color_map(session, user.id))
+
+
+@router.get("/tasks/{task_id}/edit", response_class=HTMLResponse)
+async def edit_form(
+    request: Request, task_id: UUID, user: RequiredUser, session: DbSession
+) -> Response:
+    try:
+        task = await get_task(session, user.id, task_id)
+    except TaskNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
+    return templates.TemplateResponse(request, "_partials/task_row_edit.html", {"task": task})
+
+
+@router.patch("/tasks/{task_id}", response_class=HTMLResponse)
+async def edit_save(
+    request: Request,
+    task_id: UUID,
+    user: RequiredUser,
+    session: DbSession,
+    title: Annotated[str, Form()],
+) -> Response:
+    try:
+        task = await update_task(session, user.id, task_id, title=title)
+    except TaskNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
+    return _row_response(request, task, await _project_color_map(session, user.id))
 
 
 @router.post("/quickadd", response_class=HTMLResponse)
@@ -95,13 +146,49 @@ async def quickadd_endpoint(
         label = await find_or_create_by_name(session, user.id, label_name)
         await attach_label(session, user.id, task.id, label.id)
 
-    color_result = await session.execute(
-        select(Project.id, Project.color).where(Project.user_id == user.id)
+    return _row_response(request, task, await _project_color_map(session, user.id))
+
+
+@router.get("/search", response_class=HTMLResponse)
+async def search_endpoint(
+    request: Request, user: RequiredUser, session: DbSession, q: str = ""
+) -> Response:
+    """Live search across task titles + descriptions + project names. Case-insensitive ILIKE."""
+    q = q.strip()
+    if len(q) < 2:
+        return templates.TemplateResponse(
+            request, "_partials/search_results.html", {"q": q, "tasks": [], "projects": []}
+        )
+
+    # Use lower() on both sides — Postgres ILIKE only lowercases ASCII in C locale,
+    # which breaks Cyrillic case-insensitive matching.
+    pattern = f"%{q.lower()}%"
+    task_rows = await session.execute(
+        select(Task)
+        .where(
+            Task.user_id == user.id,
+            or_(
+                func.lower(Task.title).like(pattern),
+                func.lower(Task.description).like(pattern),
+            ),
+        )
+        .order_by(Task.is_completed, Task.created_at.desc())
+        .limit(15)
     )
-    project_color_map: dict[UUID, str] = {pid: color for pid, color in color_result.all()}
+    tasks = list(task_rows.scalars().all())
+
+    project_rows = await session.execute(
+        select(Project)
+        .where(Project.user_id == user.id, func.lower(Project.name).like(pattern))
+        .order_by(Project.position)
+        .limit(8)
+    )
+    projects = list(project_rows.scalars().all())
+
+    color_map = await _project_color_map(session, user.id)
 
     return templates.TemplateResponse(
         request,
-        "_partials/task_row.html",
-        {"task": task, "project_color_map": project_color_map},
+        "_partials/search_results.html",
+        {"q": q, "tasks": tasks, "projects": projects, "project_color_map": color_map},
     )

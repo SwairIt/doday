@@ -17,4 +17,18 @@
     </main>
   </div>
 </div>
+
+{% include "_partials/search_palette.html" %}
+
+{# Mobile FAB — opens quick-add via the open-search event handler is too generic; reuse open-new-project for now. #}
+<button
+  type="button"
+  title="Поиск"
+  class="md:hidden fixed bottom-6 right-6 z-30 w-14 h-14 rounded-full grad-bg shadow-glow flex items-center justify-center text-white active:scale-95 transition"
+  onclick="document.dispatchEvent(new CustomEvent('open-search'))"
+>
+  <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"/>
+  </svg>
+</button>
 {% endblock %}
