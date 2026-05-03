@@ -1,6 +1,7 @@
 """Task service — CRUD, complete/uncomplete, reorder, list filters."""
 
-from datetime import UTC, datetime, timedelta
+from calendar import monthrange
+from datetime import UTC, date, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import and_, select
@@ -12,6 +13,26 @@ from app.tasks.models import Task, TaskPriority
 
 class TaskNotFound(Exception):
     """Task does not exist or belongs to another user."""
+
+
+def _shift_date(d: date, recurrence: str) -> date:
+    """Compute the next occurrence date for a recurrence rule."""
+    if recurrence == "daily":
+        return d + timedelta(days=1)
+    if recurrence == "weekly":
+        return d + timedelta(days=7)
+    if recurrence == "monthly":
+        next_m = 1 if d.month == 12 else d.month + 1
+        next_y = d.year + 1 if d.month == 12 else d.year
+        last_day = monthrange(next_y, next_m)[1]
+        return date(next_y, next_m, min(d.day, last_day))
+    if recurrence == "yearly":
+        # Feb 29 in non-leap → Feb 28
+        try:
+            return date(d.year + 1, d.month, d.day)
+        except ValueError:
+            return date(d.year + 1, d.month, d.day - 1)
+    raise ValueError(f"unknown recurrence: {recurrence!r}")
 
 
 async def get_task(session: AsyncSession, user_id: UUID, task_id: UUID) -> Task:
@@ -33,6 +54,7 @@ async def create_task(
     due_at: datetime | None = None,
     due_date_only: bool = True,
     priority: TaskPriority = TaskPriority.P4,
+    recurrence: str | None = None,
 ) -> Task:
     if project_id is None:
         project = await ensure_inbox(session, user_id)
@@ -67,6 +89,7 @@ async def create_task(
         due_date_only=due_date_only,
         priority=priority,
         position=position,
+        recurrence=recurrence,
     )
     session.add(task)
     await session.commit()
@@ -174,6 +197,7 @@ async def update_task(
     priority: TaskPriority | None = None,
     project_id: UUID | None = None,
     parent_task_id: UUID | None = None,
+    recurrence: str | None = None,
 ) -> Task:
     task = await get_task(session, user_id, task_id)
     if title is not None:
@@ -194,18 +218,47 @@ async def update_task(
         if parent.parent_task_id is not None:
             raise ValueError("cannot nest subtasks deeper than one level")
         task.parent_task_id = parent_task_id
+    if recurrence is not None:
+        task.recurrence = recurrence
     await session.commit()
     await session.refresh(task)
     return task
 
 
 async def complete_task(session: AsyncSession, user_id: UUID, task_id: UUID) -> Task:
+    """Mark task complete. If `recurrence` is set, also spawn the next instance."""
     task = await get_task(session, user_id, task_id)
-    if not task.is_completed:
-        task.is_completed = True
-        task.completed_at = datetime.now(UTC)
-        await session.commit()
-        await session.refresh(task)
+    if task.is_completed:
+        return task
+
+    task.is_completed = True
+    task.completed_at = datetime.now(UTC)
+    await session.commit()
+
+    if task.recurrence and task.due_at is not None:
+        next_date = _shift_date(task.due_at.date(), task.recurrence)
+        next_due = datetime(
+            next_date.year,
+            next_date.month,
+            next_date.day,
+            task.due_at.hour,
+            task.due_at.minute,
+            tzinfo=UTC,
+        )
+        await create_task(
+            session,
+            user_id,
+            title=task.title,
+            project_id=task.project_id,
+            section_id=task.section_id,
+            description=task.description,
+            due_at=next_due,
+            due_date_only=task.due_date_only,
+            priority=task.priority,
+            recurrence=task.recurrence,
+        )
+
+    await session.refresh(task)
     return task
 
 
