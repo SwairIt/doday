@@ -166,30 +166,48 @@ async def calendar_view(
 
 @router.get("/projects/{slug}", response_class=HTMLResponse)
 async def project_view(
-    slug: str, request: Request, user: RequiredUser, session: DbSession
+    slug: str,
+    request: Request,
+    user: RequiredUser,
+    session: DbSession,
+    view: str = "list",
 ) -> HTMLResponse:
+    """Project list view + sections grouping. ?view=kanban switches to board layout."""
+    from app.sections.service import list_sections
+
     try:
         project = await get_project_by_slug(session, user.id, slug)
     except ProjectNotFound as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "проект не найден") from e
 
     tasks = await list_tasks(session, user.id, project_id=project.id, include_completed=True)
-    active = [t for t in tasks if not t.is_completed]
+    sections = await list_sections(session, user.id, project.id)
+
+    by_section: dict[UUID | None, list[Task]] = defaultdict(list)
+    for t in tasks:
+        if not t.is_completed:
+            by_section[t.section_id].append(t)
+
+    no_section_active = by_section.get(None, [])
+    section_groups = [{"section": s, "tasks": by_section.get(s.id, [])} for s in sections]
     completed = [t for t in tasks if t.is_completed]
 
     projects = await list_projects(session, user.id)
     project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
 
+    template_name = "app/kanban.html" if view == "kanban" else "app/project.html"
     return templates.TemplateResponse(
         request,
-        "app/project.html",
+        template_name,
         {
             "current_user": user,
             "current_view": "project",
+            "view_mode": "kanban" if view == "kanban" else "list",
             "project": project,
             "projects": projects,
             "project_color_map": project_color_map,
-            "active": active,
+            "no_section_active": no_section_active,
+            "section_groups": section_groups,
             "completed": completed,
         },
     )

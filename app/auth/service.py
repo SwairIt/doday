@@ -83,7 +83,11 @@ async def provision_new_user(session: AsyncSession, user: User) -> None:
     samples = [
         ("Попробуй закрыть эту задачу — кликни кружок слева", today, TaskPriority.P2),
         ("Создай свою задачу через «+» вверху", today, TaskPriority.P3),
-        ("Открой задачу мышкой и наведи — появятся кнопки редактировать и удалить", tomorrow, TaskPriority.P4),
+        (
+            "Открой задачу мышкой и наведи — появятся кнопки редактировать и удалить",
+            tomorrow,
+            TaskPriority.P4,
+        ),
         ("Нажми ⌘K (или Ctrl+K) — откроется поиск", None, TaskPriority.P4),
     ]
     for title, due, prio in samples:

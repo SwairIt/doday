@@ -58,9 +58,7 @@ async def test_provision_is_idempotent(db_session: AsyncSession) -> None:
 
     await provision_new_user(db_session, user)
 
-    tasks = (
-        await db_session.execute(select(Task).where(Task.user_id == user.id))
-    ).scalars().all()
+    tasks = (await db_session.execute(select(Task).where(Task.user_id == user.id))).scalars().all()
     assert len(tasks) == EXPECTED_SAMPLE_COUNT
 
 
@@ -75,9 +73,7 @@ async def test_re_verify_does_not_re_seed(db_session: AsyncSession) -> None:
     await db_session.commit()
 
     await mark_email_verified(db_session, str(user.id))
-    tasks = (
-        await db_session.execute(select(Task).where(Task.user_id == user.id))
-    ).scalars().all()
+    tasks = (await db_session.execute(select(Task).where(Task.user_id == user.id))).scalars().all()
     assert len(tasks) == EXPECTED_SAMPLE_COUNT
 
 
@@ -90,13 +86,9 @@ async def test_provision_skips_when_already_done(db_session: AsyncSession) -> No
     await db_session.commit()
 
     await provision_new_user(db_session, user)
-    first = (
-        await db_session.execute(select(Task).where(Task.user_id == user.id))
-    ).scalars().all()
+    first = (await db_session.execute(select(Task).where(Task.user_id == user.id))).scalars().all()
     assert len(first) == EXPECTED_SAMPLE_COUNT
 
     await provision_new_user(db_session, user)
-    second = (
-        await db_session.execute(select(Task).where(Task.user_id == user.id))
-    ).scalars().all()
+    second = (await db_session.execute(select(Task).where(Task.user_id == user.id))).scalars().all()
     assert len(second) == EXPECTED_SAMPLE_COUNT

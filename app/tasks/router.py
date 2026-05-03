@@ -7,6 +7,7 @@ from fastapi.responses import Response
 
 from app.auth.deps import DbSession, RequiredUser
 from app.projects.service import ProjectNotFound
+from app.sections.service import SectionNotFound
 from app.tasks.schemas import TaskCreate, TaskOut, TaskReorder, TaskUpdate
 from app.tasks.service import (
     TaskNotFound,
@@ -74,6 +75,7 @@ async def create_endpoint(payload: TaskCreate, user: RequiredUser, session: DbSe
 async def update_endpoint(
     task_id: UUID, payload: TaskUpdate, user: RequiredUser, session: DbSession
 ) -> TaskOut:
+    section_was_set = "section_id" in payload.model_fields_set
     try:
         task = await update_task(
             session,
@@ -86,11 +88,15 @@ async def update_endpoint(
             priority=payload.priority,
             project_id=payload.project_id,
             parent_task_id=payload.parent_task_id,
+            section_id=payload.section_id if section_was_set else None,
+            clear_section=section_was_set and payload.section_id is None,
         )
     except TaskNotFound as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
     except ProjectNotFound as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "проект не найден") from e
+    except SectionNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "секция не найдена") from e
     except ValueError as e:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e)) from e
     return TaskOut.model_validate(task)

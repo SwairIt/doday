@@ -197,8 +197,12 @@ async def update_task(
     priority: TaskPriority | None = None,
     project_id: UUID | None = None,
     parent_task_id: UUID | None = None,
+    section_id: UUID | None = None,
+    clear_section: bool = False,
     recurrence: str | None = None,
 ) -> Task:
+    from app.sections.service import get_section
+
     task = await get_task(session, user_id, task_id)
     if title is not None:
         task.title = title
@@ -218,6 +222,13 @@ async def update_task(
         if parent.parent_task_id is not None:
             raise ValueError("cannot nest subtasks deeper than one level")
         task.parent_task_id = parent_task_id
+    if clear_section:
+        task.section_id = None
+    elif section_id is not None:
+        section = await get_section(session, user_id, section_id)
+        if section.project_id != task.project_id:
+            raise ValueError("section belongs to a different project")
+        task.section_id = section_id
     if recurrence is not None:
         task.recurrence = recurrence
     await session.commit()

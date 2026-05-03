@@ -17,6 +17,10 @@
       {% if project.is_inbox %}· системный проект{% endif %}
     </p>
   </div>
+  <div class="flex items-center gap-1 p-1 rounded-xl bg-[var(--surface-2)] text-sm">
+    <span class="px-3 py-1.5 rounded-lg grad-bg text-white font-semibold">Список</span>
+    <a href="?view=kanban" class="px-3 py-1.5 rounded-lg hover:bg-[var(--surface)] transition">Доска</a>
+  </div>
 </div>
 
 {% include "_partials/quick_add.html" %}
