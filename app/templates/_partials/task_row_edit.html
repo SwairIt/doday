@@ -4,23 +4,31 @@
   hx-patch="/htmx/tasks/{{ task.id }}"
   hx-target="this"
   hx-swap="outerHTML"
-  class="task-row flex items-center gap-3 p-3 rounded-xl border-2 border-[var(--accent)] bg-[var(--surface)] shadow-glow"
+  class="task-row p-3 rounded-xl border-2 border-[var(--accent)] bg-[var(--surface)] shadow-glow space-y-2"
 >
   <input
     type="text"
     name="title"
     value="{{ task.title }}"
-    class="flex-1 bg-transparent border-none outline-none text-base font-medium"
+    class="w-full bg-transparent border-none outline-none text-base font-medium"
     autofocus
     required
     onkeydown="if (event.key === 'Escape') { htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/row', { target: '#task-{{ task.id }}', swap: 'outerHTML' }); }"
   >
-  <button type="submit" class="btn-primary px-3 py-1.5 text-sm">Сохранить</button>
-  <button
-    type="button"
-    class="btn-ghost px-3 py-1.5 text-sm"
-    hx-get="/htmx/tasks/{{ task.id }}/row"
-    hx-target="#task-{{ task.id }}"
-    hx-swap="outerHTML"
-  >Отмена</button>
+  <textarea
+    name="description"
+    rows="2"
+    placeholder="Описание (не обязательно)…"
+    class="w-full bg-[var(--surface-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm outline-none focus:border-[var(--accent)] transition resize-y"
+  >{{ task.description or '' }}</textarea>
+  <div class="flex items-center justify-end gap-2">
+    <button
+      type="button"
+      class="btn-ghost px-3 py-1.5 text-sm"
+      hx-get="/htmx/tasks/{{ task.id }}/row"
+      hx-target="#task-{{ task.id }}"
+      hx-swap="outerHTML"
+    >Отмена</button>
+    <button type="submit" class="btn-primary px-3 py-1.5 text-sm">Сохранить</button>
+  </div>
 </form>

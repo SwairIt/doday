@@ -101,9 +101,16 @@ async def edit_save(
     user: RequiredUser,
     session: DbSession,
     title: Annotated[str, Form()],
+    description: Annotated[str, Form()] = "",
 ) -> Response:
     try:
-        task = await update_task(session, user.id, task_id, title=title)
+        task = await update_task(
+            session,
+            user.id,
+            task_id,
+            title=title,
+            description=description if description else "",
+        )
     except TaskNotFound as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
     return _row_response(request, task, await _project_color_map(session, user.id))
