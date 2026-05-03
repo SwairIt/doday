@@ -17,7 +17,10 @@ async def test_landing_anonymous_shows_login_links(client: AsyncClient) -> None:
     assert "Doday" in response.text
 
 
-async def test_landing_logged_in_shows_email(client: AsyncClient, db_session: AsyncSession) -> None:
+async def test_landing_logged_in_redirects_to_app(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """Logged-in users skip the marketing landing — straight to /app/today."""
     user = await register_user(
         db_session, RegisterIn(email="kid@school.ru", password="strongpass123")
     )
@@ -29,6 +32,6 @@ async def test_landing_logged_in_shows_email(client: AsyncClient, db_session: As
         data={"email": "kid@school.ru", "password": "strongpass123"},
     )
 
-    response = await client.get("/")
-    assert response.status_code == 200
-    assert "kid@school.ru" in response.text
+    response = await client.get("/", follow_redirects=False)
+    assert response.status_code == 302
+    assert response.headers["location"] == "/app/today"

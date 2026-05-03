@@ -1,4 +1,4 @@
-"""Tests for the onboarding-on-verify flow (Inbox + 3 sample tasks)."""
+"""Tests for the onboarding-on-verify flow (Inbox + 4 sample tasks)."""
 
 from datetime import UTC, datetime
 
@@ -13,6 +13,8 @@ from app.auth.service import (
 )
 from app.projects.models import Project
 from app.tasks.models import Task
+
+EXPECTED_SAMPLE_COUNT = 4
 
 
 async def test_verify_seeds_inbox_and_samples(db_session: AsyncSession) -> None:
@@ -42,7 +44,7 @@ async def test_verify_seeds_inbox_and_samples(db_session: AsyncSession) -> None:
         .scalars()
         .all()
     )
-    assert len(tasks) == 3
+    assert len(tasks) == EXPECTED_SAMPLE_COUNT
     assert all(t.project_id == inboxes[0].id for t in tasks)
     assert all(not t.is_completed for t in tasks)
 
@@ -54,11 +56,12 @@ async def test_provision_is_idempotent(db_session: AsyncSession) -> None:
     )
     await mark_email_verified(db_session, str(user.id))
 
-    # Call provision_new_user again — should NOT add more samples
     await provision_new_user(db_session, user)
 
-    tasks = (await db_session.execute(select(Task).where(Task.user_id == user.id))).scalars().all()
-    assert len(tasks) == 3
+    tasks = (
+        await db_session.execute(select(Task).where(Task.user_id == user.id))
+    ).scalars().all()
+    assert len(tasks) == EXPECTED_SAMPLE_COUNT
 
 
 async def test_re_verify_does_not_re_seed(db_session: AsyncSession) -> None:
@@ -68,13 +71,14 @@ async def test_re_verify_does_not_re_seed(db_session: AsyncSession) -> None:
     )
     await mark_email_verified(db_session, str(user.id))
 
-    # Manually clear email_verified_at then re-verify — even so, samples shouldn't dupe
     user.email_verified_at = None
     await db_session.commit()
 
     await mark_email_verified(db_session, str(user.id))
-    tasks = (await db_session.execute(select(Task).where(Task.user_id == user.id))).scalars().all()
-    assert len(tasks) == 3
+    tasks = (
+        await db_session.execute(select(Task).where(Task.user_id == user.id))
+    ).scalars().all()
+    assert len(tasks) == EXPECTED_SAMPLE_COUNT
 
 
 async def test_provision_skips_when_already_done(db_session: AsyncSession) -> None:
@@ -85,12 +89,14 @@ async def test_provision_skips_when_already_done(db_session: AsyncSession) -> No
     user.email_verified_at = datetime.now(UTC)
     await db_session.commit()
 
-    # Seed manually first
     await provision_new_user(db_session, user)
-    first = (await db_session.execute(select(Task).where(Task.user_id == user.id))).scalars().all()
-    assert len(first) == 3
+    first = (
+        await db_session.execute(select(Task).where(Task.user_id == user.id))
+    ).scalars().all()
+    assert len(first) == EXPECTED_SAMPLE_COUNT
 
-    # Second call must not duplicate
     await provision_new_user(db_session, user)
-    second = (await db_session.execute(select(Task).where(Task.user_id == user.id))).scalars().all()
-    assert len(second) == 3
+    second = (
+        await db_session.execute(select(Task).where(Task.user_id == user.id))
+    ).scalars().all()
+    assert len(second) == EXPECTED_SAMPLE_COUNT

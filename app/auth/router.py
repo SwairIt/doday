@@ -125,7 +125,7 @@ async def login_submit(
             status_code=403,
         )
     request.session["user_id"] = str(user.id)
-    return RedirectResponse(url="/", status_code=303)
+    return RedirectResponse(url="/app/today", status_code=303)
 
 
 @router.post("/logout", response_model=None)

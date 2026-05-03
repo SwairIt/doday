@@ -61,12 +61,15 @@ async def mark_email_verified(session: AsyncSession, user_id: str) -> User:
 
 
 async def provision_new_user(session: AsyncSession, user: User) -> None:
-    """One-time onboarding: ensure Inbox project and 3 sample tasks.
+    """One-time onboarding: ensure Inbox + sample tasks visible from day one.
 
-    Idempotent — re-runs are a no-op if Inbox already has any tasks.
+    Two tasks are dated today (so Today view is not empty), one is tomorrow,
+    one stays in Inbox without a date. Idempotent.
     """
-    # Local import to avoid circular dependencies between auth ↔ projects/tasks
+    from datetime import timedelta
+
     from app.projects.service import ensure_inbox
+    from app.tasks.models import TaskPriority
     from app.tasks.service import create_task, list_tasks
 
     inbox = await ensure_inbox(session, user.id)
@@ -74,13 +77,24 @@ async def provision_new_user(session: AsyncSession, user: User) -> None:
     if existing:
         return
 
+    today = datetime.now(UTC).replace(hour=23, minute=59, second=0, microsecond=0)
+    tomorrow = today + timedelta(days=1)
+
     samples = [
-        "Попробуй закрыть эту задачу — кликни кружок слева",
-        "Перетащи меня в проект через сайдбар",
-        "Создай свою задачу через «+» сверху",
+        ("Попробуй закрыть эту задачу — кликни кружок слева", today, TaskPriority.P2),
+        ("Создай свою задачу через «+» вверху", today, TaskPriority.P3),
+        ("Открой задачу мышкой и наведи — появятся кнопки редактировать и удалить", tomorrow, TaskPriority.P4),
+        ("Нажми ⌘K (или Ctrl+K) — откроется поиск", None, TaskPriority.P4),
     ]
-    for title in samples:
-        await create_task(session, user.id, project_id=inbox.id, title=title)
+    for title, due, prio in samples:
+        await create_task(
+            session,
+            user.id,
+            project_id=inbox.id,
+            title=title,
+            due_at=due,
+            priority=prio,
+        )
 
 
 async def authenticate(session: AsyncSession, email: str, password: str) -> User:

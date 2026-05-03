@@ -25,7 +25,7 @@ async def test_login_correct_credentials_sets_session(
         follow_redirects=False,
     )
     assert response.status_code == 303
-    assert response.headers["location"] == "/"
+    assert response.headers["location"] == "/app/today"
     assert "session" in response.cookies
 
 
