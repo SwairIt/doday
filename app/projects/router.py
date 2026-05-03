@@ -54,6 +54,25 @@ async def list_archived_endpoint(user: RequiredUser, session: DbSession) -> list
     return [ProjectOut.model_validate(p) for p in projects]
 
 
+@router.get("/counts", response_model=dict[UUID, int])
+async def counts_endpoint(user: RequiredUser, session: DbSession) -> dict[UUID, int]:
+    """Return {project_id: active_top_level_task_count} for the sidebar badges."""
+    from sqlalchemy import func, select
+
+    from app.tasks.models import Task
+
+    rows = await session.execute(
+        select(Task.project_id, func.count(Task.id))
+        .where(
+            Task.user_id == user.id,
+            Task.is_completed.is_(False),
+            Task.parent_task_id.is_(None),
+        )
+        .group_by(Task.project_id)
+    )
+    return {pid: count for pid, count in rows.all()}
+
+
 @router.post("/reorder", response_model=list[ProjectOut])
 async def reorder_endpoint(
     payload: ProjectReorder, user: RequiredUser, session: DbSession

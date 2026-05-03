@@ -141,6 +141,18 @@
 
 <script>
   (function() {
+    function loadCounts() {
+      fetch('/api/projects/counts', {credentials: 'include'})
+        .then(function(r){ return r.ok ? r.json() : {}; })
+        .then(function(map){
+          Object.keys(map).forEach(function(pid){
+            document.querySelectorAll('[data-project-count="' + pid + '"]').forEach(function(el){
+              var n = map[pid];
+              if (n > 0) el.textContent = n;
+            });
+          });
+        });
+    }
     function initProjectsSortable() {
       var el = document.getElementById('sidebar-projects-list');
       if (!el || el.dataset.sortableInit) return;
@@ -160,10 +172,14 @@
         }
       });
     }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initProjectsSortable);
-    } else {
+    function init() {
       initProjectsSortable();
+      loadCounts();
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
     }
   })();
 </script>

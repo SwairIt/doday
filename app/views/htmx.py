@@ -102,17 +102,17 @@ async def edit_save(
     session: DbSession,
     title: Annotated[str, Form()],
     description: Annotated[str, Form()] = "",
+    recurrence: Annotated[str, Form()] = "",
 ) -> Response:
     try:
-        task = await update_task(
-            session,
-            user.id,
-            task_id,
-            title=title,
-            description=description if description else "",
-        )
+        task = await get_task(session, user.id, task_id)
     except TaskNotFound as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
+    task.title = title
+    task.description = description if description else None
+    task.recurrence = recurrence if recurrence in ("daily", "weekly", "monthly", "yearly") else None
+    await session.commit()
+    await session.refresh(task)
     return _row_response(request, task, await _project_color_map(session, user.id))
 
 

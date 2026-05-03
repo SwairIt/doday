@@ -57,10 +57,12 @@ async def create_endpoint(payload: TaskCreate, user: RequiredUser, session: DbSe
             title=payload.title,
             project_id=payload.project_id,
             parent_task_id=payload.parent_task_id,
+            section_id=payload.section_id,
             description=payload.description,
             due_at=payload.due_at,
             due_date_only=payload.due_date_only,
             priority=payload.priority,
+            recurrence=payload.recurrence,
         )
     except ProjectNotFound as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "проект не найден") from e

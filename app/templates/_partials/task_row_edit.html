@@ -21,6 +21,16 @@
     placeholder="Описание (не обязательно)…"
     class="w-full bg-[var(--surface-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm outline-none focus:border-[var(--accent)] transition resize-y"
   >{{ task.description or '' }}</textarea>
+  <div class="flex items-center gap-2 flex-wrap text-xs text-[var(--text-muted)]">
+    <span class="font-semibold uppercase tracking-wider">Повтор:</span>
+    {% set recur_options = [('', 'Нет'), ('daily', 'Каждый день'), ('weekly', 'Каждую неделю'), ('monthly', 'Каждый месяц'), ('yearly', 'Каждый год')] %}
+    {% for val, label in recur_options %}
+      <label class="cursor-pointer">
+        <input type="radio" name="recurrence" value="{{ val }}" {% if (task.recurrence or '') == val %}checked{% endif %} class="peer sr-only">
+        <span class="px-2 py-1 rounded-md border border-[var(--border)] peer-checked:bg-emerald-500/15 peer-checked:border-emerald-400 peer-checked:text-emerald-400 transition inline-block">{{ label }}</span>
+      </label>
+    {% endfor %}
+  </div>
   <div class="flex items-center justify-end gap-2">
     <button
       type="button"
