@@ -204,6 +204,54 @@ async def inbox_view(request: Request, user: RequiredUser, session: DbSession) -
     return RedirectResponse(url=f"/app/projects/{inbox.slug}", status_code=302)
 
 
+@router.get("/profile", response_class=HTMLResponse)
+async def profile_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
+    from sqlalchemy import func
+    from sqlalchemy import select as sa_select
+
+    from app.labels.models import Label
+    from app.projects.models import Project as ProjectModel
+
+    projects = await list_projects(session, user.id)
+    project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
+
+    project_count_row = await session.execute(
+        sa_select(func.count()).select_from(ProjectModel).where(ProjectModel.user_id == user.id)
+    )
+    active_count_row = await session.execute(
+        sa_select(func.count())
+        .select_from(Task)
+        .where(Task.user_id == user.id, Task.is_completed.is_(False))
+    )
+    completed_count_row = await session.execute(
+        sa_select(func.count())
+        .select_from(Task)
+        .where(Task.user_id == user.id, Task.is_completed.is_(True))
+    )
+    label_count_row = await session.execute(
+        sa_select(func.count()).select_from(Label).where(Label.user_id == user.id)
+    )
+
+    stats = {
+        "projects": project_count_row.scalar_one(),
+        "active": active_count_row.scalar_one(),
+        "completed": completed_count_row.scalar_one(),
+        "labels": label_count_row.scalar_one(),
+    }
+
+    return templates.TemplateResponse(
+        request,
+        "app/profile.html",
+        {
+            "current_user": user,
+            "current_view": "profile",
+            "projects": projects,
+            "project_color_map": project_color_map,
+            "stats": stats,
+        },
+    )
+
+
 @router.get("/upcoming", response_class=HTMLResponse)
 async def upcoming_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
     projects = await list_projects(session, user.id)

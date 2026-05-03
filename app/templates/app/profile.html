@@ -1,0 +1,75 @@
+{% extends "app_base.html" %}
+{% block title %}Профиль — Doday{% endblock %}
+{% block view_title %}Профиль{% endblock %}
+{% block content %}
+<div class="mb-8">
+  <h1 class="text-3xl md:text-4xl font-bold mb-1">Профиль</h1>
+  <p class="text-[var(--text-muted)]">Аккаунт и данные.</p>
+</div>
+
+<div class="space-y-6">
+  <section class="card p-6">
+    <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-4">Аккаунт</h2>
+    <div class="flex items-center gap-4">
+      <div class="w-14 h-14 rounded-2xl grad-bg flex items-center justify-center text-white font-bold text-xl shadow-glow">
+        {{ current_user.email[0]|upper }}
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="font-semibold truncate">{{ current_user.email }}</div>
+        <div class="text-sm text-[var(--text-muted)]">
+          {% if current_user.email_verified_at %}
+            <span class="text-emerald-400">✓ почта подтверждена</span>
+          {% else %}
+            <span class="text-amber-400">⚠ почта не подтверждена</span>
+          {% endif %}
+          · с {{ current_user.created_at.strftime('%d.%m.%Y') }}
+        </div>
+      </div>
+      <form method="post" action="/auth/logout">
+        <button type="submit" class="btn-ghost px-4 py-2 text-sm">Выйти</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="card p-6">
+    <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-4">Статистика</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div>
+        <div class="text-3xl font-bold grad-text">{{ stats.projects }}</div>
+        <div class="text-xs text-[var(--text-muted)] mt-1">проектов</div>
+      </div>
+      <div>
+        <div class="text-3xl font-bold">{{ stats.active }}</div>
+        <div class="text-xs text-[var(--text-muted)] mt-1">активных задач</div>
+      </div>
+      <div>
+        <div class="text-3xl font-bold text-emerald-400">{{ stats.completed }}</div>
+        <div class="text-xs text-[var(--text-muted)] mt-1">выполнено</div>
+      </div>
+      <div>
+        <div class="text-3xl font-bold">{{ stats.labels }}</div>
+        <div class="text-xs text-[var(--text-muted)] mt-1">лейблов</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card p-6">
+    <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-4">Тема оформления</h2>
+    <p class="text-sm text-[var(--text-muted)] mb-3">Переключатель темы — в правом верхнем углу. По умолчанию — системная.</p>
+  </section>
+
+  <section class="card p-6 border-rose-500/40">
+    <h2 class="text-sm uppercase tracking-wider font-semibold text-rose-400 mb-2">Опасная зона</h2>
+    <p class="text-sm text-[var(--text-muted)] mb-4">Удаление аккаунта необратимо. Все проекты, задачи и лейблы будут удалены вместе с ним.</p>
+    <form
+      method="post"
+      action="/api/profile/delete"
+      onsubmit="return confirm('Удалить аккаунт со всеми данными? Это нельзя отменить.')"
+    >
+      <button type="submit" class="px-4 py-2 rounded-xl bg-rose-500/15 text-rose-400 border border-rose-500/40 hover:bg-rose-500/25 transition font-medium text-sm">
+        Удалить аккаунт
+      </button>
+    </form>
+  </section>
+</div>
+{% endblock %}
