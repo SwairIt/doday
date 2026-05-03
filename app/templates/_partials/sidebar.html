@@ -33,6 +33,27 @@
       </a>
     {% endfor %}
 
+    <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider px-3 pt-5 pb-1">
+      Фильтры
+    </div>
+    {% set filter_items = [
+      ('overdue',       'Просрочено',       'rose',   'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'),
+      ('no-date',       'Без даты',         'slate',  'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'),
+      ('high-priority', 'Высокий приоритет','amber',  'M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9'),
+      ('this-week',     'На этой неделе',   'violet', 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'),
+    ] %}
+    {% for fkey, flabel, fcolor, ficon in filter_items %}
+      {% set active = view == 'filter:' ~ fkey %}
+      <a href="/app/filters/{{ fkey }}"
+         class="flex items-center gap-3 px-3 py-2 rounded-lg transition
+                {% if active %}bg-{{ fcolor }}-500/15 text-{{ fcolor }}-400 font-semibold{% else %}hover:bg-[var(--surface)]{% endif %}">
+        <svg class="w-4 h-4 shrink-0 text-{{ fcolor }}-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="{{ ficon }}"/>
+        </svg>
+        <span>{{ flabel }}</span>
+      </a>
+    {% endfor %}
+
     <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider px-3 pt-5 pb-1 flex items-center justify-between">
       <span>Проекты</span>
       <button

@@ -53,6 +53,30 @@ The product changed scope. It is no longer "todo for Russian schoolchildren" —
 - **Author email**: ALWAYS use `112168281+SwairIt@users.noreply.github.com` so commits show as SwairIt on GitHub. Never use the system-supplied userEmail.
 - `.env` is gitignored. Verify before any `git add`.
 
+## Uvicorn lifecycle (CRITICAL — repeated bug source)
+
+**Symptom of the bug:** user opens `/app/<some-recently-added-route>` and gets `{"detail": "Not Found"}` even though `pytest` and `mypy` pass and the route is in the code. Cause: a stale uvicorn process from an earlier run is still bound to port 8000 with **old code**, and new uvicorn restarts have silently failed to take over.
+
+**Always do these three things when starting uvicorn:**
+
+1. **Kill anything on 8000 with PID-direct `Stop-Process -Id <pid> -Force`.** Do NOT rely on the `Get-NetTCPConnection | foreach Stop-Process` pattern alone — sometimes a process holds the port but isn't returned by `Get-NetTCPConnection -State Listen`. Check with raw `netstat -ano | Select-String ":8000\s+0.0.0.0:0\s+LISTENING"` first to find the PID, then force-kill.
+
+2. **Start uvicorn with `--reload`.** This way subsequent code edits auto-reload without manual restart, eliminating the whole class of "wrong version of code is running" bugs:
+   ```
+   uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload > .uvicorn.log 2> .uvicorn.err
+   ```
+   Run via Bash `run_in_background: true`.
+
+3. **Verify the new server actually owns the port AND serves new routes:**
+   ```
+   sleep 8
+   curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8000/health   # expect 200
+   curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8000/app/<new-route>  # expect 401, NOT 404
+   ```
+   `404` on a route that exists in code = the wrong process is still answering. `401` (auth required) = correct route is registered.
+
+**Never skip step 3.** "Process started OK" / `/health` 200 is not enough — old uvicorn also serves `/health`. Check the specific route the new code added.
+
 ## What is RUNNING right now
 
 - Local Postgres (scoop install): `C:\Users\Yaroslav\scoop\apps\postgresql\current\bin\pg_ctl.exe`

@@ -204,6 +204,31 @@ async def inbox_view(request: Request, user: RequiredUser, session: DbSession) -
     return RedirectResponse(url=f"/app/projects/{inbox.slug}", status_code=302)
 
 
+@router.get("/filters/{slug}", response_class=HTMLResponse)
+async def filter_view(
+    slug: str, request: Request, user: RequiredUser, session: DbSession
+) -> HTMLResponse:
+    from app.filters.service import FILTERS, list_for_filter
+
+    if slug not in FILTERS:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "фильтр не найден")
+    tasks = await list_for_filter(session, user.id, slug)
+    projects = await list_projects(session, user.id)
+    project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
+    return templates.TemplateResponse(
+        request,
+        "app/filter.html",
+        {
+            "current_user": user,
+            "current_view": f"filter:{slug}",
+            "projects": projects,
+            "project_color_map": project_color_map,
+            "filter": FILTERS[slug],
+            "tasks": tasks,
+        },
+    )
+
+
 @router.get("/stats", response_class=HTMLResponse)
 async def stats_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
     from app.stats.service import compute_user_stats

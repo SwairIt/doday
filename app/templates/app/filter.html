@@ -1,0 +1,36 @@
+{% extends "app_base.html" %}
+{% block title %}{{ filter.name }} — Doday{% endblock %}
+{% block view_title %}{{ filter.name }}{% endblock %}
+{% block content %}
+<div class="mb-8 flex items-start gap-4">
+  <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-{{ filter.color }}-500/15 shrink-0">
+    <svg class="w-5 h-5 text-{{ filter.color }}-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="{{ filter.icon_path }}"/>
+    </svg>
+  </div>
+  <div class="flex-1 min-w-0">
+    <h1 class="text-3xl md:text-4xl font-bold mb-1">{{ filter.name }}</h1>
+    <p class="text-[var(--text-muted)] text-sm">
+      {{ filter.description }} · найдено: <strong>{{ tasks|length }}</strong>
+    </p>
+  </div>
+</div>
+
+{% if not tasks %}
+  <div class="card p-12 text-center">
+    <div class="w-16 h-16 mx-auto mb-4 rounded-2xl grad-bg flex items-center justify-center shadow-glow">
+      <svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+      </svg>
+    </div>
+    <h2 class="text-xl font-semibold mb-1">Чисто</h2>
+    <p class="text-[var(--text-muted)]">Под этот фильтр ничего не подходит.</p>
+  </div>
+{% else %}
+  <div class="space-y-2">
+    {% for task in tasks %}
+      {% include "_partials/task_row.html" %}
+    {% endfor %}
+  </div>
+{% endif %}
+{% endblock %}

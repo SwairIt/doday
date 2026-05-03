@@ -60,6 +60,8 @@ ignore = [
 ]
 "app/quickadd/parser.py" = ["RUF001"]  # intentional Cyrillic in date keywords
 "app/views/router.py" = ["RUF001"]  # intentional Cyrillic in month / weekday names
+"app/filters/service.py" = ["RUF001"]  # intentional Cyrillic in filter labels
+"app/stats/service.py" = ["RUF001"]  # intentional Cyrillic in weekday labels
 
 [tool.mypy]
 python_version = "3.12"
