@@ -1,0 +1,112 @@
+{# Global keyboard shortcuts + ? overlay. #}
+<div
+  x-data="{
+    open: false,
+    pendingG: false,
+    init() {
+      window.addEventListener('keydown', (e) => {
+        const tag = (e.target && e.target.tagName) || '';
+        const isField = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (e.target && e.target.isContentEditable);
+        if (isField && e.key !== 'Escape') return;
+        if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+        if (e.key === '?' && e.shiftKey) {
+          e.preventDefault();
+          this.open = true;
+          return;
+        }
+        if (e.key === 'Escape') { this.open = false; return; }
+        if (this.open) return;
+
+        if (e.key === 'g') {
+          this.pendingG = true;
+          setTimeout(() => { this.pendingG = false; }, 1500);
+          return;
+        }
+        if (this.pendingG) {
+          this.pendingG = false;
+          if (e.key === 'i') { e.preventDefault(); window.location.href = '/app/inbox'; return; }
+          if (e.key === 't') { e.preventDefault(); window.location.href = '/app/today'; return; }
+          if (e.key === 'u') { e.preventDefault(); window.location.href = '/app/upcoming'; return; }
+          if (e.key === 'c') { e.preventDefault(); window.location.href = '/app/calendar'; return; }
+          if (e.key === 's') { e.preventDefault(); window.location.href = '/app/stats'; return; }
+          if (e.key === 'p') { e.preventDefault(); window.location.href = '/app/profile'; return; }
+          if (e.key === 'a') { e.preventDefault(); window.location.href = '/app/projects-archive'; return; }
+          if (e.key === 'f') { e.preventDefault(); window.location.href = '/app/filters'; return; }
+          return;
+        }
+
+        if (e.key === '/') {
+          e.preventDefault();
+          window.dispatchEvent(new CustomEvent('open-search'));
+          return;
+        }
+        if (e.key === 'n' || e.key === '+') {
+          const qa = document.querySelector('[data-quickadd-input]');
+          if (qa) {
+            e.preventDefault();
+            qa.focus();
+          }
+          return;
+        }
+        if (e.key === 'P' && e.shiftKey) {
+          e.preventDefault();
+          window.dispatchEvent(new CustomEvent('open-new-project'));
+          return;
+        }
+      });
+    },
+  }"
+>
+  <div x-show="pendingG" x-cloak x-transition.opacity
+       class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-3 py-1.5 rounded-lg bg-[var(--surface-2)] border border-[var(--accent)] text-xs text-[var(--accent)] shadow-glow font-mono">
+    g + …
+  </div>
+
+  <div x-show="open" x-cloak x-transition.opacity
+       @click.self="open = false"
+       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div x-show="open" x-transition.scale.origin.center.duration.200ms
+         class="card w-full max-w-lg shadow-glow">
+      <div class="px-6 py-4 border-b border-[var(--border)] flex items-center justify-between">
+        <h2 class="text-xl font-bold">Горячие клавиши</h2>
+        <button type="button" @click="open = false" class="p-1 rounded hover:bg-[var(--surface-2)] text-[var(--text-muted)]">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="p-6 space-y-4 text-sm">
+        <div>
+          <h3 class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider mb-2">Навигация</h3>
+          <div class="space-y-1.5">
+            {% set nav_keys = [
+              ('g i', 'Inbox'),
+              ('g t', 'Сегодня'),
+              ('g u', 'Ближайшие'),
+              ('g c', 'Календарь'),
+              ('g s', 'Статистика'),
+              ('g p', 'Профиль'),
+              ('g f', 'Мои фильтры'),
+              ('g a', 'Архив проектов'),
+            ] %}
+            {% for keys, label in nav_keys %}
+              <div class="flex items-center justify-between">
+                <span>{{ label }}</span>
+                <kbd class="font-mono text-xs bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-0.5">{{ keys }}</kbd>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        <div>
+          <h3 class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider mb-2">Действия</h3>
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between"><span>Новая задача (фокус на быстрое добавление)</span><kbd class="font-mono text-xs bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-0.5">n</kbd></div>
+            <div class="flex items-center justify-between"><span>Поиск</span><kbd class="font-mono text-xs bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-0.5">/</kbd></div>
+            <div class="flex items-center justify-between"><span>Новый проект</span><kbd class="font-mono text-xs bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-0.5">⇧ P</kbd></div>
+            <div class="flex items-center justify-between"><span>Закрыть модалку / снять выделение</span><kbd class="font-mono text-xs bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-0.5">Esc</kbd></div>
+            <div class="flex items-center justify-between"><span>Эта подсказка</span><kbd class="font-mono text-xs bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-0.5">?</kbd></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

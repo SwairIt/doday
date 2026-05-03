@@ -7,7 +7,15 @@
     <span class="w-3 h-3 rounded-full bg-{{ project.color }}-500"></span>
   </div>
   <div class="flex-1 min-w-0">
-    <h1 class="text-3xl font-bold mb-1 truncate">{{ project.name }}</h1>
+    <h1 class="text-3xl font-bold mb-1 truncate flex items-center gap-2">
+      {{ project.name }}
+      {% if project.is_favorite %}
+        <svg class="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.366 2.446a1 1 0 00-.364 1.118l1.287 3.957c.299.921-.755 1.688-1.539 1.118l-3.366-2.446a1 1 0 00-1.176 0l-3.366 2.446c-.783.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.07 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z"/></svg>
+      {% endif %}
+    </h1>
+    {% if project.description %}
+      <p class="text-sm mb-1.5 text-[var(--text)]">{{ project.description }}</p>
+    {% endif %}
     <p class="text-[var(--text-muted)] text-sm">Kanban-доска · перетаскивай задачи между колонками</p>
   </div>
   <div class="flex items-center gap-1 p-1 rounded-xl bg-[var(--surface-2)] text-sm">
