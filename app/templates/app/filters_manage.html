@@ -1,0 +1,52 @@
+{% extends "app_base.html" %}
+{% block title %}Мои фильтры — Doday{% endblock %}
+{% block view_title %}Мои фильтры{% endblock %}
+{% block content %}
+<div class="mb-8 flex items-start gap-4">
+  <div class="flex-1 min-w-0">
+    <h1 class="text-3xl md:text-4xl font-bold mb-1">Мои фильтры</h1>
+    <p class="text-[var(--text-muted)] text-sm">Сохрани часто используемый набор условий — он появится в сайдбаре.</p>
+  </div>
+  <button type="button"
+          @click="$dispatch('open-filter-editor', {mode: 'create'})"
+          class="btn-primary px-4 py-2 text-sm inline-flex items-center gap-2">
+    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+    Новый фильтр
+  </button>
+</div>
+
+{% if custom_filters %}
+  <div class="space-y-2">
+    {% for cf in custom_filters %}
+      <div class="card p-4 flex items-center gap-4">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-{{ cf.color }}-500/20 shrink-0">
+          <svg class="w-5 h-5 text-{{ cf.color }}-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+        </div>
+        <a href="/app/filters/custom/{{ cf.id }}" class="flex-1 min-w-0">
+          <div class="font-semibold truncate">{{ cf.name }}</div>
+          <div class="text-xs text-[var(--text-muted)] mt-0.5">
+            {% set q = cf.query %}
+            {% if q.priorities %}приоритет: {{ q.priorities|join(', ') }} ·{% endif %}
+            {% if q.due_window %}срок: {{ q.due_window }} ·{% endif %}
+            {% if q.has_text %}«{{ q.has_text }}» ·{% endif %}
+            {% if q.include_completed %}включая выполненные{% endif %}
+          </div>
+        </a>
+        <button type="button"
+                @click="$dispatch('open-filter-editor', {mode: 'edit', id: '{{ cf.id }}', name: {{ cf.name|tojson }}, color: '{{ cf.color }}', query: {{ cf.query|tojson }} })"
+                class="btn-ghost px-3 py-1.5 text-sm">Изменить</button>
+        <button type="button"
+                onclick="if(confirm('Удалить фильтр «{{ cf.name }}»?')) fetch('/api/custom-filters/{{ cf.id }}', {method:'DELETE',credentials:'include'}).then(()=>location.reload())"
+                class="px-3 py-1.5 rounded-lg text-sm bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition">Удалить</button>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="card p-10 text-center text-[var(--text-muted)]">
+    <div class="text-5xl mb-3">🔎</div>
+    <div>Пока ни одного фильтра. Создай первый — и он появится в сайдбаре.</div>
+  </div>
+{% endif %}
+
+{% include "_partials/filter_editor_modal.html" %}
+{% endblock %}
