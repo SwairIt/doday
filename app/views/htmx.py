@@ -255,8 +255,15 @@ async def bulk_action(
     session: DbSession,
     action: Annotated[str, Form()],
     ids: Annotated[list[UUID], Form()],
+    priority: Annotated[str, Form()] = "",
+    project_id: Annotated[str, Form()] = "",
 ) -> Response:
-    """Apply an action to many tasks at once. action ∈ {complete, delete}."""
+    """Apply an action to many tasks at once.
+    action ∈ {complete, delete, set_priority, move_project}.
+    """
+    from uuid import UUID as _UUID
+
+    from app.projects.service import ProjectNotFound, get_project
     from app.tasks.service import delete_task
 
     if not ids:
@@ -267,11 +274,35 @@ async def bulk_action(
             try:
                 await complete_task(session, user.id, tid)
             except TaskNotFound:
-                pass  # silently skip — IDs from selection may include stale ones
+                pass
     elif action == "delete":
         for tid in ids:
             try:
                 await delete_task(session, user.id, tid)
+            except TaskNotFound:
+                pass
+    elif action == "set_priority":
+        try:
+            prio = TaskPriority(priority)
+        except ValueError as e:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "неизвестный приоритет") from e
+        for tid in ids:
+            try:
+                await update_task(session, user.id, tid, priority=prio)
+            except TaskNotFound:
+                pass
+    elif action == "move_project":
+        try:
+            target = _UUID(project_id)
+        except ValueError as e:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "неверный project_id") from e
+        try:
+            await get_project(session, user.id, target)
+        except ProjectNotFound as e:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "проект не найден") from e
+        for tid in ids:
+            try:
+                await update_task(session, user.id, tid, project_id=target)
             except TaskNotFound:
                 pass
     else:
