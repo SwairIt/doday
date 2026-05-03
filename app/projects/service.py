@@ -3,12 +3,14 @@
 import re
 import secrets
 import unicodedata
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.projects.models import Project
+from app.projects.templates_data import ProjectTemplate
 
 
 def slugify(name: str) -> str:
@@ -106,6 +108,72 @@ async def delete_project(session: AsyncSession, user_id: UUID, project_id: UUID)
         raise CannotDeleteInbox(str(project_id))
     await session.delete(project)
     await session.commit()
+
+
+async def create_from_template(
+    session: AsyncSession, user_id: UUID, template: ProjectTemplate, *, name: str | None = None
+) -> Project:
+    """Materialize a project template — project + sections + tasks."""
+    from app.sections.models import Section
+    from app.tasks.models import Task, TaskPriority
+
+    project = await create_project(
+        session, user_id, name=name or template["name"], color=template["color"]
+    )
+
+    today = datetime.now(UTC)
+    section_objs: list[Section] = []
+    for idx, sec_def in enumerate(template["sections"]):
+        section = Section(
+            user_id=user_id,
+            project_id=project.id,
+            name=sec_def["name"],
+            position=idx,
+        )
+        session.add(section)
+        section_objs.append(section)
+    await session.commit()
+    for s in section_objs:
+        await session.refresh(s)
+
+    position = 0
+    for sec_obj, sec_def in zip(section_objs, template["sections"], strict=True):
+        for t_def in sec_def["tasks"]:
+            due_at = None
+            if "due_offset_days" in t_def:
+                due_at = today + timedelta(days=t_def["due_offset_days"])
+            session.add(
+                Task(
+                    user_id=user_id,
+                    project_id=project.id,
+                    section_id=sec_obj.id,
+                    title=t_def["title"],
+                    priority=TaskPriority(t_def.get("priority", "p4")),
+                    due_at=due_at,
+                    due_date_only=True,
+                    position=position,
+                )
+            )
+            position += 1
+    for t_def in template["loose_tasks"]:
+        due_at = None
+        if "due_offset_days" in t_def:
+            due_at = today + timedelta(days=t_def["due_offset_days"])
+        session.add(
+            Task(
+                user_id=user_id,
+                project_id=project.id,
+                title=t_def["title"],
+                priority=TaskPriority(t_def.get("priority", "p4")),
+                due_at=due_at,
+                due_date_only=True,
+                position=position,
+            )
+        )
+        position += 1
+    await session.commit()
+    await session.refresh(project)
+    return project
 
 
 async def ensure_inbox(session: AsyncSession, user_id: UUID) -> Project:
