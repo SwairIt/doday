@@ -192,6 +192,38 @@ async def quickadd_endpoint(
     return _row_response(request, task, await _project_color_map(session, user.id))
 
 
+@router.post("/bulk", response_class=HTMLResponse)
+async def bulk_action(
+    request: Request,
+    user: RequiredUser,
+    session: DbSession,
+    action: Annotated[str, Form()],
+    ids: Annotated[list[UUID], Form()],
+) -> Response:
+    """Apply an action to many tasks at once. action ∈ {complete, delete}."""
+    from app.tasks.service import delete_task
+
+    if not ids:
+        return HTMLResponse("", status_code=200)
+
+    if action == "complete":
+        for tid in ids:
+            try:
+                await complete_task(session, user.id, tid)
+            except TaskNotFound:
+                pass  # silently skip — IDs from selection may include stale ones
+    elif action == "delete":
+        for tid in ids:
+            try:
+                await delete_task(session, user.id, tid)
+            except TaskNotFound:
+                pass
+    else:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"unknown action: {action}")
+
+    return HTMLResponse("", status_code=200, headers={"HX-Refresh": "true"})
+
+
 @router.post("/sections", response_class=HTMLResponse)
 async def create_section_inline(
     request: Request,
@@ -205,9 +237,7 @@ async def create_section_inline(
     from app.sections.service import create_section
 
     try:
-        section = await create_section(
-            session, user.id, project_id=project_id, name=name.strip()
-        )
+        section = await create_section(session, user.id, project_id=project_id, name=name.strip())
     except ProjectNotFound as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "проект не найден") from e
     return HTMLResponse(

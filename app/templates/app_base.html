@@ -3,6 +3,23 @@
 {# App shell layout: sticky sidebar (md+), drawer on mobile, sticky topbar, scrolling main canvas. #}
 {% block layout %}
 <style>[x-cloak]{display:none!important}</style>
+<script>
+  document.addEventListener('alpine:init', () => {
+    Alpine.store('selection', {
+      ids: [],
+      has(id) { return this.ids.includes(id); },
+      toggle(id) {
+        const i = this.ids.indexOf(id);
+        if (i >= 0) this.ids.splice(i, 1); else this.ids.push(id);
+      },
+      clear() { this.ids = []; },
+      count() { return this.ids.length; },
+    });
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') Alpine.store('selection').clear();
+    });
+  });
+</script>
 
 <div class="min-h-screen flex" x-data="{ sidebarOpen: false }">
   {% include "_partials/sidebar.html" %}
@@ -19,8 +36,9 @@
 </div>
 
 {% include "_partials/search_palette.html" %}
+{% include "_partials/bulk_bar.html" %}
 
-{# Mobile FAB — opens quick-add via the open-search event handler is too generic; reuse open-new-project for now. #}
+{# Mobile FAB → opens search palette. #}
 <button
   type="button"
   title="Поиск"
