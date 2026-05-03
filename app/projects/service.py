@@ -119,6 +119,89 @@ async def update_project(
     return project
 
 
+async def duplicate_project(
+    session: AsyncSession, user_id: UUID, project_id: UUID, *, new_name: str | None = None
+) -> Project:
+    """Clone a project with its sections and active tasks (subtasks included)."""
+    from sqlalchemy import select as sa_select
+
+    from app.sections.models import Section
+    from app.tasks.models import Task
+
+    src = await get_project(session, user_id, project_id)
+    new = await create_project(
+        session, user_id, name=new_name or f"{src.name} (копия)", color=src.color
+    )
+    new.description = src.description
+    await session.commit()
+    await session.refresh(new)
+
+    src_sections = (
+        (
+            await session.execute(
+                sa_select(Section)
+                .where(Section.user_id == user_id, Section.project_id == src.id)
+                .order_by(Section.position)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    section_id_map: dict[UUID, UUID] = {}
+    for s in src_sections:
+        new_s = Section(user_id=user_id, project_id=new.id, name=s.name, position=s.position)
+        session.add(new_s)
+        await session.flush()
+        section_id_map[s.id] = new_s.id
+
+    src_tasks = (
+        (
+            await session.execute(
+                sa_select(Task)
+                .where(Task.user_id == user_id, Task.project_id == src.id)
+                .order_by(Task.position)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    task_id_map: dict[UUID, UUID] = {}
+    pending = list(src_tasks)
+    while pending:
+        progressed = False
+        next_round = []
+        for t in pending:
+            new_parent_id: UUID | None = None
+            if t.parent_task_id is not None:
+                if t.parent_task_id not in task_id_map:
+                    next_round.append(t)
+                    continue
+                new_parent_id = task_id_map[t.parent_task_id]
+            new_t = Task(
+                user_id=user_id,
+                project_id=new.id,
+                section_id=section_id_map.get(t.section_id) if t.section_id else None,
+                parent_task_id=new_parent_id,
+                title=t.title,
+                description=t.description,
+                due_at=t.due_at,
+                due_date_only=t.due_date_only,
+                priority=t.priority,
+                position=t.position,
+                recurrence=t.recurrence,
+            )
+            session.add(new_t)
+            await session.flush()
+            task_id_map[t.id] = new_t.id
+            progressed = True
+        if not progressed:
+            break
+        pending = next_round
+    await session.commit()
+    await session.refresh(new)
+    return new
+
+
 async def reorder_projects(session: AsyncSession, user_id: UUID, ids: list[UUID]) -> list[Project]:
     """Persist a new ordering. Inbox is pinned to position 0; other ids start at 1."""
     rows = await session.execute(

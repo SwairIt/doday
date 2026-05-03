@@ -14,6 +14,7 @@ from app.projects.service import (
     create_from_template,
     create_project,
     delete_project,
+    duplicate_project,
     list_archived_projects,
     list_projects,
     reorder_projects,
@@ -140,6 +141,19 @@ async def create_from_template_endpoint(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "шаблон не найден")
     project = await create_from_template(session, user.id, template, name=payload.name)
     return ProjectOut.model_validate(project)
+
+
+@router.post(
+    "/{project_id}/duplicate", response_model=ProjectOut, status_code=status.HTTP_201_CREATED
+)
+async def duplicate_endpoint(
+    project_id: UUID, user: RequiredUser, session: DbSession
+) -> ProjectOut:
+    try:
+        new = await duplicate_project(session, user.id, project_id)
+    except ProjectNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "проект не найден") from e
+    return ProjectOut.model_validate(new)
 
 
 @router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
