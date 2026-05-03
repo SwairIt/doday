@@ -72,3 +72,11 @@ async def test_detail_open_trigger_in_task_row(logged_in_client: AsyncClient) ->
 async def test_detail_unknown_task_404(logged_in_client: AsyncClient) -> None:
     response = await logged_in_client.get("/htmx/tasks/00000000-0000-0000-0000-000000000000/detail")
     assert response.status_code == 404
+
+
+async def test_detail_includes_pomodoro_widget(logged_in_client: AsyncClient) -> None:
+    task = (await logged_in_client.post("/api/tasks", json={"title": "Focus"})).json()
+    html = (await logged_in_client.get(f"/htmx/tasks/{task['id']}/detail")).text
+    assert "Помидор" in html
+    assert "Работа 25" in html
+    assert "Перерыв 5" in html

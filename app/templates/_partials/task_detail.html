@@ -141,6 +141,108 @@
       {% endif %}
     </div>
 
+    <div class="px-5 py-4 border-b border-[var(--border)]"
+         x-data="{
+           workSec: 25 * 60,
+           breakSec: 5 * 60,
+           remaining: 25 * 60,
+           mode: 'work',
+           running: false,
+           interval: null,
+           sessions: parseInt(localStorage.getItem('doday-pomodoro-sessions-{{ task.id }}') || '0'),
+           init() {
+             const saved = localStorage.getItem('doday-pomodoro-{{ task.id }}');
+             if (saved) {
+               try {
+                 const s = JSON.parse(saved);
+                 if (s.endTs && s.endTs > Date.now()) {
+                   this.mode = s.mode;
+                   this.remaining = Math.ceil((s.endTs - Date.now()) / 1000);
+                   this.running = true;
+                   this.tick();
+                 }
+               } catch (e) {}
+             }
+           },
+           fmt(s) {
+             const m = Math.floor(s / 60);
+             const r = s % 60;
+             return m + ':' + (r < 10 ? '0' : '') + r;
+           },
+           start() {
+             if (this.running) return;
+             this.running = true;
+             const endTs = Date.now() + this.remaining * 1000;
+             localStorage.setItem('doday-pomodoro-{{ task.id }}', JSON.stringify({mode: this.mode, endTs}));
+             this.tick();
+             if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+           },
+           pause() {
+             this.running = false;
+             clearInterval(this.interval);
+             localStorage.removeItem('doday-pomodoro-{{ task.id }}');
+           },
+           reset() {
+             this.pause();
+             this.remaining = this.mode === 'work' ? this.workSec : this.breakSec;
+           },
+           switchMode(m) {
+             this.pause();
+             this.mode = m;
+             this.remaining = m === 'work' ? this.workSec : this.breakSec;
+           },
+           tick() {
+             clearInterval(this.interval);
+             this.interval = setInterval(() => {
+               this.remaining--;
+               if (this.remaining <= 0) {
+                 this.pause();
+                 if (this.mode === 'work') {
+                   this.sessions++;
+                   localStorage.setItem('doday-pomodoro-sessions-{{ task.id }}', this.sessions);
+                 }
+                 this.notify();
+                 this.switchMode(this.mode === 'work' ? 'break' : 'work');
+               }
+             }, 1000);
+           },
+           notify() {
+             try {
+               if ('Notification' in window && Notification.permission === 'granted') {
+                 new Notification(this.mode === 'work' ? '🍅 Готово, время отдохнуть' : 'Перерыв окончен — назад к делу', {body: '{{ task.title|tojson|safe }}'.replace(/^.|.$/g, '')});
+               }
+               const ctx = new (window.AudioContext || window.webkitAudioContext)();
+               const o = ctx.createOscillator();
+               o.frequency.value = 880;
+               o.connect(ctx.destination);
+               o.start();
+               setTimeout(() => o.stop(), 200);
+             } catch (e) {}
+           }
+         }">
+      <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider mb-2 flex items-center justify-between">
+        <span>🍅 Помидор</span>
+        <span class="normal-case text-[10px]">сессий: <span x-text="sessions"></span></span>
+      </div>
+      <div class="card p-4 flex items-center gap-4">
+        <div class="text-3xl font-mono font-bold tabular-nums shrink-0" x-text="fmt(remaining)"
+             :class="mode === 'work' ? 'grad-text' : 'text-emerald-400'"></div>
+        <div class="flex-1 flex items-center gap-1.5 flex-wrap">
+          <button type="button" @click="switchMode('work')"
+                  :class="mode === 'work' ? 'bg-[var(--accent)]/20 text-[var(--accent)]' : 'text-[var(--text-muted)] hover:bg-[var(--surface-2)]'"
+                  class="px-2.5 py-1 rounded text-xs font-medium transition">Работа 25</button>
+          <button type="button" @click="switchMode('break')"
+                  :class="mode === 'break' ? 'bg-emerald-500/20 text-emerald-400' : 'text-[var(--text-muted)] hover:bg-[var(--surface-2)]'"
+                  class="px-2.5 py-1 rounded text-xs font-medium transition">Перерыв 5</button>
+        </div>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button type="button" x-show="!running" @click="start()" class="btn-primary px-3 py-1.5 text-xs">▶︎ Старт</button>
+          <button type="button" x-show="running" @click="pause()" class="btn-ghost px-3 py-1.5 text-xs">⏸ Пауза</button>
+          <button type="button" @click="reset()" title="Сбросить" class="btn-ghost px-2 py-1.5 text-xs">↺</button>
+        </div>
+      </div>
+    </div>
+
     {% if not task.parent_task_id %}
       <div class="px-5 py-4 border-b border-[var(--border)]">
         <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider mb-2">Подзадачи · {{ subtasks|length }}</div>
