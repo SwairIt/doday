@@ -106,15 +106,21 @@
   </div>
 {% endif %}
 
-{# Sections with their tasks #}
+{# Sections with their tasks — wrapper supports drag-reorder. #}
+<div id="sections-wrap" data-project-id="{{ project.id }}">
 {% for group in section_groups %}
   {% set s = group.section %}
   <section
     id="section-{{ s.id }}"
+    data-section-id="{{ s.id }}"
     x-data="{ open: true, editing: false, name: {{ s.name|tojson }} }"
     class="mb-6 animate-fade-in"
   >
     <div class="flex items-center gap-2 mb-2 group">
+      <span data-section-handle
+            class="cursor-grab active:cursor-grabbing text-[var(--text-muted)] opacity-0 group-hover:opacity-60 hover:opacity-100 -ml-1">
+        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
+      </span>
       <button
         type="button"
         @click="open = !open"
@@ -157,6 +163,7 @@
     </div>
   </section>
 {% endfor %}
+</div>
 
 {# Inline form to add a new section #}
 <form
@@ -242,6 +249,27 @@
           }
         });
       });
+
+      var secWrap = document.getElementById('sections-wrap');
+      if (secWrap && !secWrap.dataset.sortableInit) {
+        secWrap.dataset.sortableInit = '1';
+        new Sortable(secWrap, {
+          animation: 200,
+          handle: '[data-section-handle]',
+          draggable: 'section[data-section-id]',
+          ghostClass: 'opacity-50',
+          onEnd: function() {
+            var ids = Array.from(secWrap.querySelectorAll('section[data-section-id]'))
+              .map(function(s){return s.dataset.sectionId;}).filter(Boolean);
+            if (!ids.length) return;
+            fetch('/api/sections/reorder', {
+              method: 'POST', credentials: 'include',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({project_id: secWrap.dataset.projectId, ids: ids}),
+            });
+          }
+        });
+      }
     }
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', initSortable);

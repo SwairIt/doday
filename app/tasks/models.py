@@ -2,12 +2,16 @@
 
 from datetime import UTC, datetime
 from enum import StrEnum
+from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Index, Integer, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
+
+if TYPE_CHECKING:
+    from app.labels.models import Label
 
 
 def _utcnow() -> datetime:
@@ -62,4 +66,8 @@ class Task(Base):
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False
+    )
+
+    labels: Mapped[list["Label"]] = relationship(
+        "Label", secondary="task_labels", lazy="selectin", order_by="Label.name"
     )

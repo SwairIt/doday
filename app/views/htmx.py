@@ -294,6 +294,78 @@ async def create_section_inline(
     )
 
 
+@router.get("/tasks/{task_id}/labels-popover", response_class=HTMLResponse)
+async def labels_popover(
+    request: Request, task_id: UUID, user: RequiredUser, session: DbSession
+) -> Response:
+    """Return the label-picker popover: all user labels with checkboxes for current task."""
+    from app.labels.service import list_labels, list_task_labels
+
+    try:
+        attached = await list_task_labels(session, user.id, task_id)
+    except TaskNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
+    all_labels = await list_labels(session, user.id)
+    attached_ids = {lab.id for lab in attached}
+    return templates.TemplateResponse(
+        request,
+        "_partials/labels_popover.html",
+        {"task_id": task_id, "labels": all_labels, "attached_ids": attached_ids},
+    )
+
+
+@router.post("/tasks/{task_id}/labels/{label_id}/toggle", response_class=HTMLResponse)
+async def toggle_label(
+    request: Request,
+    task_id: UUID,
+    label_id: UUID,
+    user: RequiredUser,
+    session: DbSession,
+) -> Response:
+    """Attach or detach a label and return the refreshed task row."""
+    from app.labels.service import (
+        LabelNotFound,
+        attach_label,
+        detach_label,
+        list_task_labels,
+    )
+
+    try:
+        attached = await list_task_labels(session, user.id, task_id)
+    except TaskNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
+    is_attached = any(lab.id == label_id for lab in attached)
+    try:
+        if is_attached:
+            await detach_label(session, user.id, task_id, label_id)
+        else:
+            await attach_label(session, user.id, task_id, label_id)
+    except LabelNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "лейбл не найден") from e
+    task = await get_task(session, user.id, task_id)
+    return _row_response(request, task, await _project_color_map(session, user.id))
+
+
+@router.post("/tasks/{task_id}/labels/new", response_class=HTMLResponse)
+async def create_and_attach_label(
+    request: Request,
+    task_id: UUID,
+    user: RequiredUser,
+    session: DbSession,
+    name: Annotated[str, Form()],
+) -> Response:
+    """Create a new label by name and attach it to the task."""
+    from app.labels.service import attach_label, find_or_create_by_name
+
+    try:
+        label = await find_or_create_by_name(session, user.id, name.strip())
+        await attach_label(session, user.id, task_id, label.id)
+    except TaskNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
+    task = await get_task(session, user.id, task_id)
+    return _row_response(request, task, await _project_color_map(session, user.id))
+
+
 @router.get("/tasks/{task_id}/comments", response_class=HTMLResponse)
 async def comments_block(
     request: Request, task_id: UUID, user: RequiredUser, session: DbSession
