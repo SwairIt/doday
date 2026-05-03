@@ -165,6 +165,22 @@ async def list_upcoming(session: AsyncSession, user_id: UUID, *, days: int = 7) 
     return list(result.scalars().all())
 
 
+async def list_completed(session: AsyncSession, user_id: UUID, *, limit: int = 200) -> list[Task]:
+    """Most recently completed tasks (top-level only) for the history view."""
+    stmt = (
+        select(Task)
+        .where(
+            Task.user_id == user_id,
+            Task.is_completed.is_(True),
+            Task.parent_task_id.is_(None),
+        )
+        .order_by(Task.completed_at.desc().nulls_last(), Task.updated_at.desc())
+        .limit(limit)
+    )
+    result = await session.execute(stmt)
+    return list(result.scalars().all())
+
+
 async def list_in_range(
     session: AsyncSession,
     user_id: UUID,

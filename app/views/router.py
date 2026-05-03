@@ -22,7 +22,13 @@ from app.projects.service import (
     list_projects,
 )
 from app.tasks.models import Task
-from app.tasks.service import list_in_range, list_tasks, list_today, list_upcoming
+from app.tasks.service import (
+    list_completed,
+    list_in_range,
+    list_tasks,
+    list_today,
+    list_upcoming,
+)
 
 router = APIRouter(prefix="/app", tags=["app"])
 templates = Jinja2Templates(directory="app/templates")
@@ -323,6 +329,47 @@ async def filters_manage_view(
             "projects": projects,
             "project_color_map": project_color_map,
             "custom_filters": custom_filters,
+        },
+    )
+
+
+@router.get("/done", response_class=HTMLResponse)
+async def done_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
+    """History of completed tasks, grouped by completion date (newest first)."""
+    tasks = await list_completed(session, user.id, limit=300)
+    today_date = datetime.now(UTC).date()
+    yesterday = today_date - timedelta(days=1)
+
+    grouped: dict[date, list[Task]] = defaultdict(list)
+    for t in tasks:
+        when = (t.completed_at or t.updated_at).date()
+        grouped[when].append(t)
+
+    days = []
+    for d in sorted(grouped, reverse=True):
+        if d == today_date:
+            label = "Сегодня"
+        elif d == yesterday:
+            label = "Вчера"
+        else:
+            label = (
+                f"{_RU_WEEKDAYS[d.weekday()].capitalize()}, {d.day} {_RU_MONTHS_GEN[d.month - 1]}"
+            )
+        days.append({"date": d, "label": label, "tasks": grouped[d]})
+
+    projects = await list_projects(session, user.id)
+    project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
+
+    return templates.TemplateResponse(
+        request,
+        "app/done.html",
+        {
+            "current_user": user,
+            "current_view": "done",
+            "projects": projects,
+            "project_color_map": project_color_map,
+            "days": days,
+            "total": len(tasks),
         },
     )
 
