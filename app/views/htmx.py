@@ -1,5 +1,6 @@
 """HTMX-target endpoints — return HTML fragments rather than JSON."""
 
+from datetime import UTC, datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -12,7 +13,7 @@ from app.auth.deps import DbSession, RequiredUser
 from app.labels.service import attach_label, find_or_create_by_name
 from app.projects.models import Project
 from app.quickadd.parser import parse_quick_add
-from app.tasks.models import Task
+from app.tasks.models import Task, TaskPriority
 from app.tasks.service import (
     TaskNotFound,
     complete_task,
@@ -105,6 +106,54 @@ async def edit_save(
         task = await update_task(session, user.id, task_id, title=title)
     except TaskNotFound as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
+    return _row_response(request, task, await _project_color_map(session, user.id))
+
+
+@router.post("/tasks/{task_id}/priority", response_class=HTMLResponse)
+async def set_priority(
+    request: Request,
+    task_id: UUID,
+    user: RequiredUser,
+    session: DbSession,
+    priority: Annotated[str, Form()],
+) -> Response:
+    """Inline-edit task priority. Form: priority=p1|p2|p3|p4."""
+    try:
+        prio = TaskPriority(priority)
+    except ValueError as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "неизвестный приоритет") from e
+    try:
+        task = await update_task(session, user.id, task_id, priority=prio)
+    except TaskNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
+    return _row_response(request, task, await _project_color_map(session, user.id))
+
+
+@router.post("/tasks/{task_id}/due", response_class=HTMLResponse)
+async def set_due(
+    request: Request,
+    task_id: UUID,
+    user: RequiredUser,
+    session: DbSession,
+    due: Annotated[str, Form()] = "",
+) -> Response:
+    """Inline-edit due date. Form: due=YYYY-MM-DD or empty to clear."""
+    try:
+        task = await get_task(session, user.id, task_id)
+    except TaskNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
+
+    if due:
+        try:
+            d = datetime.strptime(due, "%Y-%m-%d").replace(tzinfo=UTC)
+        except ValueError as e:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "неверный формат даты") from e
+        task.due_at = d
+        task.due_date_only = True
+    else:
+        task.due_at = None
+    await session.commit()
+    await session.refresh(task)
     return _row_response(request, task, await _project_color_map(session, user.id))
 
 

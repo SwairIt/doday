@@ -71,9 +71,30 @@
   <div class="flex-1 min-w-0">
     <div class="flex items-center gap-2 flex-wrap">
       <span class="{% if task.is_completed %}line-through text-[var(--text-muted)]{% endif %}">{{ task.title }}</span>
-      {% if task.priority.value != 'p4' %}
-        <span class="text-xs px-1.5 py-0.5 rounded-full bg-{{ prio_class }}-500/15 text-{{ prio_class }}-400 font-semibold">!{{ task.priority.value[1:] }}</span>
-      {% endif %}
+      <div x-data="{ open: false }" class="relative">
+        <button
+          type="button"
+          @click="open = !open"
+          title="Изменить приоритет"
+          class="text-xs px-1.5 py-0.5 rounded-full font-semibold transition hover:scale-105
+                 {% if task.priority.value != 'p4' %}bg-{{ prio_class }}-500/15 text-{{ prio_class }}-400{% else %}opacity-0 group-hover:opacity-100 bg-[var(--surface-2)] text-[var(--text-muted)]{% endif %}"
+        >!{{ task.priority.value[1:] if task.priority.value != 'p4' else '4' }}</button>
+        <div x-show="open" x-cloak @click.outside="open = false" x-transition
+             class="absolute top-full left-0 mt-1 z-20 card p-1 flex gap-1 shadow-lg">
+          {% for p, pc in [('p1','rose'),('p2','amber'),('p3','sky'),('p4','slate')] %}
+            <button
+              type="button"
+              title="Приоритет {{ p }}"
+              class="w-7 h-7 rounded text-xs font-bold bg-{{ pc }}-500/15 text-{{ pc }}-400 hover:bg-{{ pc }}-500/30 transition"
+              hx-post="/htmx/tasks/{{ task.id }}/priority"
+              hx-vals='{"priority": "{{ p }}"}'
+              hx-target="#task-{{ task.id }}"
+              hx-swap="outerHTML"
+              @click="open = false"
+            >!{{ p[1:] }}</button>
+          {% endfor %}
+        </div>
+      </div>
     </div>
     {% if task.description %}
       <div class="text-xs text-[var(--text-muted)] mt-1 line-clamp-1">{{ task.description }}</div>
@@ -89,15 +110,55 @@
         </svg>
       </span>
     {% endif %}
-    {% if task.due_at %}
-      <span class="text-xs px-2 py-1 rounded-md bg-{{ color }}-500/10 text-{{ color }}-400 font-medium">
-        {% if task.due_date_only %}
-          {{ task.due_at.strftime('%d.%m') }}
+    <div x-data="{ open: false, today: new Date().toISOString().slice(0,10), tomorrow: new Date(Date.now()+86400000).toISOString().slice(0,10), nextweek: new Date(Date.now()+7*86400000).toISOString().slice(0,10) }" class="relative">
+      <button
+        type="button"
+        @click="open = !open"
+        title="Изменить дату"
+        class="text-xs px-2 py-1 rounded-md font-medium transition hover:scale-105
+               {% if task.due_at %}bg-{{ color }}-500/10 text-{{ color }}-400{% else %}opacity-0 group-hover:opacity-100 bg-[var(--surface-2)] text-[var(--text-muted)] inline-flex items-center gap-1{% endif %}"
+      >
+        {% if task.due_at %}
+          {% if task.due_date_only %}{{ task.due_at.strftime('%d.%m') }}{% else %}{{ task.due_at.strftime('%d.%m %H:%M') }}{% endif %}
         {% else %}
-          {{ task.due_at.strftime('%d.%m %H:%M') }}
+          <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          Дата
         {% endif %}
-      </span>
-    {% endif %}
+      </button>
+      <div x-show="open" x-cloak @click.outside="open = false" x-transition
+           class="absolute top-full right-0 mt-1 z-20 card p-2 w-56 shadow-lg space-y-1">
+        <button type="button" class="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-[var(--surface-2)] transition flex items-center justify-between"
+                hx-post="/htmx/tasks/{{ task.id }}/due" :hx-vals="JSON.stringify({due: today})"
+                hx-target="#task-{{ task.id }}" hx-swap="outerHTML" @click="open = false">
+          <span>📅 Сегодня</span><span class="text-[var(--text-muted)]" x-text="new Date().toLocaleDateString('ru-RU', {day: '2-digit', month: 'short'})"></span>
+        </button>
+        <button type="button" class="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-[var(--surface-2)] transition flex items-center justify-between"
+                hx-post="/htmx/tasks/{{ task.id }}/due" :hx-vals="JSON.stringify({due: tomorrow})"
+                hx-target="#task-{{ task.id }}" hx-swap="outerHTML" @click="open = false">
+          <span>🌅 Завтра</span><span class="text-[var(--text-muted)]" x-text="new Date(Date.now()+86400000).toLocaleDateString('ru-RU', {day: '2-digit', month: 'short'})"></span>
+        </button>
+        <button type="button" class="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-[var(--surface-2)] transition flex items-center justify-between"
+                hx-post="/htmx/tasks/{{ task.id }}/due" :hx-vals="JSON.stringify({due: nextweek})"
+                hx-target="#task-{{ task.id }}" hx-swap="outerHTML" @click="open = false">
+          <span>📆 Через неделю</span><span class="text-[var(--text-muted)]" x-text="new Date(Date.now()+7*86400000).toLocaleDateString('ru-RU', {day: '2-digit', month: 'short'})"></span>
+        </button>
+        <div class="border-t border-[var(--border)] pt-2 mt-2">
+          <input type="date" x-ref="picker"
+                 class="w-full bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-1 text-xs text-[var(--text)]"
+                 @change="
+                   htmx.ajax('POST', '/htmx/tasks/{{ task.id }}/due', {target: '#task-{{ task.id }}', swap: 'outerHTML', values: {due: $event.target.value}});
+                   open = false;
+                 ">
+        </div>
+        {% if task.due_at %}
+          <button type="button" class="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-rose-500/10 text-rose-400 transition"
+                  hx-post="/htmx/tasks/{{ task.id }}/due" hx-vals='{"due": ""}'
+                  hx-target="#task-{{ task.id }}" hx-swap="outerHTML" @click="open = false">
+            🚫 Убрать дату
+          </button>
+        {% endif %}
+      </div>
+    </div>
     <div class="opacity-0 group-hover:opacity-100 transition flex items-center gap-1">
       <button
         type="button"
