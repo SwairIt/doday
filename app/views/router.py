@@ -9,7 +9,12 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 
 from app.auth.deps import DbSession, RequiredUser
-from app.projects.service import ProjectNotFound, get_project_by_slug, list_projects
+from app.projects.service import (
+    ProjectNotFound,
+    get_project_by_slug,
+    list_archived_projects,
+    list_projects,
+)
 from app.tasks.models import Task
 from app.tasks.service import list_in_range, list_tasks, list_today, list_upcoming
 
@@ -261,6 +266,26 @@ async def stats_view(request: Request, user: RequiredUser, session: DbSession) -
             "current_view": "stats",
             "projects": projects,
             "stats": stats,
+        },
+    )
+
+
+@router.get("/projects-archive", response_class=HTMLResponse)
+async def projects_archive_view(
+    request: Request, user: RequiredUser, session: DbSession
+) -> HTMLResponse:
+    projects = await list_projects(session, user.id)
+    archived = await list_archived_projects(session, user.id)
+    project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
+    return templates.TemplateResponse(
+        request,
+        "app/projects_archive.html",
+        {
+            "current_user": user,
+            "current_view": "archive",
+            "projects": projects,
+            "project_color_map": project_color_map,
+            "archived": archived,
         },
     )
 

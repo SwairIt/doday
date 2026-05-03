@@ -7,14 +7,16 @@ from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
 from app.auth.deps import DbSession, RequiredUser
-from app.projects.schemas import ProjectCreate, ProjectOut, ProjectUpdate
+from app.projects.schemas import ProjectCreate, ProjectOut, ProjectReorder, ProjectUpdate
 from app.projects.service import (
     CannotDeleteInbox,
     ProjectNotFound,
     create_from_template,
     create_project,
     delete_project,
+    list_archived_projects,
     list_projects,
+    reorder_projects,
     update_project,
 )
 from app.projects.templates_data import TEMPLATES, get_template
@@ -39,8 +41,27 @@ router = APIRouter(prefix="/api/projects", tags=["projects"])
 
 
 @router.get("", response_model=list[ProjectOut])
-async def list_endpoint(user: RequiredUser, session: DbSession) -> list[ProjectOut]:
-    projects = await list_projects(session, user.id)
+async def list_endpoint(
+    user: RequiredUser, session: DbSession, include_archived: bool = False
+) -> list[ProjectOut]:
+    projects = await list_projects(session, user.id, include_archived=include_archived)
+    return [ProjectOut.model_validate(p) for p in projects]
+
+
+@router.get("/archived", response_model=list[ProjectOut])
+async def list_archived_endpoint(user: RequiredUser, session: DbSession) -> list[ProjectOut]:
+    projects = await list_archived_projects(session, user.id)
+    return [ProjectOut.model_validate(p) for p in projects]
+
+
+@router.post("/reorder", response_model=list[ProjectOut])
+async def reorder_endpoint(
+    payload: ProjectReorder, user: RequiredUser, session: DbSession
+) -> list[ProjectOut]:
+    try:
+        projects = await reorder_projects(session, user.id, payload.ids)
+    except ProjectNotFound as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e)) from e
     return [ProjectOut.model_validate(p) for p in projects]
 
 
@@ -67,6 +88,8 @@ async def update_endpoint(
             name=payload.name,
             color=payload.color,
             is_archived=payload.is_archived,
+            is_favorite=payload.is_favorite,
+            description=payload.description,
         )
     except ProjectNotFound as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "проект не найден") from e

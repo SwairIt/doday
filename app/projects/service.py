@@ -29,11 +29,22 @@ class CannotDeleteInbox(Exception):
     """Inbox is special-cased — never deletable."""
 
 
-async def list_projects(session: AsyncSession, user_id: UUID) -> list[Project]:
+async def list_projects(
+    session: AsyncSession, user_id: UUID, *, include_archived: bool = False
+) -> list[Project]:
+    stmt = select(Project).where(Project.user_id == user_id)
+    if not include_archived:
+        stmt = stmt.where(Project.is_archived.is_(False))
+    stmt = stmt.order_by(Project.position, Project.created_at)
+    result = await session.execute(stmt)
+    return list(result.scalars().all())
+
+
+async def list_archived_projects(session: AsyncSession, user_id: UUID) -> list[Project]:
     result = await session.execute(
         select(Project)
-        .where(Project.user_id == user_id, Project.is_archived.is_(False))
-        .order_by(Project.position, Project.created_at)
+        .where(Project.user_id == user_id, Project.is_archived.is_(True))
+        .order_by(Project.updated_at.desc())
     )
     return list(result.scalars().all())
 
@@ -89,6 +100,8 @@ async def update_project(
     name: str | None = None,
     color: str | None = None,
     is_archived: bool | None = None,
+    is_favorite: bool | None = None,
+    description: str | None = None,
 ) -> Project:
     project = await get_project(session, user_id, project_id)
     if name is not None:
@@ -97,9 +110,33 @@ async def update_project(
         project.color = color
     if is_archived is not None:
         project.is_archived = is_archived
+    if is_favorite is not None:
+        project.is_favorite = is_favorite
+    if description is not None:
+        project.description = description
     await session.commit()
     await session.refresh(project)
     return project
+
+
+async def reorder_projects(session: AsyncSession, user_id: UUID, ids: list[UUID]) -> list[Project]:
+    """Persist a new ordering. Inbox is pinned to position 0; other ids start at 1."""
+    rows = await session.execute(
+        select(Project).where(Project.user_id == user_id, Project.id.in_(ids))
+    )
+    by_id = {p.id: p for p in rows.scalars().all()}
+    if len(by_id) != len(set(ids)):
+        raise ProjectNotFound("one or more project ids do not belong to this user")
+    pos = 1
+    for pid in ids:
+        proj = by_id[pid]
+        if proj.is_inbox:
+            proj.position = 0
+            continue
+        proj.position = pos
+        pos += 1
+    await session.commit()
+    return await list_projects(session, user_id)
 
 
 async def delete_project(session: AsyncSession, user_id: UUID, project_id: UUID) -> None:

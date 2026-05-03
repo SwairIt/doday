@@ -36,6 +36,8 @@ class Project(Base):
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     is_inbox: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     is_archived: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    is_favorite: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    description: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False
     )

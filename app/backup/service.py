@@ -49,6 +49,8 @@ async def export_user_data(session: AsyncSession, user_id: UUID) -> dict[str, An
                 "position": p.position,
                 "is_inbox": p.is_inbox,
                 "is_archived": p.is_archived,
+                "is_favorite": p.is_favorite,
+                "description": p.description,
             }
             for p in projects
         ],
@@ -119,6 +121,8 @@ async def import_user_data(
             color=p.get("color", "violet"),
             position=p.get("position", 0),
             is_archived=p.get("is_archived", False),
+            is_favorite=p.get("is_favorite", False),
+            description=p.get("description"),
         )
         session.add(new_proj)
         await session.flush()
