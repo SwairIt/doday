@@ -25,6 +25,70 @@
 
 {% include "_partials/quick_add.html" %}
 
+<div x-data="{
+       sort: localStorage.getItem('doday-sort-{{ project.id }}') || 'manual',
+       showCompleted: localStorage.getItem('doday-show-completed-{{ project.id }}') !== '0',
+       apply() {
+         document.querySelectorAll('.sortable-tasks').forEach(el => {
+           var rows = Array.from(el.children).filter(c => c.id && c.id.startsWith('task-wrap-'));
+           if (this.sort === 'manual') return;
+           rows.sort((a, b) => {
+             if (this.sort === 'priority') return a.dataset.priority.localeCompare(b.dataset.priority);
+             if (this.sort === 'date') {
+               var ad = a.dataset.due || '9999';
+               var bd = b.dataset.due || '9999';
+               return ad.localeCompare(bd);
+             }
+             if (this.sort === 'alpha') return a.dataset.title.localeCompare(b.dataset.title, 'ru');
+             if (this.sort === 'created') return a.dataset.created.localeCompare(b.dataset.created);
+             return 0;
+           });
+           rows.forEach(r => el.appendChild(r));
+         });
+         var completed = document.getElementById('completed-block');
+         if (completed) completed.style.display = this.showCompleted ? '' : 'none';
+       },
+       setSort(s) {
+         this.sort = s;
+         localStorage.setItem('doday-sort-{{ project.id }}', s);
+         this.apply();
+       },
+       toggleCompleted() {
+         this.showCompleted = !this.showCompleted;
+         localStorage.setItem('doday-show-completed-{{ project.id }}', this.showCompleted ? '1' : '0');
+         this.apply();
+       },
+     }"
+     x-init="$nextTick(() => apply())"
+     class="flex items-center justify-end gap-1 mb-3 text-xs"
+>
+  <div x-data="{ open: false }" class="relative">
+    <button type="button" @click="open = !open"
+            class="px-2.5 py-1 rounded-lg hover:bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--text)] transition flex items-center gap-1.5">
+      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
+      <span>Сортировка: <span x-text="{manual:'вручную',priority:'приоритет',date:'дата',alpha:'алфавит',created:'добавлено'}[sort]"></span></span>
+    </button>
+    <div x-show="open" x-cloak @click.outside="open = false" x-transition
+         class="absolute top-full right-0 mt-1 z-30 card p-1 w-48 shadow-lg space-y-0.5">
+      {% set sorts = [('manual', 'Вручную'), ('priority', 'По приоритету'), ('date', 'По дате'), ('alpha', 'По алфавиту'), ('created', 'По дате добавления')] %}
+      {% for key, label in sorts %}
+        <button type="button" @click="open = false; setSort('{{ key }}')"
+                :class="sort === '{{ key }}' ? 'bg-[var(--accent)]/15 text-[var(--accent)]' : 'hover:bg-[var(--surface-2)]'"
+                class="w-full text-left text-sm px-3 py-1.5 rounded transition">{{ label }}</button>
+      {% endfor %}
+    </div>
+  </div>
+  <button type="button" @click="toggleCompleted()"
+          :class="showCompleted ? 'bg-[var(--accent)]/15 text-[var(--accent)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'"
+          class="px-2.5 py-1 rounded-lg hover:bg-[var(--surface-2)] transition flex items-center gap-1.5">
+    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path x-show="showCompleted" stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+      <path x-show="!showCompleted" stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.243 4.243L9.88 9.88"/>
+    </svg>
+    <span x-text="showCompleted ? 'Выполненные показаны' : 'Выполненные скрыты'"></span>
+  </button>
+</div>
+
 {# Top-level tasks (no section) #}
 {% if no_section_active %}
   <div class="space-y-2 mb-6 sortable-tasks" data-project-id="{{ project.id }}">
@@ -121,7 +185,7 @@
 </form>
 
 {% if completed %}
-  <section x-data="{ open: false }" class="mt-8">
+  <section id="completed-block" x-data="{ open: false }" class="mt-8">
     <button
       @click="open = !open"
       type="button"

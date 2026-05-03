@@ -5,7 +5,11 @@
 {% set is_subtask = task.parent_task_id is not none %}
 {% set tid = task.id|string %}
 
-<div id="task-wrap-{{ task.id }}">
+<div id="task-wrap-{{ task.id }}"
+     data-priority="{{ task.priority.value }}"
+     data-due="{{ task.due_at.isoformat() if task.due_at else '' }}"
+     data-title="{{ task.title|lower }}"
+     data-created="{{ task.created_at.isoformat() }}">
 <div
   id="task-{{ task.id }}"
   class="task-row group flex items-center gap-2 p-3 rounded-xl border border-[var(--border)]
