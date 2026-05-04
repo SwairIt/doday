@@ -1,0 +1,52 @@
+{# Школьные каникулы баннер. Показывается:
+   - если сегодня каникулы → крупный «🎒 Каникулы! Осталось N дней»
+   - иначе если до ближайших < 14 дней → мини-плашка «До каникул N дней»
+   Фронтенд тянет /api/school/holiday при загрузке. #}
+<section
+  x-data="{
+    cfg: null,
+    async load() {
+      try {
+        const r = await fetch('/api/school/holiday', {credentials:'include'});
+        if (r.ok) this.cfg = await r.json();
+      } catch(e){}
+    },
+    daysWord(n) {
+      const last = n % 10, last2 = n % 100;
+      if (last === 1 && last2 !== 11) return 'день';
+      if (last >= 2 && last <= 4 && (last2 < 10 || last2 >= 20)) return 'дня';
+      return 'дней';
+    },
+    showBig() { return this.cfg && this.cfg.current; },
+    showMini() {
+      return this.cfg && !this.cfg.current && this.cfg.next && this.cfg.days_until_next !== null && this.cfg.days_until_next <= 14;
+    },
+  }"
+  x-init="load()"
+>
+  <div x-show="showBig()" x-cloak class="card p-5 mb-6 border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-teal-500/5">
+    <div class="flex items-center gap-3">
+      <div class="text-4xl shrink-0">🎒</div>
+      <div class="flex-1 min-w-0">
+        <div class="text-xs uppercase tracking-wider font-semibold text-emerald-400" x-text="cfg && cfg.current ? cfg.current.name : ''"></div>
+        <div class="text-lg font-semibold mt-0.5">
+          <template x-if="cfg && cfg.days_left_in_current === 0">
+            <span>Сегодня последний день каникул 🎉</span>
+          </template>
+          <template x-if="cfg && cfg.days_left_in_current > 0">
+            <span>Осталось <span class="grad-text" x-text="cfg.days_left_in_current"></span> <span x-text="daysWord(cfg.days_left_in_current)"></span></span>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div x-show="showMini()" x-cloak class="card p-3 mb-6 border border-violet-500/20 bg-violet-500/5">
+    <div class="flex items-center gap-3 text-sm">
+      <span class="text-xl">📅</span>
+      <span class="flex-1">
+        До «<span class="font-semibold" x-text="cfg && cfg.next ? cfg.next.name.toLowerCase() : ''"></span>» — <span class="font-semibold grad-text" x-text="cfg ? cfg.days_until_next : ''"></span> <span x-text="daysWord(cfg ? cfg.days_until_next : 0)"></span>
+      </span>
+    </div>
+  </div>
+</section>

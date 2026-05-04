@@ -1,5 +1,6 @@
 """HTTP routes for managing school portal integrations."""
 
+from datetime import UTC, datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -7,6 +8,7 @@ from fastapi import APIRouter, Form, HTTPException, status
 from pydantic import ValidationError
 
 from app.auth.deps import DbSession, RequiredUser
+from app.school.holidays import current_holiday, next_holiday
 from app.school.schedule_service import (
     delete_slot,
     list_slots,
@@ -127,3 +129,30 @@ async def schedule_delete(
     weekday: int, period: int, user: RequiredUser, session: DbSession
 ) -> None:
     await delete_slot(session, user.id, weekday=weekday, period=period)
+
+
+@router.get("/holiday")
+async def holiday_endpoint(user: RequiredUser) -> dict[str, object]:
+    """Return today's holiday window (if any) and the next upcoming one."""
+    _ = user  # auth-gate only
+    today = datetime.now(UTC).date()
+    cur = current_holiday(today)
+    nxt = next_holiday(today)
+
+    def _serialize(h: dict[str, object] | None) -> dict[str, object] | None:
+        if h is None:
+            return None
+        return {
+            "name": h["name"],
+            "start": h["start"].isoformat(),  # type: ignore[union-attr]
+            "end": h["end"].isoformat(),  # type: ignore[union-attr]
+        }
+
+    days_until = (nxt["start"] - today).days if nxt else None
+    days_left = (cur["end"] - today).days if cur else None
+    return {
+        "current": _serialize(cur),
+        "next": _serialize(nxt),
+        "days_until_next": days_until,
+        "days_left_in_current": days_left,
+    }
