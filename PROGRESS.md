@@ -147,6 +147,16 @@ groundwork for the school-portal integration the user asked about.
 | B8 | 🔥-чип серии в шапке (текущая серия + рекорд через `/api/stats/streak`) | `6202713` |
 | B9 | Общая ical-подписка `/api/calendar/all.ics` + блок «Календарь-подписка» в /profile | `d29acf0` |
 | B10 | Утренний брифинг на /today (4-11 ч., советы под аудиторию) | `36d805c` |
-| B11 | Заметка дня внизу /today (per-day localStorage) | этот коммит |
+| B11 | Заметка дня внизу /today (per-day localStorage) | `dcfe32e` |
+| B12 | Пустые состояния /today под аудиторию + апдейт CLAUDE.md | `79e8309` |
+| B13 | Фикс конфтеста: сброс auth-rate-limit между тестами + горячая клавиша «g r» | `38c35f6`, `df6690f` |
+| B14 | Help-статья о подписке календаря Apple/Google | `f0d641a` |
 
-Тесты на эту сессию: ~62 новых.
+**Финальный прогон тестов: 424 passed (~9 мин), 0 failed, 0 errors.**
+
+Новые модели в БД: `users.audience` (0011), `school_integrations` (0012), `schedule_slots` (0013).
+Новые модули: `app/school/` (integrations + schedule + subjects), `app/company/` (standup),
+`app/calendar_feed/` (.ics feed), `app/stats/router.py` (streak chip endpoint).
+Новые экраны и виджеты: `/app/schedule` (сетка уроков), morning_briefing,
+standup_widget, today_schedule, daily_note, audience-aware пустые состояния,
+🔥-чип серии в шапке, audience-бейдж в сайдбаре.
