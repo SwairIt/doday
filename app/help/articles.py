@@ -313,6 +313,7 @@ RFC 5545 со всеми задачами проекта, у которых ес
   <tr><td><kbd>g</kbd> + <kbd>f</kbd></td><td>Мои фильтры</td></tr>
   <tr><td><kbd>g</kbd> + <kbd>p</kbd></td><td>Профиль</td></tr>
   <tr><td><kbd>g</kbd> + <kbd>a</kbd></td><td>Архив проектов</td></tr>
+  <tr><td><kbd>g</kbd> + <kbd>r</kbd></td><td>Расписание уроков (только для школьной аудитории)</td></tr>
 </table>
 
 <h3>Действия</h3>

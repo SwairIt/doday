@@ -36,6 +36,7 @@
           if (e.key === 'p') { e.preventDefault(); window.location.href = '/app/profile'; return; }
           if (e.key === 'a') { e.preventDefault(); window.location.href = '/app/projects-archive'; return; }
           if (e.key === 'f') { e.preventDefault(); window.location.href = '/app/filters'; return; }
+          if (e.key === 'r') { e.preventDefault(); window.location.href = '/app/schedule'; return; }
           return;
         }
 
@@ -93,6 +94,7 @@
               ('g p', 'Профиль'),
               ('g f', 'Мои фильтры'),
               ('g a', 'Архив проектов'),
+              ('g r', 'Расписание уроков'),
             ] %}
             {% for keys, label in nav_keys %}
               <div class="flex items-center justify-between">
