@@ -129,3 +129,20 @@ Each cron fire (every 1 minute):
 ### 2026-05-03 — session 3 (Plan A pivot, this overnight loop)
 - C0 (in progress): wrote pivot spec, updated memory + claude.md, refactored PROGRESS to chunk pointer
 - (subsequent chunks logged here as they land)
+
+### 2026-05-04 — session 4 (audience-aware features overnight)
+
+Goal: differentiate UX by audience (school / company / personal) and lay
+groundwork for the school-portal integration the user asked about.
+
+| Batch | Что | Commit |
+|---|---|---|
+| B1 | Audience-селектор при регистрации (3-card picker, миграция 0011, тесты) | `2107f5d` |
+| B2 | Welcome-flow per audience — стартовые задачи разные для школы/работы/жизни | `6523086` |
+| B3 | Scaffold интеграций со школьными порталами (Школьный портал МО + МЭШ): модель, API, UI в /profile, help-статья, миграция 0012 | `ab46bfc` |
+| B4 | Расписание уроков: модель, миграция 0013, страница /app/schedule с кликабельной сеткой Пн-Сб × 8 | `3136820` |
+| B5 | Standup-виджет на /today для company-аудитории + расписание-виджет для school | `32aa9cd` |
+| B6 | Смена audience в /profile + бейдж режима в сайдбаре | `530d2d2` |
+| B7 | Чипы предметов над quickadd для school-аудитории | `498e420` |
+
+Тесты на эту сессию: 5 + 6 + 10 + 9 + 7 + 6 + 3 = **46 новых**, всего **400+**.

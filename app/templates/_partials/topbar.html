@@ -13,6 +13,18 @@
 
   <h1 class="text-lg font-semibold flex-1 truncate">{% block view_title %}Doday{% endblock %}</h1>
 
+  <a href="/app/stats"
+     x-data="{ s: null, async load() {
+       try { const r = await fetch('/api/stats/streak', {credentials:'include'}); if (r.ok) this.s = await r.json(); } catch(e){}
+     } }"
+     x-init="load()"
+     x-show="s && s.current > 0" x-cloak
+     class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-orange-500/30 bg-orange-500/10 text-orange-400 text-xs font-semibold hover:bg-orange-500/20 transition"
+     :title="'Серия: ' + s.current + ' д. подряд · рекорд ' + s.longest">
+    <span>🔥</span>
+    <span x-text="s.current"></span>
+  </a>
+
   <button
     type="button"
     class="hidden md:inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--border)]
