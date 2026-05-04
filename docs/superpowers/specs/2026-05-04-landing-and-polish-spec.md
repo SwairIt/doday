@@ -120,14 +120,14 @@
 ## Прогресс
 
 - [x] A. Spec
-- [ ] B. Tariffs
-- [ ] C. Landing
-- [ ] D. Help center
-- [ ] E. Auth polish
-- [ ] F. UI polish
-- [ ] G. Performance
-- [ ] H. Security
-- [ ] I. Accessibility
-- [ ] J. Mobile
+- [x] B. Tariffs (миграция 0009 + billing service + 6 тестов)
+- [x] C. Landing (10 секций, reveal-on-scroll, 4 теста)
+- [x] D. Help center (10 статей + sticky sidebar + prev/next, 5 тестов)
+- [x] E. Auth polish (show/hide pwd, strength meter, caps-lock, two-column, 5 тестов)
+- [x] F. UI polish (focus-visible, smooth-scroll, prefers-reduced-motion, :disabled, .card-hover)
+- [x] G. Performance (миграция 0010 — partial-index по completed_at)
+- [x] H. Security (rate-limit на login/register с auto-reset, 4 теста)
+- [x] I. Accessibility (aria-current на nav, aria-hidden на декоративные SVG, focus rings уже в F)
+- [x] J. Mobile smoke-check (все экраны 200 на iPhone UA)
 
 Каждый завершённый батч → апдейт этого файла + commit.
