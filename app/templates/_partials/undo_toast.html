@@ -1,0 +1,53 @@
+{# Undo-toast singleton. Listens for window CustomEvent('doday-task-deleted', {detail: {...task}})
+   and shows a 10-second toast with a button that POSTs to /api/tasks to restore. #}
+<div
+  x-data="{
+    show: false,
+    payload: null,
+    timer: null,
+    init() {
+      window.addEventListener('doday-task-deleted', (ev) => {
+        if (!ev.detail) return;
+        this.payload = ev.detail;
+        this.show = true;
+        if (this.timer) clearTimeout(this.timer);
+        this.timer = setTimeout(() => { this.show = false; this.payload = null; }, 10000);
+      });
+    },
+    async restore() {
+      if (!this.payload) return;
+      const body = {
+        title: this.payload.title,
+        priority: this.payload.priority || 'p4',
+      };
+      if (this.payload.project_id) body.project_id = this.payload.project_id;
+      if (this.payload.due_at) body.due_at = this.payload.due_at;
+      if (this.payload.description) body.description = this.payload.description;
+      try {
+        await fetch('/api/tasks', {
+          method: 'POST', credentials: 'include',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(body),
+        });
+        this.show = false;
+        this.payload = null;
+        if (this.timer) clearTimeout(this.timer);
+        window.location.reload();
+      } catch(e) {}
+    },
+  }"
+  x-show="show"
+  x-cloak
+  x-transition:enter="transition ease-out duration-200"
+  x-transition:enter-start="opacity-0 translate-y-4"
+  x-transition:enter-end="opacity-100 translate-y-0"
+  x-transition:leave="transition ease-in duration-150"
+  x-transition:leave-start="opacity-100"
+  x-transition:leave-end="opacity-0"
+  class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 card px-4 py-2.5 shadow-glow border border-[var(--border)] flex items-center gap-3 text-sm"
+>
+  <span class="text-[var(--text-muted)]">
+    Удалено: <span class="text-[var(--text)] font-medium" x-text="payload && payload.title"></span>
+  </span>
+  <button @click="restore()" class="text-[var(--accent)] font-semibold hover:underline">Отменить</button>
+</div>
