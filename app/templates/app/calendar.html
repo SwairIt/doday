@@ -5,7 +5,7 @@
 <div class="mb-6 flex items-center justify-between">
   <div>
     <h1 class="text-3xl md:text-4xl font-bold mb-1">{{ month_label }}</h1>
-    <p class="text-[var(--text-muted)] text-sm">Перетаскивание дат и неделя — в следующих обновлениях.</p>
+    <p class="text-[var(--text-muted)] text-sm">Перетаскивай задачи между днями, чтобы изменить срок.</p>
   </div>
   <div class="flex items-center gap-2">
     <a href="?month={{ prev_month }}" class="btn-ghost px-3 py-2" title="Предыдущий месяц">
@@ -18,12 +18,13 @@
   </div>
 </div>
 
-<div class="grid grid-cols-7 gap-px bg-[var(--border)] rounded-2xl overflow-hidden border border-[var(--border)]">
+<div class="grid grid-cols-7 gap-px bg-[var(--border)] rounded-2xl overflow-hidden border border-[var(--border)]" id="calendar-grid">
   {% for w in ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'] %}
     <div class="bg-[var(--surface-2)] py-2 px-3 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] text-center">{{ w }}</div>
   {% endfor %}
   {% for cell in cells %}
-    <div class="bg-[var(--surface)] min-h-[110px] p-2 transition relative
+    <div data-cal-day="{{ cell.date.isoformat() }}"
+         class="cal-cell bg-[var(--surface)] min-h-[110px] p-2 transition relative
                 {% if not cell.in_month %}opacity-40{% endif %}
                 {% if cell.is_today %}ring-2 ring-inset ring-[var(--accent)]{% endif %}
                 hover:bg-[var(--surface-2)]">
@@ -34,11 +35,17 @@
       <div class="space-y-1">
         {% for task in cell.tasks[:3] %}
           {% set color = project_color_map.get(task.project_id, 'violet') %}
-          <a href="/app/today" class="block text-xs px-2 py-1 rounded-md truncate
-                                     bg-{{ color }}-500/15 text-{{ color }}-400 hover:bg-{{ color }}-500/25 transition
-                                     {% if task.is_completed %}line-through opacity-60{% endif %}">
+          <div draggable="true"
+               data-task-id="{{ task.id }}"
+               class="cal-chip block text-xs px-2 py-1 rounded-md truncate cursor-grab active:cursor-grabbing
+                      bg-{{ color }}-500/15 text-{{ color }}-400 hover:bg-{{ color }}-500/25 transition
+                      {% if task.is_completed %}line-through opacity-60{% endif %}"
+               hx-get="/htmx/tasks/{{ task.id }}/detail"
+               hx-target="#task-detail-slot"
+               hx-swap="innerHTML"
+               title="{{ task.title }} · перетащи на другой день, чтобы перенести">
             {{ task.title }}
-          </a>
+          </div>
         {% endfor %}
         {% if cell.tasks|length > 3 %}
           <div class="text-xs text-[var(--text-muted)] px-2">+{{ cell.tasks|length - 3 }} ещё</div>
@@ -47,4 +54,67 @@
     </div>
   {% endfor %}
 </div>
+
+<script>
+  (function() {
+    var grid = document.getElementById('calendar-grid');
+    if (!grid) return;
+    var dragged = null;
+    grid.addEventListener('dragstart', function(e) {
+      var chip = e.target.closest('.cal-chip');
+      if (!chip) return;
+      dragged = chip;
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', chip.dataset.taskId); } catch (_) {}
+      chip.classList.add('opacity-40');
+    });
+    grid.addEventListener('dragend', function() {
+      if (dragged) dragged.classList.remove('opacity-40');
+      dragged = null;
+      grid.querySelectorAll('.ring-2.ring-[var(--accent)]:not(.cal-cell)').forEach(function(el) {
+        el.classList.remove('ring-2', 'ring-[var(--accent)]');
+      });
+      grid.querySelectorAll('[data-cal-drop-active]').forEach(function(el) {
+        el.removeAttribute('data-cal-drop-active');
+        el.classList.remove('bg-[var(--accent)]/10', 'ring-2', 'ring-[var(--accent)]');
+      });
+    });
+    grid.addEventListener('dragover', function(e) {
+      var cell = e.target.closest('.cal-cell');
+      if (!cell || !dragged) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (!cell.dataset.calDropActive) {
+        cell.dataset.calDropActive = '1';
+        cell.classList.add('bg-[var(--accent)]/10', 'ring-2', 'ring-[var(--accent)]');
+      }
+    });
+    grid.addEventListener('dragleave', function(e) {
+      var cell = e.target.closest('.cal-cell');
+      if (!cell) return;
+      if (!cell.contains(e.relatedTarget)) {
+        cell.removeAttribute('data-cal-drop-active');
+        cell.classList.remove('bg-[var(--accent)]/10', 'ring-2', 'ring-[var(--accent)]');
+      }
+    });
+    grid.addEventListener('drop', function(e) {
+      var cell = e.target.closest('.cal-cell');
+      if (!cell || !dragged) return;
+      e.preventDefault();
+      var taskId = dragged.dataset.taskId;
+      var dayIso = cell.dataset.calDay;
+      cell.removeAttribute('data-cal-drop-active');
+      cell.classList.remove('bg-[var(--accent)]/10', 'ring-2', 'ring-[var(--accent)]');
+      if (!taskId || !dayIso) return;
+      fetch('/api/tasks/' + taskId, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({due_at: dayIso + 'T00:00:00Z', due_date_only: true}),
+      }).then(function(r) {
+        if (r.ok) location.reload();
+      });
+    });
+  })();
+</script>
 {% endblock %}
