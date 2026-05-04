@@ -118,7 +118,7 @@ def _starter_samples_for(
         return [
             ("☕ Утренний стендап в 10:00", today, TaskPriority.P2),
             ("📊 Подготовить статус-репорт", today, TaskPriority.P1),
-            ("🤝 1:1 встреча с тимлидом", tomorrow, TaskPriority.P2),  # noqa: RUF001
+            ("🤝 1:1 встреча с тимлидом", tomorrow, TaskPriority.P2),
             ("🚀 Закрыть тикет из спринта", in_three_days, TaskPriority.P3),
             ("💡 Совет: shift+пробел — добавить задачу из любого экрана", None, TaskPriority.P4),
         ]

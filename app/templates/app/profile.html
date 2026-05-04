@@ -182,6 +182,108 @@
     </template>
   </section>
 
+  <section class="card p-6"
+           x-data="{
+             integrations: [],
+             provider: 'school_mo',
+             token: '',
+             saving: false,
+             syncing: null,
+             err: null,
+             ok: null,
+             async load() {
+               try {
+                 const r = await fetch('/api/school/integrations', {credentials:'include'});
+                 if (r.ok) this.integrations = await r.json();
+               } catch(e){}
+             },
+             async save() {
+               this.saving = true; this.err = null; this.ok = null;
+               const fd = new FormData();
+               fd.append('provider', this.provider);
+               fd.append('auth_token', this.token);
+               try {
+                 const r = await fetch('/api/school/integrations', {method:'POST', body: fd, credentials:'include'});
+                 if (r.ok) { this.ok = 'Сохранено'; this.token = ''; await this.load(); }
+                 else this.err = (await r.json()).detail || 'Не удалось сохранить';
+               } catch(e){ this.err = String(e); } finally { this.saving = false; }
+             },
+             async sync(p) {
+               this.syncing = p; this.err = null; this.ok = null;
+               try {
+                 const r = await fetch('/api/school/integrations/'+p+'/sync', {method:'POST', credentials:'include'});
+                 const data = await r.json();
+                 if (data.ok) this.ok = 'Синхронизировано: ' + data.pulled;
+                 else this.err = data.error || 'Ошибка синхронизации';
+                 await this.load();
+               } catch(e){ this.err = String(e); } finally { this.syncing = null; }
+             },
+             async remove(p) {
+               if (!confirm('Удалить интеграцию '+p+'?')) return;
+               try {
+                 const r = await fetch('/api/school/integrations/'+p, {method:'DELETE', credentials:'include'});
+                 if (r.status === 204) { this.ok = 'Удалено'; await this.load(); }
+               } catch(e){}
+             },
+             label(p) { return p === 'school_mo' ? 'Школьный портал МО' : (p === 'mesh' ? 'МЭШ (dnevnik.mos.ru)' : p); },
+           }"
+           x-init="load()">
+    <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">Школьный дневник</h2>
+    <p class="text-sm text-[var(--text-muted)] mb-4">
+      Подключи школьный портал — домашка автоматически попадёт в твои задачи.
+      Нужен <span class="font-mono text-[11px] bg-[var(--surface-2)] px-1.5 py-0.5 rounded">auth_token</span>
+      из cookie твоего браузера после входа на портал.
+      <a href="/help/school-integrations" class="text-[var(--accent)] hover:underline">Как достать токен →</a>
+    </p>
+
+    <template x-if="integrations.length">
+      <div class="space-y-2 mb-4">
+        <template x-for="i in integrations" :key="i.id">
+          <div class="flex items-center gap-3 p-3 rounded-xl border border-[var(--border)] bg-[var(--surface-2)]/50">
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-sm" x-text="label(i.provider)"></div>
+              <div class="text-xs text-[var(--text-muted)]">
+                <template x-if="i.last_sync_at"><span>последний раз: <span x-text="new Date(i.last_sync_at).toLocaleString('ru-RU')"></span></span></template>
+                <template x-if="!i.last_sync_at"><span>ещё не синхронизировалось</span></template>
+                <template x-if="i.last_error"><span class="text-rose-400 ml-2">⚠ <span x-text="i.last_error"></span></span></template>
+              </div>
+            </div>
+            <button @click="sync(i.provider)" :disabled="syncing === i.provider"
+                    class="btn-ghost px-3 py-1.5 text-xs">
+              <span x-text="syncing === i.provider ? 'Синхрон…' : 'Синхронизировать'"></span>
+            </button>
+            <button @click="remove(i.provider)" class="text-xs text-rose-400 hover:underline">Удалить</button>
+          </div>
+        </template>
+      </div>
+    </template>
+
+    <form @submit.prevent="save()" class="space-y-3">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div class="md:col-span-1">
+          <label class="block text-xs text-[var(--text-muted)] mb-1">Портал</label>
+          <select x-model="provider" class="w-full px-3 py-2 rounded-lg bg-[var(--surface-2)] border border-[var(--border)] text-sm">
+            <option value="school_mo">Школьный портал МО</option>
+            <option value="mesh">МЭШ (dnevnik.mos.ru)</option>
+          </select>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-xs text-[var(--text-muted)] mb-1">auth_token</label>
+          <input x-model="token" type="password" autocomplete="off"
+                 placeholder="вставь сюда длинную строку из cookie"
+                 class="w-full px-3 py-2 rounded-lg bg-[var(--surface-2)] border border-[var(--border)] text-sm font-mono">
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <button type="submit" :disabled="saving || token.length < 8" class="btn-primary px-4 py-2 text-sm">
+          <span x-text="saving ? 'Сохраняю…' : 'Сохранить'"></span>
+        </button>
+        <template x-if="ok"><span class="text-xs text-emerald-400" x-text="'✓ '+ok"></span></template>
+        <template x-if="err"><span class="text-xs text-rose-400" x-text="'⚠ '+err"></span></template>
+      </div>
+    </form>
+  </section>
+
   <section class="card p-6 border-rose-500/40">
     <h2 class="text-sm uppercase tracking-wider font-semibold text-rose-400 mb-2">Опасная зона</h2>
     <p class="text-sm text-[var(--text-muted)] mb-4">Удаление аккаунта необратимо. Все проекты, задачи и лейблы будут удалены вместе с ним.</p>

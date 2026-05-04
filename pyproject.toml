@@ -64,6 +64,10 @@ ignore = [
 "app/stats/service.py" = ["RUF001"]  # intentional Cyrillic in weekday labels
 "app/projects/templates_data.py" = ["RUF001"]  # intentional Cyrillic in template content
 "app/help/articles.py" = ["RUF001"]  # help articles authored in Russian
+"app/school/service.py" = ["RUF001", "RUF002"]  # intentional Cyrillic in error messages
+"app/school/schemas.py" = ["RUF001"]            # intentional Cyrillic in provider labels
+"app/school/__init__.py" = ["RUF002"]           # intentional Cyrillic in module docstring
+"app/auth/service.py" = ["RUF001"]              # intentional Cyrillic in starter task copy
 
 [tool.mypy]
 python_version = "3.12"

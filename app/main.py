@@ -16,6 +16,7 @@ from app.logging_setup import configure_logging
 from app.pages.router import router as pages_router
 from app.profile.router import router as profile_router
 from app.projects.router import router as projects_router
+from app.school.router import router as school_router
 from app.sections.router import router as sections_router
 from app.tasks.router import reorder_router as tasks_reorder_router
 from app.tasks.router import router as tasks_router
@@ -58,6 +59,7 @@ app.include_router(user_templates_router)
 app.include_router(save_as_template_router)
 app.include_router(billing_router)
 app.include_router(help_router)
+app.include_router(school_router)
 
 
 @app.get("/health")
