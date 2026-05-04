@@ -29,9 +29,7 @@ async def test_toggle_button_visible_for_school_with_subjects(
 ) -> None:
     await _login_school(client, db_session)
     today_iso = datetime.now(UTC).date().isoformat() + "T18:00:00Z"
-    await client.post(
-        "/api/tasks", json={"title": "Алгебра — параграф 5", "due_at": today_iso}
-    )
+    await client.post("/api/tasks", json={"title": "Алгебра — параграф 5", "due_at": today_iso})
     body = (await client.get("/app/today")).text
     assert "По предметам" in body or "Линейно" in body
     assert "doday-today-grouped" in body
@@ -61,8 +59,6 @@ async def test_unknown_subject_falls_into_no_subject_bucket(
 ) -> None:
     await _login_school(client, db_session)
     today_iso = datetime.now(UTC).date().isoformat() + "T18:00:00Z"
-    await client.post(
-        "/api/tasks", json={"title": "Подстричь газон", "due_at": today_iso}
-    )
+    await client.post("/api/tasks", json={"title": "Подстричь газон", "due_at": today_iso})
     body = (await client.get("/app/today")).text
     assert "Без предмета" in body

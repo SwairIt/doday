@@ -260,7 +260,9 @@ async def quickadd_endpoint(
         title=parsed.title,
         project_id=target_project_id,
         due_at=parsed.due_at,
+        due_date_only=parsed.date_only,
         priority=parsed.priority,
+        recurrence=parsed.recurrence,
     )
 
     for label_name in parsed.label_names:

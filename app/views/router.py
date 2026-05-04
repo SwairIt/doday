@@ -154,9 +154,7 @@ async def today_view(request: Request, user: RequiredUser, session: DbSession) -
         ordered_keys = [k for k in bucket_meta if k != "_other"]
         if "_other" in bucket_meta:
             ordered_keys.append("_other")
-        today_by_subject = [
-            {**bucket_meta[k], "tasks": bucket_tasks[k]} for k in ordered_keys
-        ]
+        today_by_subject = [{**bucket_meta[k], "tasks": bucket_tasks[k]} for k in ordered_keys]
 
     return templates.TemplateResponse(
         request,
