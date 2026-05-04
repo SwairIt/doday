@@ -160,3 +160,26 @@ groundwork for the school-portal integration the user asked about.
 Новые экраны и виджеты: `/app/schedule` (сетка уроков), morning_briefing,
 standup_widget, today_schedule, daily_note, audience-aware пустые состояния,
 🔥-чип серии в шапке, audience-бейдж в сайдбаре.
+
+### 2026-05-04 (продолжение) — батч QoL
+
+После запроса «придумай ещё фишек» — записан брейншторм с ~80 идеями
+(`docs/ideas-2026-05-04.md`) и реализованы первые 7 пунктов:
+
+| Батч | Что | Commit |
+|---|---|---|
+| U2 | Bulk-paste в quickadd: paste нескольких строк → модалка превью → создание списком (POST `/api/tasks/bulk`) | `9d01757` |
+| U4 | «Завершено сегодня» — сворачиваемая секция внизу /today (`list_completed_today`) | `49bc0fc` |
+| U5 | Auto-save черновика quickadd в localStorage | `634ba38` |
+| U6 | Countdown-пины на /today (до 3 одновременно, дата + ярлык, localStorage) | `486f812` |
+| U7 | PWA — manifest.webmanifest + service-worker.js + meta в base.html | `33a9d13` |
+| U8 | Undo-toast 10с после удаления задачи (восстанавливает по «Отменить») | `7c4a3ce` |
+| S1 | Для школы — переключатель «По предметам» на /today (детектит предмет в названии) | `17b482b`, `a8c0d32` |
+
+(U1 sub-task progress bar и U3 markdown в description обнаружены уже реализованными.)
+
+**Финальный прогон тестов после QoL-батча: 444 passed (~8 мин), 0 failed, 0 errors.**
+
+Весь backlog с ~80 идеями (universal QoL, парсер дат, рекуррентность, school,
+company, personal, геймификация, инфра) лежит в `docs/ideas-2026-05-04.md`
+с пометками ✅/🔨/💡 для приоритизации следующих сессий.
