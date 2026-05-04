@@ -53,6 +53,42 @@
     </div>
   </section>
 
+  <section class="card p-6"
+           x-data="{
+             current: '{{ current_user.audience or '' }}',
+             saving: false, ok: false,
+             async pick(v) {
+               if (v === this.current) return;
+               this.saving = true; this.ok = false;
+               const fd = new FormData(); fd.append('audience', v);
+               try {
+                 const r = await fetch('/api/profile/audience', {method:'POST', body: fd, credentials:'include'});
+                 if (r.ok) { this.current = v; this.ok = true; setTimeout(()=>location.reload(), 600); }
+               } finally { this.saving = false; }
+             },
+           }">
+    <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">Для чего туду-лист?</h2>
+    <p class="text-sm text-[var(--text-muted)] mb-4">Выбор меняет виджеты на «Сегодня», стартовые подсказки и боковое меню.</p>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+      {% for key, emoji, label, sub in [
+        ('school',   '🎓', 'Учёба',  'Уроки, дедлайны'),
+        ('company',  '💼', 'Работа', 'Спринты, команда'),
+        ('personal', '🌱', 'Жизнь',  'Привычки, дом'),
+        ('',         '✦',  'Без темы', 'Нейтральный режим'),
+      ] %}
+        <button type="button" @click="pick('{{ key }}')"
+                :class="current === '{{ key }}' ? 'border-[var(--accent)] bg-[var(--accent)]/10 ring-2 ring-[var(--accent)]/30' : 'border-[var(--border)] hover:border-[var(--accent)]'"
+                class="p-3 rounded-xl border-2 text-left transition">
+          <div class="text-xl mb-1">{{ emoji }}</div>
+          <div class="text-sm font-semibold">{{ label }}</div>
+          <div class="text-[10px] text-[var(--text-muted)] mt-0.5 leading-tight">{{ sub }}</div>
+        </button>
+      {% endfor %}
+    </div>
+    <p x-show="saving" x-cloak class="text-xs text-[var(--text-muted)] mt-2">Сохраняю…</p>
+    <p x-show="ok" x-cloak class="text-xs text-emerald-400 mt-2">✓ Сохранено, обновляю…</p>
+  </section>
+
   <section class="card p-6">
     <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-4">Тема оформления</h2>
     <p class="text-sm text-[var(--text-muted)] mb-4">Светлая/тёмная — иконкой луны в правом верхнем углу. Цветовая палитра — здесь:</p>

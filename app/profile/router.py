@@ -1,6 +1,8 @@
-"""Profile management — currently just account deletion."""
+"""Profile management — account deletion + audience switching."""
 
-from fastapi import APIRouter, Request
+from typing import Annotated
+
+from fastapi import APIRouter, Form, HTTPException, Request, status
 from fastapi.responses import RedirectResponse, Response
 from sqlalchemy import delete
 
@@ -17,3 +19,25 @@ async def delete_account(request: Request, user: RequiredUser, session: DbSessio
     await session.commit()
     request.session.clear()
     return RedirectResponse(url="/?deleted=1", status_code=303)
+
+
+@router.post("/audience")
+async def update_audience(
+    user: RequiredUser,
+    session: DbSession,
+    audience: Annotated[str, Form()],
+) -> dict[str, str | None]:
+    """Switch the user's audience (school / company / personal / clear).
+
+    Empty string clears the choice; the audience-specific widgets revert to
+    the generic experience until a new value is picked.
+    """
+    if audience == "":
+        new_value: str | None = None
+    elif audience in ("school", "company", "personal"):
+        new_value = audience
+    else:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "неизвестная аудитория")
+    user.audience = new_value
+    await session.commit()
+    return {"audience": new_value}

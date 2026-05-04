@@ -11,6 +11,15 @@
   <a href="/" class="flex items-center gap-2.5 font-bold text-xl px-6 py-5">
     <span class="grad-bg w-9 h-9 rounded-xl flex items-center justify-center text-white font-extrabold shadow-glow">D</span>
     <span class="grad-text">Doday</span>
+    {% if current_user and current_user.audience %}
+      {% set aud_emoji = {'school': '🎓', 'company': '💼', 'personal': '🌱'} %}
+      {% set aud_label = {'school': 'Учёба', 'company': 'Работа', 'personal': 'Жизнь'} %}
+      <a href="/app/profile" title="Сменить режим"
+         class="ml-auto text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-[var(--surface)] border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition inline-flex items-center gap-1">
+        <span>{{ aud_emoji[current_user.audience] }}</span>
+        <span>{{ aud_label[current_user.audience] }}</span>
+      </a>
+    {% endif %}
   </a>
 
   <nav class="px-3 flex-1 space-y-0.5">
