@@ -50,6 +50,15 @@ async def _truncate_all(engine: AsyncEngine) -> None:
             await conn.execute(text(f'TRUNCATE TABLE "{table.name}" RESTART IDENTITY CASCADE'))
 
 
+@pytest.fixture(autouse=True)
+def _reset_rate_limit() -> None:
+    """Auth endpoints use an in-memory rate limiter — clear before each test
+    so a long suite of `logged_in_client` logins doesn't trip the IP bucket."""
+    from app.auth.rate_limit import reset_all
+
+    reset_all()
+
+
 @pytest.fixture
 async def db_session() -> AsyncIterator[AsyncSession]:
     test_engine = create_async_engine(_settings.test_database_url)

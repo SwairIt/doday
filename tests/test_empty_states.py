@@ -20,9 +20,7 @@ async def _login_as(
     )
     db_session.add(user)
     await db_session.commit()
-    response = await client.post(
-        "/auth/login", data={"email": email, "password": "strongpass123"}
-    )
+    response = await client.post("/auth/login", data={"email": email, "password": "strongpass123"})
     assert response.status_code == 303
 
 
