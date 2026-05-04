@@ -37,14 +37,21 @@
 {% include "_partials/quick_add.html" %}
 
 {% if not overdue and not today %}
+  {% set empty_copy = {
+    'school':   ('🎓', 'На сегодня уроков и домашки нет', 'Закинь предметы в <a href="/app/schedule" class="text-[var(--accent)] hover:underline">расписание</a>, и они будут видны автоматически.'),
+    'company':  ('💼', 'Ясный календарь — редкий день', 'Используй его для глубокой работы или загляни в <a href="/app/upcoming" class="text-[var(--accent)] hover:underline">ближайшие</a>.'),
+    'personal': ('🌱', 'Сегодня свободно', 'Идеальный момент для того, чтобы <em>не</em> делать дела. Или добавь маленькую радость через «+».'),
+  } %}
+  {% set aud = current_user.audience or '' %}
+  {% if aud and empty_copy[aud] %}
+    {% set emoji, title, desc = empty_copy[aud] %}
+  {% else %}
+    {% set emoji, title, desc = '✨', 'Сегодня всё чисто', 'Можешь отдохнуть или <a href="/app/upcoming" class="text-[var(--accent)] hover:underline">запланировать что-нибудь</a>.' %}
+  {% endif %}
   <div class="card p-12 text-center">
-    <div class="w-16 h-16 mx-auto mb-4 rounded-2xl grad-bg flex items-center justify-center shadow-glow">
-      <svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-      </svg>
-    </div>
-    <h2 class="text-xl font-semibold mb-1">Сегодня всё чисто</h2>
-    <p class="text-[var(--text-muted)]">Можешь отдохнуть или <a href="/app/upcoming" class="text-[var(--accent)] hover:underline">запланировать что-нибудь</a>.</p>
+    <div class="text-5xl mb-3">{{ emoji }}</div>
+    <h2 class="text-xl font-semibold mb-1">{{ title }}</h2>
+    <p class="text-[var(--text-muted)]">{{ desc|safe }}</p>
   </div>
 {% endif %}
 
