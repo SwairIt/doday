@@ -33,6 +33,9 @@ class User(Base):
     # Audience the user picked at sign-up — drives starter templates, default
     # labels, sidebar tweaks and home-screen widgets. NULL = not set yet.
     audience: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    # Long-lived per-user token for unauthenticated calendar feeds (.ics). Lazy
+    # — generated on first /api/calendar/feed request. Rotatable via /profile.
+    ical_token: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False
     )
