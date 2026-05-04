@@ -4,7 +4,7 @@ from calendar import monthrange
 from datetime import UTC, date, datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import and_, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.projects.service import ensure_inbox, get_project
@@ -174,6 +174,27 @@ async def list_completed(session: AsyncSession, user_id: UUID, *, limit: int = 2
             Task.parent_task_id.is_(None),
         )
         .order_by(Task.completed_at.desc().nulls_last(), Task.updated_at.desc())
+        .limit(limit)
+    )
+    result = await session.execute(stmt)
+    return list(result.scalars().all())
+
+
+async def list_completed_today(
+    session: AsyncSession, user_id: UUID, *, limit: int = 10
+) -> list[Task]:
+    """Tasks completed today (UTC), most-recent first — fuel for the
+    'Recently completed' widget on /today."""
+    today = datetime.now(UTC).date()
+    stmt = (
+        select(Task)
+        .where(
+            Task.user_id == user_id,
+            Task.is_completed.is_(True),
+            Task.completed_at.is_not(None),
+            func.date(Task.completed_at) == today,
+        )
+        .order_by(Task.completed_at.desc().nulls_last())
         .limit(limit)
     )
     result = await session.execute(stmt)

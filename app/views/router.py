@@ -24,6 +24,7 @@ from app.projects.service import (
 from app.tasks.models import Task
 from app.tasks.service import (
     list_completed,
+    list_completed_today,
     list_in_range,
     list_tasks,
     list_today,
@@ -129,6 +130,8 @@ async def today_view(request: Request, user: RequiredUser, session: DbSession) -
     )
     done_week_count = done_week_count_row.scalar_one()
 
+    completed_today = await list_completed_today(session, user.id, limit=10)
+
     return templates.TemplateResponse(
         request,
         "app/today.html",
@@ -142,6 +145,7 @@ async def today_view(request: Request, user: RequiredUser, session: DbSession) -
             "today": today,
             "done_today_count": done_today_count,
             "done_week_count": done_week_count,
+            "completed_today": completed_today,
         },
     )
 
