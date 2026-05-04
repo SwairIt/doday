@@ -1,0 +1,36 @@
+{# Optional task-completion chime — opt-in via localStorage `doday-sound-on`.
+   Hooks any click on a complete-toggle button. Uses WebAudio so no asset needed. #}
+<script>
+  (function() {
+    function enabled() {
+      try { return localStorage.getItem('doday-sound-on') === 'yes'; } catch (_) { return false; }
+    }
+    let ctx = null;
+    function beep() {
+      if (!enabled()) return;
+      try {
+        if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.frequency.value = 880;
+        o.type = 'sine';
+        g.gain.setValueAtTime(0.0001, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18);
+        o.connect(g);
+        g.connect(ctx.destination);
+        o.start();
+        o.stop(ctx.currentTime + 0.2);
+      } catch (_) {}
+    }
+    document.body.addEventListener('click', function(e) {
+      const btn = e.target && e.target.closest && e.target.closest('button');
+      if (!btn) return;
+      const path = btn.getAttribute('hx-post') || '';
+      if (!/\/htmx\/tasks\/[^/]+\/toggle$/.test(path)) return;
+      // Toggle UP (complete) only — find current state by class on the checkmark button.
+      const wasComplete = btn.querySelector('svg path[d^="M5 13"]') !== null;
+      if (!wasComplete) beep();
+    }, true);
+  })();
+</script>

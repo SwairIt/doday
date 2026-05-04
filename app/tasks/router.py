@@ -15,6 +15,7 @@ from app.tasks.service import (
     create_task,
     delete_task,
     duplicate_task,
+    get_task,
     list_tasks,
     list_today,
     list_upcoming,
@@ -112,6 +113,33 @@ async def complete_endpoint(task_id: UUID, user: RequiredUser, session: DbSessio
     except TaskNotFound as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
     return TaskOut.model_validate(task)
+
+
+@router.get("/{task_id}/subtask-stats", response_model=dict[str, int])
+async def subtask_stats_endpoint(
+    task_id: UUID, user: RequiredUser, session: DbSession
+) -> dict[str, int]:
+    """{total, done} for direct children of this task — used by progress badges."""
+    from sqlalchemy import case, func, select
+
+    from app.tasks.models import Task
+
+    try:
+        await get_task(session, user.id, task_id)
+    except TaskNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
+    row = await session.execute(
+        select(
+            func.count().label("total"),
+            func.coalesce(
+                func.sum(case((Task.is_completed.is_(True), 1), else_=0)), 0
+            ).label("done"),
+        )
+        .select_from(Task)
+        .where(Task.user_id == user.id, Task.parent_task_id == task_id)
+    )
+    r = row.first()
+    return {"total": int(r.total or 0), "done": int(r.done or 0)}
 
 
 @router.post("/{task_id}/duplicate", response_model=TaskOut, status_code=status.HTTP_201_CREATED)

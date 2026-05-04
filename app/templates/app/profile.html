@@ -88,6 +88,44 @@
 
   <section class="card p-6"
            x-data="{
+             on: localStorage.getItem('doday-sound-on') === 'yes',
+             toggle() {
+               this.on = !this.on;
+               try { localStorage.setItem('doday-sound-on', this.on ? 'yes' : 'no'); } catch(e){}
+               if (this.on) this.preview();
+             },
+             preview() {
+               try {
+                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                 const o = ctx.createOscillator();
+                 const g = ctx.createGain();
+                 o.frequency.value = 880;
+                 g.gain.setValueAtTime(0.0001, ctx.currentTime);
+                 g.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.02);
+                 g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18);
+                 o.connect(g); g.connect(ctx.destination);
+                 o.start(); o.stop(ctx.currentTime + 0.2);
+               } catch(e){}
+             }
+           }">
+    <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">Звук завершения</h2>
+    <p class="text-sm text-[var(--text-muted)] mb-4">Короткий «пиньк» при отметке задачи как выполненной. Выкл по умолчанию — никто не разозлится в опенспейсе.</p>
+    <div class="flex items-center gap-3">
+      <button type="button" @click="toggle()" :aria-pressed="on"
+              :class="on ? 'grad-bg text-white' : 'bg-[var(--surface-2)] text-[var(--text)] border border-[var(--border)]'"
+              class="px-4 py-2 rounded-lg font-medium text-sm inline-flex items-center gap-2 transition">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path x-show="on" stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+          <path x-show="!on" stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+        </svg>
+        <span x-text="on ? 'Включён' : 'Выключен'"></span>
+      </button>
+      <button type="button" @click="preview()" class="btn-ghost px-3 py-2 text-sm">▶︎ Послушать</button>
+    </div>
+  </section>
+
+  <section class="card p-6"
+           x-data="{
              importing: false,
              result: null,
              error: null,
