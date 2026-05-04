@@ -1,6 +1,6 @@
 """SQLAlchemy ORM models for the auth feature."""
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 from sqlalchemy import DateTime, String
@@ -13,6 +13,10 @@ def _utcnow() -> datetime:
     return datetime.now(UTC)
 
 
+def _trial_default() -> datetime:
+    return datetime.now(UTC) + timedelta(days=14)
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -21,6 +25,10 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     email_verified_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
+    )
+    tier: Mapped[str] = mapped_column(String(20), nullable=False, default="free")
+    trial_ends_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, default=_trial_default
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False

@@ -5,6 +5,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.auth.router import router as auth_router
 from app.backup.router import router as backup_router
+from app.billing.router import router as billing_router
 from app.comments.router import comments_router, task_comments_router
 from app.config import get_settings
 from app.custom_filters.router import router as custom_filters_router
@@ -54,6 +55,7 @@ app.include_router(comments_router)
 app.include_router(custom_filters_router)
 app.include_router(user_templates_router)
 app.include_router(save_as_template_router)
+app.include_router(billing_router)
 
 
 @app.get("/health")

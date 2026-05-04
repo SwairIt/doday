@@ -91,6 +91,11 @@ async def reorder_endpoint(
 async def create_endpoint(
     payload: ProjectCreate, user: RequiredUser, session: DbSession
 ) -> ProjectOut:
+    from app.billing.service import can_create_project
+
+    allowed, reason = await can_create_project(session, user)
+    if not allowed:
+        raise HTTPException(status.HTTP_402_PAYMENT_REQUIRED, reason or "tier limit reached")
     project = await create_project(session, user.id, name=payload.name, color=payload.color)
     return ProjectOut.model_validate(project)
 
