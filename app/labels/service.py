@@ -21,6 +21,23 @@ async def list_labels(session: AsyncSession, user_id: UUID) -> list[Label]:
     return list(result.scalars().all())
 
 
+async def list_labels_with_counts(session: AsyncSession, user_id: UUID) -> list[tuple[Label, int]]:
+    """Return [(label, task_count)] for every label owned by user."""
+    from sqlalchemy import func
+
+    from app.tasks.models import Task
+
+    rows = await session.execute(
+        select(Label, func.count(task_labels.c.task_id))
+        .outerjoin(task_labels, task_labels.c.label_id == Label.id)
+        .outerjoin(Task, Task.id == task_labels.c.task_id)
+        .where(Label.user_id == user_id)
+        .group_by(Label.id)
+        .order_by(Label.name)
+    )
+    return [(lab, count) for lab, count in rows.all()]
+
+
 async def get_label(session: AsyncSession, user_id: UUID, label_id: UUID) -> Label:
     label = await session.get(Label, label_id)
     if label is None or label.user_id != user_id:

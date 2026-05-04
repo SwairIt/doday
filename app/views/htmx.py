@@ -257,14 +257,17 @@ async def bulk_action(
     ids: Annotated[list[UUID], Form()],
     priority: Annotated[str, Form()] = "",
     project_id: Annotated[str, Form()] = "",
+    due: Annotated[str, Form()] = "",
+    label_id: Annotated[str, Form()] = "",
 ) -> Response:
     """Apply an action to many tasks at once.
-    action ∈ {complete, delete, set_priority, move_project}.
+    action ∈ {complete, delete, set_priority, move_project, set_due, attach_label, detach_label}.
     """
     from uuid import UUID as _UUID
 
+    from app.labels.service import LabelNotFound, attach_label, detach_label
     from app.projects.service import ProjectNotFound, get_project
-    from app.tasks.service import delete_task
+    from app.tasks.service import delete_task, get_task
 
     if not ids:
         return HTMLResponse("", status_code=200)
@@ -304,6 +307,38 @@ async def bulk_action(
             try:
                 await update_task(session, user.id, tid, project_id=target)
             except TaskNotFound:
+                pass
+    elif action == "set_due":
+        if due:
+            try:
+                d = datetime.strptime(due, "%Y-%m-%d").replace(tzinfo=UTC)
+            except ValueError as e:
+                raise HTTPException(status.HTTP_400_BAD_REQUEST, "неверный формат даты") from e
+            for tid in ids:
+                try:
+                    task = await get_task(session, user.id, tid)
+                    task.due_at = d
+                    task.due_date_only = True
+                except TaskNotFound:
+                    pass
+        else:
+            for tid in ids:
+                try:
+                    task = await get_task(session, user.id, tid)
+                    task.due_at = None
+                except TaskNotFound:
+                    pass
+        await session.commit()
+    elif action in ("attach_label", "detach_label"):
+        try:
+            lid = _UUID(label_id)
+        except ValueError as e:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "неверный label_id") from e
+        op = attach_label if action == "attach_label" else detach_label
+        for tid in ids:
+            try:
+                await op(session, user.id, tid, lid)
+            except (TaskNotFound, LabelNotFound):
                 pass
     else:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, f"unknown action: {action}")

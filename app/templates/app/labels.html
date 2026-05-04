@@ -1,0 +1,80 @@
+{% extends "app_base.html" %}
+{% block title %}Лейблы — Doday{% endblock %}
+{% block view_title %}Лейблы{% endblock %}
+{% block content %}
+<div class="mb-8 flex items-start gap-4">
+  <div class="flex-1 min-w-0">
+    <h1 class="text-3xl md:text-4xl font-bold mb-1">Лейблы</h1>
+    <p class="text-[var(--text-muted)] text-sm">Дважды кликни по имени, чтобы переименовать. Лейблы используются в quickadd через <code class="px-1 rounded bg-[var(--surface-2)]">@название</code>.</p>
+  </div>
+  <form
+    x-data="{ name: '', color: 'violet', saving: false, async submit() {
+      if (!this.name.trim()) return;
+      this.saving = true;
+      const r = await fetch('/api/labels', {method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name: this.name.trim(), color: this.color})});
+      this.saving = false;
+      if (r.ok) location.reload();
+    } }"
+    @submit.prevent="submit()"
+    class="flex items-center gap-2 card p-2"
+  >
+    <input type="text" x-model="name" placeholder="Новый лейбл…" maxlength="40"
+           class="bg-transparent border-none outline-none text-sm px-2 w-40">
+    <select x-model="color" class="bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-1 text-xs">
+      {% for c in ['violet', 'fuchsia', 'rose', 'amber', 'emerald', 'sky', 'indigo', 'cyan', 'slate'] %}
+        <option value="{{ c }}">{{ c }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" :disabled="saving || !name.trim()"
+            :class="saving || !name.trim() ? 'opacity-50' : ''"
+            class="btn-primary px-3 py-1.5 text-sm">+</button>
+  </form>
+</div>
+
+{% if labels_with_counts %}
+  <div class="space-y-2">
+    {% for lab, count in labels_with_counts %}
+      <div class="card p-3 flex items-center gap-3"
+           x-data="{
+             editing: false,
+             name: {{ lab.name|tojson }},
+             color: '{{ lab.color }}',
+             async save() {
+               this.editing = false;
+               if (!this.name.trim()) { this.name = {{ lab.name|tojson }}; return; }
+               const r = await fetch('/api/labels/{{ lab.id }}', {method:'PATCH', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name: this.name.trim(), color: this.color})});
+               if (r.ok) location.reload();
+             }
+           }">
+        <button type="button" title="Сменить цвет"
+                @click="const colors=['violet','fuchsia','rose','amber','emerald','sky','indigo','cyan','slate']; const i=colors.indexOf(color); color=colors[(i+1)%colors.length]; save()"
+                class="w-8 h-8 rounded-lg shrink-0 transition hover:scale-110"
+                :class="'bg-' + color + '-500'"></button>
+        <div class="flex-1 min-w-0">
+          <span x-show="!editing" @dblclick="editing = true; $nextTick(() => $refs.lname.focus())"
+                class="text-sm font-medium cursor-text"
+                x-text="'@' + name">@{{ lab.name }}</span>
+          <input x-show="editing" x-cloak x-model="name" x-ref="lname"
+                 @blur="save()"
+                 @keydown.enter.prevent="$el.blur()"
+                 @keydown.escape="name = {{ lab.name|tojson }}; editing = false"
+                 maxlength="40"
+                 class="text-sm font-medium bg-[var(--surface-2)] border border-[var(--accent)] rounded px-2 py-0.5 outline-none w-full">
+        </div>
+        <span class="text-xs text-[var(--text-muted)] tabular-nums">{{ count }} {% if count == 1 %}задача{% elif 1 < count < 5 %}задачи{% else %}задач{% endif %}</span>
+        <button type="button"
+                onclick="if(confirm('Удалить лейбл «{{ lab.name }}»? Связи с задачами тоже удалятся.')) fetch('/api/labels/{{ lab.id }}', {method:'DELETE', credentials:'include'}).then(()=>location.reload())"
+                class="px-3 py-1.5 rounded-lg text-sm bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition">
+          Удалить
+        </button>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="card p-10 text-center text-[var(--text-muted)]">
+    <div class="text-5xl mb-3">🏷️</div>
+    <div>Пока ни одного лейбла.</div>
+    <div class="text-xs mt-1">Создай первый сверху или через quickadd: «купить молоко @покупки».</div>
+  </div>
+{% endif %}
+{% endblock %}

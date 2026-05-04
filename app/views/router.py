@@ -333,6 +333,26 @@ async def filters_manage_view(
     )
 
 
+@router.get("/labels", response_class=HTMLResponse)
+async def labels_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
+    from app.labels.service import list_labels_with_counts
+
+    pairs = await list_labels_with_counts(session, user.id)
+    projects = await list_projects(session, user.id)
+    project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
+    return templates.TemplateResponse(
+        request,
+        "app/labels.html",
+        {
+            "current_user": user,
+            "current_view": "labels",
+            "projects": projects,
+            "project_color_map": project_color_map,
+            "labels_with_counts": pairs,
+        },
+    )
+
+
 @router.get("/done", response_class=HTMLResponse)
 async def done_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
     """History of completed tasks, grouped by completion date (newest first)."""

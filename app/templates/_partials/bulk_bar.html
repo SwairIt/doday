@@ -2,13 +2,18 @@
 <div
   x-data="{
     projects: [],
+    labels: [],
     loaded: false,
     async load() {
       if (this.loaded) return;
       this.loaded = true;
       try {
-        const r = await fetch('/api/projects', {credentials: 'include'});
-        if (r.ok) this.projects = await r.json();
+        const [pr, lr] = await Promise.all([
+          fetch('/api/projects', {credentials: 'include'}),
+          fetch('/api/labels', {credentials: 'include'}),
+        ]);
+        if (pr.ok) this.projects = await pr.json();
+        if (lr.ok) this.labels = await lr.json();
       } catch (e) {}
     },
   }"
@@ -75,6 +80,74 @@
           </button>
         </form>
       </template>
+    </div>
+  </div>
+
+  <div x-data="{
+         open: false,
+         today: new Date().toISOString().slice(0,10),
+         tomorrow: new Date(Date.now()+86400000).toISOString().slice(0,10),
+         nextweek: new Date(Date.now()+7*86400000).toISOString().slice(0,10),
+       }" class="relative">
+    <button type="button" @click="open = !open"
+            class="btn-ghost px-3 py-1.5 text-sm gap-1.5">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      Дата
+    </button>
+    <div x-show="open" x-cloak @click.outside="open = false" x-transition
+         class="absolute bottom-full mb-2 left-0 card p-2 w-56 shadow-lg z-30 space-y-1">
+      <template x-for="opt in [
+                  {label: '📅 Сегодня', val: today},
+                  {label: '🌅 Завтра', val: tomorrow},
+                  {label: '📆 Через 7 дней', val: nextweek},
+                  {label: '🚫 Без срока', val: ''}
+                ]" :key="opt.label">
+        <form hx-post="/htmx/bulk" hx-include="this" :hx-vals="JSON.stringify({action: 'set_due', due: opt.val})" class="contents">
+          <template x-for="id in $store.selection.ids" :key="id">
+            <input type="hidden" name="ids" :value="id">
+          </template>
+          <button type="submit" @click="open = false"
+                  class="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-[var(--surface-2)] transition" x-text="opt.label"></button>
+        </form>
+      </template>
+      <div class="border-t border-[var(--border)] pt-2 mt-1">
+        <input type="date"
+               class="w-full bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-1 text-xs"
+               @change="
+                 const v = $event.target.value;
+                 if (!v) return;
+                 const f = new FormData();
+                 f.append('action', 'set_due');
+                 f.append('due', v);
+                 $store.selection.ids.forEach(id => f.append('ids', id));
+                 fetch('/htmx/bulk', {method:'POST', credentials:'include', body: f}).then(()=>location.reload());
+                 open = false;
+               ">
+      </div>
+    </div>
+  </div>
+
+  <div x-data="{ open: false }" class="relative">
+    <button type="button" @click="open = !open"
+            class="btn-ghost px-3 py-1.5 text-sm gap-1.5">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+      Лейбл
+    </button>
+    <div x-show="open" x-cloak @click.outside="open = false" x-transition
+         class="absolute bottom-full mb-2 left-0 card p-1 w-56 max-h-64 overflow-y-auto shadow-lg z-30 space-y-0.5">
+      <template x-for="lab in labels" :key="lab.id">
+        <form hx-post="/htmx/bulk" hx-include="this" :hx-vals="JSON.stringify({action: 'attach_label', label_id: lab.id})" class="contents">
+          <template x-for="id in $store.selection.ids" :key="id">
+            <input type="hidden" name="ids" :value="id">
+          </template>
+          <button type="submit" @click="open = false"
+                  class="w-full text-left text-sm px-3 py-1.5 rounded hover:bg-[var(--surface-2)] flex items-center gap-2 transition">
+            <span class="w-2 h-2 rounded-full shrink-0" :class="'bg-' + lab.color + '-500'"></span>
+            <span class="truncate" x-text="'@' + lab.name"></span>
+          </button>
+        </form>
+      </template>
+      <div x-show="!labels.length" class="text-xs text-[var(--text-muted)] italic px-3 py-2">Лейблов нет — создай на /app/labels</div>
     </div>
   </div>
 
