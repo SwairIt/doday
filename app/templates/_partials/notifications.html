@@ -1,0 +1,58 @@
+{# Client-side reminder daemon. Polls /api/tasks/today every 60s and shows
+   browser notifications for tasks coming due in the next hour or already
+   overdue. Tracked-once via sessionStorage so each task pings once per tab. #}
+<div
+  x-data="{
+    enabled: false,
+    notified: new Set(),
+    init() {
+      if (!('Notification' in window)) return;
+      try {
+        const raw = sessionStorage.getItem('doday-notified');
+        if (raw) this.notified = new Set(JSON.parse(raw));
+      } catch (_) {}
+      const ask = () => {
+        if (Notification.permission === 'default') Notification.requestPermission();
+      };
+      window.addEventListener('click', ask, {once: true});
+      window.addEventListener('keydown', ask, {once: true});
+      this.tick();
+      setInterval(() => this.tick(), 60000);
+    },
+    persistNotified() {
+      try { sessionStorage.setItem('doday-notified', JSON.stringify(Array.from(this.notified))); } catch (_) {}
+    },
+    async tick() {
+      if (Notification.permission !== 'granted') return;
+      try {
+        const r = await fetch('/api/tasks/today', {credentials: 'include'});
+        if (!r.ok) return;
+        const tasks = await r.json();
+        const now = Date.now();
+        const inHour = now + 60 * 60 * 1000;
+        for (const t of tasks) {
+          if (t.is_completed || !t.due_at || this.notified.has(t.id)) continue;
+          const due = Date.parse(t.due_at);
+          if (isNaN(due)) continue;
+          let title = null;
+          if (due < now) {
+            title = '⏰ Просрочено: ' + t.title;
+          } else if (due <= inHour) {
+            title = '⏰ Скоро: ' + t.title;
+          }
+          if (!title) continue;
+          try {
+            const n = new Notification(title, {
+              body: t.due_date_only ? 'до конца дня' : new Date(due).toLocaleString('ru-RU'),
+              tag: 'doday-' + t.id,
+              icon: '/favicon.ico',
+            });
+            n.onclick = () => { window.focus(); n.close(); };
+            this.notified.add(t.id);
+            this.persistNotified();
+          } catch (_) {}
+        }
+      } catch (_) {}
+    },
+  }"
+></div>

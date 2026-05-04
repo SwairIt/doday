@@ -4,7 +4,7 @@
 {% block content %}
 <div class="mb-8">
   <h1 class="text-3xl md:text-4xl font-bold mb-1">Ближайшие 7 дней</h1>
-  <p class="text-[var(--text-muted)]">{{ range_label }}</p>
+  <p class="text-[var(--text-muted)]">{{ range_label }} · перетащи задачу в другой день, чтобы перенести</p>
 </div>
 
 {% if not days %}
@@ -19,9 +19,9 @@
   </div>
 {% endif %}
 
-<div class="space-y-8">
+<div class="space-y-8" id="upcoming-grid">
   {% for group in days %}
-    <section>
+    <section data-up-day="{{ group.date.isoformat() }}" class="up-day rounded-xl transition">
       <h2 class="sticky top-14 -mx-4 md:-mx-8 px-4 md:px-8 py-2 backdrop-blur bg-[var(--bg)]/70 border-b border-[var(--border)] z-10
                  flex items-baseline gap-2 mb-3">
         <span class="text-sm uppercase tracking-wider font-semibold {% if group.is_today %}text-[var(--accent)]{% else %}text-[var(--text-muted)]{% endif %}">
@@ -29,12 +29,74 @@
         </span>
         <span class="text-xs text-[var(--text-muted)]">· {{ group.tasks|length }}</span>
       </h2>
-      <div class="space-y-2">
+      <div class="space-y-2 min-h-[40px]" data-up-dropzone>
         {% for task in group.tasks %}
-          {% include "_partials/task_row.html" %}
+          <div data-up-task="{{ task.id }}" draggable="true" class="up-draggable">
+            {% include "_partials/task_row.html" %}
+          </div>
         {% endfor %}
       </div>
     </section>
   {% endfor %}
 </div>
+
+<script>
+  (function() {
+    var grid = document.getElementById('upcoming-grid');
+    if (!grid) return;
+    var dragged = null;
+    grid.addEventListener('dragstart', function(e) {
+      var src = e.target.closest('.up-draggable');
+      if (!src) return;
+      dragged = src;
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', src.dataset.upTask); } catch (_) {}
+      src.classList.add('opacity-40');
+    });
+    grid.addEventListener('dragend', function() {
+      if (dragged) dragged.classList.remove('opacity-40');
+      dragged = null;
+      grid.querySelectorAll('[data-up-drop-active]').forEach(function(el) {
+        el.removeAttribute('data-up-drop-active');
+        el.classList.remove('bg-[var(--accent)]/10', 'ring-2', 'ring-[var(--accent)]');
+      });
+    });
+    grid.addEventListener('dragover', function(e) {
+      var section = e.target.closest('section.up-day');
+      if (!section || !dragged) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (!section.dataset.upDropActive) {
+        section.dataset.upDropActive = '1';
+        section.classList.add('bg-[var(--accent)]/10', 'ring-2', 'ring-[var(--accent)]');
+      }
+    });
+    grid.addEventListener('dragleave', function(e) {
+      var section = e.target.closest('section.up-day');
+      if (!section) return;
+      if (!section.contains(e.relatedTarget)) {
+        section.removeAttribute('data-up-drop-active');
+        section.classList.remove('bg-[var(--accent)]/10', 'ring-2', 'ring-[var(--accent)]');
+      }
+    });
+    grid.addEventListener('drop', function(e) {
+      var section = e.target.closest('section.up-day');
+      if (!section || !dragged) return;
+      e.preventDefault();
+      var taskId = dragged.dataset.upTask;
+      var dayIso = section.dataset.upDay;
+      section.removeAttribute('data-up-drop-active');
+      section.classList.remove('bg-[var(--accent)]/10', 'ring-2', 'ring-[var(--accent)]');
+      if (!taskId || !dayIso) return;
+      fetch('/api/tasks/' + taskId, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({due_at: dayIso + 'T00:00:00Z', due_date_only: true}),
+      }).then(function(r) {
+        if (r.ok) location.reload();
+      });
+    });
+  })();
+</script>
 {% endblock %}

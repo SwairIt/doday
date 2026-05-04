@@ -64,9 +64,8 @@ async def create_task(
         await get_project(session, user_id, project_id)
 
     if parent_task_id is not None:
-        parent = await get_task(session, user_id, parent_task_id)
-        if parent.parent_task_id is not None:
-            raise ValueError("subtasks may not have their own subtasks (1 level only)")
+        # Ownership check; nesting depth is unrestricted (UI can drill down).
+        await get_task(session, user_id, parent_task_id)
 
     last = (
         await session.execute(
@@ -234,9 +233,8 @@ async def update_task(
         await get_project(session, user_id, project_id)
         task.project_id = project_id
     if parent_task_id is not None:
-        parent = await get_task(session, user_id, parent_task_id)
-        if parent.parent_task_id is not None:
-            raise ValueError("cannot nest subtasks deeper than one level")
+        # Ownership check; nesting depth unrestricted.
+        await get_task(session, user_id, parent_task_id)
         task.parent_task_id = parent_task_id
     if clear_section:
         task.section_id = None
