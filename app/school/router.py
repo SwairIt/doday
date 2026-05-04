@@ -134,18 +134,20 @@ async def schedule_delete(
 @router.get("/holiday")
 async def holiday_endpoint(user: RequiredUser) -> dict[str, object]:
     """Return today's holiday window (if any) and the next upcoming one."""
+    from app.school.holidays import HolidayWindow
+
     _ = user  # auth-gate only
     today = datetime.now(UTC).date()
     cur = current_holiday(today)
     nxt = next_holiday(today)
 
-    def _serialize(h: dict[str, object] | None) -> dict[str, object] | None:
+    def _serialize(h: HolidayWindow | None) -> dict[str, str] | None:
         if h is None:
             return None
         return {
             "name": h["name"],
-            "start": h["start"].isoformat(),  # type: ignore[union-attr]
-            "end": h["end"].isoformat(),  # type: ignore[union-attr]
+            "start": h["start"].isoformat(),
+            "end": h["end"].isoformat(),
         }
 
     days_until = (nxt["start"] - today).days if nxt else None
