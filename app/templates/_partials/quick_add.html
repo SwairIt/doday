@@ -1,4 +1,28 @@
 {# Sticky quick-add input at the top of a list view. #}
+{% if current_user and current_user.audience == 'school' %}
+  {% set subject_chips = [
+    ('🔢', 'Алгебра'), ('📐', 'Геометрия'), ('📝', 'Русский'), ('📖', 'Литература'),
+    ('🇬🇧', 'Английский'), ('📜', 'История'), ('⚛️', 'Физика'), ('⚗️', 'Химия'),
+    ('🧬', 'Биология'), ('💻', 'Информатика'),
+  ] %}
+  <div class="mb-2 flex flex-wrap gap-1.5">
+    {% for emoji, name in subject_chips %}
+      <button type="button"
+              x-data
+              @click="
+                const inp = document.querySelector('[data-quickadd-input]');
+                if (inp) {
+                  inp.value = (inp.value ? inp.value + ' ' : '') + '{{ emoji }} {{ name }}: ';
+                  inp.focus();
+                  inp.setSelectionRange(inp.value.length, inp.value.length);
+                }
+              "
+              class="text-xs px-2.5 py-1 rounded-full bg-[var(--surface-2)] border border-[var(--border)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition">
+        {{ emoji }} {{ name }}
+      </button>
+    {% endfor %}
+  </div>
+{% endif %}
 <form
   hx-post="/htmx/quickadd"
   hx-target="#quickadd-list"
