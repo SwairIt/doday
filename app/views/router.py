@@ -136,25 +136,27 @@ async def today_view(request: Request, user: RequiredUser, session: DbSession) -
     if user.audience == "school" and today:
         from app.school.subjects import detect_subject
 
-        buckets: dict[str, dict[str, object]] = {}
+        bucket_meta: dict[str, dict[str, str]] = {}
+        bucket_tasks: dict[str, list[Task]] = {}
         for t in today:
             subj = detect_subject(t.title)
             key = subj["code"] if subj else "_other"
-            if key not in buckets:
-                buckets[key] = {
+            if key not in bucket_meta:
+                bucket_meta[key] = {
                     "code": key,
                     "name": subj["name"] if subj else "Без предмета",
                     "emoji": subj["emoji"] if subj else "📌",
                     "color": subj["color"] if subj else "slate",
-                    "tasks": [],
                 }
-            tasks_list = buckets[key]["tasks"]
-            assert isinstance(tasks_list, list)
-            tasks_list.append(t)
+                bucket_tasks[key] = []
+            bucket_tasks[key].append(t)
         # Sort: known subjects first, "Без предмета" last.
-        today_by_subject = [b for k, b in buckets.items() if k != "_other"]
-        if "_other" in buckets:
-            today_by_subject.append(buckets["_other"])
+        ordered_keys = [k for k in bucket_meta if k != "_other"]
+        if "_other" in bucket_meta:
+            ordered_keys.append("_other")
+        today_by_subject = [
+            {**bucket_meta[k], "tasks": bucket_tasks[k]} for k in ordered_keys
+        ]
 
     return templates.TemplateResponse(
         request,
