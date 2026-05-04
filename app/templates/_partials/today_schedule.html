@@ -1,0 +1,63 @@
+{# Today's classes for school-audience users — auto-loaded from /api/school/schedule. #}
+<section class="card p-5 mb-6"
+         x-data="{
+           loaded: false,
+           today: [],
+           subjects: [],
+           wd: new Date().getDay() === 0 ? 6 : new Date().getDay() - 1,
+           async load() {
+             try {
+               const r = await fetch('/api/school/schedule', {credentials:'include'});
+               if (r.ok) {
+                 const all = await r.json();
+                 this.today = all.filter(s => s.weekday === this.wd).sort((a,b)=>a.period-b.period);
+               }
+               // small subject lookup table — keep in sync with app/school/subjects.py
+               this.subjects = [
+                 {code:'math',name:'Математика',emoji:'🔢'},{code:'algebra',name:'Алгебра',emoji:'➗'},
+                 {code:'geometry',name:'Геометрия',emoji:'📐'},{code:'rus',name:'Русский язык',emoji:'📝'},
+                 {code:'lit',name:'Литература',emoji:'📖'},{code:'eng',name:'Английский',emoji:'🇬🇧'},
+                 {code:'history',name:'История',emoji:'📜'},{code:'social',name:'Обществознание',emoji:'🏛️'},
+                 {code:'geo',name:'География',emoji:'🌍'},{code:'biology',name:'Биология',emoji:'🧬'},
+                 {code:'physics',name:'Физика',emoji:'⚛️'},{code:'chemistry',name:'Химия',emoji:'⚗️'},
+                 {code:'informatics',name:'Информатика',emoji:'💻'},{code:'pe',name:'Физкультура',emoji:'🏃'},
+                 {code:'art',name:'ИЗО',emoji:'🎨'},{code:'music',name:'Музыка',emoji:'🎵'},
+                 {code:'obj',name:'ОБЖ',emoji:'⛑️'},{code:'tech',name:'Технология',emoji:'🔧'},
+                 {code:'free',name:'Окно',emoji:'☕'},
+               ];
+             } finally { this.loaded = true; }
+           },
+           subj(code) { return this.subjects.find(s => s.code === code) || {emoji:'•',name:code}; },
+         }"
+         x-init="load()">
+  <div class="flex items-center justify-between gap-3 mb-3">
+    <div class="flex items-center gap-3 min-w-0">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-400 flex items-center justify-center text-lg shrink-0">📚</div>
+      <div class="min-w-0">
+        <div class="font-semibold text-sm">Расписание на сегодня</div>
+        <div class="text-xs text-[var(--text-muted)]">Из твоей сетки на странице «Расписание».</div>
+      </div>
+    </div>
+    <a href="/app/schedule" class="btn-ghost px-3 py-1.5 text-xs">Изменить</a>
+  </div>
+
+  <template x-if="loaded && !today.length">
+    <div class="text-xs text-[var(--text-muted)]">
+      Расписание на сегодня пока пустое.
+      <a href="/app/schedule" class="text-[var(--accent)] hover:underline">Заполнить →</a>
+    </div>
+  </template>
+
+  <template x-if="today.length">
+    <ol class="space-y-1.5">
+      <template x-for="s in today" :key="s.period">
+        <li class="flex items-center gap-3 text-sm">
+          <span class="w-6 text-center font-mono text-xs text-[var(--text-muted)]" x-text="s.period"></span>
+          <span x-text="subj(s.subject_code).emoji"></span>
+          <span class="flex-1 min-w-0 truncate" x-text="subj(s.subject_code).name"></span>
+          <span class="text-xs text-[var(--text-muted)]" x-text="s.room ? 'каб. '+s.room : ''"></span>
+        </li>
+      </template>
+    </ol>
+  </template>
+</section>

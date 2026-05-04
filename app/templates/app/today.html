@@ -27,6 +27,12 @@
 
 {% include "_partials/onboarding_card.html" %}
 {% include "_partials/daily_goal.html" %}
+{% if current_user and current_user.audience == 'company' %}
+  {% include "_partials/standup_widget.html" %}
+{% endif %}
+{% if current_user and current_user.audience == 'school' %}
+  {% include "_partials/today_schedule.html" %}
+{% endif %}
 {% include "_partials/quick_add.html" %}
 
 {% if not overdue and not today %}

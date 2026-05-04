@@ -1,0 +1,86 @@
+{# Standup helper for company-audience users — shown on /app/today.
+   Generates a markdown summary of yesterday/today/blockers and copies to clipboard. #}
+<section class="card p-5 mb-6"
+         x-data="{
+           open: false,
+           loading: false,
+           md: '',
+           report: null,
+           copied: false,
+           async load() {
+             this.loading = true; this.copied = false;
+             try {
+               const r = await fetch('/api/company/standup', {credentials:'include'});
+               if (r.ok) this.report = await r.json();
+               const t = await fetch('/api/company/standup.md', {credentials:'include'});
+               if (t.ok) this.md = await t.text();
+             } finally { this.loading = false; }
+           },
+           toggle() { this.open = !this.open; if (this.open && !this.report) this.load(); },
+           async copy() {
+             try { await navigator.clipboard.writeText(this.md); this.copied = true;
+                   setTimeout(() => this.copied = false, 2000); } catch(e){}
+           },
+         }">
+  <div class="flex items-center justify-between gap-3">
+    <div class="flex items-center gap-3 min-w-0">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-lg shrink-0">☕</div>
+      <div class="min-w-0">
+        <div class="font-semibold text-sm">Сборка стендапа</div>
+        <div class="text-xs text-[var(--text-muted)]">Вчера + сегодня + блокеры — готовый markdown.</div>
+      </div>
+    </div>
+    <button @click="toggle()" class="btn-ghost px-3 py-1.5 text-xs">
+      <span x-text="open ? 'Свернуть' : 'Открыть'"></span>
+    </button>
+  </div>
+
+  <div x-show="open" x-cloak x-transition class="mt-4 space-y-3">
+    <template x-if="loading">
+      <div class="text-xs text-[var(--text-muted)]">Собираю отчёт…</div>
+    </template>
+    <template x-if="report && !loading">
+      <div class="grid md:grid-cols-3 gap-3 text-xs">
+        <div class="rounded-lg border border-[var(--border)] p-3 bg-[var(--surface-2)]/50">
+          <div class="font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">Вчера</div>
+          <template x-if="!report.yesterday.length"><div class="text-[var(--text-muted)] italic">Ничего не закрыл</div></template>
+          <ul class="space-y-1">
+            <template x-for="t in report.yesterday" :key="t.id">
+              <li class="truncate" x-text="'• ' + t.title"></li>
+            </template>
+          </ul>
+        </div>
+        <div class="rounded-lg border border-[var(--border)] p-3 bg-[var(--surface-2)]/50">
+          <div class="font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">Сегодня</div>
+          <template x-if="!report.today.length"><div class="text-[var(--text-muted)] italic">Ничего не запланировано</div></template>
+          <ul class="space-y-1">
+            <template x-for="t in report.today" :key="t.id">
+              <li class="truncate" x-text="'• ' + t.title"></li>
+            </template>
+          </ul>
+        </div>
+        <div class="rounded-lg border border-rose-500/30 p-3 bg-rose-500/5">
+          <div class="font-semibold text-rose-400 uppercase tracking-wider mb-2">Блокеры</div>
+          <template x-if="!report.blockers.length"><div class="text-[var(--text-muted)] italic">Нет</div></template>
+          <ul class="space-y-1">
+            <template x-for="t in report.blockers" :key="t.id">
+              <li class="truncate" x-text="'• ' + t.title"></li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </template>
+    <template x-if="md && !loading">
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold">Markdown</span>
+          <button @click="copy()" class="btn-ghost px-3 py-1 text-xs inline-flex items-center gap-1.5">
+            <span x-show="!copied">📋 Скопировать</span>
+            <span x-show="copied" class="text-emerald-400">✓ Скопировано</span>
+          </button>
+        </div>
+        <pre class="text-[11px] font-mono bg-[var(--surface-2)] rounded-lg p-3 overflow-x-auto whitespace-pre-wrap" x-text="md"></pre>
+      </div>
+    </template>
+  </div>
+</section>
