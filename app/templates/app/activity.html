@@ -1,0 +1,68 @@
+{% extends "app_base.html" %}
+{% block title %}Активность — Doday{% endblock %}
+{% block view_title %}Активность{% endblock %}
+{% block content %}
+<div class="mb-8">
+  <h1 class="text-3xl md:text-4xl font-bold mb-1">Активность</h1>
+  <p class="text-[var(--text-muted)] text-sm">
+    Что происходило за последние 30 дней — задачи, завершения, комментарии. Всего событий: {{ total }}.
+  </p>
+</div>
+
+{% if days %}
+  <div class="space-y-8">
+    {% for day in days %}
+      <section class="animate-fade-in">
+        <div class="sticky top-0 bg-[var(--bg)] py-2 z-10 mb-3">
+          <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text)]">
+            {{ day.label }}
+            <span class="text-xs text-[var(--text-muted)] font-normal">· {{ day.items|length }}</span>
+          </h2>
+        </div>
+        <div class="space-y-2">
+          {% for it in day["items"] %}
+            <div class="card p-3 flex items-start gap-3 hover:border-[var(--accent)] transition cursor-pointer"
+                 hx-get="/htmx/tasks/{{ it.task_id }}/detail"
+                 hx-target="#task-detail-slot"
+                 hx-swap="innerHTML">
+              <div class="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center
+                          {% if it.kind == 'created' %}bg-sky-500/15 text-sky-400{% elif it.kind == 'completed' %}bg-emerald-500/15 text-emerald-400{% else %}bg-amber-500/15 text-amber-400{% endif %}">
+                {% if it.kind == 'created' %}
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                {% elif it.kind == 'completed' %}
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                {% else %}
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                {% endif %}
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm">
+                  {% if it.kind == 'created' %}<span class="text-[var(--text-muted)]">Создал</span>
+                  {% elif it.kind == 'completed' %}<span class="text-[var(--text-muted)]">Завершил</span>
+                  {% else %}<span class="text-[var(--text-muted)]">Комментарий к</span>
+                  {% endif %}
+                  <strong class="text-[var(--text)]">«{{ it.title }}»</strong>
+                  <span class="text-[var(--text-muted)]">в</span>
+                  <span class="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-{{ it.color }}-500/15 text-{{ it.color }}-400">
+                    <span class="w-1.5 h-1.5 rounded-full bg-{{ it.color }}-500"></span>{{ it.project }}
+                  </span>
+                </div>
+                {% if it.extra %}
+                  <div class="text-xs text-[var(--text-muted)] mt-1 italic line-clamp-2">{{ it.extra }}</div>
+                {% endif %}
+                <div class="text-[10px] text-[var(--text-muted)] mt-1">{{ it.ts.strftime('%H:%M') }}</div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </section>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="card p-10 text-center text-[var(--text-muted)]">
+    <div class="text-5xl mb-3">📜</div>
+    <div>Пока тихо.</div>
+    <div class="text-xs mt-1">Создай первую задачу — лента активности заполнится сама.</div>
+  </div>
+{% endif %}
+{% endblock %}

@@ -349,6 +349,138 @@ async def filters_manage_view(
     )
 
 
+@router.get("/activity", response_class=HTMLResponse)
+async def activity_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
+    """Derived activity feed — created/completed tasks + new comments, last 30 days."""
+    from sqlalchemy import select as sa_select
+
+    from app.comments.models import Comment
+
+    cutoff = datetime.now(UTC) - timedelta(days=30)
+    today_date = datetime.now(UTC).date()
+    yesterday = today_date - timedelta(days=1)
+
+    projects = await list_projects(session, user.id)
+    project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
+    project_name_map: dict[UUID, str] = {p.id: p.name for p in projects}
+
+    created_rows = (
+        (
+            await session.execute(
+                sa_select(Task).where(Task.user_id == user.id, Task.created_at >= cutoff)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    completed_rows = (
+        (
+            await session.execute(
+                sa_select(Task).where(
+                    Task.user_id == user.id,
+                    Task.is_completed.is_(True),
+                    Task.completed_at.is_not(None),
+                    Task.completed_at >= cutoff,
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+    comment_rows = (
+        (
+            await session.execute(
+                sa_select(Comment).where(
+                    Comment.user_id == user.id, Comment.created_at >= cutoff
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+    task_lookup: dict[UUID, Task] = {t.id: t for t in created_rows}
+    for t in completed_rows:
+        task_lookup.setdefault(t.id, t)
+
+    items: list[dict[str, object]] = []
+    for t in created_rows:
+        items.append(
+            {
+                "kind": "created",
+                "ts": t.created_at,
+                "title": t.title,
+                "project": project_name_map.get(t.project_id, "?"),
+                "color": project_color_map.get(t.project_id, "violet"),
+                "task_id": t.id,
+                "extra": "",
+            }
+        )
+    for t in completed_rows:
+        items.append(
+            {
+                "kind": "completed",
+                "ts": t.completed_at,
+                "title": t.title,
+                "project": project_name_map.get(t.project_id, "?"),
+                "color": project_color_map.get(t.project_id, "violet"),
+                "task_id": t.id,
+                "extra": "",
+            }
+        )
+    for c in comment_rows:
+        parent = task_lookup.get(c.task_id)
+        if parent is None:
+            parent = await session.get(Task, c.task_id)
+        if parent is None:
+            continue
+        snippet = c.body if len(c.body) <= 80 else c.body[:77] + "…"
+        items.append(
+            {
+                "kind": "commented",
+                "ts": c.created_at,
+                "title": parent.title,
+                "project": project_name_map.get(parent.project_id, "?"),
+                "color": project_color_map.get(parent.project_id, "violet"),
+                "task_id": parent.id,
+                "extra": snippet,
+            }
+        )
+
+    items.sort(key=lambda x: x["ts"], reverse=True)  # type: ignore[arg-type,return-value]
+
+    grouped: dict[date, list[dict[str, object]]] = defaultdict(list)
+    for it in items:
+        ts = it["ts"]
+        when = ts.date() if isinstance(ts, datetime) else today_date
+        grouped[when].append(it)
+
+    days = []
+    for d in sorted(grouped, reverse=True):
+        if d == today_date:
+            label = "Сегодня"
+        elif d == yesterday:
+            label = "Вчера"
+        else:
+            label = (
+                f"{_RU_WEEKDAYS[d.weekday()].capitalize()}, "
+                f"{d.day} {_RU_MONTHS_GEN[d.month - 1]}"
+            )
+        days.append({"date": d, "label": label, "items": grouped[d]})
+
+    return templates.TemplateResponse(
+        request,
+        "app/activity.html",
+        {
+            "current_user": user,
+            "current_view": "activity",
+            "projects": projects,
+            "project_color_map": project_color_map,
+            "days": days,
+            "total": len(items),
+        },
+    )
+
+
 @router.get("/labels", response_class=HTMLResponse)
 async def labels_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
     from app.labels.service import list_labels_with_counts
