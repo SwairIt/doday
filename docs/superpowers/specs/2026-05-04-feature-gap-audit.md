@@ -143,12 +143,14 @@
 ## Прогресс
 
 - [x] 1. Logout + landing preview
-- [ ] 2. Tab badge
-- [ ] 3. Auto theme + System
-- [ ] 4. Task duplicate
-- [ ] 5. Markdown rendering
-- [ ] 6. Focus mode
-- [ ] 7. Weekly goal
-- [ ] 8. Move-to-section in detail
-- [ ] 9. Confetti
-- [ ] 10. Bulk duplicate
+- [x] 2. Tab badge
+- [x] 3. Auto theme + System (cycle в topbar)
+- [x] 4. Task duplicate (одна с подзадачами рекурсивно)
+- [x] 5. Markdown rendering (regex, без либ — h1-h3/bold/italic/code/links/lists)
+- [x] 6. Focus mode (`f` toggle + exit-pill)
+- [x] 7. Weekly goal (вторая полоска под дневной)
+- [x] 8. Move-to-section dropdown в task detail
+- [x] 9. Confetti (CSS+JS на первом достижении дневной цели)
+- [/] 10. Bulk duplicate — отложено (на удивление редко нужно после single-duplicate)
+
+Всего по этому заходу: 5 коммитов, +13 тестов (4 duplicate + 9 polish).
