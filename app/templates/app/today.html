@@ -2,9 +2,27 @@
 {% block title %}Сегодня — Doday{% endblock %}
 {% block view_title %}Сегодня{% endblock %}
 {% block content %}
-<div class="mb-8">
-  <h1 class="text-3xl md:text-4xl font-bold mb-1">Сегодня</h1>
-  <p class="text-[var(--text-muted)]">{{ today_label }}</p>
+<div class="mb-8 flex items-end justify-between gap-4">
+  <div class="min-w-0">
+    <h1 class="text-3xl md:text-4xl font-bold mb-1">Сегодня</h1>
+    <p class="text-[var(--text-muted)]">{{ today_label }}</p>
+  </div>
+  {% set total_today = (overdue|length) + (today|length) %}
+  {% if total_today > 1 %}
+    <button type="button"
+            x-data
+            @click="
+              const ids = Array.from(document.querySelectorAll('[id^=&quot;task-wrap-&quot;]')).map(d => d.id.replace('task-wrap-', ''));
+              if (!ids.length) return;
+              const pick = ids[Math.floor(Math.random() * ids.length)];
+              htmx.ajax('GET', '/htmx/tasks/' + pick + '/detail', {target: '#task-detail-slot', swap: 'innerHTML'});
+            "
+            title="Случайная задача из списка — открыть в панели"
+            class="btn-ghost px-3 py-2 text-sm gap-1.5 shrink-0">
+      <span class="text-base">🎲</span>
+      Что дальше?
+    </button>
+  {% endif %}
 </div>
 
 {% include "_partials/onboarding_card.html" %}

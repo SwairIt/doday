@@ -1,6 +1,6 @@
 """HTMX-target endpoints — return HTML fragments rather than JSON."""
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 from uuid import UUID
 
@@ -136,6 +136,28 @@ async def set_priority(
     return _row_response(request, task, await _project_color_map(session, user.id))
 
 
+@router.post("/tasks/{task_id}/snooze", response_class=HTMLResponse)
+async def snooze_task(
+    request: Request,
+    task_id: UUID,
+    user: RequiredUser,
+    session: DbSession,
+    days: Annotated[int, Form()] = 1,
+) -> Response:
+    """Push the task's due date by N days. If no due date, set to today + N."""
+    try:
+        task = await get_task(session, user.id, task_id)
+    except TaskNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
+    base = task.due_at if task.due_at else datetime.now(UTC)
+    new_due = base + timedelta(days=max(1, min(30, days)))
+    task.due_at = new_due
+    task.due_date_only = True
+    await session.commit()
+    await session.refresh(task)
+    return _row_response(request, task, await _project_color_map(session, user.id))
+
+
 @router.post("/tasks/{task_id}/due", response_class=HTMLResponse)
 async def set_due(
     request: Request,
@@ -260,14 +282,13 @@ async def bulk_action(
     due: Annotated[str, Form()] = "",
     label_id: Annotated[str, Form()] = "",
 ) -> Response:
-    """Apply an action to many tasks at once.
-    action ∈ {complete, delete, set_priority, move_project, set_due, attach_label, detach_label}.
-    """
+    """Apply an action to many tasks at once. action ∈ {complete, delete, set_priority,
+    move_project, set_due, attach_label, detach_label, duplicate}."""
     from uuid import UUID as _UUID
 
     from app.labels.service import LabelNotFound, attach_label, detach_label
     from app.projects.service import ProjectNotFound, get_project
-    from app.tasks.service import delete_task, get_task
+    from app.tasks.service import delete_task, duplicate_task, get_task
 
     if not ids:
         return HTMLResponse("", status_code=200)
@@ -339,6 +360,12 @@ async def bulk_action(
             try:
                 await op(session, user.id, tid, lid)
             except (TaskNotFound, LabelNotFound):
+                pass
+    elif action == "duplicate":
+        for tid in ids:
+            try:
+                await duplicate_task(session, user.id, tid)
+            except TaskNotFound:
                 pass
     else:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, f"unknown action: {action}")

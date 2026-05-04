@@ -40,6 +40,16 @@
     </button>
   </form>
 
+  <form hx-post="/htmx/bulk" hx-include="this" hx-vals='js:{action: "duplicate"}' class="contents">
+    <template x-for="id in $store.selection.ids" :key="id">
+      <input type="hidden" name="ids" :value="id">
+    </template>
+    <button type="submit" class="btn-ghost px-3 py-1.5 text-sm gap-1.5" title="Дублировать выбранные">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+      Дублировать
+    </button>
+  </form>
+
   <div x-data="{ open: false }" class="relative">
     <button type="button" @click="open = !open"
             class="btn-ghost px-3 py-1.5 text-sm gap-1.5">
