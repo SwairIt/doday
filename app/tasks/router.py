@@ -131,14 +131,16 @@ async def subtask_stats_endpoint(
     row = await session.execute(
         select(
             func.count().label("total"),
-            func.coalesce(
-                func.sum(case((Task.is_completed.is_(True), 1), else_=0)), 0
-            ).label("done"),
+            func.coalesce(func.sum(case((Task.is_completed.is_(True), 1), else_=0)), 0).label(
+                "done"
+            ),
         )
         .select_from(Task)
         .where(Task.user_id == user.id, Task.parent_task_id == task_id)
     )
     r = row.first()
+    if r is None:
+        return {"total": 0, "done": 0}
     return {"total": int(r.total or 0), "done": int(r.done or 0)}
 
 

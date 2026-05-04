@@ -30,6 +30,9 @@ class User(Base):
     trial_ends_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True, default=_trial_default
     )
+    # Audience the user picked at sign-up — drives starter templates, default
+    # labels, sidebar tweaks and home-screen widgets. NULL = not set yet.
+    audience: Mapped[str | None] = mapped_column(String(20), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False
     )

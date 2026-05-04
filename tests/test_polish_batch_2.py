@@ -23,12 +23,8 @@ async def test_subtask_stats_endpoint(logged_in_client: AsyncClient) -> None:
             "/api/tasks", json={"title": "C1", "parent_task_id": parent["id"]}
         )
     ).json()
-    await logged_in_client.post(
-        "/api/tasks", json={"title": "C2", "parent_task_id": parent["id"]}
-    )
-    await logged_in_client.post(
-        "/api/tasks", json={"title": "C3", "parent_task_id": parent["id"]}
-    )
+    await logged_in_client.post("/api/tasks", json={"title": "C2", "parent_task_id": parent["id"]})
+    await logged_in_client.post("/api/tasks", json={"title": "C3", "parent_task_id": parent["id"]})
     await logged_in_client.post(f"/api/tasks/{c1['id']}/complete")
 
     response = await logged_in_client.get(f"/api/tasks/{parent['id']}/subtask-stats")
@@ -45,9 +41,7 @@ async def test_subtask_stats_zero_when_no_children(logged_in_client: AsyncClient
 
 
 async def test_subtask_stats_unknown_404(logged_in_client: AsyncClient) -> None:
-    r = await logged_in_client.get(
-        "/api/tasks/00000000-0000-0000-0000-000000000000/subtask-stats"
-    )
+    r = await logged_in_client.get("/api/tasks/00000000-0000-0000-0000-000000000000/subtask-stats")
     assert r.status_code == 404
 
 
@@ -73,7 +67,8 @@ async def test_subtask_badge_template_present(logged_in_client: AsyncClient) -> 
         )
     ).json()
     await logged_in_client.post(
-        "/api/tasks", json={"title": "Child", "parent_task_id": parent["id"], "project_id": proj["id"]}
+        "/api/tasks",
+        json={"title": "Child", "parent_task_id": parent["id"], "project_id": proj["id"]},
     )
     body = (await logged_in_client.get(f"/app/projects/{proj['slug']}")).text
     # The badge is rendered for parent (top-level) only — fetches stats client-side.

@@ -43,6 +43,7 @@ async def register_submit(
     email: Annotated[str, Form()],
     password: Annotated[str, Form()],
     agree_privacy: Annotated[str | None, Form()] = None,
+    audience: Annotated[str | None, Form()] = None,
 ) -> HTMLResponse | RedirectResponse:
     ip = request.client.host if request.client else None
     if not hit(client_key(ip, "register"), max_calls=5, per_seconds=60):
@@ -61,8 +62,9 @@ async def register_submit(
             status_code=400,
         )
 
+    aud = audience if audience in ("school", "company", "personal") else None
     try:
-        payload = RegisterIn(email=email, password=password)
+        payload = RegisterIn(email=email, password=password, audience=aud)  # type: ignore[arg-type]
     except ValidationError:
         return templates.TemplateResponse(
             request,

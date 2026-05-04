@@ -4,7 +4,8 @@ from httpx import AsyncClient
 
 
 async def _make_task(client: AsyncClient) -> str:
-    return (await client.post("/api/tasks", json={"title": "T"})).json()["id"]
+    tid: str = (await client.post("/api/tasks", json={"title": "T"})).json()["id"]
+    return tid
 
 
 async def test_create_and_list_comment(logged_in_client: AsyncClient) -> None:

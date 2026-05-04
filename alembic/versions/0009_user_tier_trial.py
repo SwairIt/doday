@@ -26,7 +26,9 @@ def upgrade() -> None:
         sa.Column("trial_ends_at", sa.DateTime(timezone=True), nullable=True),
     )
     # Bootstrap trial for existing users — 14 days from now.
-    op.execute("UPDATE users SET trial_ends_at = NOW() + INTERVAL '14 days' WHERE trial_ends_at IS NULL")
+    op.execute(
+        "UPDATE users SET trial_ends_at = NOW() + INTERVAL '14 days' WHERE trial_ends_at IS NULL"
+    )
 
 
 def downgrade() -> None:

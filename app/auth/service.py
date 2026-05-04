@@ -32,11 +32,20 @@ async def register_user(session: AsyncSession, payload: RegisterIn) -> User:
     if existing.scalar_one_or_none() is not None:
         raise EmailAlreadyExists(payload.email)
 
-    user = User(email=payload.email, password_hash=hash_password(payload.password))
+    user = User(
+        email=payload.email,
+        password_hash=hash_password(payload.password),
+        audience=payload.audience,
+    )
     session.add(user)
     await session.commit()
     await session.refresh(user)
     return user
+
+
+async def get_user_by_email(session: AsyncSession, email: str) -> User | None:
+    result = await session.execute(select(User).where(User.email == email.lower().strip()))
+    return result.scalar_one_or_none()
 
 
 async def mark_email_verified(session: AsyncSession, user_id: str) -> User:
