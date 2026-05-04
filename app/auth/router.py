@@ -9,6 +9,7 @@ from pydantic import ValidationError
 
 from app.auth.deps import DbSession
 from app.auth.email import send_verification_email
+from app.auth.rate_limit import client_key, hit, reset
 from app.auth.schemas import RegisterIn
 from app.auth.security import (
     InvalidToken,
@@ -43,6 +44,15 @@ async def register_submit(
     password: Annotated[str, Form()],
     agree_privacy: Annotated[str | None, Form()] = None,
 ) -> HTMLResponse | RedirectResponse:
+    ip = request.client.host if request.client else None
+    if not hit(client_key(ip, "register"), max_calls=5, per_seconds=60):
+        return templates.TemplateResponse(
+            request,
+            "auth/register.html",
+            {"error": "Слишком много попыток. Подожди минуту и попробуй снова."},
+            status_code=429,
+        )
+
     if agree_privacy != "on":
         return templates.TemplateResponse(
             request,
@@ -108,6 +118,16 @@ async def login_submit(
     email: Annotated[str, Form()],
     password: Annotated[str, Form()],
 ) -> HTMLResponse | RedirectResponse:
+    ip = request.client.host if request.client else None
+    rl_key = client_key(ip, f"login:{email.lower()}")
+    if not hit(rl_key, max_calls=10, per_seconds=60):
+        return templates.TemplateResponse(
+            request,
+            "auth/login.html",
+            {"error": "Слишком много попыток. Подожди минуту."},
+            status_code=429,
+        )
+
     try:
         user = await authenticate(session, email, password)
     except InvalidCredentials:
@@ -124,6 +144,7 @@ async def login_submit(
             {"error": "Сначала подтверди email — мы отправили тебе письмо."},
             status_code=403,
         )
+    reset(rl_key)
     request.session["user_id"] = str(user.id)
     return RedirectResponse(url="/app/today", status_code=303)
 
