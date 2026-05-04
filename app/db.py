@@ -20,7 +20,16 @@ class Base(DeclarativeBase):
 
 @lru_cache(maxsize=1)
 def get_engine() -> AsyncEngine:
-    return create_async_engine(get_settings().database_url, future=True)
+    # Force every asyncpg connection to UTC so `func.date(timestamptz_col)`
+    # in queries matches Python's `datetime.now(UTC).date()` consistently —
+    # otherwise we get off-by-one buckets in the early hours of any non-UTC
+    # server timezone (e.g. MSK at 02:00 stores May 4 23:00 UTC but
+    # Postgres-in-MSK extracts DATE = May 5).
+    return create_async_engine(
+        get_settings().database_url,
+        future=True,
+        connect_args={"server_settings": {"timezone": "UTC"}},
+    )
 
 
 @lru_cache(maxsize=1)

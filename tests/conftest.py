@@ -31,9 +31,15 @@ from app.tasks import models as _tasks_models  # noqa: F401
 
 _settings = get_settings()
 
+# Match production: every test connection uses UTC so func.date(timestamptz)
+# matches Python's datetime.now(UTC).date() regardless of host timezone.
+_TEST_CONNECT_ARGS = {"server_settings": {"timezone": "UTC"}}
+
 
 async def _setup_test_schema() -> None:
-    test_engine = create_async_engine(_settings.test_database_url)
+    test_engine = create_async_engine(
+        _settings.test_database_url, connect_args=_TEST_CONNECT_ARGS
+    )
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
@@ -62,7 +68,9 @@ def _reset_rate_limit() -> None:
 
 @pytest.fixture
 async def db_session() -> AsyncIterator[AsyncSession]:
-    test_engine = create_async_engine(_settings.test_database_url)
+    test_engine = create_async_engine(
+        _settings.test_database_url, connect_args=_TEST_CONNECT_ARGS
+    )
     session_maker = async_sessionmaker(test_engine, expire_on_commit=False, class_=AsyncSession)
     async with session_maker() as session:
         yield session
