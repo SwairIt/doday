@@ -651,6 +651,22 @@ async def profile_view(request: Request, user: RequiredUser, session: DbSession)
     )
 
 
+@router.get("/habits", response_class=HTMLResponse)
+async def habits_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
+    projects = await list_projects(session, user.id)
+    project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
+    return templates.TemplateResponse(
+        request,
+        "app/habits.html",
+        {
+            "current_user": user,
+            "current_view": "habits",
+            "projects": projects,
+            "project_color_map": project_color_map,
+        },
+    )
+
+
 @router.get("/schedule", response_class=HTMLResponse)
 async def schedule_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
     from app.school.schedule_service import list_slots

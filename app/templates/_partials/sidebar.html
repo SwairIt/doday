@@ -38,6 +38,9 @@
     {% if current_user and current_user.audience == 'school' %}
       {% set _ = nav_items.append(('schedule', '/app/schedule', 'Расписание', 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M12 11h4M12 15h4M8 11h.01M8 15h.01')) %}
     {% endif %}
+    {% if current_user and current_user.audience in ('personal', 'school') %}
+      {% set _ = nav_items.append(('habits', '/app/habits', 'Привычки', 'M5 13l4 4L19 7')) %}
+    {% endif %}
     {% for key, href, label, icon in nav_items %}
       {% set active = view == key %}
       <a href="{{ href }}"
