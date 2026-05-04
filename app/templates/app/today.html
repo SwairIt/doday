@@ -31,6 +31,7 @@
 {% include "_partials/daily_goal.html" %}
 {% if current_user and current_user.audience == 'company' %}
   {% include "_partials/sprint_widget.html" %}
+  {% include "_partials/retro_widget.html" %}
   {% include "_partials/standup_widget.html" %}
 {% endif %}
 {% if current_user and current_user.audience == 'school' %}

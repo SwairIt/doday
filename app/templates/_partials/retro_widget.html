@@ -1,0 +1,118 @@
+{# Пятничный retro-промпт для company-аудитории. Шторно появляется на /today
+   с пятницы по воскресенье (UTC weekday 4-6). Сохраняет ответы по ключу
+   doday-retro-<ISO-week> в localStorage. #}
+<section
+  x-data="{
+    show: false,
+    weekKey: '',
+    cfg: { wins: '', issues: '', next: '' },
+    saved: false,
+    history: [],
+    historyOpen: false,
+    init() {
+      const dow = new Date().getDay();  // 0 = Sun, 5 = Fri, 6 = Sat
+      this.show = (dow === 5 || dow === 6 || dow === 0);
+      this.weekKey = this.isoWeek();
+      try {
+        const raw = localStorage.getItem('doday-retro-' + this.weekKey);
+        if (raw) this.cfg = JSON.parse(raw);
+      } catch(e) {}
+      this.loadHistory();
+    },
+    isoWeek(d) {
+      const date = d || new Date();
+      const t = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+      t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
+      const yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+      const week = Math.ceil((((t - yearStart) / 86400000) + 1) / 7);
+      return t.getUTCFullYear() + '-W' + String(week).padStart(2, '0');
+    },
+    save() {
+      this.saved = false;
+      try { localStorage.setItem('doday-retro-' + this.weekKey, JSON.stringify(this.cfg)); } catch(e){}
+      this.saved = true;
+      setTimeout(() => this.saved = false, 1500);
+      this.loadHistory();
+    },
+    loadHistory() {
+      const out = [];
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith('doday-retro-') && k !== ('doday-retro-' + this.weekKey)) {
+            try {
+              const v = JSON.parse(localStorage.getItem(k));
+              if (v && (v.wins || v.issues || v.next)) {
+                out.push({ key: k.replace('doday-retro-', ''), ...v });
+              }
+            } catch(e){}
+          }
+        }
+      } catch(e){}
+      out.sort((a,b) => b.key.localeCompare(a.key));
+      this.history = out.slice(0, 8);
+    },
+    async copy() {
+      const md = '*Retro · ' + this.weekKey + '*\n\n' +
+        '*Что сработало:*\n' + (this.cfg.wins || '— ничего не отметил —') + '\n\n' +
+        '*Что не сработало:*\n' + (this.cfg.issues || '— ничего не отметил —') + '\n\n' +
+        '*На следующую неделю:*\n' + (this.cfg.next || '— ничего не отметил —');
+      try { await navigator.clipboard.writeText(md); } catch(e){}
+    },
+  }"
+  x-show="show"
+  x-cloak
+  class="card p-5 mb-6 border border-amber-500/20 bg-amber-500/5"
+>
+  <div class="flex items-start gap-3 mb-3">
+    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-lg shrink-0">🔁</div>
+    <div class="flex-1 min-w-0">
+      <div class="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold">Конец недели</div>
+      <div class="font-semibold">Retro · <span x-text="weekKey"></span></div>
+    </div>
+    <button @click="copy()" :disabled="!cfg.wins && !cfg.issues && !cfg.next"
+            class="btn-ghost px-3 py-1.5 text-xs">📋 в markdown</button>
+  </div>
+  <p class="text-xs text-[var(--text-muted)] mb-3">
+    3 минуты — что сработало, что не сработало, что попробуешь дальше. Хранится в этом браузере.
+  </p>
+  <div class="space-y-2">
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-emerald-400 font-semibold">✓ Что сработало</label>
+      <textarea x-model="cfg.wins" @blur="save()" rows="2"
+                placeholder="Лучшие моменты, выигрыши, что особенно зашло"
+                class="w-full mt-1 px-3 py-2 text-sm rounded-lg bg-[var(--surface-2)] border border-[var(--border)] outline-none focus:border-[var(--accent)] resize-y"></textarea>
+    </div>
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-rose-400 font-semibold">✗ Что не сработало</label>
+      <textarea x-model="cfg.issues" @blur="save()" rows="2"
+                placeholder="Проблемы, тупики, потеря времени"
+                class="w-full mt-1 px-3 py-2 text-sm rounded-lg bg-[var(--surface-2)] border border-[var(--border)] outline-none focus:border-[var(--accent)] resize-y"></textarea>
+    </div>
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-violet-400 font-semibold">→ На следующую неделю</label>
+      <textarea x-model="cfg.next" @blur="save()" rows="2"
+                placeholder="Один-два эксперимента, что попробуешь иначе"
+                class="w-full mt-1 px-3 py-2 text-sm rounded-lg bg-[var(--surface-2)] border border-[var(--border)] outline-none focus:border-[var(--accent)] resize-y"></textarea>
+    </div>
+  </div>
+  <div class="flex items-center justify-between mt-3">
+    <span x-show="saved" x-cloak class="text-[10px] text-emerald-400">✓ сохранено</span>
+    <button @click="historyOpen = !historyOpen" x-show="history.length"
+            class="text-[10px] text-[var(--text-muted)] hover:text-[var(--accent)] ml-auto">
+      <span x-text="historyOpen ? 'Скрыть прошлые' : 'Прошлые ретро ('+history.length+')'"></span>
+    </button>
+  </div>
+  <div x-show="historyOpen" x-cloak class="mt-3 pt-3 border-t border-[var(--border)] space-y-2">
+    <template x-for="h in history" :key="h.key">
+      <details class="bg-[var(--surface-2)]/50 rounded-lg p-2.5">
+        <summary class="cursor-pointer text-xs font-semibold text-[var(--text-muted)]" x-text="h.key"></summary>
+        <div class="mt-2 text-xs space-y-1.5 text-[var(--text-muted)]">
+          <template x-if="h.wins"><div><span class="text-emerald-400">✓</span> <span x-text="h.wins"></span></div></template>
+          <template x-if="h.issues"><div><span class="text-rose-400">✗</span> <span x-text="h.issues"></span></div></template>
+          <template x-if="h.next"><div><span class="text-violet-400">→</span> <span x-text="h.next"></span></div></template>
+        </div>
+      </details>
+    </template>
+  </div>
+</section>
