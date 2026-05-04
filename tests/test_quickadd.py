@@ -112,3 +112,60 @@ async def test_quickadd_attaches_label(logged_in_client: AsyncClient) -> None:
     # Verify the label was created
     labels = await logged_in_client.get("/api/labels")
     assert any(lab["name"] == "дом" for lab in labels.json())
+
+
+def test_parser_through_n_days() -> None:
+    p = parse_quick_add("Позвонить через 5 дней", now=_FIXED_NOW)
+    assert p.title == "Позвонить"
+    assert p.due_at is not None
+    assert p.due_at.date() == (_FIXED_NOW + timedelta(days=5)).date()
+
+
+def test_parser_through_one_day_implicit() -> None:
+    p = parse_quick_add("Зайти через день", now=_FIXED_NOW)
+    assert p.title == "Зайти"
+    assert p.due_at is not None
+    assert p.due_at.date() == (_FIXED_NOW + timedelta(days=1)).date()
+
+
+def test_parser_through_week() -> None:
+    p = parse_quick_add("Отчёт через неделю", now=_FIXED_NOW)
+    assert p.title == "Отчёт"
+    assert p.due_at is not None
+    assert p.due_at.date() == (_FIXED_NOW + timedelta(weeks=1)).date()
+
+
+def test_parser_through_two_weeks() -> None:
+    p = parse_quick_add("Спринт через 2 недели", now=_FIXED_NOW)
+    assert p.title == "Спринт"
+    assert p.due_at is not None
+    assert p.due_at.date() == (_FIXED_NOW + timedelta(weeks=2)).date()
+
+
+def test_parser_through_month() -> None:
+    p = parse_quick_add("Подвести итоги через месяц", now=_FIXED_NOW)
+    assert p.title == "Подвести итоги"
+    assert p.due_at is not None
+    assert p.due_at.date() == (_FIXED_NOW + timedelta(days=30)).date()
+
+
+def test_parser_day_month_words() -> None:
+    p = parse_quick_add("Купить подарок 15 декабря", now=_FIXED_NOW)
+    assert p.title == "Купить подарок"
+    assert p.due_at is not None
+    assert p.due_at.month == 12 and p.due_at.day == 15
+
+
+def test_parser_day_month_past_rolls_to_next_year() -> None:
+    # 1 января has already passed in 2026 (today is 3 May 2026) → roll to 2027
+    p = parse_quick_add("Поздравить 1 января", now=_FIXED_NOW)
+    assert p.due_at is not None
+    assert p.due_at.year == 2027 and p.due_at.month == 1 and p.due_at.day == 1
+
+
+def test_parser_next_weekday_prefix_skips_a_week() -> None:
+    # _FIXED_NOW is Sunday 2026-05-03. Monday is +1 day; «след пн» should be +8 days.
+    p = parse_quick_add("Встреча след пн", now=_FIXED_NOW)
+    assert p.due_at is not None
+    assert p.due_at.weekday() == 0
+    assert (p.due_at.date() - _FIXED_NOW.date()).days == 8

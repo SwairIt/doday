@@ -35,6 +35,33 @@ _WEEKDAYS_RU: dict[str, int] = {
     "воскресенье": 6,
 }
 
+_MONTHS_RU: dict[str, int] = {
+    "января": 1,
+    "февраля": 2,
+    "марта": 3,
+    "апреля": 4,
+    "мая": 5,
+    "июня": 6,
+    "июля": 7,
+    "августа": 8,
+    "сентября": 9,
+    "октября": 10,
+    "ноября": 11,
+    "декабря": 12,
+    "январь": 1,
+    "февраль": 2,
+    "март": 3,
+    "апрель": 4,
+    "май": 5,
+    "июнь": 6,
+    "июль": 7,
+    "август": 8,
+    "сентябрь": 9,
+    "октябрь": 10,
+    "ноябрь": 11,
+    "декабрь": 12,
+}
+
 
 @dataclass
 class ParsedQuickAdd:
@@ -88,12 +115,54 @@ def parse_quick_add(text: str, *, now: datetime | None = None) -> ParsedQuickAdd
             text = (text[: wm.start()] + text[wm.end() :]).strip()
             break
 
+    # «через N дней/неделю/недели/месяц/месяца»
+    if due_at is None:
+        rm = re.search(
+            r"(?i)\bчерез\s+(\d+)?\s*(дн[еья]|день|дней|недел[юия]|месяц[ае]?)\b",
+            text,
+        )
+        if rm:
+            n = int(rm.group(1)) if rm.group(1) else 1
+            unit = rm.group(2).lower()
+            if unit.startswith("дн") or unit == "день" or unit == "дней":
+                due_at = _eod(today + timedelta(days=n))
+            elif unit.startswith("недел"):
+                due_at = _eod(today + timedelta(weeks=n))
+            elif unit.startswith("месяц"):
+                due_at = _eod(today + timedelta(days=30 * n))
+            text = (text[: rm.start()] + text[rm.end() :]).strip()
+
+    # «N января», «15 декабря» etc.
+    if due_at is None:
+        mm = re.search(
+            r"(?i)\b(\d{1,2})\s+(" + "|".join(_MONTHS_RU.keys()) + r")\b",
+            text,
+        )
+        if mm:
+            try:
+                day_n = int(mm.group(1))
+                month_n = _MONTHS_RU[mm.group(2).lower()]
+                year_n = today.year
+                target = date(year_n, month_n, day_n)
+                if target < today:
+                    target = date(year_n + 1, month_n, day_n)
+                due_at = _eod(target)
+                text = (text[: mm.start()] + text[mm.end() :]).strip()
+            except ValueError:
+                pass
+
     if due_at is None:
         for word, weekday in _WEEKDAYS_RU.items():
-            wm = re.search(rf"(?i)\b{word}\b", text)
+            # support optional «след(ующ)?» prefix → forces +7 days
+            wm = re.search(
+                rf"(?i)\b(след(?:ующ(?:ий|ая|ее|ую))?\s+)?{word}\b",
+                text,
+            )
             if wm:
-                days_ahead = (weekday - today.weekday()) % 7 or 7
-                due_at = _eod(today + timedelta(days=days_ahead))
+                base_days_ahead = (weekday - today.weekday()) % 7 or 7
+                if wm.group(1):
+                    base_days_ahead += 7
+                due_at = _eod(today + timedelta(days=base_days_ahead))
                 text = (text[: wm.start()] + text[wm.end() :]).strip()
                 break
 
