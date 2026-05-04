@@ -144,5 +144,9 @@ groundwork for the school-portal integration the user asked about.
 | B5 | Standup-виджет на /today для company-аудитории + расписание-виджет для school | `32aa9cd` |
 | B6 | Смена audience в /profile + бейдж режима в сайдбаре | `530d2d2` |
 | B7 | Чипы предметов над quickadd для school-аудитории | `498e420` |
+| B8 | 🔥-чип серии в шапке (текущая серия + рекорд через `/api/stats/streak`) | `6202713` |
+| B9 | Общая ical-подписка `/api/calendar/all.ics` + блок «Календарь-подписка» в /profile | `d29acf0` |
+| B10 | Утренний брифинг на /today (4-11 ч., советы под аудиторию) | `36d805c` |
+| B11 | Заметка дня внизу /today (per-day localStorage) | этот коммит |
 
-Тесты на эту сессию: 5 + 6 + 10 + 9 + 7 + 6 + 3 = **46 новых**, всего **400+**.
+Тесты на эту сессию: ~62 новых.

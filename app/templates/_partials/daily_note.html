@@ -1,0 +1,46 @@
+{# A small sticky note tied to today's date — saved per-day in localStorage.
+   Lives at the bottom of /today, never blocks anything. Pure frontend. #}
+<section
+  x-data="{
+    key() { return 'doday-note-' + new Date().toISOString().slice(0, 10); },
+    text: '',
+    saved: false,
+    saveTimer: null,
+    init() {
+      try { this.text = localStorage.getItem(this.key()) || ''; } catch(e){}
+    },
+    onInput() {
+      this.saved = false;
+      clearTimeout(this.saveTimer);
+      this.saveTimer = setTimeout(() => {
+        try { localStorage.setItem(this.key(), this.text); } catch(e){}
+        this.saved = true;
+        setTimeout(() => this.saved = false, 1500);
+      }, 400);
+    },
+    clear() {
+      this.text = '';
+      try { localStorage.removeItem(this.key()); } catch(e){}
+    },
+  }"
+  class="card p-5 mt-8 bg-amber-500/5 border border-amber-500/20"
+>
+  <div class="flex items-center justify-between gap-3 mb-2">
+    <div class="flex items-center gap-2">
+      <span class="text-lg">📝</span>
+      <span class="text-sm font-semibold">Заметка дня</span>
+      <span class="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">только в этом браузере</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span x-show="saved" x-cloak class="text-[10px] text-emerald-400">✓ сохранено</span>
+      <button x-show="text" @click="clear()" class="text-[10px] text-[var(--text-muted)] hover:text-rose-400 transition">очистить</button>
+    </div>
+  </div>
+  <textarea
+    x-model="text"
+    @input="onInput()"
+    rows="3"
+    placeholder="Что сегодня важно? Идея, мысль, маленькая победа..."
+    class="w-full bg-transparent border-0 outline-none resize-y text-sm text-[var(--text)] placeholder:text-[var(--text-muted)]/60"
+  ></textarea>
+</section>
