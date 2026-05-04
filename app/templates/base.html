@@ -59,15 +59,35 @@
 
     <script>
       (function() {
+        // Theme modes: 'light' / 'dark' / 'system' (default).
+        // 'system' = no explicit preference, follows prefers-color-scheme dynamically.
+        function applyTheme() {
+          try {
+            var mode = localStorage.getItem('doday-theme') || 'system';
+            var resolved;
+            if (mode === 'light' || mode === 'dark') {
+              resolved = mode;
+            } else {
+              resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            document.documentElement.setAttribute('data-theme', resolved);
+            document.documentElement.setAttribute('data-theme-mode', mode);
+          } catch (e) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+          }
+        }
+        applyTheme();
+        // Re-apply when system preference flips and user is in 'system' mode.
         try {
-          var saved = localStorage.getItem('doday-theme');
-          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          document.documentElement.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+          var mq = window.matchMedia('(prefers-color-scheme: dark)');
+          if (mq.addEventListener) mq.addEventListener('change', applyTheme);
+        } catch (e) {}
+        try {
           var accent = localStorage.getItem('doday-accent');
           if (accent) document.documentElement.setAttribute('data-accent', accent);
-        } catch (e) {
-          document.documentElement.setAttribute('data-theme', 'dark');
-        }
+        } catch (e) {}
+        // Expose globally so the topbar/profile buttons can call it.
+        window.dodayApplyTheme = applyTheme;
       })();
     </script>
 

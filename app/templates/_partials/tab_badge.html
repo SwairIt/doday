@@ -1,0 +1,31 @@
+{# Updates browser tab title with current today-task count: "(N) Doday — page".
+   Hooks into htmx mutations so it stays accurate after toggle/create/delete. #}
+<script>
+  (function() {
+    var BASE = document.title;
+    var ORIG = BASE.replace(/^\(\d+\)\s*/, '');
+    function setBadge(n) {
+      document.title = (n > 0 ? '(' + n + ') ' : '') + ORIG;
+    }
+    var lastFetched = 0;
+    var THROTTLE_MS = 8000;
+    function refresh(force) {
+      var now = Date.now();
+      if (!force && (now - lastFetched < THROTTLE_MS)) return;
+      lastFetched = now;
+      fetch('/api/tasks/today', {credentials: 'include'})
+        .then(function(r){ return r.ok ? r.json() : []; })
+        .then(function(tasks){
+          var n = (tasks || []).filter(function(t){ return !t.is_completed; }).length;
+          setBadge(n);
+        })
+        .catch(function(){});
+    }
+    refresh(true);
+    setInterval(function(){ refresh(false); }, 60000);
+    // Refresh after any HTMX swap (toggle, delete, create) reflects on Today.
+    document.body.addEventListener('htmx:afterSwap', function(){ refresh(true); });
+    // Refresh when the tab regains focus.
+    window.addEventListener('focus', function(){ refresh(true); });
+  })();
+</script>
