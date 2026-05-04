@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.models import User
 from app.auth.schemas import RegisterIn
 from app.auth.security import hash_password, verify_password
+from app.tasks.models import TaskPriority
 
 
 class EmailAlreadyExists(Exception):
@@ -70,15 +71,12 @@ async def mark_email_verified(session: AsyncSession, user_id: str) -> User:
 
 
 async def provision_new_user(session: AsyncSession, user: User) -> None:
-    """One-time onboarding: ensure Inbox + sample tasks visible from day one.
+    """One-time onboarding: ensure Inbox + audience-specific starter tasks.
 
-    Two tasks are dated today (so Today view is not empty), one is tomorrow,
-    one stays in Inbox without a date. Idempotent.
+    Sample set is picked by `user.audience` so a schoolchild, an office worker
+    and a "for me" user each see relevant first impressions. Idempotent.
     """
-    from datetime import timedelta
-
     from app.projects.service import ensure_inbox
-    from app.tasks.models import TaskPriority
     from app.tasks.service import create_task, list_tasks
 
     inbox = await ensure_inbox(session, user.id)
@@ -86,19 +84,7 @@ async def provision_new_user(session: AsyncSession, user: User) -> None:
     if existing:
         return
 
-    today = datetime.now(UTC).replace(hour=23, minute=59, second=0, microsecond=0)
-    tomorrow = today + timedelta(days=1)
-
-    samples = [
-        ("Попробуй закрыть эту задачу — кликни кружок слева", today, TaskPriority.P2),
-        ("Создай свою задачу через «+» вверху", today, TaskPriority.P3),
-        (
-            "Открой задачу мышкой и наведи — появятся кнопки редактировать и удалить",
-            tomorrow,
-            TaskPriority.P4,
-        ),
-        ("Нажми ⌘K (или Ctrl+K) — откроется поиск", None, TaskPriority.P4),
-    ]
+    samples = _starter_samples_for(user.audience)
     for title, due, prio in samples:
         await create_task(
             session,
@@ -108,6 +94,52 @@ async def provision_new_user(session: AsyncSession, user: User) -> None:
             due_at=due,
             priority=prio,
         )
+
+
+def _starter_samples_for(
+    audience: str | None,
+) -> list[tuple[str, datetime | None, TaskPriority]]:
+    """Pick the right onboarding sample set for the chosen audience."""
+    from datetime import timedelta
+
+    today = datetime.now(UTC).replace(hour=23, minute=59, second=0, microsecond=0)
+    tomorrow = today + timedelta(days=1)
+    in_three_days = today + timedelta(days=3)
+
+    if audience == "school":
+        return [
+            ("📚 Сделать домашку на завтра", today, TaskPriority.P1),
+            ("📝 Подготовиться к контрольной", tomorrow, TaskPriority.P2),
+            ("🎒 Собрать рюкзак вечером", today, TaskPriority.P3),
+            ("📖 Прочитать главу по литературе", in_three_days, TaskPriority.P3),
+            ("💡 Совет: ⌘K (или Ctrl+K) — быстрый поиск по задачам", None, TaskPriority.P4),
+        ]
+    if audience == "company":
+        return [
+            ("☕ Утренний стендап в 10:00", today, TaskPriority.P2),
+            ("📊 Подготовить статус-репорт", today, TaskPriority.P1),
+            ("🤝 1:1 встреча с тимлидом", tomorrow, TaskPriority.P2),  # noqa: RUF001
+            ("🚀 Закрыть тикет из спринта", in_three_days, TaskPriority.P3),
+            ("💡 Совет: shift+пробел — добавить задачу из любого экрана", None, TaskPriority.P4),
+        ]
+    if audience == "personal":
+        return [
+            ("🌱 Выпить стакан воды — простой первый чек-ин", today, TaskPriority.P3),
+            ("🛒 Купить продукты на неделю", today, TaskPriority.P2),
+            ("📞 Позвонить близкому человеку", tomorrow, TaskPriority.P3),
+            ("📚 30 минут чтения перед сном", in_three_days, TaskPriority.P4),
+            ("💡 Совет: жми ⌘K (Ctrl+K) — поиск и быстрые команды", None, TaskPriority.P4),
+        ]
+    return [
+        ("Попробуй закрыть эту задачу — кликни кружок слева", today, TaskPriority.P2),
+        ("Создай свою задачу через «+» вверху", today, TaskPriority.P3),
+        (
+            "Открой задачу мышкой и наведи — появятся кнопки редактировать и удалить",
+            tomorrow,
+            TaskPriority.P4,
+        ),
+        ("Нажми ⌘K (или Ctrl+K) — откроется поиск", None, TaskPriority.P4),
+    ]
 
 
 async def authenticate(session: AsyncSession, email: str, password: str) -> User:
