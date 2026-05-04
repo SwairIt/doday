@@ -16,14 +16,24 @@
     {% if project.description %}
       <p class="text-sm mb-1.5 text-[var(--text)]">{{ project.description }}</p>
     {% endif %}
+    {% set total_active = namespace(n=no_section_active|length) %}
+    {% for g in section_groups %}{% set total_active.n = total_active.n + g.tasks|length %}{% endfor %}
+    {% set total = total_active.n + completed|length %}
+    {% set pct = (completed|length * 100 // total) if total else 0 %}
     <p class="text-[var(--text-muted)] text-sm">
-      {% set total_active = no_section_active|length %}
-      {% for g in section_groups %}{% set total_active = total_active + g.tasks|length %}{% endfor %}
-      {{ total_active }} активных
+      {{ total_active.n }} активных
       {% if completed %}· {{ completed|length }} выполнено{% endif %}
       {% if section_groups %}· {{ section_groups|length }} секций{% endif %}
       {% if project.is_inbox %}· системный проект{% endif %}
     </p>
+    {% if total %}
+      <div class="mt-2 flex items-center gap-2 text-xs text-[var(--text-muted)]">
+        <div class="flex-1 h-1.5 bg-[var(--surface-2)] rounded-full overflow-hidden max-w-xs">
+          <div class="h-full grad-bg transition-all duration-500" style="width: {{ pct }}%"></div>
+        </div>
+        <span class="tabular-nums">{{ pct }}%</span>
+      </div>
+    {% endif %}
   </div>
   <div class="flex items-center gap-1 p-1 rounded-xl bg-[var(--surface-2)] text-sm">
     <span class="px-3 py-1.5 rounded-lg grad-bg text-white font-semibold">Список</span>

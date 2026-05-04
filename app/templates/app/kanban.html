@@ -17,6 +17,18 @@
       <p class="text-sm mb-1.5 text-[var(--text)]">{{ project.description }}</p>
     {% endif %}
     <p class="text-[var(--text-muted)] text-sm">Kanban-доска · перетаскивай задачи между колонками</p>
+    {% set total_active_k = namespace(n=no_section_active|length) %}
+    {% for g in section_groups %}{% set total_active_k.n = total_active_k.n + g.tasks|length %}{% endfor %}
+    {% set total_k = total_active_k.n + completed|length %}
+    {% set pct_k = (completed|length * 100 // total_k) if total_k else 0 %}
+    {% if total_k %}
+      <div class="mt-2 flex items-center gap-2 text-xs text-[var(--text-muted)]">
+        <div class="flex-1 h-1.5 bg-[var(--surface-2)] rounded-full overflow-hidden max-w-xs">
+          <div class="h-full grad-bg transition-all duration-500" style="width: {{ pct_k }}%"></div>
+        </div>
+        <span class="tabular-nums">{{ completed|length }} / {{ total_k }} · {{ pct_k }}%</span>
+      </div>
+    {% endif %}
   </div>
   <div class="flex items-center gap-1 p-1 rounded-xl bg-[var(--surface-2)] text-sm">
     <a href="/app/projects/{{ project.slug }}" class="px-3 py-1.5 rounded-lg hover:bg-[var(--surface)] transition">Список</a>
