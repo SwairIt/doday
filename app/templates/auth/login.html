@@ -1,45 +1,149 @@
 {% extends "base.html" %}
 {% block title %}Вход — Doday{% endblock %}
 {% block layout %}
-<div class="min-h-screen flex flex-col">
-  <header class="px-6 py-4">
-    <a href="/" class="inline-flex items-center gap-2.5 font-bold text-xl">
+<style>
+  [x-cloak] { display: none !important; }
+  @keyframes blob-1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(30px,-20px) scale(1.1); } }
+  @keyframes blob-2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-25px,30px) scale(0.95); } }
+  .blob-1 { animation: blob-1 12s ease-in-out infinite; }
+  .blob-2 { animation: blob-2 14s ease-in-out infinite; }
+  .floating-label input:focus + label,
+  .floating-label input:not(:placeholder-shown) + label {
+    transform: translateY(-1.6rem) scale(0.85);
+    color: var(--accent);
+  }
+  .floating-label label {
+    position: absolute;
+    left: 0.85rem;
+    top: 0.7rem;
+    pointer-events: none;
+    transform-origin: left top;
+    transition: transform .18s ease, color .18s ease;
+    color: var(--text-muted);
+    background: var(--surface);
+    padding: 0 0.35rem;
+  }
+</style>
+
+<div class="min-h-screen grid md:grid-cols-2">
+
+  {# ─── LEFT: form ─── #}
+  <div class="flex flex-col px-6 md:px-12 py-8">
+    <a href="/" class="inline-flex items-center gap-2.5 font-bold text-xl mb-12">
       <span class="grad-bg w-9 h-9 rounded-xl flex items-center justify-center text-white font-extrabold shadow-glow">D</span>
       <span class="grad-text">Doday</span>
     </a>
-  </header>
 
-  <main class="flex-1 flex items-center justify-center px-6 py-12">
-    <div class="w-full max-w-md animate-pop-in">
-      <div class="card p-8 relative overflow-hidden">
-        <div class="absolute -top-20 -right-20 w-48 h-48 grad-bg rounded-full blur-3xl opacity-25"></div>
-
-        <h1 class="text-3xl font-bold mb-2 relative">Вход</h1>
-        <p class="text-[var(--text-muted)] mb-7 relative">С возвращением.</p>
+    <div class="flex-1 flex items-center">
+      <div class="w-full max-w-md mx-auto"
+           x-data="{
+             showPwd: false,
+             capsOn: false,
+             email: '',
+             emailValid: false,
+             pwdLen: 0,
+             checkCaps(e) { this.capsOn = e.getModifierState && e.getModifierState('CapsLock'); },
+             validateEmail() { this.emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email); },
+           }">
+        <h1 class="text-3xl md:text-4xl font-bold mb-2">С возвращением</h1>
+        <p class="text-[var(--text-muted)] mb-8">Залогинься и вперёд к делам.</p>
 
         {% if error %}
-          <div class="mb-5 px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-sm relative animate-fade-in">
-            {{ error }}
+          <div class="mb-5 px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-sm flex items-start gap-2 animate-fade-in">
+            <svg class="w-4 h-4 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            <span>{{ error }}</span>
           </div>
         {% endif %}
 
-        <form method="post" action="/auth/login" class="space-y-4 relative">
-          <label class="block">
-            <span class="text-sm font-medium block mb-1.5">Email</span>
-            <input type="email" name="email" required placeholder="ты@example.com" class="input">
-          </label>
-          <label class="block">
-            <span class="text-sm font-medium block mb-1.5">Пароль</span>
-            <input type="password" name="password" required placeholder="••••••••" class="input">
-          </label>
-          <button type="submit" class="btn-primary w-full mt-3">Войти</button>
+        <form method="post" action="/auth/login" class="space-y-5" autocomplete="on">
+          <div class="floating-label relative">
+            <input type="email" name="email" id="email" required placeholder=" "
+                   x-model="email" @input="validateEmail()"
+                   autocomplete="email"
+                   class="w-full px-4 py-3 rounded-xl bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--accent)] outline-none transition pr-10">
+            <label for="email" class="text-sm">Email</label>
+            <div x-show="emailValid" x-cloak x-transition class="absolute right-3 top-3.5 text-emerald-400">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            </div>
+          </div>
+
+          <div>
+            <div class="floating-label relative">
+              <input :type="showPwd ? 'text' : 'password'" name="password" id="password" required placeholder=" "
+                     @input="pwdLen = $event.target.value.length"
+                     @keydown="checkCaps($event)" @keyup="checkCaps($event)"
+                     autocomplete="current-password"
+                     class="w-full px-4 py-3 rounded-xl bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--accent)] outline-none transition pr-12">
+              <label for="password" class="text-sm">Пароль</label>
+              <button type="button" @click="showPwd = !showPwd" tabindex="-1"
+                      :title="showPwd ? 'Скрыть пароль' : 'Показать пароль'"
+                      class="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-2)] transition">
+                <svg x-show="!showPwd" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                <svg x-show="showPwd" x-cloak class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.243 4.243L9.88 9.88"/></svg>
+              </button>
+            </div>
+            <div x-show="capsOn" x-cloak x-transition
+                 class="text-xs text-amber-400 mt-1.5 flex items-center gap-1.5 px-1">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>
+              Включён Caps Lock
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between text-sm">
+            <label class="inline-flex items-center gap-2 cursor-pointer text-[var(--text-muted)]">
+              <input type="checkbox" name="remember" class="accent-[var(--accent)] w-4 h-4">
+              Запомнить меня
+            </label>
+            <a href="/auth/forgot" class="text-[var(--accent)] hover:underline">Забыл пароль?</a>
+          </div>
+
+          <button type="submit" class="btn-primary w-full py-3">
+            Войти
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          </button>
         </form>
 
-        <p class="mt-6 text-sm text-center text-[var(--text-muted)] relative">
-          Нет аккаунта? <a href="/auth/register" class="text-[var(--accent)] hover:underline font-medium">Создать</a>
+        <p class="mt-7 text-sm text-center text-[var(--text-muted)]">
+          Ещё нет аккаунта? <a href="/auth/register" class="text-[var(--accent)] hover:underline font-semibold">Создать</a>
         </p>
       </div>
     </div>
-  </main>
+
+    <p class="text-xs text-[var(--text-muted)] text-center mt-8">
+      © 2026 Doday · <a href="/help" class="hover:text-[var(--text)]">База знаний</a> · <a href="/privacy" class="hover:text-[var(--text)]">Политика</a>
+    </p>
+  </div>
+
+  {# ─── RIGHT: marketing side (hidden on mobile) ─── #}
+  <aside class="hidden md:flex relative bg-[var(--surface-2)] overflow-hidden items-center justify-center p-12">
+    <div class="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+      <div class="absolute top-1/4 left-1/4 w-72 h-72 bg-violet-500/40 rounded-full blur-3xl blob-1"></div>
+      <div class="absolute bottom-1/4 right-1/4 w-72 h-72 bg-fuchsia-500/40 rounded-full blur-3xl blob-2"></div>
+    </div>
+
+    <div class="max-w-md text-left">
+      <div class="text-5xl mb-6">🎯</div>
+      <blockquote class="text-2xl md:text-3xl font-semibold leading-snug mb-5">
+        «Doday — единственный тудулист, к которому я возвращаюсь по своей воле, а не потому что он мне напомнил.»
+      </blockquote>
+      <p class="text-[var(--text-muted)] text-sm mb-8">Один из счастливых пользователей. Стань вторым.</p>
+
+      <div class="space-y-3">
+        {% for line in [
+          "🍅 Pomodoro-таймер на каждой задаче",
+          "📅 Перетаскивай задачи между днями календаря",
+          "⌨️ Полный набор горячих клавиш",
+          "📦 Бэкап в JSON одной кнопкой",
+          "🎨 Тёмная и светлая темы из коробки"
+        ] %}
+          <div class="flex items-center gap-3 text-sm">
+            <span class="text-base">{{ line.split(' ')[0] }}</span>
+            <span>{{ line.split(' ', 1)[1] }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </aside>
+
 </div>
 {% endblock %}
