@@ -194,11 +194,19 @@ standup_widget, today_schedule, daily_note, audience-aware пустые сост
 | C2 | Пятничный retro-промпт (Fr-Sun) для company: 3 поля + история по неделям + копирование в markdown | `3f29c6b` |
 | S2 | Школьная серия `/api/stats/school-streak` — отдельный streak только по задачам с предметом | `9fa4d4c` |
 | S5 | Российские школьные каникулы 2024-2027 в коде, `/api/school/holiday`, баннер «Каникулы! Осталось N дней» / «До каникул N дней» | `bae22d8`, `42343a4` |
+| FX | Пин TZ='UTC' на каждое asyncpg-соединение — устраняет off-by-one в `func.date(timestamptz)` ночью локального TZ | `633a37d` |
 
 Новые модели: `users.ical_token` (0014), `habits` + `habit_checkins` (0015).
 Новые модули: `app/habits/`, `app/school/holidays.py`.
 Новые экраны: `/app/habits` с эмодзи-чекбоксами и сеткой 30 дней.
 Новые виджеты на /today: sprint, retro, school_streak, school_holiday.
+
+**Финальный прогон тестов после ночной автономки: 497 passed (~11.5 мин), 0 failed.**
+
+Найденный и пофикшенный баг: streak-эндпоинты возвращали 0 в первые часы
+московских суток — Postgres-сессия исполняла `func.date()` в локальном TZ,
+а Python-«сегодня» считалось в UTC, даты не совпадали. Теперь все
+asyncpg-соединения принудительно UTC (через `connect_args.server_settings`).
 
 Весь backlog с ~80 идеями (universal QoL, парсер дат, рекуррентность, school,
 company, personal, геймификация, инфра) лежит в `docs/ideas-2026-05-04.md`
