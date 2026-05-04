@@ -16,11 +16,11 @@
         <div class="sticky top-0 bg-[var(--bg)] py-2 z-10 mb-3">
           <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text)]">
             {{ day.label }}
-            <span class="text-xs text-[var(--text-muted)] font-normal">· {{ day.items|length }}</span>
+            <span class="text-xs text-[var(--text-muted)] font-normal">· {{ day.events|length }}</span>
           </h2>
         </div>
         <div class="space-y-2">
-          {% for it in day["items"] %}
+          {% for it in day.events %}
             <div class="card p-3 flex items-start gap-3 hover:border-[var(--accent)] transition cursor-pointer"
                  hx-get="/htmx/tasks/{{ it.task_id }}/detail"
                  hx-target="#task-detail-slot"

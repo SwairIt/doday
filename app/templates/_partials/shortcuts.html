@@ -32,6 +32,7 @@
           if (e.key === 's') { e.preventDefault(); window.location.href = '/app/stats'; return; }
           if (e.key === 'd') { e.preventDefault(); window.location.href = '/app/done'; return; }
           if (e.key === 'l') { e.preventDefault(); window.location.href = '/app/labels'; return; }
+          if (e.key === 'v') { e.preventDefault(); window.location.href = '/app/activity'; return; }
           if (e.key === 'p') { e.preventDefault(); window.location.href = '/app/profile'; return; }
           if (e.key === 'a') { e.preventDefault(); window.location.href = '/app/projects-archive'; return; }
           if (e.key === 'f') { e.preventDefault(); window.location.href = '/app/filters'; return; }
@@ -88,6 +89,7 @@
               ('g s', 'Статистика'),
               ('g d', 'Завершённые'),
               ('g l', 'Лейблы'),
+              ('g v', 'Активность'),
               ('g p', 'Профиль'),
               ('g f', 'Мои фильтры'),
               ('g a', 'Архив проектов'),

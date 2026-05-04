@@ -390,9 +390,7 @@ async def activity_view(request: Request, user: RequiredUser, session: DbSession
     comment_rows = (
         (
             await session.execute(
-                sa_select(Comment).where(
-                    Comment.user_id == user.id, Comment.created_at >= cutoff
-                )
+                sa_select(Comment).where(Comment.user_id == user.id, Comment.created_at >= cutoff)
             )
         )
         .scalars()
@@ -462,10 +460,9 @@ async def activity_view(request: Request, user: RequiredUser, session: DbSession
             label = "Вчера"
         else:
             label = (
-                f"{_RU_WEEKDAYS[d.weekday()].capitalize()}, "
-                f"{d.day} {_RU_MONTHS_GEN[d.month - 1]}"
+                f"{_RU_WEEKDAYS[d.weekday()].capitalize()}, {d.day} {_RU_MONTHS_GEN[d.month - 1]}"
             )
-        days.append({"date": d, "label": label, "items": grouped[d]})
+        days.append({"date": d, "label": label, "events": grouped[d]})
 
     return templates.TemplateResponse(
         request,
