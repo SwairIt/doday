@@ -250,6 +250,83 @@ async def update_task(
     return task
 
 
+async def duplicate_task(
+    session: AsyncSession, user_id: UUID, task_id: UUID
+) -> Task:
+    """Clone a single task. Subtasks are copied recursively, parent stays sibling."""
+    src = await get_task(session, user_id, task_id)
+    parent_filter = (
+        Task.parent_task_id.is_(None)
+        if src.parent_task_id is None
+        else Task.parent_task_id == src.parent_task_id
+    )
+    sibling_last = (
+        await session.execute(
+            select(Task)
+            .where(
+                Task.user_id == user_id,
+                Task.project_id == src.project_id,
+                parent_filter,
+            )
+            .order_by(Task.position.desc())
+            .limit(1)
+        )
+    ).scalar_one_or_none()
+    next_pos = (sibling_last.position + 1) if sibling_last else 0
+
+    new_root = Task(
+        user_id=user_id,
+        project_id=src.project_id,
+        parent_task_id=src.parent_task_id,
+        section_id=src.section_id,
+        title=src.title + " (копия)",
+        description=src.description,
+        due_at=src.due_at,
+        due_date_only=src.due_date_only,
+        priority=src.priority,
+        position=next_pos,
+        recurrence=src.recurrence,
+    )
+    session.add(new_root)
+    await session.flush()
+
+    # Recursively copy children depth-first.
+    async def _copy_children(orig_id: UUID, new_parent_id: UUID) -> None:
+        children = (
+            (
+                await session.execute(
+                    select(Task)
+                    .where(Task.user_id == user_id, Task.parent_task_id == orig_id)
+                    .order_by(Task.position)
+                )
+            )
+            .scalars()
+            .all()
+        )
+        for c in children:
+            new_c = Task(
+                user_id=user_id,
+                project_id=c.project_id,
+                parent_task_id=new_parent_id,
+                section_id=c.section_id,
+                title=c.title,
+                description=c.description,
+                due_at=c.due_at,
+                due_date_only=c.due_date_only,
+                priority=c.priority,
+                position=c.position,
+                recurrence=c.recurrence,
+            )
+            session.add(new_c)
+            await session.flush()
+            await _copy_children(c.id, new_c.id)
+
+    await _copy_children(src.id, new_root.id)
+    await session.commit()
+    await session.refresh(new_root)
+    return new_root
+
+
 async def complete_task(session: AsyncSession, user_id: UUID, task_id: UUID) -> Task:
     """Mark task complete. If `recurrence` is set, also spawn the next instance."""
     task = await get_task(session, user_id, task_id)

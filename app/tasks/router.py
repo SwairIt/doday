@@ -14,6 +14,7 @@ from app.tasks.service import (
     complete_task,
     create_task,
     delete_task,
+    duplicate_task,
     list_tasks,
     list_today,
     list_upcoming,
@@ -111,6 +112,15 @@ async def complete_endpoint(task_id: UUID, user: RequiredUser, session: DbSessio
     except TaskNotFound as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
     return TaskOut.model_validate(task)
+
+
+@router.post("/{task_id}/duplicate", response_model=TaskOut, status_code=status.HTTP_201_CREATED)
+async def duplicate_endpoint(task_id: UUID, user: RequiredUser, session: DbSession) -> TaskOut:
+    try:
+        new = await duplicate_task(session, user.id, task_id)
+    except TaskNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
+    return TaskOut.model_validate(new)
 
 
 @router.post("/{task_id}/uncomplete", response_model=TaskOut)
