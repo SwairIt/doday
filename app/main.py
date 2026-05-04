@@ -1,6 +1,7 @@
 """FastAPI application entrypoint."""
 
 from fastapi import FastAPI
+from fastapi.responses import Response
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.auth.router import router as auth_router
@@ -71,3 +72,88 @@ app.include_router(calendar_feed_router)
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+# ---------------------------------------------------------------------------
+# PWA endpoints — manifest + service worker. Inlined so we don't need a
+# separate static directory or build step. Icon is rendered as inline SVG
+# data-URL inside the manifest to avoid extra HTTP round-trips.
+# ---------------------------------------------------------------------------
+
+_PWA_ICON_SVG = (
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">'
+    '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'
+    '<stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#d946ef"/>'
+    "</linearGradient></defs>"
+    '<rect width="192" height="192" rx="40" fill="url(#g)"/>'
+    '<text x="50%" y="56%" text-anchor="middle" dominant-baseline="middle" '
+    'font-family="Inter,Arial,sans-serif" font-weight="800" font-size="120" fill="white">D</text>'
+    "</svg>"
+)
+
+
+@app.get("/manifest.webmanifest")
+async def pwa_manifest() -> Response:
+    import json
+    from urllib.parse import quote
+
+    icon_url = "data:image/svg+xml;utf8," + quote(_PWA_ICON_SVG)
+    body = json.dumps(
+        {
+            "name": "Doday — todo для всех",
+            "short_name": "Doday",
+            "description": "Бесплатный туду-лист для школьников, компаний и личных дел",
+            "lang": "ru",
+            "start_url": "/app/today",
+            "scope": "/",
+            "display": "standalone",
+            "orientation": "portrait",
+            "background_color": "#0d0820",
+            "theme_color": "#7c3aed",
+            "icons": [
+                {"src": icon_url, "sizes": "192x192", "type": "image/svg+xml", "purpose": "any"},
+                {
+                    "src": icon_url,
+                    "sizes": "512x512",
+                    "type": "image/svg+xml",
+                    "purpose": "any maskable",
+                },
+            ],
+        },
+        ensure_ascii=False,
+    )
+    return Response(content=body, media_type="application/manifest+json")
+
+
+@app.get("/service-worker.js")
+async def pwa_service_worker() -> Response:
+    body = """// Doday service worker — minimal cache-first for the app shell, network for everything else.
+const CACHE = 'doday-shell-v1';
+const SHELL = ['/app/today', '/manifest.webmanifest'];
+
+self.addEventListener('install', (e) => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL).catch(() => null)).then(() => self.skipWaiting()));
+});
+
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', (e) => {
+  const req = e.request;
+  if (req.method !== 'GET') return;
+  // Never cache the API.
+  if (new URL(req.url).pathname.startsWith('/api/')) return;
+  e.respondWith(
+    fetch(req).then(r => {
+      const copy = r.clone();
+      caches.open(CACHE).then(c => c.put(req, copy)).catch(() => null);
+      return r;
+    }).catch(() => caches.match(req).then(c => c || new Response('Offline', {status: 503})))
+  );
+});
+"""
+    return Response(content=body, media_type="application/javascript")
