@@ -17,6 +17,8 @@ from app.projects.router import router as projects_router
 from app.sections.router import router as sections_router
 from app.tasks.router import reorder_router as tasks_reorder_router
 from app.tasks.router import router as tasks_router
+from app.user_templates.router import router as user_templates_router
+from app.user_templates.router import save_router as save_as_template_router
 from app.views.htmx import router as htmx_router
 from app.views.router import router as views_router
 
@@ -50,6 +52,8 @@ app.include_router(backup_router)
 app.include_router(task_comments_router)
 app.include_router(comments_router)
 app.include_router(custom_filters_router)
+app.include_router(user_templates_router)
+app.include_router(save_as_template_router)
 
 
 @app.get("/health")
