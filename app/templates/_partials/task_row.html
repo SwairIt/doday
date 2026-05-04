@@ -32,27 +32,23 @@
     >
   </label>
 
-  {# Subtask expand caret (only for top-level tasks). #}
-  {% if not is_subtask %}
-    <button
-      type="button"
-      title="Подзадачи"
-      class="shrink-0 w-5 h-5 rounded text-[var(--text-muted)] hover:text-[var(--accent)] transition"
-      :class="subsOpen ? 'rotate-90' : ''"
-      style="transition: transform 150ms"
-      @click="
-        subsOpen = !subsOpen;
-        if (subsOpen) htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/subtasks', { target: '#subtasks-of-{{ task.id }}-slot', swap: 'innerHTML' });
-        else document.getElementById('subtasks-of-{{ task.id }}-slot').innerHTML = '';
-      "
-    >
-      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-      </svg>
-    </button>
-  {% else %}
-    <span class="w-2 shrink-0"></span>
-  {% endif %}
+  {# Subtask expand caret — shown for any task; nested subtasks supported. #}
+  <button
+    type="button"
+    title="Подзадачи"
+    class="shrink-0 w-5 h-5 rounded text-[var(--text-muted)] hover:text-[var(--accent)] transition"
+    :class="subsOpen ? 'rotate-90' : ''"
+    style="transition: transform 150ms"
+    @click="
+      subsOpen = !subsOpen;
+      if (subsOpen) htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/subtasks', { target: '#subtasks-of-{{ task.id }}-slot', swap: 'innerHTML' });
+      else document.getElementById('subtasks-of-{{ task.id }}-slot').innerHTML = '';
+    "
+  >
+    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+    </svg>
+  </button>
 
   {# Complete-toggle circle. #}
   <button
@@ -226,8 +222,6 @@
     </div>
   </div>
 </div>
-{% if not is_subtask %}
-  <div id="subtasks-of-{{ task.id }}-slot"></div>
-{% endif %}
+<div id="subtasks-of-{{ task.id }}-slot"></div>
 <div id="comments-slot-{{ task.id }}"></div>
 </div>

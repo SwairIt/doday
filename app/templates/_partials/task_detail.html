@@ -243,9 +243,8 @@
       </div>
     </div>
 
-    {% if not task.parent_task_id %}
-      <div class="px-5 py-4 border-b border-[var(--border)]">
-        <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider mb-2">Подзадачи · {{ subtasks|length }}</div>
+    <div class="px-5 py-4 border-b border-[var(--border)]">
+      <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider mb-2">Подзадачи · {{ subtasks|length }}</div>
         <div class="space-y-1.5 mb-2">
           {% for sub in subtasks %}
             {% set sub_prio = {'p1': 'rose', 'p2': 'amber', 'p3': 'sky', 'p4': 'slate'}[sub.priority.value] %}
@@ -279,7 +278,6 @@
           <button type="submit" class="btn-primary px-3 py-1.5 text-sm">+</button>
         </form>
       </div>
-    {% endif %}
 
     <div class="px-5 py-4">
       <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider mb-2">Комментарии · {{ comments|length }}</div>

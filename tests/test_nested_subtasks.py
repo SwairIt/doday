@@ -42,3 +42,26 @@ async def test_reparent_to_subtask_via_patch(logged_in_client: AsyncClient) -> N
     )
     assert response.status_code == 200
     assert response.json()["parent_task_id"] == child["id"]
+
+
+async def test_subtask_row_renders_expand_caret_for_nested(
+    logged_in_client: AsyncClient,
+) -> None:
+    """Bug fix: previously only top-level rows had the caret + slot — sub-subtasks
+    were created via API but invisible. Now the caret + slot live on every row."""
+    parent = (await logged_in_client.post("/api/tasks", json={"title": "P"})).json()
+    child = (
+        await logged_in_client.post(
+            "/api/tasks", json={"title": "C", "parent_task_id": parent["id"]}
+        )
+    ).json()
+    grandchild_resp = await logged_in_client.post(
+        "/api/tasks", json={"title": "GC", "parent_task_id": child["id"]}
+    )
+    assert grandchild_resp.status_code == 201
+
+    # The subtasks block of the immediate child must include the caret + slot
+    # so the user can drill further.
+    subs_html = (await logged_in_client.get(f"/htmx/tasks/{parent['id']}/subtasks")).text
+    assert f'subtasks-of-{child["id"]}-slot' in subs_html
+    assert f"/htmx/tasks/{child['id']}/subtasks" in subs_html
