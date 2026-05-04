@@ -250,9 +250,7 @@ async def update_task(
     return task
 
 
-async def duplicate_task(
-    session: AsyncSession, user_id: UUID, task_id: UUID
-) -> Task:
+async def duplicate_task(session: AsyncSession, user_id: UUID, task_id: UUID) -> Task:
     """Clone a single task. Subtasks are copied recursively, parent stays sibling."""
     src = await get_task(session, user_id, task_id)
     parent_filter = (

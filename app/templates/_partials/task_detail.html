@@ -65,12 +65,53 @@
           class="flex-1 bg-transparent border-none outline-none text-xl font-bold {% if task.is_completed %}line-through text-[var(--text-muted)]{% endif %}"
         >
       </div>
-      <textarea
-        name="description"
-        rows="3"
-        placeholder="Описание (markdown поддерживается простым текстом)…"
-        class="w-full bg-[var(--surface-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm outline-none focus:border-[var(--accent)] transition resize-y"
-      >{{ task.description or '' }}</textarea>
+      <div x-data="{
+             text: {{ (task.description or '')|tojson }},
+             editing: false,
+             render(s) {
+               if (!s) return '';
+               // Escape HTML first to prevent injection.
+               let h = s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+               // Code blocks first (greedy fence), then inline code.
+               h = h.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+               h = h.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+               // Headings.
+               h = h.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+               h = h.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+               h = h.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+               // Bold + italic.
+               h = h.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+               h = h.replace(/(?:^|[^*])\*([^*\n]+)\*/g, function(m, g){ return m[0] === '*' ? '*' + g + '*' : m[0] + '<em>' + g + '</em>'; });
+               // Links [text](url).
+               h = h.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href=\"$2\" target=\"_blank\" rel=\"noopener\">$1</a>');
+               // Bullet lists.
+               h = h.replace(/(?:^|\n)((?:- .+\n?)+)/g, function(m, block){
+                 const items = block.trim().split(/\n/).map(l => '<li>' + l.replace(/^- /, '') + '</li>').join('');
+                 return '\n<ul>' + items + '</ul>';
+               });
+               // Paragraph breaks.
+               h = h.replace(/\n{2,}/g, '</p><p>');
+               h = '<p>' + h + '</p>';
+               // Cleanup: don't wrap headings/lists/pre in <p>.
+               h = h.replace(/<p>(\s*<(h[1-3]|ul|pre)>)/g, '$1').replace(/(<\/(h[1-3]|ul|pre)>)\s*<\/p>/g, '$1');
+               return h;
+             }
+           }">
+        <textarea
+          name="description"
+          x-model="text"
+          @focus="editing = true"
+          rows="3"
+          placeholder="Описание (поддерживает # заголовки, **жирный**, *курсив*, `код`, [ссылки](url), - списки)"
+          class="w-full bg-[var(--surface-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm outline-none focus:border-[var(--accent)] transition resize-y"
+        ></textarea>
+        <div x-show="text && !editing" x-cloak
+             class="md-preview mt-2 px-3 py-2 rounded-lg bg-[var(--surface-2)]/40 text-sm leading-relaxed"
+             x-html="render(text)"></div>
+        <div x-show="editing && text" x-cloak class="text-[10px] text-[var(--text-muted)] mt-1 px-1">
+          Снимешь фокус — увидишь preview. Поддержка: # / ## / ###, **bold**, *italic*, `code`, [link](url), - lists.
+        </div>
+      </div>
       <div class="flex justify-end">
         <button type="submit" class="btn-primary px-4 py-1.5 text-sm">Сохранить</button>
       </div>
@@ -115,6 +156,61 @@
         <input type="date" :value="'{{ task.due_at.strftime('%Y-%m-%d') if task.due_at else '' }}'"
                @change="setDue($event.target.value)"
                class="w-full bg-[var(--surface-2)] border border-[var(--border)] rounded px-3 py-1.5 text-sm outline-none focus:border-[var(--accent)] transition">
+      </div>
+
+      <div x-data="{
+             open: false,
+             sections: [],
+             currentSectionId: {{ (task.section_id|string)|tojson if task.section_id else 'null' }},
+             async load() {
+               try {
+                 const r = await fetch('/api/sections?project_id={{ task.project_id }}', {credentials: 'include'});
+                 if (r.ok) this.sections = await r.json();
+               } catch (e) {}
+             },
+             async setSection(secId) {
+               const r = await fetch('/api/tasks/{{ task.id }}', {
+                 method: 'PATCH', credentials: 'include',
+                 headers: {'Content-Type': 'application/json'},
+                 body: JSON.stringify({section_id: secId}),
+               });
+               if (r.ok) {
+                 this.currentSectionId = secId;
+                 this.open = false;
+                 htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/detail', {target: '#task-detail-slot', swap: 'innerHTML'});
+               }
+             },
+             currentName() {
+               const m = this.sections.find(s => s.id === this.currentSectionId);
+               return m ? m.name : 'Без секции';
+             },
+           }" x-init="load()" class="relative">
+        <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider mb-2 flex items-center justify-between">
+          <span>Секция</span>
+          <button type="button" @click="open = !open"
+                  class="text-[10px] normal-case font-medium px-2 py-0.5 rounded hover:bg-[var(--surface-2)] text-[var(--accent)]">
+            <span x-text="currentName()"></span>
+            <svg class="w-3 h-3 inline -mt-0.5 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+        </div>
+        <div x-show="open" x-cloak @click.outside="open = false" x-transition
+             class="absolute right-0 top-full mt-1 z-30 card p-1 w-56 shadow-lg space-y-0.5">
+          <button type="button" @click="setSection(null)"
+                  :class="!currentSectionId ? 'bg-[var(--accent)]/15 text-[var(--accent)]' : 'hover:bg-[var(--surface-2)]'"
+                  class="w-full text-left text-sm px-3 py-1.5 rounded transition flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+            Без секции
+          </button>
+          <template x-for="s in sections" :key="s.id">
+            <button type="button" @click="setSection(s.id)"
+                    :class="currentSectionId === s.id ? 'bg-[var(--accent)]/15 text-[var(--accent)]' : 'hover:bg-[var(--surface-2)]'"
+                    class="w-full text-left text-sm px-3 py-1.5 rounded transition flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full" :class="'bg-' + '{{ project.color }}' + '-500'"></span>
+              <span class="truncate" x-text="s.name"></span>
+            </button>
+          </template>
+          <div x-show="!sections.length" class="text-xs text-[var(--text-muted)] italic px-3 py-1">Секций в проекте нет</div>
+        </div>
       </div>
 
       <div x-data="{ open: false }" class="relative">

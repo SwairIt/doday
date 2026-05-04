@@ -115,6 +115,20 @@ async def today_view(request: Request, user: RequiredUser, session: DbSession) -
     )
     done_today_count = done_today_count_row.scalar_one()
 
+    week_start = today_date - timedelta(days=today_date.weekday())
+    done_week_count_row = await session.execute(
+        sa_select(func.count())
+        .select_from(Task)
+        .where(
+            Task.user_id == user.id,
+            Task.is_completed.is_(True),
+            Task.completed_at.is_not(None),
+            func.date(Task.completed_at) >= week_start,
+            func.date(Task.completed_at) <= today_date,
+        )
+    )
+    done_week_count = done_week_count_row.scalar_one()
+
     return templates.TemplateResponse(
         request,
         "app/today.html",
@@ -127,6 +141,7 @@ async def today_view(request: Request, user: RequiredUser, session: DbSession) -
             "overdue": overdue,
             "today": today,
             "done_today_count": done_today_count,
+            "done_week_count": done_week_count,
         },
     )
 

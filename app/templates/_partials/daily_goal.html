@@ -1,44 +1,102 @@
-{# Daily goal card — target stored in localStorage, progress server-rendered. #}
+{# Daily + weekly goal card with progress bars + confetti when daily goal hit. #}
 <div
   x-data="{
     target: parseInt(localStorage.getItem('doday-daily-goal') || '5'),
+    weekTarget: parseInt(localStorage.getItem('doday-weekly-goal') || '25'),
     done: {{ done_today_count }},
+    doneWeek: {{ done_week_count }},
     editing: false,
+    editingWeek: false,
     draft: 5,
+    draftWeek: 25,
+    celebrated: localStorage.getItem('doday-celebrated-' + new Date().toISOString().slice(0,10)) === 'yes',
+    init() {
+      // If page loaded already past goal and we haven't celebrated today — celebrate.
+      if (this.done >= this.target && !this.celebrated) this.celebrate();
+    },
     get pct() { return Math.min(100, Math.round(this.done / Math.max(1, this.target) * 100)); },
+    get pctWeek() { return Math.min(100, Math.round(this.doneWeek / Math.max(1, this.weekTarget) * 100)); },
     save() {
       const n = parseInt(this.draft);
       if (!n || n < 1) { this.editing = false; return; }
       this.target = Math.min(50, n);
       try { localStorage.setItem('doday-daily-goal', this.target); } catch (e) {}
       this.editing = false;
-    }
+    },
+    saveWeek() {
+      const n = parseInt(this.draftWeek);
+      if (!n || n < 1) { this.editingWeek = false; return; }
+      this.weekTarget = Math.min(200, n);
+      try { localStorage.setItem('doday-weekly-goal', this.weekTarget); } catch (e) {}
+      this.editingWeek = false;
+    },
+    celebrate() {
+      try { localStorage.setItem('doday-celebrated-' + new Date().toISOString().slice(0,10), 'yes'); } catch (e) {}
+      this.celebrated = true;
+      const stage = document.createElement('div');
+      stage.className = 'confetti-stage';
+      const colors = ['#7c3aed','#d946ef','#f43f5e','#f59e0b','#10b981','#0ea5e9','#fb923c'];
+      for (let i = 0; i < 80; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left = Math.random() * 100 + 'vw';
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.animationDelay = (Math.random() * 0.6) + 's';
+        piece.style.animationDuration = (1.6 + Math.random() * 1.6) + 's';
+        stage.appendChild(piece);
+      }
+      document.body.appendChild(stage);
+      setTimeout(() => stage.remove(), 4000);
+    },
   }"
-  class="card p-4 mb-6 flex items-center gap-4"
+  class="card p-4 mb-6 space-y-3"
 >
-  <div class="text-3xl shrink-0" x-text="pct >= 100 ? '🎉' : pct > 0 ? '🔥' : '🎯'"></div>
-  <div class="flex-1 min-w-0">
-    <div class="flex items-center gap-2 mb-1.5">
-      <span class="text-sm font-semibold">
-        Цель на день:
-        <span x-show="!editing" @dblclick="draft = target; editing = true; $nextTick(() => $refs.goalInput.focus())"
-              class="cursor-text grad-text" x-text="target"></span>
-        <input x-show="editing" x-cloak x-model="draft" x-ref="goalInput" type="number" min="1" max="50"
-               @blur="save()" @keydown.enter.prevent="$el.blur()" @keydown.escape="editing = false"
-               class="w-12 bg-[var(--surface-2)] border border-[var(--accent)] rounded px-1 py-0.5 text-sm font-semibold outline-none">
-        задач(и)
-      </span>
-      <span class="ml-auto text-sm text-[var(--text-muted)] tabular-nums">
-        <span x-text="done"></span> / <span x-text="target"></span>
-      </span>
-    </div>
-    <div class="h-2 bg-[var(--surface-2)] rounded-full overflow-hidden">
-      <div class="h-full grad-bg transition-all duration-500"
-           :style="`width: ${pct}%`"
-           :class="pct >= 100 ? 'shadow-glow' : ''"></div>
-    </div>
-    <div class="text-[10px] text-[var(--text-muted)] mt-1">
-      Дважды кликни по числу, чтобы изменить цель.
+  {# Daily goal row #}
+  <div class="flex items-center gap-4">
+    <div class="text-3xl shrink-0" x-text="pct >= 100 ? '🎉' : pct > 0 ? '🔥' : '🎯'"></div>
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2 mb-1.5">
+        <span class="text-sm font-semibold">
+          Цель на день:
+          <span x-show="!editing" @dblclick="draft = target; editing = true; $nextTick(() => $refs.goalInput.focus())"
+                class="cursor-text grad-text" x-text="target"></span>
+          <input x-show="editing" x-cloak x-model="draft" x-ref="goalInput" type="number" min="1" max="50"
+                 @blur="save()" @keydown.enter.prevent="$el.blur()" @keydown.escape="editing = false"
+                 class="w-12 bg-[var(--surface-2)] border border-[var(--accent)] rounded px-1 py-0.5 text-sm font-semibold outline-none">
+          задач(и)
+        </span>
+        <span class="ml-auto text-sm text-[var(--text-muted)] tabular-nums">
+          <span x-text="done"></span> / <span x-text="target"></span>
+        </span>
+      </div>
+      <div class="h-2 bg-[var(--surface-2)] rounded-full overflow-hidden">
+        <div class="h-full grad-bg transition-all duration-500"
+             :style="`width: ${pct}%`"
+             :class="pct >= 100 ? 'shadow-glow' : ''"></div>
+      </div>
     </div>
   </div>
+
+  {# Weekly goal row — compact #}
+  <div class="flex items-center gap-4 pl-12">
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2 mb-1 text-xs">
+        <span class="text-[var(--text-muted)] uppercase tracking-wider font-semibold">На неделе</span>
+        <span x-show="!editingWeek" @dblclick="draftWeek = weekTarget; editingWeek = true; $nextTick(() => $refs.weekInput.focus())"
+              class="cursor-text font-mono text-[var(--text)]"><span x-text="doneWeek"></span> / <span x-text="weekTarget"></span></span>
+        <input x-show="editingWeek" x-cloak x-model="draftWeek" x-ref="weekInput" type="number" min="1" max="200"
+               @blur="saveWeek()" @keydown.enter.prevent="$el.blur()" @keydown.escape="editingWeek = false"
+               class="w-14 bg-[var(--surface-2)] border border-[var(--accent)] rounded px-1 py-0 text-xs font-semibold outline-none">
+        <span class="ml-auto tabular-nums text-[var(--text-muted)]" x-text="pctWeek + '%'"></span>
+      </div>
+      <div class="h-1 bg-[var(--surface-2)] rounded-full overflow-hidden">
+        <div class="h-full transition-all duration-500"
+             :style="`width: ${pctWeek}%; background: linear-gradient(90deg, var(--accent), var(--accent-2))`"></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="text-[10px] text-[var(--text-muted)] text-center pt-1">
+    Дважды кликни по числу, чтобы изменить цель.
+  </p>
 </div>

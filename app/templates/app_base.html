@@ -44,6 +44,29 @@
 {% include "_partials/notifications.html" %}
 {% include "_partials/tab_badge.html" %}
 
+{# Focus mode — `f` toggles, exit pill stays visible while active. #}
+<button type="button"
+        @click="document.body.classList.remove('focus-mode')"
+        class="focus-exit-pill items-center gap-2 px-3 py-1.5 rounded-full grad-bg text-white text-xs font-semibold shadow-glow"
+        x-data>
+  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+  Выйти из focus
+</button>
+<script>
+  (function() {
+    document.addEventListener('keydown', function(e) {
+      const tag = (e.target && e.target.tagName) || '';
+      const isField = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (e.target && e.target.isContentEditable);
+      if (isField) return;
+      if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+      if (e.key === 'f') {
+        e.preventDefault();
+        document.body.classList.toggle('focus-mode');
+      }
+    });
+  })();
+</script>
+
 <div id="task-detail-slot"></div>
 
 {# Mobile FAB → opens search palette. Sits above the bottom nav. #}

@@ -210,6 +210,50 @@
         background: linear-gradient(135deg, var(--grad-from) 0%, var(--grad-to) 100%);
       }
 
+      /* Markdown preview inside task detail panel + anywhere else .md-preview is used. */
+      .md-preview h1 { font-size: 1.25rem; font-weight: 700; margin: 0.6em 0 0.3em; }
+      .md-preview h2 { font-size: 1.1rem; font-weight: 600; margin: 0.5em 0 0.25em; }
+      .md-preview h3 { font-size: 1rem; font-weight: 600; margin: 0.4em 0 0.2em; }
+      .md-preview p { margin: 0.4em 0; }
+      .md-preview ul { margin: 0.4em 0; padding-left: 1.4em; list-style: disc; }
+      .md-preview li { margin: 0.1em 0; }
+      .md-preview code { background: var(--surface); padding: 0.05em 0.35em; border-radius: 4px; font-size: 0.9em; }
+      .md-preview pre { background: var(--surface); border: 1px solid var(--border); padding: 0.6em 0.8em; border-radius: 8px; margin: 0.5em 0; overflow-x: auto; }
+      .md-preview pre code { background: transparent; padding: 0; }
+      .md-preview a { color: var(--accent); text-decoration: underline; }
+      .md-preview strong { font-weight: 700; }
+      .md-preview em { font-style: italic; }
+
+      /* Focus mode — hides chrome so user sees only the task list. Toggled by `f` shortcut. */
+      body.focus-mode aside,
+      body.focus-mode header.glass,
+      body.focus-mode nav.md\:hidden {
+        display: none !important;
+      }
+      body.focus-mode > div.min-h-screen > div { max-width: 760px; margin: 0 auto; }
+      .focus-exit-pill {
+        position: fixed;
+        top: 0.75rem;
+        right: 0.75rem;
+        z-index: 60;
+        display: none;
+      }
+      body.focus-mode .focus-exit-pill { display: inline-flex; }
+
+      /* Confetti container — fixed full-screen overlay, pointer-events disabled. */
+      .confetti-stage {
+        position: fixed; inset: 0; pointer-events: none; z-index: 100;
+        overflow: hidden;
+      }
+      @keyframes confetti-fall {
+        0% { transform: translateY(-20vh) rotate(0); opacity: 1; }
+        100% { transform: translateY(120vh) rotate(720deg); opacity: 0; }
+      }
+      .confetti-piece {
+        position: absolute; top: 0; width: 10px; height: 14px; border-radius: 2px;
+        animation: confetti-fall 2.4s ease-in forwards;
+      }
+
       html { scroll-behavior: smooth; }
       @media (prefers-reduced-motion: reduce) {
         html { scroll-behavior: auto; }

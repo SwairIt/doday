@@ -23,7 +23,7 @@ async def test_landing_pricing_lists_three_tiers(client: AsyncClient) -> None:
     body = (await client.get("/")).text
     # Section heading + tier names.
     assert ">Free<" in body
-    assert ">Pro<" in body or "grad-text\">Pro</h3>" in body
+    assert ">Pro<" in body or 'grad-text">Pro</h3>' in body
     assert ">Team<" in body
     # Trial promise + pricing markers.
     assert "14 дней Pro" in body or "14 дней" in body
