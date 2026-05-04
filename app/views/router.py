@@ -92,6 +92,9 @@ async def app_root() -> Response:
 
 @router.get("/today", response_class=HTMLResponse)
 async def today_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
+    from sqlalchemy import func
+    from sqlalchemy import select as sa_select
+
     projects = await list_projects(session, user.id)
     project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
 
@@ -99,6 +102,18 @@ async def today_view(request: Request, user: RequiredUser, session: DbSession) -
     today_date = datetime.now(UTC).date()
     overdue = [t for t in tasks if t.due_at and t.due_at.date() < today_date]
     today = [t for t in tasks if t.due_at and t.due_at.date() >= today_date]
+
+    done_today_count_row = await session.execute(
+        sa_select(func.count())
+        .select_from(Task)
+        .where(
+            Task.user_id == user.id,
+            Task.is_completed.is_(True),
+            Task.completed_at.is_not(None),
+            func.date(Task.completed_at) == today_date,
+        )
+    )
+    done_today_count = done_today_count_row.scalar_one()
 
     return templates.TemplateResponse(
         request,
@@ -111,6 +126,7 @@ async def today_view(request: Request, user: RequiredUser, session: DbSession) -
             "today_label": _today_label(today_date),
             "overdue": overdue,
             "today": today,
+            "done_today_count": done_today_count,
         },
     )
 

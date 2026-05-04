@@ -29,6 +29,23 @@ async def test_calendar_chips_are_draggable(logged_in_client: AsyncClient) -> No
     assert "Перетаскивай задачи" in page.text
 
 
+async def test_daily_goal_card_renders(logged_in_client: AsyncClient) -> None:
+    page = await logged_in_client.get("/app/today")
+    assert page.status_code == 200
+    assert "Цель на день" in page.text
+    assert "doday-daily-goal" in page.text
+
+
+async def test_daily_goal_count_reflects_completed_today(logged_in_client: AsyncClient) -> None:
+    t1 = (await logged_in_client.post("/api/tasks", json={"title": "G1"})).json()
+    t2 = (await logged_in_client.post("/api/tasks", json={"title": "G2"})).json()
+    await logged_in_client.post(f"/api/tasks/{t1['id']}/complete")
+    await logged_in_client.post(f"/api/tasks/{t2['id']}/complete")
+    page = await logged_in_client.get("/app/today")
+    # Alpine x-data has `done: {{ done_today_count }}` rendered server-side.
+    assert "done: 2" in page.text
+
+
 async def test_calendar_drop_endpoint_works(logged_in_client: AsyncClient) -> None:
     """Drop fires PATCH /api/tasks/{id} with due_at — verify endpoint accepts it."""
     proj = (await logged_in_client.post("/api/projects", json={"name": "Cal2"})).json()

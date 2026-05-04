@@ -1,0 +1,44 @@
+{# Daily goal card — target stored in localStorage, progress server-rendered. #}
+<div
+  x-data="{
+    target: parseInt(localStorage.getItem('doday-daily-goal') || '5'),
+    done: {{ done_today_count }},
+    editing: false,
+    draft: 5,
+    get pct() { return Math.min(100, Math.round(this.done / Math.max(1, this.target) * 100)); },
+    save() {
+      const n = parseInt(this.draft);
+      if (!n || n < 1) { this.editing = false; return; }
+      this.target = Math.min(50, n);
+      try { localStorage.setItem('doday-daily-goal', this.target); } catch (e) {}
+      this.editing = false;
+    }
+  }"
+  class="card p-4 mb-6 flex items-center gap-4"
+>
+  <div class="text-3xl shrink-0" x-text="pct >= 100 ? '🎉' : pct > 0 ? '🔥' : '🎯'"></div>
+  <div class="flex-1 min-w-0">
+    <div class="flex items-center gap-2 mb-1.5">
+      <span class="text-sm font-semibold">
+        Цель на день:
+        <span x-show="!editing" @dblclick="draft = target; editing = true; $nextTick(() => $refs.goalInput.focus())"
+              class="cursor-text grad-text" x-text="target"></span>
+        <input x-show="editing" x-cloak x-model="draft" x-ref="goalInput" type="number" min="1" max="50"
+               @blur="save()" @keydown.enter.prevent="$el.blur()" @keydown.escape="editing = false"
+               class="w-12 bg-[var(--surface-2)] border border-[var(--accent)] rounded px-1 py-0.5 text-sm font-semibold outline-none">
+        задач(и)
+      </span>
+      <span class="ml-auto text-sm text-[var(--text-muted)] tabular-nums">
+        <span x-text="done"></span> / <span x-text="target"></span>
+      </span>
+    </div>
+    <div class="h-2 bg-[var(--surface-2)] rounded-full overflow-hidden">
+      <div class="h-full grad-bg transition-all duration-500"
+           :style="`width: ${pct}%`"
+           :class="pct >= 100 ? 'shadow-glow' : ''"></div>
+    </div>
+    <div class="text-[10px] text-[var(--text-muted)] mt-1">
+      Дважды кликни по числу, чтобы изменить цель.
+    </div>
+  </div>
+</div>
