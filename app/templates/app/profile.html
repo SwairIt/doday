@@ -220,6 +220,31 @@
 
   <section class="card p-6"
            x-data="{
+             url: window.location.origin + '/api/calendar/all.ics',
+             copied: false,
+             async copy() {
+               try { await navigator.clipboard.writeText(this.url); this.copied = true;
+                     setTimeout(() => this.copied = false, 2000); } catch(e){}
+             },
+           }">
+    <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">Календарь-подписка</h2>
+    <p class="text-sm text-[var(--text-muted)] mb-3">
+      Подпиши Apple Calendar или Google Calendar на эту ссылку — все задачи Doday
+      с датой будут видны как события. Изменения подтянутся каждые 15-30 минут.
+    </p>
+    <div class="flex items-center gap-2">
+      <code class="flex-1 min-w-0 truncate px-3 py-2 text-xs font-mono rounded-lg bg-[var(--surface-2)] border border-[var(--border)]"
+            x-text="url"></code>
+      <button @click="copy()" class="btn-ghost px-3 py-2 text-xs inline-flex items-center gap-1.5">
+        <span x-show="!copied">📋 Скопировать</span>
+        <span x-show="copied" class="text-emerald-400">✓ Скопировано</span>
+      </button>
+      <a :href="url" download="doday-all.ics" class="btn-primary px-3 py-2 text-xs">Скачать .ics</a>
+    </div>
+  </section>
+
+  <section class="card p-6"
+           x-data="{
              integrations: [],
              provider: 'school_mo',
              token: '',
