@@ -57,3 +57,16 @@ class TaskOut(BaseModel):
 
 class TaskReorder(BaseModel):
     ids: list[UUID] = Field(min_length=1)
+
+
+class TaskBulkCreate(BaseModel):
+    """Bulk-create payload — typically sent when the user pastes multiple lines.
+
+    Each title turns into a separate task in the same project. The optional
+    common_due_at lets a school user say "all of these are due tomorrow".
+    """
+
+    project_id: UUID | None = None
+    titles: list[str] = Field(min_length=1, max_length=200)
+    common_due_at: datetime | None = None
+    common_priority: TaskPriority = TaskPriority.P4

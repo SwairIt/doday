@@ -8,7 +8,7 @@ from fastapi.responses import Response
 from app.auth.deps import DbSession, RequiredUser
 from app.projects.service import ProjectNotFound
 from app.sections.service import SectionNotFound
-from app.tasks.schemas import TaskCreate, TaskOut, TaskReorder, TaskUpdate
+from app.tasks.schemas import TaskBulkCreate, TaskCreate, TaskOut, TaskReorder, TaskUpdate
 from app.tasks.service import (
     TaskNotFound,
     complete_task,
@@ -48,6 +48,36 @@ async def today_endpoint(user: RequiredUser, session: DbSession) -> list[TaskOut
 @router.get("/upcoming", response_model=list[TaskOut])
 async def upcoming_endpoint(user: RequiredUser, session: DbSession, days: int = 7) -> list[TaskOut]:
     return [TaskOut.model_validate(t) for t in await list_upcoming(session, user.id, days=days)]
+
+
+@router.post("/bulk", response_model=list[TaskOut], status_code=status.HTTP_201_CREATED)
+async def bulk_create_endpoint(
+    payload: TaskBulkCreate, user: RequiredUser, session: DbSession
+) -> list[TaskOut]:
+    """Create many tasks in one go — used by quickadd's paste-multiple-lines flow.
+
+    Empty / whitespace-only lines are silently dropped. Each surviving line
+    becomes a top-level task in the chosen project (or Inbox if none).
+    """
+    cleaned = [t.strip() for t in payload.titles if t and t.strip()]
+    if not cleaned:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "пустой список задач")
+
+    out: list[TaskOut] = []
+    try:
+        for title in cleaned:
+            task = await create_task(
+                session,
+                user.id,
+                title=title[:500],
+                project_id=payload.project_id,
+                due_at=payload.common_due_at,
+                priority=payload.common_priority,
+            )
+            out.append(TaskOut.model_validate(task))
+    except ProjectNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "проект не найден") from e
+    return out
 
 
 @router.post("", response_model=TaskOut, status_code=status.HTTP_201_CREATED)

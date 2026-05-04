@@ -23,6 +23,42 @@
     {% endfor %}
   </div>
 {% endif %}
+<div
+  x-data="{
+    bulkOpen: false,
+    bulkLines: [],
+    bulkSaving: false,
+    {% if project %}projectId: '{{ project.id }}',{% else %}projectId: null,{% endif %}
+    onPaste(ev) {
+      const text = (ev.clipboardData && ev.clipboardData.getData('text')) || '';
+      if (!text.includes('\n')) return;
+      ev.preventDefault();
+      const lines = text.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+      if (lines.length < 2) {
+        const inp = document.querySelector('[data-quickadd-input]');
+        if (inp) inp.value = lines[0] || '';
+        return;
+      }
+      this.bulkLines = lines.slice(0, 200);
+      this.bulkOpen = true;
+    },
+    removeLine(i) { this.bulkLines.splice(i, 1); },
+    async createBulk() {
+      if (!this.bulkLines.length) { this.bulkOpen = false; return; }
+      this.bulkSaving = true;
+      try {
+        const body = { titles: this.bulkLines };
+        if (this.projectId) body.project_id = this.projectId;
+        const r = await fetch('/api/tasks/bulk', {
+          method: 'POST', credentials: 'include',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(body),
+        });
+        if (r.ok) { this.bulkOpen = false; window.location.reload(); }
+      } finally { this.bulkSaving = false; }
+    },
+  }"
+>
 <form
   hx-post="/htmx/quickadd"
   hx-target="#quickadd-list"
@@ -44,6 +80,7 @@
       class="flex-1 bg-transparent border-none outline-none text-sm md:text-base placeholder:text-[var(--text-muted)]"
       autocomplete="off"
       required
+      @paste="onPaste($event)"
     >
     {% if project %}
       <input type="hidden" name="project_id" value="{{ project.id }}">
@@ -66,3 +103,39 @@
   </div>
 </form>
 <div id="quickadd-list"></div>
+
+  {# Bulk-paste confirmation modal #}
+  <div x-show="bulkOpen" x-cloak x-transition.opacity
+       @keydown.escape.window="bulkOpen = false"
+       @click.self="bulkOpen = false"
+       class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div class="card w-full max-w-lg p-5 max-h-[80vh] flex flex-col">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <h3 class="text-lg font-semibold">Создать задачи списком</h3>
+          <p class="text-xs text-[var(--text-muted)]">
+            <span x-text="bulkLines.length"></span> строк — каждая станет отдельной задачей.
+          </p>
+        </div>
+        <button @click="bulkOpen = false" class="text-[var(--text-muted)] hover:text-[var(--text)]">✕</button>
+      </div>
+      <ul class="flex-1 overflow-y-auto space-y-1.5 mb-4 pr-1">
+        <template x-for="(line, i) in bulkLines" :key="i">
+          <li class="flex items-center gap-2 text-sm">
+            <span class="text-[var(--text-muted)] w-6 text-right text-xs" x-text="(i+1)+'.'"></span>
+            <input x-model="bulkLines[i]" maxlength="500"
+                   class="flex-1 bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-1 text-sm outline-none focus:border-[var(--accent)]">
+            <button @click="removeLine(i)" class="text-rose-400 hover:underline text-xs">×</button>
+          </li>
+        </template>
+      </ul>
+      <div class="flex items-center gap-2">
+        <button @click="createBulk()" :disabled="bulkSaving || !bulkLines.length"
+                class="btn-primary px-4 py-2 text-sm">
+          <span x-text="bulkSaving ? 'Создаю…' : ('Создать ' + bulkLines.length)"></span>
+        </button>
+        <button @click="bulkOpen = false" class="btn-ghost px-4 py-2 text-sm">Отмена</button>
+      </div>
+    </div>
+  </div>
+</div>
