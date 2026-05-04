@@ -25,6 +25,7 @@
   {% endif %}
 </div>
 
+{% include "_partials/morning_briefing.html" %}
 {% include "_partials/onboarding_card.html" %}
 {% include "_partials/daily_goal.html" %}
 {% if current_user and current_user.audience == 'company' %}

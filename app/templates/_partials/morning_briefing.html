@@ -1,0 +1,72 @@
+{# Morning briefing — shows 4-11 local time. Fully client-side: greeting based on
+   the user's hour and the same dataset already rendered for /today. #}
+<section
+  x-data="{
+    show: false,
+    name: '{{ current_user.email.split('@')[0]|capitalize }}',
+    audience: '{{ current_user.audience or '' }}',
+    counts: { total: 0, p1: 0 },
+    tip: '',
+    init() {
+      const h = new Date().getHours();
+      this.show = h >= 4 && h <= 11;
+      if (!this.show) return;
+      // Count rendered task cards on this page (rendered by the server in the lists below).
+      const wraps = document.querySelectorAll('[id^=&quot;task-wrap-&quot;]');
+      this.counts.total = wraps.length;
+      this.counts.p1 = document.querySelectorAll('[data-task-priority=&quot;p1&quot;]').length;
+      const tipsByAudience = {
+        school: [
+          'Закрой сначала самое нелюбимое — потом легче.',
+          'Если задача больше 25 минут — разбей её. ⌘K → «Подзадачи».',
+          'Принцип «лягушки»: тяжёлая первой.',
+        ],
+        company: [
+          'Утренние 90 минут — лучшее окно для глубокой работы.',
+          'Стендап в 10? Открой виджет «Сборка стендапа» снизу.',
+          'Записывай блокеры сразу — потом легче эскалировать.',
+        ],
+        personal: [
+          'Маленькая победа утром = настроение на весь день.',
+          'Можно перенести задачу клавишей S — снузом.',
+          'Закрытое — это закрытое. Не возвращайся к нему мысленно.',
+        ],
+        '': [
+          'Выбери одну задачу как «главную сегодня». Пусть всё остальное — бонус.',
+          'Жми ⌘K (или Ctrl+K) — поиск и быстрые команды.',
+          'Если день перегружен — перенеси неважное на завтра кнопкой «снуз».',
+        ],
+      };
+      const arr = tipsByAudience[this.audience] || tipsByAudience[''];
+      this.tip = arr[Math.floor(Math.random() * arr.length)];
+    },
+    greeting() {
+      const h = new Date().getHours();
+      if (h < 6) return 'Раннее утро';
+      if (h < 11) return 'Доброе утро';
+      return 'Утро';
+    },
+    summary() {
+      if (this.counts.total === 0) return 'Сегодня пока пусто — добавь, что хочется сделать.';
+      let s = 'Сегодня у тебя ' + this.counts.total + ' ';
+      s += this.counts.total % 10 === 1 && this.counts.total % 100 !== 11 ? 'задача' :
+           (this.counts.total % 10 >= 2 && this.counts.total % 10 <= 4 && (this.counts.total % 100 < 10 || this.counts.total % 100 >= 20) ? 'задачи' : 'задач');
+      if (this.counts.p1 > 0) s += ', из них ' + this.counts.p1 + ' с высоким приоритетом';
+      return s + '.';
+    },
+  }"
+  x-show="show"
+  x-cloak
+  class="card p-5 mb-6 bg-gradient-to-br from-violet-500/10 via-fuchsia-500/5 to-transparent border border-violet-500/20"
+>
+  <div class="flex items-start gap-4">
+    <div class="text-3xl shrink-0">🌅</div>
+    <div class="flex-1 min-w-0">
+      <div class="text-lg font-semibold mb-0.5">
+        <span x-text="greeting()"></span>, <span x-text="name" class="grad-text"></span>!
+      </div>
+      <p class="text-sm text-[var(--text-muted)]" x-text="summary()"></p>
+      <p class="text-xs text-[var(--text-muted)] mt-2 italic" x-text="'💡 ' + tip"></p>
+    </div>
+  </div>
+</section>
