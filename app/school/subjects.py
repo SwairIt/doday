@@ -41,6 +41,23 @@ def get_subject(code: str) -> Subject | None:
     return next((s for s in SUBJECTS if s["code"] == code), None)
 
 
+def detect_subject(title: str) -> Subject | None:
+    """Best-effort match: scan a task title for any subject name as a substring.
+
+    Lowercased so 'Алгебра — параграф 5' matches 'Алгебра'. Returns the first
+    match in SUBJECTS order — order matters for short names that are prefixes
+    of longer ones (e.g. 'История' vs nothing). 'Окно' is excluded because
+    it's a schedule placeholder, not a real subject for tasks.
+    """
+    t = title.lower()
+    for s in SUBJECTS:
+        if s["code"] == "free":
+            continue
+        if s["name"].lower() in t:
+            return s
+    return None
+
+
 WEEKDAY_SHORT_RU = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
 WEEKDAY_FULL_RU = [
     "Понедельник",

@@ -132,6 +132,30 @@ async def today_view(request: Request, user: RequiredUser, session: DbSession) -
 
     completed_today = await list_completed_today(session, user.id, limit=10)
 
+    today_by_subject: list[dict[str, object]] = []
+    if user.audience == "school" and today:
+        from app.school.subjects import detect_subject
+
+        buckets: dict[str, dict[str, object]] = {}
+        for t in today:
+            subj = detect_subject(t.title)
+            key = subj["code"] if subj else "_other"
+            if key not in buckets:
+                buckets[key] = {
+                    "code": key,
+                    "name": subj["name"] if subj else "Без предмета",
+                    "emoji": subj["emoji"] if subj else "📌",
+                    "color": subj["color"] if subj else "slate",
+                    "tasks": [],
+                }
+            tasks_list = buckets[key]["tasks"]
+            assert isinstance(tasks_list, list)
+            tasks_list.append(t)
+        # Sort: known subjects first, "Без предмета" last.
+        today_by_subject = [b for k, b in buckets.items() if k != "_other"]
+        if "_other" in buckets:
+            today_by_subject.append(buckets["_other"])
+
     return templates.TemplateResponse(
         request,
         "app/today.html",
@@ -146,6 +170,7 @@ async def today_view(request: Request, user: RequiredUser, session: DbSession) -
             "done_today_count": done_today_count,
             "done_week_count": done_week_count,
             "completed_today": completed_today,
+            "today_by_subject": today_by_subject,
         },
     )
 
