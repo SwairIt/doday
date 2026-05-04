@@ -67,6 +67,7 @@ ignore = [
 "app/school/service.py" = ["RUF001", "RUF002"]  # intentional Cyrillic in error messages
 "app/school/schemas.py" = ["RUF001"]            # intentional Cyrillic in provider labels
 "app/school/__init__.py" = ["RUF002"]           # intentional Cyrillic in module docstring
+"app/school/subjects.py" = ["RUF001"]           # intentional Cyrillic in subject + weekday names
 "app/auth/service.py" = ["RUF001"]              # intentional Cyrillic in starter task copy
 
 [tool.mypy]

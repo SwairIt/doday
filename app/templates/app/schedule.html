@@ -1,0 +1,152 @@
+{% extends "app_base.html" %}
+{% block title %}Расписание — Doday{% endblock %}
+{% block view_title %}Расписание{% endblock %}
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-3xl md:text-4xl font-bold mb-1">Расписание уроков</h1>
+  <p class="text-[var(--text-muted)] text-sm">
+    Кликни по любой ячейке, чтобы поставить предмет. Расписание появится виджетом
+    на экране «Сегодня».
+  </p>
+</div>
+
+<div
+  x-data="{
+    grid: {{ grid|tojson|safe }},
+    subjects: {{ subjects|tojson|safe }},
+    weekdays: {{ weekdays_short|tojson|safe }},
+    periods: {{ periods|tojson|safe }},
+    editing: null,
+    form: { weekday: 0, period: 1, subject_code: 'math', room: '', teacher: '' },
+    saving: false,
+    key(w, p) { return w + '_' + p; },
+    has(w, p) { return this.grid[this.key(w, p)] !== undefined; },
+    cell(w, p) { return this.grid[this.key(w, p)] || null; },
+    subject(code) { return this.subjects.find(s => s.code === code); },
+    open(w, p) {
+      const c = this.cell(w, p);
+      this.editing = { weekday: w, period: p };
+      this.form = {
+        weekday: w, period: p,
+        subject_code: c ? c.subject_code : 'math',
+        room: c ? (c.room || '') : '',
+        teacher: c ? (c.teacher || '') : '',
+      };
+    },
+    close() { this.editing = null; },
+    async save() {
+      this.saving = true;
+      const fd = new FormData();
+      fd.append('weekday', this.form.weekday);
+      fd.append('period', this.form.period);
+      fd.append('subject_code', this.form.subject_code);
+      if (this.form.room) fd.append('room', this.form.room);
+      if (this.form.teacher) fd.append('teacher', this.form.teacher);
+      try {
+        const r = await fetch('/api/school/schedule', {method:'POST', body: fd, credentials:'include'});
+        if (r.ok) {
+          const slot = await r.json();
+          this.grid[this.key(slot.weekday, slot.period)] = {
+            subject_code: slot.subject_code, room: slot.room, teacher: slot.teacher
+          };
+          this.close();
+        }
+      } finally { this.saving = false; }
+    },
+    async clear(w, p) {
+      const r = await fetch('/api/school/schedule/'+w+'/'+p, {method:'DELETE', credentials:'include'});
+      if (r.status === 204) { delete this.grid[this.key(w, p)]; this.close(); }
+    },
+  }"
+  class="card p-4 overflow-x-auto"
+>
+  <table class="w-full text-sm border-separate" style="border-spacing: 4px">
+    <thead>
+      <tr>
+        <th class="text-xs text-[var(--text-muted)] font-semibold w-12">№</th>
+        <template x-for="(w, idx) in weekdays.slice(0, 6)" :key="idx">
+          <th class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]" x-text="w"></th>
+        </template>
+      </tr>
+    </thead>
+    <tbody>
+      <template x-for="p in periods" :key="p">
+        <tr>
+          <td class="text-center text-xs text-[var(--text-muted)] font-mono pr-2" x-text="p"></td>
+          <template x-for="w in [0,1,2,3,4,5]" :key="w">
+            <td>
+              <button
+                @click="open(w, p)"
+                class="w-full h-16 rounded-lg border border-[var(--border)] text-left p-2 hover:border-[var(--accent)] transition group"
+                :class="has(w, p) ? 'bg-[var(--surface-2)]' : 'border-dashed'"
+              >
+                <template x-if="has(w, p)">
+                  <div class="text-xs">
+                    <div class="font-semibold flex items-center gap-1">
+                      <span x-text="subject(cell(w, p).subject_code).emoji"></span>
+                      <span x-text="subject(cell(w, p).subject_code).name" class="truncate"></span>
+                    </div>
+                    <template x-if="cell(w, p).room">
+                      <div class="text-[10px] text-[var(--text-muted)] mt-0.5">каб. <span x-text="cell(w, p).room"></span></div>
+                    </template>
+                  </div>
+                </template>
+                <template x-if="!has(w, p)">
+                  <div class="text-xs text-[var(--text-muted)]/40 text-center group-hover:text-[var(--accent)]">+</div>
+                </template>
+              </button>
+            </td>
+          </template>
+        </tr>
+      </template>
+    </tbody>
+  </table>
+
+  <div x-show="editing" x-cloak
+       class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+       @click.self="close()" @keydown.escape.window="close()">
+    <div class="card p-6 w-full max-w-md mx-4">
+      <h3 class="text-lg font-semibold mb-4">
+        <span x-text="weekdays[form.weekday]"></span>, <span x-text="form.period"></span>-й урок
+      </h3>
+      <form @submit.prevent="save()" class="space-y-3">
+        <div>
+          <label class="block text-xs text-[var(--text-muted)] mb-1">Предмет</label>
+          <select x-model="form.subject_code"
+                  class="w-full px-3 py-2 rounded-lg bg-[var(--surface-2)] border border-[var(--border)] text-sm">
+            <template x-for="s in subjects" :key="s.code">
+              <option :value="s.code" x-text="s.emoji + ' ' + s.name"></option>
+            </template>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-[var(--text-muted)] mb-1">Кабинет</label>
+            <input x-model="form.room" placeholder="318" maxlength="40"
+                   class="w-full px-3 py-2 rounded-lg bg-[var(--surface-2)] border border-[var(--border)] text-sm">
+          </div>
+          <div>
+            <label class="block text-xs text-[var(--text-muted)] mb-1">Учитель</label>
+            <input x-model="form.teacher" placeholder="Иванова И.И." maxlength="80"
+                   class="w-full px-3 py-2 rounded-lg bg-[var(--surface-2)] border border-[var(--border)] text-sm">
+          </div>
+        </div>
+        <div class="flex items-center gap-2 pt-2">
+          <button type="submit" :disabled="saving" class="btn-primary px-4 py-2 text-sm">
+            <span x-text="saving ? 'Сохраняю…' : 'Сохранить'"></span>
+          </button>
+          <button type="button" @click="close()" class="btn-ghost px-4 py-2 text-sm">Отмена</button>
+          <button type="button" x-show="has(form.weekday, form.period)"
+                  @click="clear(form.weekday, form.period)"
+                  class="ml-auto text-xs text-rose-400 hover:underline">Удалить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<p class="text-xs text-[var(--text-muted)] mt-4">
+  Сейчас храним только {{ periods|length }} уроков на каждый день, Пн–Сб.
+  Каникулы и переменные расписания добавим позже.
+</p>
+{% endblock %}

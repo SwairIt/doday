@@ -7,6 +7,11 @@ from fastapi import APIRouter, Form, HTTPException, status
 from pydantic import ValidationError
 
 from app.auth.deps import DbSession, RequiredUser
+from app.school.schedule_service import (
+    delete_slot,
+    list_slots,
+    upsert_slot,
+)
 from app.school.schemas import IntegrationIn, IntegrationOut, Provider, SyncResult
 from app.school.service import (
     IntegrationNotFound,
@@ -15,6 +20,7 @@ from app.school.service import (
     sync_now,
     upsert_integration,
 )
+from app.school.subjects import get_subject
 
 router = APIRouter(prefix="/api/school", tags=["school"])
 
@@ -64,3 +70,60 @@ async def sync_endpoint(provider: Provider, user: RequiredUser, session: DbSessi
         return await sync_now(session, user.id, provider)
     except IntegrationNotFound as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "интеграция не найдена") from e
+
+
+@router.get("/schedule")
+async def schedule_list(user: RequiredUser, session: DbSession) -> list[dict[str, object]]:
+    slots = await list_slots(session, user.id)
+    return [
+        {
+            "id": str(s.id),
+            "weekday": s.weekday,
+            "period": s.period,
+            "subject_code": s.subject_code,
+            "room": s.room,
+            "teacher": s.teacher,
+        }
+        for s in slots
+    ]
+
+
+@router.post("/schedule")
+async def schedule_upsert(
+    user: RequiredUser,
+    session: DbSession,
+    weekday: Annotated[int, Form()],
+    period: Annotated[int, Form()],
+    subject_code: Annotated[str, Form()],
+    room: Annotated[str | None, Form()] = None,
+    teacher: Annotated[str | None, Form()] = None,
+) -> dict[str, object]:
+    if get_subject(subject_code) is None:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "неизвестный предмет")
+    try:
+        slot = await upsert_slot(
+            session,
+            user.id,
+            weekday=weekday,
+            period=period,
+            subject_code=subject_code,
+            room=room or None,
+            teacher=teacher or None,
+        )
+    except ValueError as e:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(e)) from e
+    return {
+        "id": str(slot.id),
+        "weekday": slot.weekday,
+        "period": slot.period,
+        "subject_code": slot.subject_code,
+        "room": slot.room,
+        "teacher": slot.teacher,
+    }
+
+
+@router.delete("/schedule/{weekday}/{period}", status_code=status.HTTP_204_NO_CONTENT)
+async def schedule_delete(
+    weekday: int, period: int, user: RequiredUser, session: DbSession
+) -> None:
+    await delete_slot(session, user.id, weekday=weekday, period=period)

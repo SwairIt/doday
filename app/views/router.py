@@ -622,6 +622,38 @@ async def profile_view(request: Request, user: RequiredUser, session: DbSession)
     )
 
 
+@router.get("/schedule", response_class=HTMLResponse)
+async def schedule_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
+    from app.school.schedule_service import list_slots
+    from app.school.subjects import SUBJECTS, WEEKDAY_FULL_RU, WEEKDAY_SHORT_RU
+
+    projects = await list_projects(session, user.id)
+    project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
+    slots = await list_slots(session, user.id)
+    grid: dict[tuple[int, int], dict[str, object]] = {}
+    for s in slots:
+        grid[(s.weekday, s.period)] = {
+            "subject_code": s.subject_code,
+            "room": s.room,
+            "teacher": s.teacher,
+        }
+    return templates.TemplateResponse(
+        request,
+        "app/schedule.html",
+        {
+            "current_user": user,
+            "current_view": "schedule",
+            "projects": projects,
+            "project_color_map": project_color_map,
+            "subjects": SUBJECTS,
+            "weekdays_short": WEEKDAY_SHORT_RU,
+            "weekdays_full": WEEKDAY_FULL_RU,
+            "periods": list(range(1, 9)),
+            "grid": grid,
+        },
+    )
+
+
 @router.get("/upcoming", response_class=HTMLResponse)
 async def upcoming_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
     projects = await list_projects(session, user.id)
