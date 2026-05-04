@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Помощь — Doday{% endblock %}
+{% block layout %}
+<div class="min-h-screen flex flex-col">
+  <header class="sticky top-0 z-30 glass">
+    <nav class="max-w-7xl mx-auto px-6 py-3.5 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2.5 font-bold text-xl">
+        <span class="grad-bg w-9 h-9 rounded-xl flex items-center justify-center text-white font-extrabold shadow-glow">D</span>
+        <span class="grad-text">Doday</span>
+      </a>
+      <div class="flex items-center gap-3">
+        {% if user %}
+          <a href="/app/today" class="btn-primary">Мои задачи</a>
+        {% else %}
+          <a href="/auth/login" class="btn-ghost">Войти</a>
+          <a href="/auth/register" class="btn-primary">Начать бесплатно</a>
+        {% endif %}
+      </div>
+    </nav>
+  </header>
+
+  <main class="flex-1">
+    <section class="max-w-5xl mx-auto px-6 pt-16 pb-12 text-center">
+      <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">База знаний</p>
+      <h1 class="text-4xl md:text-5xl font-bold mb-4">Как пользоваться Doday</h1>
+      <p class="text-[var(--text-muted)] text-lg max-w-2xl mx-auto">
+        {{ articles|length }} статей про каждую функцию — короткие, с примерами,
+        без воды. Если чего-то не хватает — напиши на
+        <a href="mailto:hello@doday.app" class="text-[var(--accent)] hover:underline">hello@doday.app</a>.
+      </p>
+    </section>
+
+    <section class="max-w-5xl mx-auto px-6 pb-24">
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {% for article in articles %}
+          <a href="/help/{{ article.slug }}"
+             class="card p-6 transition hover:-translate-y-1 hover:border-[var(--accent)] hover:shadow-card flex flex-col gap-3">
+            <div class="w-11 h-11 rounded-xl grad-bg flex items-center justify-center shadow-glow shrink-0">
+              <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="{{ article.icon }}"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold leading-snug">{{ article.title }}</h3>
+            <p class="text-sm text-[var(--text-muted)] leading-relaxed flex-1">{{ article.summary }}</p>
+            <span class="text-sm text-[var(--accent)] inline-flex items-center gap-1 mt-1">
+              Читать
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </span>
+          </a>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="max-w-3xl mx-auto px-6 pb-24 text-center">
+      <div class="card p-10 relative overflow-hidden">
+        <div class="absolute -top-24 -right-24 w-64 h-64 grad-bg rounded-full blur-3xl opacity-25"></div>
+        <h2 class="text-2xl md:text-3xl font-bold mb-3 relative">Не нашёл ответ?</h2>
+        <p class="text-[var(--text-muted)] mb-6 relative">
+          Напиши нам — обычно отвечаем в тот же день. И если вопрос частый, статья появится здесь.
+        </p>
+        <a href="mailto:hello@doday.app" class="btn-primary px-6 py-3 text-sm relative">hello@doday.app</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="border-t border-[var(--border)] py-6 mt-auto text-sm text-[var(--text-muted)]">
+    <div class="max-w-7xl mx-auto px-6 flex flex-wrap items-center justify-between gap-3">
+      <span>© 2026 Doday</span>
+      <div class="flex gap-6">
+        <a href="/" class="hover:text-[var(--text)]">Главная</a>
+        <a href="/help" class="hover:text-[var(--text)]">Помощь</a>
+        <a href="/privacy" class="hover:text-[var(--text)]">Политика</a>
+      </div>
+    </div>
+  </footer>
+</div>
+{% endblock %}

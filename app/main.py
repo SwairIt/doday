@@ -9,6 +9,7 @@ from app.billing.router import router as billing_router
 from app.comments.router import comments_router, task_comments_router
 from app.config import get_settings
 from app.custom_filters.router import router as custom_filters_router
+from app.help.router import router as help_router
 from app.labels.router import router as labels_router
 from app.labels.router import task_labels_router
 from app.logging_setup import configure_logging
@@ -56,6 +57,7 @@ app.include_router(custom_filters_router)
 app.include_router(user_templates_router)
 app.include_router(save_as_template_router)
 app.include_router(billing_router)
+app.include_router(help_router)
 
 
 @app.get("/health")

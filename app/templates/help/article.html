@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}{{ article.title }} — Помощь Doday{% endblock %}
+{% block layout %}
+<style>
+  .help-prose h3 { font-size: 1.15rem; font-weight: 600; margin-top: 1.75rem; margin-bottom: 0.5rem; }
+  .help-prose p { margin-bottom: 0.85rem; line-height: 1.7; color: var(--text); }
+  .help-prose ul { list-style: disc; padding-left: 1.5rem; margin-bottom: 1rem; line-height: 1.7; }
+  .help-prose ul li { margin-bottom: 0.25rem; }
+  .help-prose code { background: var(--surface-2); padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.85em; }
+  .help-prose kbd { display: inline-block; background: var(--surface-2); border: 1px solid var(--border); padding: 0.05rem 0.4rem; border-radius: 4px; font-family: monospace; font-size: 0.8em; }
+  .help-prose pre { background: var(--surface-2); border: 1px solid var(--border); padding: 0.75rem 1rem; border-radius: 8px; overflow-x: auto; margin-bottom: 1rem; }
+  .help-prose pre code { background: transparent; padding: 0; }
+  .help-prose table { border-collapse: collapse; width: 100%; font-size: 0.9rem; margin: 1rem 0; }
+  .help-prose table th, .help-prose table td { padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+  .help-prose table th { font-weight: 600; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .help-prose strong { color: var(--text); font-weight: 600; }
+  .help-prose em { color: var(--accent); font-style: normal; }
+</style>
+
+<div class="min-h-screen flex flex-col">
+  <header class="sticky top-0 z-30 glass">
+    <nav class="max-w-7xl mx-auto px-6 py-3.5 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2.5 font-bold text-xl">
+        <span class="grad-bg w-9 h-9 rounded-xl flex items-center justify-center text-white font-extrabold shadow-glow">D</span>
+        <span class="grad-text">Doday</span>
+      </a>
+      <div class="flex items-center gap-3">
+        {% if user %}
+          <a href="/app/today" class="btn-primary">Мои задачи</a>
+        {% else %}
+          <a href="/auth/login" class="btn-ghost">Войти</a>
+          <a href="/auth/register" class="btn-primary">Начать бесплатно</a>
+        {% endif %}
+      </div>
+    </nav>
+  </header>
+
+  <main class="flex-1 max-w-7xl mx-auto px-6 py-10 w-full">
+    <nav class="text-sm text-[var(--text-muted)] mb-6 flex items-center gap-2">
+      <a href="/help" class="hover:text-[var(--text)]">Помощь</a>
+      <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      <span class="text-[var(--text)]">{{ article.title }}</span>
+    </nav>
+
+    <div class="grid md:grid-cols-[260px_1fr] gap-10">
+      <aside class="md:sticky md:top-24 md:self-start">
+        <div class="text-xs uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-3 px-2">Все статьи</div>
+        <div class="space-y-1">
+          {% for a in articles %}
+            <a href="/help/{{ a.slug }}"
+               class="flex items-start gap-2 px-3 py-2 rounded-lg text-sm transition
+                      {% if a.slug == article.slug %}bg-[var(--accent)]/15 text-[var(--accent)] font-semibold{% else %}hover:bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--text)]{% endif %}">
+              <svg class="w-4 h-4 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="{{ a.icon }}"/></svg>
+              <span>{{ a.title }}</span>
+            </a>
+          {% endfor %}
+        </div>
+      </aside>
+
+      <article class="min-w-0">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-12 h-12 rounded-xl grad-bg flex items-center justify-center shadow-glow">
+            <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="{{ article.icon }}"/>
+            </svg>
+          </div>
+          <h1 class="text-3xl md:text-4xl font-bold">{{ article.title }}</h1>
+        </div>
+        <p class="text-[var(--text-muted)] mb-8">{{ article.summary }}</p>
+
+        <div class="help-prose">{{ article.body|safe }}</div>
+
+        {% set idx = articles.index(article) %}
+        <div class="mt-12 pt-6 border-t border-[var(--border)] flex items-center justify-between gap-4">
+          {% if idx > 0 %}
+            <a href="/help/{{ articles[idx-1].slug }}" class="btn-ghost px-4 py-2 text-sm inline-flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+              <span class="text-left">
+                <span class="block text-[10px] text-[var(--text-muted)] uppercase">Назад</span>
+                {{ articles[idx-1].title }}
+              </span>
+            </a>
+          {% else %}
+            <span></span>
+          {% endif %}
+          {% if idx < articles|length - 1 %}
+            <a href="/help/{{ articles[idx+1].slug }}" class="btn-ghost px-4 py-2 text-sm inline-flex items-center gap-2 ml-auto">
+              <span class="text-right">
+                <span class="block text-[10px] text-[var(--text-muted)] uppercase">Далее</span>
+                {{ articles[idx+1].title }}
+              </span>
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </a>
+          {% endif %}
+        </div>
+      </article>
+    </div>
+  </main>
+
+  <footer class="border-t border-[var(--border)] py-6 mt-auto text-sm text-[var(--text-muted)]">
+    <div class="max-w-7xl mx-auto px-6 flex flex-wrap items-center justify-between gap-3">
+      <span>© 2026 Doday</span>
+      <div class="flex gap-6">
+        <a href="/" class="hover:text-[var(--text)]">Главная</a>
+        <a href="/help" class="hover:text-[var(--text)]">Помощь</a>
+        <a href="mailto:hello@doday.app" class="hover:text-[var(--text)]">Связаться</a>
+      </div>
+    </div>
+  </footer>
+</div>
+{% endblock %}
