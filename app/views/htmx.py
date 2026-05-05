@@ -441,8 +441,9 @@ async def task_detail_save(
     session: DbSession,
     title: Annotated[str, Form()] = "",
     description: Annotated[str, Form()] = "",
+    recurrence: Annotated[str | None, Form()] = None,
 ) -> Response:
-    """Save title + description from the detail panel; return refreshed panel."""
+    """Save title + description (+optional recurrence) from the detail panel."""
     try:
         task = await get_task(session, user.id, task_id)
     except TaskNotFound as e:
@@ -450,6 +451,9 @@ async def task_detail_save(
     if title.strip():
         task.title = title.strip()
     task.description = description.strip() or None
+    # `None` = field absent (keep existing value); empty string = explicit clear.
+    if recurrence is not None:
+        task.recurrence = recurrence.strip() or None
     await session.commit()
     return await task_detail(request, task_id, user, session)
 

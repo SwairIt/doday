@@ -230,16 +230,44 @@
              class="absolute right-0 top-full mt-1 z-30"></div>
       </div>
 
-      {% if task.recurrence %}
-        {% set ru_recur = {'daily': 'каждый день', 'weekly': 'еженедельно', 'monthly': 'ежемесячно', 'yearly': 'ежегодно'}.get(task.recurrence, task.recurrence) %}
-        <div>
-          <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider mb-2">Повтор</div>
+      <div x-data="{ pickerOpen: false }">
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider">Повтор</div>
+          <button type="button" @click="pickerOpen = !pickerOpen"
+                  class="text-xs text-[var(--accent)] hover:underline">
+            <span x-text="pickerOpen ? '✕ Закрыть' : (task_recurrence ? 'Изменить' : '+ Установить')"
+                  x-data="{ task_recurrence: {{ 'true' if task.recurrence else 'false' }} }"></span>
+          </button>
+        </div>
+        {% if task.recurrence %}
+          {% set ru_recur = {'daily': 'каждый день', 'weekly': 'еженедельно', 'monthly': 'ежемесячно', 'yearly': 'ежегодно'}.get(task.recurrence, task.recurrence) %}
           <span class="text-xs px-2 py-1 rounded-md bg-emerald-500/15 text-emerald-400 inline-flex items-center gap-1">
             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
             {{ ru_recur }}
           </span>
+          <p class="text-[10px] text-[var(--text-muted)] mt-1.5">При завершении задача автоматически создаст следующую копию с новой датой.</p>
+        {% else %}
+          <p class="text-xs text-[var(--text-muted)]">Без повторения</p>
+        {% endif %}
+        <div x-show="pickerOpen" x-cloak x-transition class="mt-2">
+          <div class="flex flex-wrap gap-1.5">
+            {% set recur_opts = [('', 'Нет'), ('daily', 'Каждый день'), ('weekly', 'Каждую неделю'), ('monthly', 'Каждый месяц'), ('yearly', 'Каждый год')] %}
+            {% for val, label in recur_opts %}
+              <button type="button"
+                      hx-patch="/htmx/tasks/{{ task.id }}/detail"
+                      hx-vals='{"title": {{ task.title|tojson }}, "description": {{ (task.description or "")|tojson }}, "recurrence": "{{ val }}"}'
+                      hx-target="#task-detail-slot" hx-swap="innerHTML"
+                      class="text-xs px-2.5 py-1 rounded-md border transition
+                             {% if (task.recurrence or '') == val %}border-emerald-400 bg-emerald-500/15 text-emerald-400{% else %}border-[var(--border)] hover:border-[var(--accent)]{% endif %}">
+                {{ label }}
+              </button>
+            {% endfor %}
+          </div>
+          {% if not task.due_at %}
+            <p class="text-[10px] text-amber-400 mt-1.5">⚠ Без даты повтор не сработает — задача создаст копию только если у неё есть due_at.</p>
+          {% endif %}
         </div>
-      {% endif %}
+      </div>
     </div>
 
     <div class="px-5 py-4 border-b border-[var(--border)]"
