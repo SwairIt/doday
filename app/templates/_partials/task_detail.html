@@ -234,9 +234,8 @@
         <div class="flex items-center justify-between mb-2">
           <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider">Повтор</div>
           <button type="button" @click="pickerOpen = !pickerOpen"
-                  class="text-xs text-[var(--accent)] hover:underline">
-            <span x-text="pickerOpen ? '✕ Закрыть' : (task_recurrence ? 'Изменить' : '+ Установить')"
-                  x-data="{ task_recurrence: {{ 'true' if task.recurrence else 'false' }} }"></span>
+                  class="text-xs text-[var(--accent)] hover:underline"
+                  x-text="pickerOpen ? '✕ Закрыть' : {{ '\'Изменить\'' if task.recurrence else '\'+ Установить\'' }}">
           </button>
         </div>
         {% if task.recurrence %}
