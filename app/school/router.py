@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Form, HTTPException, status
+from fastapi import APIRouter, Body, Form, HTTPException, status
 from pydantic import ValidationError
 
 from app.auth.deps import DbSession, RequiredUser
@@ -18,6 +18,7 @@ from app.school.schemas import IntegrationIn, IntegrationOut, Provider, SyncResu
 from app.school.service import (
     IntegrationNotFound,
     delete_integration,
+    import_pasted_payload,
     list_integrations,
     sync_now,
     upsert_integration,
@@ -70,6 +71,21 @@ async def delete_endpoint(provider: Provider, user: RequiredUser, session: DbSes
 async def sync_endpoint(provider: Provider, user: RequiredUser, session: DbSession) -> SyncResult:
     try:
         return await sync_now(session, user.id, provider)
+    except IntegrationNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "интеграция не найдена") from e
+
+
+@router.post("/integrations/{provider}/import", response_model=SyncResult)
+async def import_endpoint(
+    provider: Provider,
+    user: RequiredUser,
+    session: DbSession,
+    payload: Annotated[object, Body(...)],
+) -> SyncResult:
+    """Manual paste-import: when the portal is unreachable from the server but
+    visible from the user's browser. User pastes the raw API response JSON."""
+    try:
+        return await import_pasted_payload(session, user.id, provider, payload)
     except IntegrationNotFound as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "интеграция не найдена") from e
 

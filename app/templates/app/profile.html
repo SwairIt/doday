@@ -337,6 +337,10 @@
              syncing: null,
              err: null,
              ok: null,
+             pasteOpen: false,
+             pasteProvider: null,
+             pasteJson: '',
+             pasting: false,
              async load() {
                try {
                  const r = await fetch('/api/school/integrations', {credentials:'include'});
@@ -359,7 +363,7 @@
                try {
                  const r = await fetch('/api/school/integrations/'+p+'/sync', {method:'POST', credentials:'include'});
                  const data = await r.json();
-                 if (data.ok) this.ok = 'Синхронизировано: ' + data.pulled;
+                 if (data.ok) this.ok = 'Синхронизировано: ' + data.pulled + ', создано задач: ' + data.created;
                  else this.err = data.error || 'Ошибка синхронизации';
                  await this.load();
                } catch(e){ this.err = String(e); } finally { this.syncing = null; }
@@ -370,6 +374,24 @@
                  const r = await fetch('/api/school/integrations/'+p, {method:'DELETE', credentials:'include'});
                  if (r.status === 204) { this.ok = 'Удалено'; await this.load(); }
                } catch(e){}
+             },
+             openPaste(p) { this.pasteProvider = p; this.pasteJson = ''; this.pasteOpen = true; this.err = null; this.ok = null; },
+             async submitPaste() {
+               if (!this.pasteJson.trim()) return;
+               let parsed;
+               try { parsed = JSON.parse(this.pasteJson); }
+               catch (e) { this.err = 'Невалидный JSON: ' + e.message; return; }
+               this.pasting = true; this.err = null; this.ok = null;
+               try {
+                 const r = await fetch('/api/school/integrations/'+this.pasteProvider+'/import', {
+                   method: 'POST', credentials: 'include',
+                   headers: {'Content-Type': 'application/json'},
+                   body: JSON.stringify(parsed),
+                 });
+                 const data = await r.json();
+                 if (data.ok) { this.ok = 'Импортировано: ' + data.pulled + ', создано задач: ' + data.created; this.pasteOpen = false; await this.load(); }
+                 else this.err = data.error || 'Ошибка импорта';
+               } catch(e){ this.err = String(e); } finally { this.pasting = false; }
              },
              label(p) { return p === 'school_mo' ? 'Школьный портал МО' : (p === 'mesh' ? 'МЭШ (dnevnik.mos.ru)' : p); },
            }"
@@ -395,8 +417,14 @@
               </div>
             </div>
             <button @click="sync(i.provider)" :disabled="syncing === i.provider"
-                    class="btn-ghost px-3 py-1.5 text-xs">
+                    class="btn-ghost px-3 py-1.5 text-xs"
+                    title="Сервер сам ходит на портал (нужен интернет с этого хоста)">
               <span x-text="syncing === i.provider ? 'Синхрон…' : 'Синхронизировать'"></span>
+            </button>
+            <button @click="openPaste(i.provider)"
+                    class="btn-ghost px-3 py-1.5 text-xs"
+                    title="Вставить JSON, скопированный из F12 → Network">
+              📋 Импорт JSON
             </button>
             <button @click="remove(i.provider)" class="text-xs text-rose-400 hover:underline">Удалить</button>
           </div>
@@ -428,6 +456,40 @@
         <template x-if="err"><span class="text-xs text-rose-400" x-text="'⚠ '+err"></span></template>
       </div>
     </form>
+
+    {# Paste-import modal — used when the portal is reachable from the
+       browser (with VPN extension) but blocked from this server. #}
+    <div x-show="pasteOpen" x-cloak x-transition.opacity
+         @keydown.escape.window="pasteOpen = false"
+         @click.self="pasteOpen = false"
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div class="card w-full max-w-2xl p-6 max-h-[90vh] flex flex-col">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-lg font-semibold">Импорт домашки из браузера</h3>
+          <button @click="pasteOpen = false" class="text-[var(--text-muted)] hover:text-[var(--text)]">✕</button>
+        </div>
+        <div class="text-xs text-[var(--text-muted)] space-y-1.5 mb-3">
+          <p>Сервер не может достучаться до портала (видимо, VPN-расширение работает только в браузере).
+            Поэтому <em>ты</em> копируешь JSON в браузере, а Doday уже создаёт задачи у себя.</p>
+          <ol class="list-decimal pl-5 space-y-0.5">
+            <li>Открой портал в браузере, войди.</li>
+            <li>F12 → таб <strong>Network</strong> → пройди в раздел «Домашние задания».</li>
+            <li>Найди в списке запрос с именем типа <code>homeworks</code> / <code>homework</code> / <code>tasks</code>.</li>
+            <li>Кликни → таб <strong>Response</strong> → правый клик → <strong>Copy value</strong> (или Ctrl+A → Ctrl+C).</li>
+            <li>Вставь сюда ⬇ и жми «Импортировать».</li>
+          </ol>
+        </div>
+        <textarea x-model="pasteJson" rows="14" placeholder='{"homeworks": [...]}'
+                  class="w-full px-3 py-2 text-xs font-mono rounded-lg bg-[var(--surface-2)] border border-[var(--border)] outline-none focus:border-[var(--accent)] resize-y mb-3"></textarea>
+        <div class="flex items-center gap-2">
+          <button @click="submitPaste()" :disabled="pasting || !pasteJson.trim()" class="btn-primary px-4 py-2 text-sm">
+            <span x-text="pasting ? 'Импортирую…' : 'Импортировать'"></span>
+          </button>
+          <button @click="pasteOpen = false" class="btn-ghost px-3 py-2 text-sm">Отмена</button>
+          <template x-if="err && pasteOpen"><span class="text-xs text-rose-400 ml-2" x-text="'⚠ '+err"></span></template>
+        </div>
+      </div>
+    </div>
   </section>
 
   <section class="card p-6 border-rose-500/40">

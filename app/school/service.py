@@ -257,6 +257,38 @@ def _normalize_homework_payload(raw: object) -> list[dict[str, object]]:
     return out
 
 
+async def import_pasted_payload(
+    session: AsyncSession, user_id: UUID, provider: Provider, raw: object
+) -> SyncResult:
+    """Manually-imported homework JSON (from browser DevTools paste).
+
+    Used when the portal is reachable from the user's browser (with their
+    proxy/VPN extension) but not from this server. Reuses the same parsing
+    + task-creation pipeline as `sync_now`.
+    """
+    integ = await get_integration(session, user_id, provider)
+    if integ is None:
+        raise IntegrationNotFound(provider)
+    try:
+        payload = _normalize_homework_payload(raw)
+    except Exception as e:
+        return _save_error(session, integ, f"Не получилось разобрать JSON: {e}")
+    if not payload:
+        return _save_error(
+            session,
+            integ,
+            "В JSON не нашёл записей с предметом или текстом. "
+            "Проверь что вставил полный response от /api/.../homeworks.",
+        )
+    created = await _create_tasks_from_payload(
+        session, user_id, integ.target_project_id, payload
+    )
+    integ.last_sync_at = datetime.now(UTC)
+    integ.last_error = None
+    await session.commit()
+    return SyncResult(ok=True, pulled=len(payload), created=created)
+
+
 async def _create_tasks_from_payload(
     session: AsyncSession,
     user_id: UUID,

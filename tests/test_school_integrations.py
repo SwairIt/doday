@@ -167,6 +167,58 @@ async def test_delete_integration(logged_in_client: AsyncClient) -> None:
     assert listing == []
 
 
+async def test_paste_import_creates_tasks(logged_in_client: AsyncClient) -> None:
+    """Manual paste-import: user pastes raw JSON, Doday creates tasks."""
+    await logged_in_client.post(
+        "/api/school/integrations",
+        data={"provider": "school_mo", "auth_token": "doesnt-matter-for-paste-12345"},
+    )
+    payload = {
+        "homeworks": [
+            {"id": 1, "subject_name": "История", "task": "Параграф 7", "deadline": "2026-12-20"},
+            {"id": 2, "subject_name": "ОБЖ", "task": "Реферат про пожар"},
+        ]
+    }
+    response = await logged_in_client.post(
+        "/api/school/integrations/school_mo/import", json=payload
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ok"] is True
+    assert body["pulled"] == 2
+    assert body["created"] == 2
+
+    # Idempotent on second call.
+    again = (
+        await logged_in_client.post(
+            "/api/school/integrations/school_mo/import", json=payload
+        )
+    ).json()
+    assert again["created"] == 0
+
+
+async def test_paste_import_empty_payload_returns_error(
+    logged_in_client: AsyncClient,
+) -> None:
+    await logged_in_client.post(
+        "/api/school/integrations",
+        data={"provider": "school_mo", "auth_token": "tok-1234567"},
+    )
+    response = await logged_in_client.post(
+        "/api/school/integrations/school_mo/import", json={"homeworks": []}
+    )
+    body = response.json()
+    assert body["ok"] is False
+    assert body["error"]
+
+
+async def test_paste_import_unknown_integration_404(logged_in_client: AsyncClient) -> None:
+    response = await logged_in_client.post(
+        "/api/school/integrations/mesh/import", json={"homeworks": [{"task": "x"}]}
+    )
+    assert response.status_code == 404
+
+
 async def test_help_article_renders(logged_in_client: AsyncClient) -> None:
     body = (await logged_in_client.get("/help/school-integrations")).text
     assert "Школьный портал МО" in body
