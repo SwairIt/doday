@@ -1,5 +1,7 @@
-"""Task HTTP endpoints — JSON CRUD + complete/uncomplete + reorder."""
+"""Task HTTP endpoints — JSON CRUD + complete/uncomplete + reorder + CSV export."""
 
+import csv
+import io
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, status
@@ -25,6 +27,66 @@ from app.tasks.service import (
 )
 
 router = APIRouter(prefix="/api/tasks", tags=["tasks"])
+
+
+@router.get("/export.csv", response_class=Response)
+async def export_csv(
+    user: RequiredUser, session: DbSession, include_completed: bool = False
+) -> Response:
+    """Stream all (or only active) tasks as CSV — for spreadsheet processing."""
+    from sqlalchemy import select as sa_select
+
+    from app.projects.models import Project as ProjectModel
+
+    project_rows = (
+        (await session.execute(sa_select(ProjectModel).where(ProjectModel.user_id == user.id)))
+        .scalars()
+        .all()
+    )
+    project_name: dict[UUID, str] = {p.id: p.name for p in project_rows}
+
+    tasks = await list_tasks(session, user.id, include_completed=include_completed)
+
+    buf = io.StringIO()
+    writer = csv.writer(buf, dialect="excel")
+    writer.writerow(
+        [
+            "id",
+            "title",
+            "project",
+            "due_at",
+            "priority",
+            "is_completed",
+            "completed_at",
+            "recurrence",
+            "labels",
+            "description",
+            "created_at",
+        ]
+    )
+    for t in tasks:
+        writer.writerow(
+            [
+                str(t.id),
+                t.title,
+                project_name.get(t.project_id, ""),
+                t.due_at.isoformat() if t.due_at else "",
+                t.priority.value,
+                "1" if t.is_completed else "0",
+                t.completed_at.isoformat() if t.completed_at else "",
+                t.recurrence or "",
+                " ".join(f"@{lab.name}" for lab in t.labels),
+                (t.description or "").replace("\r", " ").replace("\n", " "),
+                t.created_at.isoformat(),
+            ]
+        )
+
+    body = "﻿" + buf.getvalue()  # BOM so Excel reads UTF-8 correctly
+    return Response(
+        content=body.encode("utf-8"),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="doday-tasks.csv"'},
+    )
 
 
 @router.get("", response_model=list[TaskOut])
