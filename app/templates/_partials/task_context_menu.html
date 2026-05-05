@@ -1,0 +1,130 @@
+{# Right-click context menu on any task row. Listens globally; positions
+   itself at cursor; closes on click-outside / Escape. #}
+<div id="task-ctx-menu"
+     style="display: none; position: fixed; z-index: 60;"
+     class="card p-1 shadow-glow text-sm min-w-[200px]">
+  <button data-ctx="detail" class="ctx-item">📂 Открыть детали</button>
+  <button data-ctx="edit" class="ctx-item">✏️ Редактировать</button>
+  <button data-ctx="duplicate" class="ctx-item">📑 Дублировать</button>
+  <hr class="my-1 border-[var(--border)]">
+  <button data-ctx="prio-1" class="ctx-item">🔴 Приоритет P1</button>
+  <button data-ctx="prio-2" class="ctx-item">🟠 Приоритет P2</button>
+  <button data-ctx="prio-3" class="ctx-item">🔵 Приоритет P3</button>
+  <button data-ctx="prio-4" class="ctx-item">⚪ Без приоритета</button>
+  <hr class="my-1 border-[var(--border)]">
+  <button data-ctx="due-today" class="ctx-item">📅 На сегодня</button>
+  <button data-ctx="due-tomorrow" class="ctx-item">📅 На завтра</button>
+  <button data-ctx="due-week" class="ctx-item">📅 К концу недели</button>
+  <button data-ctx="due-clear" class="ctx-item">📅 Убрать дату</button>
+  <hr class="my-1 border-[var(--border)]">
+  <button data-ctx="pin" class="ctx-item">📌 Закрепить / открепить</button>
+  <button data-ctx="delete" class="ctx-item text-rose-400">🗑️ В корзину</button>
+</div>
+
+<style>
+  .ctx-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+  }
+  .ctx-item:hover { background: var(--surface-2); }
+</style>
+
+<script>
+  (function() {
+    const menu = document.getElementById('task-ctx-menu');
+    if (!menu) return;
+    let activeTaskId = null;
+
+    function todayISO(off) {
+      const d = new Date();
+      d.setDate(d.getDate() + (off || 0));
+      return d.toISOString().slice(0, 10) + 'T23:59:00Z';
+    }
+    function endOfWeek() {
+      const now = new Date();
+      const days = (7 - now.getDay()) % 7 || 7;
+      const target = new Date(now.getFullYear(), now.getMonth(), now.getDate() + days);
+      return target.toISOString().slice(0, 10) + 'T23:59:00Z';
+    }
+
+    function showAt(x, y) {
+      menu.style.display = 'block';
+      // Clamp to viewport edges.
+      const rect = menu.getBoundingClientRect();
+      const maxX = window.innerWidth - rect.width - 8;
+      const maxY = window.innerHeight - rect.height - 8;
+      menu.style.left = Math.min(x, maxX) + 'px';
+      menu.style.top = Math.min(y, maxY) + 'px';
+    }
+    function hide() { menu.style.display = 'none'; activeTaskId = null; }
+
+    document.addEventListener('contextmenu', function(e) {
+      const wrap = e.target.closest('[id^="task-wrap-"]');
+      if (!wrap) return;
+      e.preventDefault();
+      activeTaskId = wrap.id.replace('task-wrap-', '');
+      showAt(e.clientX, e.clientY);
+    });
+    document.addEventListener('click', function(e) {
+      if (!menu.contains(e.target)) hide();
+    });
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') hide(); });
+
+    menu.addEventListener('click', async function(e) {
+      const btn = e.target.closest('[data-ctx]');
+      if (!btn || !activeTaskId) return;
+      const action = btn.dataset.ctx;
+      const tid = activeTaskId;
+      hide();
+
+      const patch = (body) => fetch('/api/tasks/' + tid, {
+        method: 'PATCH', credentials: 'include',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(body),
+      });
+
+      if (action === 'detail') {
+        if (window.htmx) htmx.ajax('GET', '/htmx/tasks/' + tid + '/detail', {target: '#task-detail-slot', swap: 'innerHTML'});
+        return;
+      }
+      if (action === 'edit') {
+        if (window.htmx) htmx.ajax('GET', '/htmx/tasks/' + tid + '/edit', {target: '#task-' + tid, swap: 'outerHTML'});
+        return;
+      }
+      if (action === 'duplicate') {
+        await fetch('/api/tasks/' + tid + '/duplicate', {method: 'POST', credentials: 'include'});
+        location.reload();
+        return;
+      }
+      if (action.startsWith('prio-')) {
+        await patch({priority: 'p' + action.slice(5)});
+        location.reload();
+        return;
+      }
+      if (action === 'due-today') { await patch({due_at: todayISO(0), due_date_only: true}); location.reload(); return; }
+      if (action === 'due-tomorrow') { await patch({due_at: todayISO(1), due_date_only: true}); location.reload(); return; }
+      if (action === 'due-week') { await patch({due_at: endOfWeek(), due_date_only: true}); location.reload(); return; }
+      if (action === 'due-clear') { await patch({due_at: null}); location.reload(); return; }
+      if (action === 'pin') {
+        // Try POST (set); ignore 200/duplicate. To unpin, user repeats — service is idempotent on POST.
+        const wrap = document.getElementById('task-wrap-' + tid);
+        const isPinned = wrap && wrap.querySelector('[title="Закреплено"]');
+        await fetch('/api/tasks/' + tid + '/pin', {
+          method: isPinned ? 'DELETE' : 'POST', credentials: 'include',
+        });
+        location.reload();
+        return;
+      }
+      if (action === 'delete') {
+        await fetch('/api/tasks/' + tid, {method: 'DELETE', credentials: 'include'});
+        const wrap = document.getElementById('task-wrap-' + tid);
+        if (wrap) wrap.remove();
+        return;
+      }
+    });
+  })();
+</script>

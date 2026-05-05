@@ -72,12 +72,18 @@
       {% if task.pinned_at %}
         <span class="text-amber-400 text-xs" title="Закреплено">📌</span>
       {% endif %}
+      {% if not is_subtask %}
+        <span class="w-1.5 h-1.5 rounded-full bg-{{ color }}-400 shrink-0"
+              title="Проект"></span>
+      {% endif %}
       <button type="button"
               class="text-left {% if task.is_completed %}line-through text-[var(--text-muted)]{% endif %} hover:text-[var(--accent)] transition"
-              title="Открыть подробности"
+              title="Открыть подробности · двойной клик — редактировать"
               hx-get="/htmx/tasks/{{ task.id }}/detail"
               hx-target="#task-detail-slot"
-              hx-swap="innerHTML">{{ task.title }}</button>
+              hx-swap="innerHTML"
+              hx-trigger="click"
+              ondblclick="event.stopPropagation(); htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/edit', {target: '#task-{{ task.id }}', swap: 'outerHTML'});">{{ task.title }}</button>
       <div x-data="{ open: false }" class="relative">
         <button
           type="button"

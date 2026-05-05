@@ -1,0 +1,83 @@
+{# Compact 7x6 month grid in the sidebar. Dots mark days with ≥1 task.
+   Click a day → /app/calendar with that month focused. #}
+<div
+  x-data="{
+    today: new Date(),
+    cursor: new Date(),
+    busy: new Set(),
+    weekdays: ['П','В','С','Ч','П','С','В'],
+    monthName: '',
+    async load() {
+      const y = this.cursor.getFullYear();
+      const m = String(this.cursor.getMonth() + 1).padStart(2, '0');
+      this.monthName = this.cursor.toLocaleString('ru-RU', {month: 'long', year: 'numeric'});
+      try {
+        const r = await fetch('/api/projects/calendar-markers?month=' + y + '-' + m, {credentials:'include'});
+        if (r.ok) {
+          const d = await r.json();
+          this.busy = new Set(d.dates || []);
+        }
+      } catch(e){}
+    },
+    init() { this.load(); },
+    cells() {
+      // 6×7 = 42 cells. Start from Monday before the 1st.
+      const first = new Date(this.cursor.getFullYear(), this.cursor.getMonth(), 1);
+      const offset = (first.getDay() + 6) % 7;  // Mon = 0
+      const start = new Date(first); start.setDate(first.getDate() - offset);
+      const out = [];
+      const todayIso = this.today.toISOString().slice(0, 10);
+      for (let i = 0; i < 42; i++) {
+        const d = new Date(start); d.setDate(start.getDate() + i);
+        const iso = d.toISOString().slice(0, 10);
+        out.push({
+          day: d.getDate(),
+          iso,
+          inMonth: d.getMonth() === this.cursor.getMonth(),
+          isToday: iso === todayIso,
+          busy: this.busy.has(iso),
+          isWeekend: d.getDay() === 0 || d.getDay() === 6,
+        });
+      }
+      return out;
+    },
+    prev() {
+      this.cursor = new Date(this.cursor.getFullYear(), this.cursor.getMonth() - 1, 1);
+      this.load();
+    },
+    next() {
+      this.cursor = new Date(this.cursor.getFullYear(), this.cursor.getMonth() + 1, 1);
+      this.load();
+    },
+    goto(iso) {
+      const ym = iso.slice(0, 7);
+      window.location = '/app/calendar?month=' + ym;
+    },
+  }"
+  class="mt-4 px-3 py-2 border-t border-[var(--border)]"
+>
+  <div class="flex items-center justify-between mb-1.5">
+    <button @click="prev()" class="text-[var(--text-muted)] hover:text-[var(--accent)] px-1.5 text-xs">‹</button>
+    <span class="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-muted)]" x-text="monthName"></span>
+    <button @click="next()" class="text-[var(--text-muted)] hover:text-[var(--accent)] px-1.5 text-xs">›</button>
+  </div>
+  <div class="grid grid-cols-7 gap-0.5">
+    <template x-for="(w, i) in weekdays" :key="i">
+      <span class="text-center text-[8px] text-[var(--text-muted)]/60 font-semibold" x-text="w"></span>
+    </template>
+    <template x-for="c in cells()" :key="c.iso">
+      <button @click="goto(c.iso)"
+              :class="[
+                c.inMonth ? '' : 'opacity-30',
+                c.isToday ? 'bg-[var(--accent)] text-white font-bold' : 'hover:bg-[var(--surface)]',
+                c.isWeekend && !c.isToday ? 'text-[var(--text-muted)]' : '',
+              ]"
+              :title="c.iso + (c.busy ? ' · есть задачи' : '')"
+              class="relative h-6 text-[10px] rounded text-center transition">
+        <span x-text="c.day"></span>
+        <span x-show="c.busy && !c.isToday"
+              class="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[var(--accent)]"></span>
+      </button>
+    </template>
+  </div>
+</div>

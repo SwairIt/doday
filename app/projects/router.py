@@ -70,10 +70,147 @@ async def counts_endpoint(user: RequiredUser, session: DbSession) -> dict[UUID, 
             Task.user_id == user.id,
             Task.is_completed.is_(False),
             Task.parent_task_id.is_(None),
+            Task.deleted_at.is_(None),
         )
         .group_by(Task.project_id)
     )
     return {pid: count for pid, count in rows.all()}
+
+
+@router.get("/sidebar-counts")
+async def sidebar_counts_endpoint(
+    user: RequiredUser, session: DbSession
+) -> dict[str, int]:
+    """One-shot counts for sidebar nav badges: inbox / today / upcoming / overdue / trash."""
+    from datetime import UTC, datetime, timedelta
+
+    from sqlalchemy import func, select
+
+    from app.projects.models import Project
+    from app.projects.service import ensure_inbox
+    from app.tasks.models import Task
+
+    inbox = await ensure_inbox(session, user.id)
+    now = datetime.now(UTC)
+    today_end = datetime(now.year, now.month, now.day, 23, 59, 59, tzinfo=UTC)
+    upcoming_end = datetime(now.year, now.month, now.day, tzinfo=UTC) + timedelta(days=8)
+
+    base = select(func.count()).select_from(Task).where(
+        Task.user_id == user.id,
+        Task.deleted_at.is_(None),
+        Task.parent_task_id.is_(None),
+    )
+
+    inbox_count = int(
+        (
+            await session.execute(
+                base.where(Task.project_id == inbox.id, Task.is_completed.is_(False))
+            )
+        ).scalar_one()
+    )
+    today_count = int(
+        (
+            await session.execute(
+                base.where(
+                    Task.is_completed.is_(False),
+                    Task.due_at.is_not(None),
+                    Task.due_at <= today_end,
+                )
+            )
+        ).scalar_one()
+    )
+    upcoming_count = int(
+        (
+            await session.execute(
+                base.where(
+                    Task.is_completed.is_(False),
+                    Task.due_at.is_not(None),
+                    Task.due_at > today_end,
+                    Task.due_at < upcoming_end,
+                )
+            )
+        ).scalar_one()
+    )
+    overdue_count = int(
+        (
+            await session.execute(
+                base.where(
+                    Task.is_completed.is_(False),
+                    Task.due_at.is_not(None),
+                    Task.due_at < datetime(now.year, now.month, now.day, tzinfo=UTC),
+                )
+            )
+        ).scalar_one()
+    )
+    trash_count_row = await session.execute(
+        select(func.count()).select_from(Task).where(
+            Task.user_id == user.id, Task.deleted_at.is_not(None)
+        )
+    )
+    trash_count = int(trash_count_row.scalar_one())
+
+    # Project archive count is also handy in sidebar.
+    archive_count_row = await session.execute(
+        select(func.count()).select_from(Project).where(
+            Project.user_id == user.id, Project.is_archived.is_(True)
+        )
+    )
+    archive_count = int(archive_count_row.scalar_one())
+
+    return {
+        "inbox": inbox_count,
+        "today": today_count,
+        "upcoming": upcoming_count,
+        "overdue": overdue_count,
+        "trash": trash_count,
+        "archive": archive_count,
+    }
+
+
+@router.get("/calendar-markers")
+async def calendar_markers_endpoint(
+    user: RequiredUser, session: DbSession, month: str | None = None
+) -> dict[str, list[str]]:
+    """Return ISO dates within the requested month that have at least 1 task.
+
+    Used by the sidebar mini-calendar to dot busy days.
+    """
+    from datetime import UTC, datetime, timedelta
+
+    from sqlalchemy import func, select
+
+    from app.tasks.models import Task
+
+    today = datetime.now(UTC).date()
+    if month:
+        try:
+            target = datetime.strptime(month, "%Y-%m").date().replace(day=1)
+        except ValueError:
+            target = today.replace(day=1)
+    else:
+        target = today.replace(day=1)
+    next_target = (target.replace(day=28) + timedelta(days=10)).replace(day=1)
+    range_start = datetime(target.year, target.month, 1, tzinfo=UTC)
+    range_end = datetime(next_target.year, next_target.month, 1, tzinfo=UTC)
+
+    rows = await session.execute(
+        select(func.date(Task.due_at))
+        .where(
+            Task.user_id == user.id,
+            Task.deleted_at.is_(None),
+            Task.due_at.is_not(None),
+            Task.due_at >= range_start,
+            Task.due_at < range_end,
+        )
+        .distinct()
+    )
+    dates: set[str] = set()
+    for row in rows.all():
+        d = row[0]
+        if d is None:
+            continue
+        dates.add(d.isoformat() if hasattr(d, "isoformat") else str(d))
+    return {"dates": sorted(dates)}
 
 
 @router.post("/reorder", response_model=list[ProjectOut])

@@ -42,8 +42,19 @@
       {% set _ = nav_items.append(('habits', '/app/habits', 'Привычки', 'M5 13l4 4L19 7')) %}
     {% endif %}
     {% set _ = nav_items.append(('trash', '/app/trash', 'Корзина', 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3')) %}
+    <div x-data="{
+           counts: {},
+           async load() {
+             try {
+               const r = await fetch('/api/projects/sidebar-counts', {credentials:'include'});
+               if (r.ok) this.counts = await r.json();
+             } catch(e){}
+           },
+         }"
+         x-init="load()">
     {% for key, href, label, icon in nav_items %}
       {% set active = view == key %}
+      {% set count_key = {'inbox': 'inbox', 'today': 'today', 'upcoming': 'upcoming', 'trash': 'trash'}.get(key) %}
       <a href="{{ href }}"
          {% if active %}aria-current="page"{% endif %}
          class="flex items-center gap-3 px-3 py-2 rounded-lg transition
@@ -51,9 +62,23 @@
         <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" d="{{ icon }}"/>
         </svg>
-        <span>{{ label }}</span>
+        <span class="flex-1">{{ label }}</span>
+        {% if count_key %}
+          <span x-show="counts['{{ count_key }}'] > 0" x-cloak
+                :class="{% if active %}'bg-white/20 text-white'{% else %}'bg-[var(--surface-2)] text-[var(--text-muted)]'{% endif %}"
+                class="text-[10px] tabular-nums px-1.5 py-0.5 rounded-md font-mono"
+                x-text="counts['{{ count_key }}']"></span>
+        {% endif %}
+        {% if key == 'today' %}
+          {# Overdue gets its own red badge — most urgent. #}
+          <span x-show="counts['overdue'] > 0" x-cloak
+                class="text-[10px] tabular-nums px-1.5 py-0.5 rounded-md font-mono bg-rose-500/20 text-rose-400"
+                x-text="counts['overdue']"
+                :title="'Просрочено: ' + counts['overdue']"></span>
+        {% endif %}
       </a>
     {% endfor %}
+    </div>
 
     <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider px-3 pt-5 pb-1">
       Фильтры
@@ -136,6 +161,8 @@
         <div class="px-3 py-2 text-xs text-[var(--text-muted)] italic">Пока ни одного проекта</div>
       {% endfor %}
     </div>
+
+    {% include "_partials/mini_calendar.html" %}
   </nav>
 
   <div class="p-3 border-t border-[var(--border)] flex items-center gap-2">

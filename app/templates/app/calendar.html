@@ -59,6 +59,9 @@
       <p class="text-[var(--text-muted)] text-sm">Кликни по дню — раскроется список. Перетащи задачу — изменится срок.</p>
     </div>
     <div class="flex items-center gap-2">
+      <input type="month" class="bg-[var(--surface-2)] border border-[var(--border)] rounded-lg px-2 py-1.5 text-xs"
+             title="Перейти к месяцу"
+             @change="if ($event.target.value) window.location = '?month=' + $event.target.value">
       <a href="?view=week" class="btn-ghost px-3 py-2 text-xs" title="Переключиться на недельный вид">Неделя</a>
       <button @click="toggleDense()" :class="dense ? 'border-[var(--accent)] text-[var(--accent)]' : ''"
               class="btn-ghost px-3 py-2 text-xs inline-flex items-center gap-1.5"
