@@ -1,4 +1,4 @@
-"""Profile management — account deletion + audience switching."""
+"""Profile management — account deletion + audience switching + password change."""
 
 from typing import Annotated
 
@@ -8,6 +8,7 @@ from sqlalchemy import delete
 
 from app.auth.deps import DbSession, RequiredUser
 from app.auth.models import User
+from app.auth.security import hash_password, verify_password
 
 router = APIRouter(prefix="/api/profile", tags=["profile"])
 
@@ -41,3 +42,22 @@ async def update_audience(
     user.audience = new_value
     await session.commit()
     return {"audience": new_value}
+
+
+@router.post("/password")
+async def change_password(
+    user: RequiredUser,
+    session: DbSession,
+    current_password: Annotated[str, Form()],
+    new_password: Annotated[str, Form()],
+) -> dict[str, str]:
+    """Change the signed-in user's password (requires current password)."""
+    if not verify_password(current_password, user.password_hash):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Текущий пароль неверный")
+    if len(new_password) < 8:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Минимум 8 символов")
+    if new_password == current_password:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Новый пароль совпадает с текущим")
+    user.password_hash = hash_password(new_password)
+    await session.commit()
+    return {"status": "ok"}
