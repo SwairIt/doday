@@ -1,0 +1,162 @@
+{# Keyboard navigation + hotkeys for selected task. Listens globally; ignores
+   events while a form input is focused or any modal is open. #}
+<style>
+  [data-kb-selected="1"] {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+</style>
+<script>
+  (function() {
+    let selectedId = null;
+
+    function getRows() {
+      // All task wrappers visible on the page, in DOM order.
+      return Array.from(document.querySelectorAll('[id^="task-wrap-"]'))
+        .filter(el => el.offsetParent !== null);  // visible only
+    }
+
+    function applyHighlight() {
+      document.querySelectorAll('[data-kb-selected]').forEach(el => el.removeAttribute('data-kb-selected'));
+      if (!selectedId) return;
+      const el = document.getElementById('task-wrap-' + selectedId);
+      if (el) {
+        el.setAttribute('data-kb-selected', '1');
+        el.scrollIntoView({block: 'nearest', behavior: 'smooth'});
+      }
+    }
+
+    function move(delta) {
+      const rows = getRows();
+      if (!rows.length) return;
+      const ids = rows.map(r => r.id.replace('task-wrap-', ''));
+      let idx = selectedId ? ids.indexOf(selectedId) : -1;
+      idx = idx < 0 ? (delta > 0 ? 0 : ids.length - 1) : idx + delta;
+      if (idx < 0) idx = 0;
+      if (idx >= ids.length) idx = ids.length - 1;
+      selectedId = ids[idx];
+      applyHighlight();
+    }
+
+    async function patchSelected(body) {
+      if (!selectedId) return;
+      await fetch('/api/tasks/' + selectedId, {
+        method: 'PATCH', credentials: 'include',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(body),
+      });
+      // Re-render via HTMX swap on the row.
+      if (window.htmx) {
+        htmx.ajax('GET', '/htmx/tasks/' + selectedId + '/row', {
+          target: '#task-' + selectedId, swap: 'outerHTML',
+        }).catch(() => location.reload());
+      } else {
+        location.reload();
+      }
+    }
+
+    function endOfWeek() {
+      const now = new Date();
+      // Monday-based week — go to Sunday (weekday 6 with offset).
+      const days = (7 - now.getDay()) % 7 || 7;
+      const target = new Date(now.getFullYear(), now.getMonth(), now.getDate() + days);
+      return target.toISOString().slice(0, 10) + 'T23:59:00Z';
+    }
+
+    function todayISO(offsetDays) {
+      const d = new Date();
+      d.setDate(d.getDate() + (offsetDays || 0));
+      return d.toISOString().slice(0, 10) + 'T23:59:00Z';
+    }
+
+    document.addEventListener('keydown', async function(e) {
+      const tag = e.target && e.target.tagName;
+      const inField = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' ||
+                      (e.target && e.target.isContentEditable);
+      if (inField) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      // Don't fight the existing g-prefix shortcuts in shortcuts.html.
+      if (e.key === 'g') return;
+      // Skip when a modal is open (search palette, day-detail, etc.).
+      if (document.querySelector('.fixed.inset-0.z-50:not([style*="display: none"])')) return;
+
+      if (e.key === 'j' || e.key === 'ArrowDown') {
+        e.preventDefault(); move(1); return;
+      }
+      if (e.key === 'k' || e.key === 'ArrowUp') {
+        e.preventDefault(); move(-1); return;
+      }
+      if (!selectedId) return;
+
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (window.htmx) {
+          htmx.ajax('GET', '/htmx/tasks/' + selectedId + '/detail', {
+            target: '#task-detail-slot', swap: 'innerHTML',
+          });
+        }
+        return;
+      }
+      if (e.key === 'c') {
+        e.preventDefault();
+        try {
+          await fetch('/htmx/tasks/' + selectedId + '/toggle', {method: 'POST', credentials: 'include'});
+          location.reload();
+        } catch(_) {}
+        return;
+      }
+      if (e.key === '1' || e.key === '2' || e.key === '3' || e.key === '4') {
+        e.preventDefault();
+        await patchSelected({priority: 'p' + e.key});
+        return;
+      }
+      if (e.key === 't' && !e.shiftKey) {
+        e.preventDefault();
+        await patchSelected({due_at: todayISO(0), due_date_only: true});
+        return;
+      }
+      if (e.key === 'T' || (e.key === 't' && e.shiftKey)) {
+        e.preventDefault();
+        await patchSelected({due_at: todayISO(1), due_date_only: true});
+        return;
+      }
+      if (e.key === 'w') {
+        e.preventDefault();
+        await patchSelected({due_at: endOfWeek(), due_date_only: true});
+        return;
+      }
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
+        try {
+          await fetch('/api/tasks/' + selectedId, {method: 'DELETE', credentials: 'include'});
+          const wrap = document.getElementById('task-wrap-' + selectedId);
+          if (wrap) wrap.remove();
+          selectedId = null;
+        } catch(_) {}
+        return;
+      }
+      if (e.key === 'e') {
+        e.preventDefault();
+        if (window.htmx) {
+          htmx.ajax('GET', '/htmx/tasks/' + selectedId + '/edit', {
+            target: '#task-' + selectedId, swap: 'outerHTML',
+          });
+        }
+        return;
+      }
+      if (e.key === 'p') {
+        e.preventDefault();
+        // Toggle pin (POST sets, DELETE clears) — try POST first, server is idempotent on resave.
+        const wrap = document.getElementById('task-wrap-' + selectedId);
+        const isPinned = wrap && wrap.querySelector('[title="Закреплено"]');
+        await fetch('/api/tasks/' + selectedId + '/pin', {
+          method: isPinned ? 'DELETE' : 'POST',
+          credentials: 'include',
+        });
+        location.reload();
+        return;
+      }
+    });
+  })();
+</script>

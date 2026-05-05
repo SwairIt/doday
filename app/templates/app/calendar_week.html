@@ -1,0 +1,145 @@
+{% extends "app_base.html" %}
+{% block title %}Неделя — Doday{% endblock %}
+{% block view_title %}Календарь · неделя{% endblock %}
+{% block content %}
+<div class="mb-6 flex items-center justify-between gap-3 flex-wrap">
+  <div>
+    <h1 class="text-3xl md:text-4xl font-bold mb-1">{{ week_label }}</h1>
+    <p class="text-[var(--text-muted)] text-sm">7 колонок Пн-Вс. Перетащи задачу — изменится день. Inline-добавление в шапке колонки.</p>
+  </div>
+  <div class="flex items-center gap-2">
+    <a href="/app/calendar" class="btn-ghost px-3 py-2 text-xs">Месяц</a>
+    <a href="?view=week&week={{ prev_week }}" class="btn-ghost px-3 py-2" title="Предыдущая неделя">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+    </a>
+    <a href="?view=week" class="btn-ghost px-4 py-2 text-sm">Эта неделя</a>
+    <a href="?view=week&week={{ next_week }}" class="btn-ghost px-3 py-2" title="Следующая неделя">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+    </a>
+  </div>
+</div>
+
+<div class="grid grid-cols-7 gap-2" id="week-grid">
+  {% for day in days %}
+    <div data-week-day="{{ day.date.isoformat() }}"
+         class="bg-[var(--surface)] rounded-xl border border-[var(--border)] p-2 min-h-[400px]
+                {% if day.is_today %}ring-2 ring-[var(--accent)]{% endif %}"
+         x-data="{
+           adding: false, draftTitle: '',
+           async addTask() {
+             const t = this.draftTitle.trim();
+             if (!t) { this.adding = false; return; }
+             const r = await fetch('/api/tasks', {
+               method: 'POST', credentials: 'include',
+               headers: {'Content-Type': 'application/json'},
+               body: JSON.stringify({title: t, due_at: '{{ day.date.isoformat() }}T23:59:00Z', due_date_only: true}),
+             });
+             if (r.ok) location.reload();
+           },
+         }">
+      <div class="px-2 pb-2 mb-1 border-b border-[var(--border)]">
+        <div class="flex items-baseline justify-between">
+          <div>
+            <div class="text-[10px] uppercase tracking-wider text-[var(--text-muted)] font-semibold">{{ day.weekday_name }}</div>
+            <div class="text-xl font-bold {% if day.is_today %}grad-text{% elif day.is_weekend %}text-[var(--text-muted)]{% endif %}">
+              {{ day.date.day }}.{{ "%02d"|format(day.date.month) }}
+            </div>
+          </div>
+          <button @click="adding = !adding; if (adding) $nextTick(() => $refs.input.focus())"
+                  class="text-[var(--text-muted)] hover:text-[var(--accent)] text-lg leading-none px-1.5 rounded hover:bg-[var(--surface-2)]"
+                  title="Добавить задачу на этот день">+</button>
+        </div>
+        <div x-show="adding" x-cloak class="mt-2">
+          <input x-ref="input" x-model="draftTitle"
+                 @keydown.enter.prevent="addTask()"
+                 @keydown.escape="adding = false; draftTitle = ''"
+                 type="text" maxlength="500"
+                 placeholder="новая задача"
+                 class="w-full px-2 py-1 text-xs rounded bg-[var(--surface-2)] border border-[var(--border)] outline-none focus:border-[var(--accent)]">
+        </div>
+      </div>
+
+      <div class="space-y-1">
+        {% for task in day.tasks %}
+          {% set color = project_color_map.get(task.project_id, 'violet') %}
+          <div draggable="true"
+               data-task-id="{{ task.id }}"
+               class="cal-chip block text-xs px-2 py-1.5 rounded-md cursor-grab active:cursor-grabbing
+                      bg-{{ color }}-500/15 text-{{ color }}-400 hover:bg-{{ color }}-500/25 transition
+                      {% if task.is_completed %}line-through opacity-60{% endif %}"
+               hx-get="/htmx/tasks/{{ task.id }}/detail"
+               hx-target="#task-detail-slot"
+               hx-swap="innerHTML"
+               title="{{ task.title }}">
+            <div class="flex items-start gap-1.5">
+              {% if task.priority.value != 'p4' %}
+                {% set prio_class = {'p1':'rose','p2':'amber','p3':'sky'}[task.priority.value] %}
+                <span class="text-{{ prio_class }}-400 font-bold shrink-0">!{{ task.priority.value[1:] }}</span>
+              {% endif %}
+              <span class="break-words leading-tight">{{ task.title }}</span>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+<script>
+  (function() {
+    var grid = document.getElementById('week-grid');
+    if (!grid) return;
+    var dragged = null;
+    grid.addEventListener('dragstart', function(e) {
+      var chip = e.target.closest('.cal-chip');
+      if (!chip) return;
+      dragged = chip;
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', chip.dataset.taskId); } catch (_) {}
+      chip.classList.add('opacity-40');
+    });
+    grid.addEventListener('dragend', function() {
+      if (dragged) dragged.classList.remove('opacity-40');
+      dragged = null;
+      grid.querySelectorAll('[data-week-drop-active]').forEach(function(el) {
+        el.removeAttribute('data-week-drop-active');
+        el.classList.remove('bg-[var(--accent)]/10', 'ring-2', 'ring-[var(--accent)]');
+      });
+    });
+    grid.addEventListener('dragover', function(e) {
+      var col = e.target.closest('[data-week-day]');
+      if (!col || !dragged) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (!col.dataset.weekDropActive) {
+        col.dataset.weekDropActive = '1';
+        col.classList.add('bg-[var(--accent)]/10', 'ring-2', 'ring-[var(--accent)]');
+      }
+    });
+    grid.addEventListener('dragleave', function(e) {
+      var col = e.target.closest('[data-week-day]');
+      if (!col) return;
+      if (!col.contains(e.relatedTarget)) {
+        col.removeAttribute('data-week-drop-active');
+        col.classList.remove('bg-[var(--accent)]/10', 'ring-2', 'ring-[var(--accent)]');
+      }
+    });
+    grid.addEventListener('drop', function(e) {
+      var col = e.target.closest('[data-week-day]');
+      if (!col || !dragged) return;
+      e.preventDefault();
+      var taskId = dragged.dataset.taskId;
+      var dayIso = col.dataset.weekDay;
+      col.removeAttribute('data-week-drop-active');
+      col.classList.remove('bg-[var(--accent)]/10', 'ring-2', 'ring-[var(--accent)]');
+      if (!taskId || !dayIso) return;
+      fetch('/api/tasks/' + taskId, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({due_at: dayIso + 'T00:00:00Z', due_date_only: true}),
+      }).then(function(r) { if (r.ok) location.reload(); });
+    });
+  })();
+</script>
+{% endblock %}

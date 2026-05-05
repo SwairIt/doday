@@ -26,7 +26,7 @@ async def test_calendar_chips_are_draggable(logged_in_client: AsyncClient) -> No
     assert 'draggable="true"' in page.text
     assert "data-task-id=" in page.text
     assert "data-cal-day=" in page.text
-    assert "Перетаскивай задачи" in page.text
+    assert "Перетащи" in page.text  # drag hint copy can vary; just ensure it mentions drag
 
 
 async def test_daily_goal_card_renders(logged_in_client: AsyncClient) -> None:

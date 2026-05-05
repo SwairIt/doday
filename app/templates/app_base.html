@@ -7,12 +7,29 @@
   document.addEventListener('alpine:init', () => {
     Alpine.store('selection', {
       ids: [],
+      lastId: null,
       has(id) { return this.ids.includes(id); },
       toggle(id) {
         const i = this.ids.indexOf(id);
         if (i >= 0) this.ids.splice(i, 1); else this.ids.push(id);
+        this.lastId = id;
       },
-      clear() { this.ids = []; },
+      // Shift-click: select everything between lastId and id in DOM order.
+      range(id) {
+        if (!this.lastId || this.lastId === id) { this.toggle(id); return; }
+        const all = Array.from(document.querySelectorAll('[id^="task-wrap-"]'))
+          .map(el => el.id.replace('task-wrap-', ''));
+        const a = all.indexOf(this.lastId);
+        const b = all.indexOf(id);
+        if (a < 0 || b < 0) { this.toggle(id); return; }
+        const [from, to] = a < b ? [a, b] : [b, a];
+        const slice = all.slice(from, to + 1);
+        for (const tid of slice) {
+          if (!this.ids.includes(tid)) this.ids.push(tid);
+        }
+        this.lastId = id;
+      },
+      clear() { this.ids = []; this.lastId = null; },
       count() { return this.ids.length; },
     });
     window.addEventListener('keydown', (e) => {
@@ -40,6 +57,7 @@
 {% include "_partials/new_project_modal.html" %}
 {% include "_partials/edit_project_modal.html" %}
 {% include "_partials/shortcuts.html" %}
+{% include "_partials/task_keyboard.html" %}
 {% include "_partials/mobile_nav.html" %}
 {% include "_partials/notifications.html" %}
 {% include "_partials/undo_toast.html" %}

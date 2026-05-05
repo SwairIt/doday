@@ -2,57 +2,197 @@
 {% block title %}Календарь — Doday{% endblock %}
 {% block view_title %}Календарь{% endblock %}
 {% block content %}
-<div class="mb-6 flex items-center justify-between">
-  <div>
-    <h1 class="text-3xl md:text-4xl font-bold mb-1">{{ month_label }}</h1>
-    <p class="text-[var(--text-muted)] text-sm">Перетаскивай задачи между днями, чтобы изменить срок.</p>
-  </div>
-  <div class="flex items-center gap-2">
-    <a href="?month={{ prev_month }}" class="btn-ghost px-3 py-2" title="Предыдущий месяц">
-      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-    </a>
-    <a href="/app/calendar" class="btn-ghost px-4 py-2 text-sm">Сегодня</a>
-    <a href="?month={{ next_month }}" class="btn-ghost px-3 py-2" title="Следующий месяц">
-      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-    </a>
-  </div>
-</div>
+{% set days_json = {} %}
+{% for cell in cells %}
+  {% set _ = days_json.update({cell.date.isoformat(): cell.tasks|map(attribute='id')|map('string')|list}) %}
+{% endfor %}
 
-<div class="grid grid-cols-7 gap-px bg-[var(--border)] rounded-2xl overflow-hidden border border-[var(--border)]" id="calendar-grid">
-  {% for w in ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'] %}
-    <div class="bg-[var(--surface-2)] py-2 px-3 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] text-center">{{ w }}</div>
-  {% endfor %}
-  {% for cell in cells %}
-    <div data-cal-day="{{ cell.date.isoformat() }}"
-         class="cal-cell bg-[var(--surface)] min-h-[110px] p-2 transition relative
-                {% if not cell.in_month %}opacity-40{% endif %}
-                {% if cell.is_today %}ring-2 ring-inset ring-[var(--accent)]{% endif %}
-                hover:bg-[var(--surface-2)]">
-      <div class="text-xs font-semibold mb-1
-                  {% if cell.is_today %}grad-text{% else %}{% if cell.is_weekend %}text-[var(--text-muted)]{% else %}text-[var(--text)]{% endif %}{% endif %}">
-        {{ cell.day }}
+<div
+  x-data="{
+    modalOpen: false,
+    modalDate: '',
+    modalDay: 0,
+    modalMonthLabel: '',
+    modalTasks: [],
+    dense: localStorage.getItem('doday-cal-dense') === 'yes',
+    toggleDense() {
+      this.dense = !this.dense;
+      try { localStorage.setItem('doday-cal-dense', this.dense ? 'yes' : 'no'); } catch(e){}
+    },
+    openDay(dateIso, dayLabel, monthLabel, tasksJson) {
+      this.modalDate = dateIso;
+      this.modalDay = dayLabel;
+      this.modalMonthLabel = monthLabel;
+      this.modalTasks = JSON.parse(tasksJson || '[]');
+      this.modalOpen = true;
+    },
+    async toggleTask(taskId, isCompleted) {
+      try {
+        await fetch('/htmx/tasks/' + taskId + '/toggle', {method: 'POST', credentials: 'include'});
+        const t = this.modalTasks.find(x => x.id === taskId);
+        if (t) t.is_completed = !isCompleted;
+      } catch(e){}
+    },
+    async addOnDay() {
+      const title = (this.$refs.addInput.value || '').trim();
+      if (!title) return;
+      const r = await fetch('/api/tasks', {
+        method: 'POST', credentials: 'include',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({title, due_at: this.modalDate + 'T23:59:00Z', due_date_only: true}),
+      });
+      if (r.ok) {
+        const t = await r.json();
+        this.modalTasks.push({
+          id: t.id, title: t.title, project_id: t.project_id,
+          is_completed: false, priority: t.priority, color: 'violet',
+        });
+        this.$refs.addInput.value = '';
+      }
+    },
+  }"
+  @keydown.escape.window="modalOpen = false"
+>
+  <div class="mb-6 flex items-center justify-between gap-3 flex-wrap">
+    <div>
+      <h1 class="text-3xl md:text-4xl font-bold mb-1">{{ month_label }}</h1>
+      <p class="text-[var(--text-muted)] text-sm">Кликни по дню — раскроется список. Перетащи задачу — изменится срок.</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="?view=week" class="btn-ghost px-3 py-2 text-xs" title="Переключиться на недельный вид">Неделя</a>
+      <button @click="toggleDense()" :class="dense ? 'border-[var(--accent)] text-[var(--accent)]' : ''"
+              class="btn-ghost px-3 py-2 text-xs inline-flex items-center gap-1.5"
+              title="Густо: вместо текста — цветные точки (по одной на задачу)">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="5" cy="5" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+        <span x-text="dense ? 'Список' : 'Точки'"></span>
+      </button>
+      <a href="?month={{ prev_month }}" class="btn-ghost px-3 py-2" title="Предыдущий месяц">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+      </a>
+      <a href="/app/calendar" class="btn-ghost px-4 py-2 text-sm">Сегодня</a>
+      <a href="?month={{ next_month }}" class="btn-ghost px-3 py-2" title="Следующий месяц">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-7 gap-px bg-[var(--border)] rounded-2xl overflow-hidden border border-[var(--border)]" id="calendar-grid">
+    {% for w in ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'] %}
+      <div class="bg-[var(--surface-2)] py-2 px-3 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] text-center">{{ w }}</div>
+    {% endfor %}
+    {% for cell in cells %}
+      {% set day_iso = cell.date.isoformat() %}
+      {% set day_tasks_json = [] %}
+      {% for t in cell.tasks %}
+        {% set color = project_color_map.get(t.project_id, 'violet') %}
+        {% set _ = day_tasks_json.append({
+          'id': t.id|string, 'title': t.title, 'is_completed': t.is_completed,
+          'priority': t.priority.value, 'color': color,
+        }) %}
+      {% endfor %}
+      <div data-cal-day="{{ day_iso }}"
+           class="cal-cell bg-[var(--surface)] min-h-[110px] p-2 transition relative cursor-pointer
+                  {% if not cell.in_month %}opacity-40{% endif %}
+                  {% if cell.is_today %}ring-2 ring-inset ring-[var(--accent)]{% endif %}
+                  hover:bg-[var(--surface-2)]"
+           @click.self="openDay('{{ day_iso }}', {{ cell.day }}, '{{ month_label }}', {{ day_tasks_json|tojson|safe|e }})">
+        <div class="flex items-baseline justify-between mb-1 pointer-events-none">
+          <span class="text-xs font-semibold
+                       {% if cell.is_today %}grad-text{% else %}{% if cell.is_weekend %}text-[var(--text-muted)]{% else %}text-[var(--text)]{% endif %}{% endif %}">
+            {{ cell.day }}
+          </span>
+          {% if cell.tasks|length > 0 %}
+            <span class="text-[10px] text-[var(--text-muted)] tabular-nums">{{ cell.tasks|length }}</span>
+          {% endif %}
+        </div>
+
+        {# Dense (dots) mode — show one colored dot per task, max ~24 fit #}
+        <div x-show="dense" x-cloak class="flex flex-wrap gap-0.5 pointer-events-none">
+          {% for t in cell.tasks %}
+            {% set color = project_color_map.get(t.project_id, 'violet') %}
+            <span class="w-1.5 h-1.5 rounded-full bg-{{ color }}-400 {% if t.is_completed %}opacity-30{% endif %}"
+                  title="{{ t.title }}"></span>
+          {% endfor %}
+        </div>
+
+        {# Default — first 3 chips + clickable «+N ещё» #}
+        <div x-show="!dense" class="space-y-1">
+          {% for task in cell.tasks[:3] %}
+            {% set color = project_color_map.get(task.project_id, 'violet') %}
+            <div draggable="true"
+                 data-task-id="{{ task.id }}"
+                 class="cal-chip block text-xs px-2 py-1 rounded-md truncate cursor-grab active:cursor-grabbing
+                        bg-{{ color }}-500/15 text-{{ color }}-400 hover:bg-{{ color }}-500/25 transition
+                        {% if task.is_completed %}line-through opacity-60{% endif %}"
+                 hx-get="/htmx/tasks/{{ task.id }}/detail"
+                 hx-target="#task-detail-slot"
+                 hx-swap="innerHTML"
+                 @click.stop
+                 title="{{ task.title }} · перетащи на другой день, чтобы перенести">
+              {{ task.title }}
+            </div>
+          {% endfor %}
+          {% if cell.tasks|length > 3 %}
+            <button type="button"
+                    @click.stop="openDay('{{ day_iso }}', {{ cell.day }}, '{{ month_label }}', {{ day_tasks_json|tojson|safe|e }})"
+                    class="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] px-2 underline-offset-2 hover:underline">
+              +{{ cell.tasks|length - 3 }} ещё
+            </button>
+          {% endif %}
+        </div>
       </div>
-      <div class="space-y-1">
-        {% for task in cell.tasks[:3] %}
-          {% set color = project_color_map.get(task.project_id, 'violet') %}
-          <div draggable="true"
-               data-task-id="{{ task.id }}"
-               class="cal-chip block text-xs px-2 py-1 rounded-md truncate cursor-grab active:cursor-grabbing
-                      bg-{{ color }}-500/15 text-{{ color }}-400 hover:bg-{{ color }}-500/25 transition
-                      {% if task.is_completed %}line-through opacity-60{% endif %}"
-               hx-get="/htmx/tasks/{{ task.id }}/detail"
-               hx-target="#task-detail-slot"
-               hx-swap="innerHTML"
-               title="{{ task.title }} · перетащи на другой день, чтобы перенести">
-            {{ task.title }}
-          </div>
-        {% endfor %}
-        {% if cell.tasks|length > 3 %}
-          <div class="text-xs text-[var(--text-muted)] px-2">+{{ cell.tasks|length - 3 }} ещё</div>
-        {% endif %}
+    {% endfor %}
+  </div>
+
+  {# ─── Day-detail modal ─── #}
+  <div x-show="modalOpen" x-cloak x-transition.opacity
+       @click.self="modalOpen = false"
+       class="fixed inset-0 z-40 flex items-start justify-center bg-black/60 p-4 pt-16 overflow-y-auto">
+    <div class="card w-full max-w-lg p-5">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <div class="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold" x-text="modalMonthLabel"></div>
+          <h3 class="text-2xl font-bold"><span x-text="modalDay"></span></h3>
+        </div>
+        <button @click="modalOpen = false" class="text-[var(--text-muted)] hover:text-[var(--text)] text-xl">✕</button>
+      </div>
+
+      <template x-if="modalTasks.length">
+        <ul class="space-y-1 mb-4 max-h-[50vh] overflow-y-auto pr-1">
+          <template x-for="t in modalTasks" :key="t.id">
+            <li class="flex items-center gap-2 p-2 rounded-lg hover:bg-[var(--surface-2)]/60 group">
+              <button @click="toggleTask(t.id, t.is_completed)"
+                      :class="t.is_completed ? 'grad-bg' : 'bg-[var(--surface-2)] border-2 border-[var(--border)]'"
+                      class="w-5 h-5 rounded-full shrink-0 flex items-center justify-center transition active:scale-95">
+                <svg x-show="t.is_completed" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              </button>
+              <span :class="t.is_completed ? 'line-through text-[var(--text-muted)]' : ''"
+                    class="flex-1 text-sm truncate cursor-pointer"
+                    @click="modalOpen = false; htmx.ajax('GET', '/htmx/tasks/' + t.id + '/detail', {target: '#task-detail-slot', swap: 'innerHTML'})"
+                    x-text="t.title"></span>
+              <span x-show="t.priority !== 'p4'"
+                    :class="'text-' + ({p1:'rose',p2:'amber',p3:'sky'}[t.priority] || 'slate') + '-400'"
+                    class="text-[10px] font-bold"
+                    x-text="'!' + t.priority.slice(1)"></span>
+            </li>
+          </template>
+        </ul>
+      </template>
+      <template x-if="!modalTasks.length">
+        <div class="text-sm text-[var(--text-muted)] text-center py-6">На этот день пока ничего не запланировано.</div>
+      </template>
+
+      <div class="border-t border-[var(--border)] pt-3">
+        <div class="flex items-center gap-2">
+          <input x-ref="addInput" type="text" placeholder="+ Добавить задачу на этот день" maxlength="500"
+                 @keydown.enter.prevent="addOnDay()"
+                 class="flex-1 px-3 py-2 text-sm rounded-lg bg-[var(--surface-2)] border border-[var(--border)] outline-none focus:border-[var(--accent)]">
+          <button @click="addOnDay()" class="btn-primary px-4 py-2 text-sm">Добавить</button>
+        </div>
+        <p class="text-[10px] text-[var(--text-muted)] mt-1.5">Enter чтобы быстро добавить.</p>
       </div>
     </div>
-  {% endfor %}
+  </div>
 </div>
 
 <script>
@@ -71,9 +211,6 @@
     grid.addEventListener('dragend', function() {
       if (dragged) dragged.classList.remove('opacity-40');
       dragged = null;
-      grid.querySelectorAll('.ring-2.ring-[var(--accent)]:not(.cal-cell)').forEach(function(el) {
-        el.classList.remove('ring-2', 'ring-[var(--accent)]');
-      });
       grid.querySelectorAll('[data-cal-drop-active]').forEach(function(el) {
         el.removeAttribute('data-cal-drop-active');
         el.classList.remove('bg-[var(--accent)]/10', 'ring-2', 'ring-[var(--accent)]');

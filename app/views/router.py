@@ -181,9 +181,62 @@ async def calendar_view(
     user: RequiredUser,
     session: DbSession,
     month: str | None = None,
+    view: str = "month",
+    week: str | None = None,
 ) -> HTMLResponse:
-    """Render a 7-by-6 month grid with up to 3 task chips per cell."""
+    """Calendar in month-grid (default) or week-column layout (?view=week)."""
     today_date = datetime.now(UTC).date()
+    projects = await list_projects(session, user.id)
+    project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
+
+    if view == "week":
+        # Pick the Monday for the requested week. `week` is "YYYY-MM-DD" of any
+        # day inside it, or absent → current week.
+        anchor = today_date
+        if week:
+            try:
+                anchor = datetime.strptime(week, "%Y-%m-%d").date()
+            except ValueError:
+                anchor = today_date
+        monday = anchor - timedelta(days=anchor.weekday())
+        sunday = monday + timedelta(days=7)
+        range_start = datetime.combine(monday, datetime.min.time(), tzinfo=UTC)
+        range_end = datetime.combine(sunday, datetime.min.time(), tzinfo=UTC)
+        tasks = await list_in_range(session, user.id, start=range_start, end=range_end)
+        by_day: dict[date, list[Task]] = defaultdict(list)
+        for t in tasks:
+            if t.due_at is not None:
+                by_day[t.due_at.date()].append(t)
+        days = []
+        weekday_names = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"]
+        for offset in range(7):
+            d = monday + timedelta(days=offset)
+            days.append(
+                {
+                    "date": d,
+                    "weekday_name": weekday_names[offset],
+                    "is_today": d == today_date,
+                    "is_weekend": d.weekday() >= 5,
+                    "tasks": by_day[d],
+                }
+            )
+        prev_iso = (monday - timedelta(days=7)).isoformat()
+        next_iso = (monday + timedelta(days=7)).isoformat()
+        return templates.TemplateResponse(
+            request,
+            "app/calendar_week.html",
+            {
+                "current_user": user,
+                "current_view": "calendar",
+                "projects": projects,
+                "project_color_map": project_color_map,
+                "week_label": f"{monday.strftime('%d.%m')} – {(sunday - timedelta(days=1)).strftime('%d.%m.%Y')}",
+                "days": days,
+                "prev_week": prev_iso,
+                "next_week": next_iso,
+            },
+        )
+
     if month:
         try:
             target = datetime.strptime(month, "%Y-%m").date().replace(day=1)
@@ -200,7 +253,7 @@ async def calendar_view(
     range_end = datetime.combine(grid_end, datetime.min.time(), tzinfo=UTC)
     tasks = await list_in_range(session, user.id, start=range_start, end=range_end)
 
-    by_day: dict[date, list[Task]] = defaultdict(list)
+    by_day = defaultdict(list)
     for t in tasks:
         if t.due_at is not None:
             by_day[t.due_at.date()].append(t)
@@ -219,9 +272,6 @@ async def calendar_view(
             }
         )
 
-    projects = await list_projects(session, user.id)
-    project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
-
     prev_target = (target.replace(day=1) - timedelta(days=1)).replace(day=1)
     next_target = (target.replace(day=28) + timedelta(days=10)).replace(day=1)
 
@@ -237,6 +287,7 @@ async def calendar_view(
             "cells": cells,
             "prev_month": prev_target.strftime("%Y-%m"),
             "next_month": next_target.strftime("%Y-%m"),
+            "current_week_iso": today_date.isoformat(),
         },
     )
 

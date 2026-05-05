@@ -26,9 +26,8 @@
     <input
       type="checkbox"
       :checked="$store.selection.has('{{ tid }}')"
-      @change="$store.selection.toggle('{{ tid }}')"
+      @click.stop="$event.shiftKey ? $store.selection.range('{{ tid }}') : $store.selection.toggle('{{ tid }}')"
       class="w-4 h-4 accent-[var(--accent)] rounded"
-      @click.stop
     >
   </label>
 
