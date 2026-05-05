@@ -1,0 +1,81 @@
+{# Monday week-plan widget. Shown Mon-Tue (UTC weekday 0-1).
+   Three goals for the week, each with a checkbox; persisted per ISO-week
+   in localStorage. Universal — visible regardless of audience. #}
+<section
+  x-data="{
+    show: false,
+    weekKey: '',
+    goals: [{text:'', done:false}, {text:'', done:false}, {text:'', done:false}],
+    saved: false,
+    init() {
+      const dow = new Date().getDay();  // 0=Sun, 1=Mon, 2=Tue
+      this.show = (dow === 1 || dow === 2);
+      this.weekKey = this.isoWeek();
+      try {
+        const raw = localStorage.getItem('doday-week-plan-' + this.weekKey);
+        if (raw) this.goals = JSON.parse(raw);
+      } catch(e){}
+    },
+    isoWeek(d) {
+      const date = d || new Date();
+      const t = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+      t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
+      const yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+      const week = Math.ceil((((t - yearStart) / 86400000) + 1) / 7);
+      return t.getUTCFullYear() + '-W' + String(week).padStart(2, '0');
+    },
+    persist() {
+      try { localStorage.setItem('doday-week-plan-' + this.weekKey, JSON.stringify(this.goals)); } catch(e){}
+      this.saved = true;
+      setTimeout(() => this.saved = false, 1500);
+    },
+    progress() {
+      const filled = this.goals.filter(g => g.text.trim()).length;
+      if (!filled) return 0;
+      const done = this.goals.filter(g => g.text.trim() && g.done).length;
+      return Math.round(done / filled * 100);
+    },
+  }"
+  x-show="show"
+  x-cloak
+  class="card p-5 mb-6 border border-violet-500/20 bg-gradient-to-br from-violet-500/10 to-fuchsia-500/5"
+>
+  <div class="flex items-start gap-3 mb-3">
+    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-lg shrink-0">🗓️</div>
+    <div class="flex-1 min-w-0">
+      <div class="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold">План недели</div>
+      <div class="font-semibold text-sm">3 главные вещи на эту неделю · <span x-text="weekKey"></span></div>
+    </div>
+    <span x-show="saved" x-cloak class="text-[10px] text-emerald-400 self-center">✓ сохранено</span>
+  </div>
+
+  <div class="space-y-2">
+    <template x-for="(g, i) in goals" :key="i">
+      <div class="flex items-center gap-2">
+        <button type="button" @click="g.done = !g.done; persist()"
+                :class="g.done ? 'grad-bg shadow-glow' : 'bg-[var(--surface-2)] border-2 border-[var(--border)]'"
+                class="w-5 h-5 rounded-full shrink-0 flex items-center justify-center transition active:scale-95">
+          <template x-if="g.done">
+            <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          </template>
+        </button>
+        <input x-model="g.text" @blur="persist()" type="text" maxlength="120"
+               :placeholder="'Цель ' + (i+1) + ' — конкретно'"
+               :class="g.done ? 'line-through text-[var(--text-muted)]' : ''"
+               class="flex-1 px-3 py-1.5 text-sm rounded-lg bg-[var(--surface-2)] border border-[var(--border)] outline-none focus:border-[var(--accent)]">
+      </div>
+    </template>
+  </div>
+
+  <template x-if="goals.some(g => g.text.trim())">
+    <div class="mt-3">
+      <div class="flex items-center justify-between text-[10px] text-[var(--text-muted)] mb-1">
+        <span>Прогресс</span>
+        <span x-text="progress() + '%'"></span>
+      </div>
+      <div class="h-1.5 bg-[var(--surface-2)] rounded-full overflow-hidden">
+        <div class="h-full transition-all" :style="`width: ${progress()}%; background: linear-gradient(90deg, var(--accent), var(--accent-2))`"></div>
+      </div>
+    </div>
+  </template>
+</section>
