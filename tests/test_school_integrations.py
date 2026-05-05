@@ -1,5 +1,6 @@
 """Tests for the school portal integration scaffold (CRUD + stub sync)."""
 
+import pytest
 from httpx import AsyncClient
 
 
@@ -50,17 +51,104 @@ async def test_short_token_rejected(logged_in_client: AsyncClient) -> None:
     assert response.status_code == 422
 
 
-async def test_sync_returns_credentials_needed_error(logged_in_client: AsyncClient) -> None:
+async def test_sync_handles_unauthorized(
+    logged_in_client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A bad/expired token should surface a friendly message, not a 500."""
+
+    class _FakeResponse:
+        def __init__(self) -> None:
+            self.status_code = 401
+            self.text = "unauthorized"
+
+        def json(self) -> dict[str, object]:
+            return {"error": "unauthorized"}
+
+    class _FakeClient:
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            pass
+
+        async def __aenter__(self) -> "_FakeClient":
+            return self
+
+        async def __aexit__(self, *args: object) -> None:
+            return None
+
+        async def get(self, url: str, headers: dict[str, str]) -> _FakeResponse:
+            return _FakeResponse()
+
+    monkeypatch.setattr("httpx.AsyncClient", _FakeClient)
+
     await logged_in_client.post(
         "/api/school/integrations",
-        data={"provider": "school_mo", "auth_token": "fake-token-1234567"},
+        data={"provider": "school_mo", "auth_token": "stale-token-12345"},
     )
     response = await logged_in_client.post("/api/school/integrations/school_mo/sync")
     assert response.status_code == 200
     body = response.json()
     assert body["ok"] is False
-    assert body["error"] is not None
-    assert "auth_token" in body["error"] or "aupd_token" in body["error"]
+    assert "401" in body["error"] or "истёк" in body["error"]
+
+
+async def test_sync_creates_tasks_from_payload(
+    logged_in_client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Mock the portal returning two homeworks and verify Doday tasks appear."""
+
+    fake_payload: dict[str, object] = {
+        "homeworks": [
+            {
+                "id": 1,
+                "subject_name": "Алгебра",
+                "task": "§ 5, № 12-15",
+                "deadline": "2026-12-31",
+            },
+            {
+                "id": 2,
+                "subject": {"name": "Физика"},
+                "description": "Лабораторная по оптике",
+                "due_at": "2026-12-25T20:00:00Z",
+            },
+        ]
+    }
+
+    class _FakeResponse:
+        def __init__(self) -> None:
+            self.status_code = 200
+            self.text = ""
+
+        def json(self) -> dict[str, object]:
+            return fake_payload
+
+    class _FakeClient:
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            pass
+
+        async def __aenter__(self) -> "_FakeClient":
+            return self
+
+        async def __aexit__(self, *args: object) -> None:
+            return None
+
+        async def get(self, url: str, headers: dict[str, str]) -> _FakeResponse:
+            return _FakeResponse()
+
+    monkeypatch.setattr("httpx.AsyncClient", _FakeClient)
+
+    await logged_in_client.post(
+        "/api/school/integrations",
+        data={"provider": "school_mo", "auth_token": "good-token-1234567"},
+    )
+    response = await logged_in_client.post("/api/school/integrations/school_mo/sync")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ok"] is True
+    assert body["pulled"] == 2
+    assert body["created"] == 2
+
+    # Re-running is idempotent — already-existing titles aren't duplicated.
+    again = (await logged_in_client.post("/api/school/integrations/school_mo/sync")).json()
+    assert again["created"] == 0
 
 
 async def test_sync_unknown_integration_404(logged_in_client: AsyncClient) -> None:

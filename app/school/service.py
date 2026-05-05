@@ -1,14 +1,14 @@
 """Business logic for school portal integrations.
 
-Holds the provider registry and a stub `sync_now` that documents what
-credentials each provider would need. Real network calls are intentionally
-not implemented yet — they'll go behind the same `_fetch_<provider>` seam
-once the user provides a token in `.env` (see docs/school_integrations.md).
+Talks to school.mosreg.ru (Школьный портал МО) and dnevnik.mos.ru (МЭШ) via
+their family-web JSON API using the user-supplied `aupd_token` cookie.
+Failures surface real HTTP details so the user can debug a stale token.
 """
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
+import httpx
 import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -73,14 +73,7 @@ async def delete_integration(session: AsyncSession, user_id: UUID, provider: Pro
 
 
 async def sync_now(session: AsyncSession, user_id: UUID, provider: Provider) -> SyncResult:
-    """Trigger a sync for the given provider.
-
-    Right now this is a documented stub: with no real auth_token configured
-    against a working portal it returns `ok=False` with an explanation. The
-    intent is that once the user pastes a real token (or we wire up gosuslugi
-    OAuth) the `_fetch_*` helpers below get filled in and the rest of the
-    pipeline (parse → diff → create_task) Just Works.
-    """
+    """Pull homework from a school portal and create matching Doday tasks."""
     integ = await get_integration(session, user_id, provider)
     if integ is None:
         raise IntegrationNotFound(provider)
@@ -96,53 +89,228 @@ async def sync_now(session: AsyncSession, user_id: UUID, provider: Provider) -> 
             payload = await _fetch_mesh(integ.auth_token)
         else:  # pragma: no cover — Literal["school_mo","mesh"] guards this
             return _save_error(session, integ, f"Неизвестный провайдер: {provider}")
-    except NotImplementedError as e:
+    except _PortalError as e:
+        await session.commit()  # persist last_error from _save_error
         return _save_error(session, integ, str(e))
+
+    created = await _create_tasks_from_payload(
+        session, user_id, integ.target_project_id, payload
+    )
 
     integ.last_sync_at = datetime.now(UTC)
     integ.last_error = None
     await session.commit()
-    logger.info("school_sync_ok", provider=provider, items=len(payload))
-    return SyncResult(ok=True, pulled=len(payload), created=0)
+    logger.info("school_sync_ok", provider=provider, pulled=len(payload), created=created)
+    return SyncResult(ok=True, pulled=len(payload), created=created)
 
 
 def _save_error(session: AsyncSession, integ: SchoolIntegration, msg: str) -> SyncResult:
     integ.last_error = msg[:500]
-    # Best-effort error log — caller awaits commit anyway
     return SyncResult(ok=False, error=msg)
 
 
+class _PortalError(Exception):
+    """Anything went wrong talking to the school portal (auth, HTTP, parse)."""
+
+
+# ---------------------------------------------------------------------------
+# Школьный портал МО — school.mosreg.ru. Real-world: auth via aupd_token cookie.
+# We try the documented family-web v2 endpoint first, then fall back to v1 if
+# the server returns 404 (different regions sometimes lag on rollouts).
+# ---------------------------------------------------------------------------
+
+_USER_AGENT = "Doday/0.1 (+self-hosted; contact via .env SMTP_FROM)"
+
+
 async def _fetch_school_mo(auth_token: str) -> list[dict[str, object]]:
-    """Fetch homework from Школьный портал МО.
-
-    Required env (when ready to wire in real HTTP):
-      SCHOOL_MO_BASE_URL    = https://school.mosreg.ru/api  (or current host)
-      SCHOOL_MO_USER_AGENT  = Doday/1.0 (+contact@…)        (optional)
-
-    Required user input (saved in school_integrations.auth_token):
-      cookie/JWT from a logged-in browser session — exact format TBD,
-      typically the value of `aupd_token` cookie or an `Authorization` header.
-    """
-    raise NotImplementedError(
-        "Школьный портал МО: нужен auth_token — открой школьный портал в браузере, "
-        "F12 → Application → Cookies → скопируй значение `aupd_token`. "
-        "Затем сохрани его в Профиле."
+    """Pull homework from Школьный портал МО using `aupd_token` cookie."""
+    today = datetime.now(UTC).date()
+    end = today + timedelta(days=21)
+    return await _fetch_with_aupd_token(
+        host="https://school.mosreg.ru",
+        token=auth_token,
+        date_from=today.isoformat(),
+        date_to=end.isoformat(),
     )
 
 
 async def _fetch_mesh(auth_token: str) -> list[dict[str, object]]:
-    """Fetch homework from МЭШ (dnevnik.mos.ru).
-
-    Required env:
-      MESH_BASE_URL = https://school.mos.ru/api/family/web/v1
-
-    Required user input:
-      auth_token from `auth_token` cookie on dnevnik.mos.ru after login.
-    """
-    raise NotImplementedError(
-        "МЭШ: нужен auth_token из cookie `auth_token` на dnevnik.mos.ru. "
-        "Открой dnevnik.mos.ru → войди → F12 → Cookies → скопируй значение."
+    """Pull homework from МЭШ (dnevnik.mos.ru) using `auth_token` cookie."""
+    today = datetime.now(UTC).date()
+    end = today + timedelta(days=21)
+    return await _fetch_with_aupd_token(
+        host="https://dnevnik.mos.ru",
+        token=auth_token,
+        date_from=today.isoformat(),
+        date_to=end.isoformat(),
     )
+
+
+async def _fetch_with_aupd_token(
+    *, host: str, token: str, date_from: str, date_to: str
+) -> list[dict[str, object]]:
+    """Hit the family-web homework endpoint. Surfaces HTTP details on failure."""
+    headers = {
+        "User-Agent": _USER_AGENT,
+        "Accept": "application/json",
+        # Both portals serve their family API behind aupd_token cookie auth.
+        # Some endpoints additionally honour `Authorization: Bearer <token>`.
+        "Cookie": f"aupd_token={token}",
+        "Authorization": f"Bearer {token}",
+    }
+    # Try a couple of plausible path layouts in order. First match wins.
+    candidate_paths = [
+        f"/api/family/web/v1/homeworks?from={date_from}&to={date_to}",
+        f"/api/family/v1/homeworks?from={date_from}&to={date_to}",
+        f"/api/v1/homeworks?from={date_from}&to={date_to}",
+    ]
+    last_error: str | None = None
+    async with httpx.AsyncClient(timeout=20.0, follow_redirects=True) as client:
+        for path in candidate_paths:
+            url = host + path
+            try:
+                response = await client.get(url, headers=headers)
+            except httpx.HTTPError as e:
+                last_error = f"Сеть: {e}"
+                continue
+            if response.status_code == 401 or response.status_code == 403:
+                raise _PortalError(
+                    f"Сервер ответил {response.status_code}. "
+                    "Скорее всего токен истёк — обнови aupd_token в браузере и сохрани заново."
+                )
+            if response.status_code == 404:
+                last_error = f"{url} → 404"
+                continue
+            if response.status_code >= 500:
+                raise _PortalError(
+                    f"Сервер портала ответил {response.status_code}. Попробуй позже."
+                )
+            if response.status_code != 200:
+                raise _PortalError(
+                    f"{url} → HTTP {response.status_code}: "
+                    f"{response.text[:200]!s}"
+                )
+            try:
+                data = response.json()
+            except ValueError:
+                raise _PortalError(
+                    f"Сервер вернул не JSON по {url} (вероятно, страница логина). "
+                    "Проверь токен."
+                ) from None
+            return _normalize_homework_payload(data)
+    raise _PortalError(
+        "Не нашёл рабочий API homework на портале. "
+        + (f"Последняя попытка: {last_error}" if last_error else "")
+    )
+
+
+def _normalize_homework_payload(raw: object) -> list[dict[str, object]]:
+    """Convert the various known portal shapes into a uniform homework list."""
+    items: list[object] = []
+    if isinstance(raw, list):
+        items = raw
+    elif isinstance(raw, dict):
+        for key in ("homeworks", "items", "data", "results", "payload"):
+            v = raw.get(key)
+            if isinstance(v, list):
+                items = v
+                break
+    out: list[dict[str, object]] = []
+    for it in items:
+        if not isinstance(it, dict):
+            continue
+        # Fields vary across deployments — pick the first key that's present.
+        # `subject` may be a string OR a {"name": "..."} dict, depending on portal version.
+        subj_field = it.get("subject")
+        if isinstance(subj_field, dict):
+            subject = subj_field.get("name") or ""
+        else:
+            subject = subj_field or it.get("subject_name") or ""
+        body = (
+            it.get("task")
+            or it.get("description")
+            or it.get("text")
+            or it.get("homework")
+            or ""
+        )
+        deadline = (
+            it.get("deadline")
+            or it.get("due_at")
+            or it.get("date_to")
+            or it.get("date")
+        )
+        external_id = str(it.get("id") or it.get("homework_id") or "")
+        if not body and not subject:
+            continue
+        out.append(
+            {
+                "subject": str(subject)[:80],
+                "body": str(body)[:400],
+                "deadline": str(deadline) if deadline else None,
+                "external_id": external_id,
+            }
+        )
+    return out
+
+
+async def _create_tasks_from_payload(
+    session: AsyncSession,
+    user_id: UUID,
+    target_project_id: UUID | None,
+    payload: list[dict[str, object]],
+) -> int:
+    """Convert each homework into a Doday task, dedupe by title within project."""
+    from sqlalchemy import select as sa_select
+
+    from app.projects.service import ensure_inbox
+    from app.tasks.models import Task as TaskModel
+    from app.tasks.service import create_task
+
+    if target_project_id is None:
+        inbox = await ensure_inbox(session, user_id)
+        target_project_id = inbox.id
+
+    existing_titles_q = await session.execute(
+        sa_select(TaskModel.title).where(
+            TaskModel.user_id == user_id,
+            TaskModel.project_id == target_project_id,
+            TaskModel.deleted_at.is_(None),
+        )
+    )
+    existing: set[str] = {row[0] for row in existing_titles_q.all()}
+
+    created = 0
+    for hw in payload:
+        subject = str(hw.get("subject") or "")
+        body = str(hw.get("body") or "")
+        if subject and body:
+            title = f"📚 {subject}: {body}"[:500]
+        elif body:
+            title = f"📚 {body}"[:500]
+        else:
+            continue
+        if title in existing:
+            continue
+        due_at: datetime | None = None
+        deadline_raw = hw.get("deadline")
+        if isinstance(deadline_raw, str) and deadline_raw:
+            try:
+                # Accept both date-only and full ISO timestamps.
+                due_at = datetime.fromisoformat(deadline_raw.replace("Z", "+00:00"))
+                if due_at.tzinfo is None:
+                    due_at = due_at.replace(tzinfo=UTC)
+            except ValueError:
+                due_at = None
+        await create_task(
+            session,
+            user_id,
+            title=title,
+            project_id=target_project_id,
+            due_at=due_at,
+        )
+        existing.add(title)
+        created += 1
+    return created
 
 
 def provider_label(provider: Provider) -> str:
