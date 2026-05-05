@@ -45,8 +45,67 @@
 
 <div x-data="{
        sort: localStorage.getItem('doday-sort-{{ project.id }}') || 'manual',
+       groupBy: localStorage.getItem('doday-group-{{ project.id }}') || 'none',
        showCompleted: localStorage.getItem('doday-show-completed-{{ project.id }}') !== '0',
+       _snapshot: null,
+       _restoreSnapshot() {
+         if (!this._snapshot) return;
+         for (const item of this._snapshot) {
+           const row = document.getElementById(item.id);
+           if (!row || !item.parent || !item.parent.isConnected) continue;
+           if (item.next && item.next.isConnected) item.parent.insertBefore(row, item.next);
+           else item.parent.appendChild(row);
+         }
+         document.querySelectorAll('section[data-section-id]').forEach(s => s.style.removeProperty('display'));
+         const ns = document.getElementById('no-section-block');
+         if (ns) ns.style.removeProperty('display');
+         const gv = document.getElementById('group-view');
+         if (gv) { gv.innerHTML = ''; gv.style.display = 'none'; }
+         this._snapshot = null;
+       },
+       _ensureGroupView() {
+         let gv = document.getElementById('group-view');
+         if (!gv) {
+           gv = document.createElement('div');
+           gv.id = 'group-view';
+           const anchor = document.getElementById('sections-wrap');
+           anchor.parentNode.insertBefore(gv, anchor);
+         }
+         gv.style.display = '';
+         return gv;
+       },
+       _groupKey(row) {
+         if (this.groupBy === 'priority') return row.dataset.priority || 'p4';
+         if (this.groupBy === 'date') {
+           const d = row.dataset.due ? row.dataset.due.slice(0, 10) : '';
+           if (!d) return '_none';
+           const today = new Date().toISOString().slice(0, 10);
+           if (d < today) return 'overdue';
+           if (d === today) return 'today';
+           const tom = new Date(); tom.setDate(tom.getDate() + 1);
+           if (d === tom.toISOString().slice(0, 10)) return 'tomorrow';
+           const w = new Date(); w.setDate(w.getDate() + 7);
+           if (d <= w.toISOString().slice(0, 10)) return 'week';
+           return 'later';
+         }
+         return 'all';
+       },
+       _groupLabel(k) {
+         if (this.groupBy === 'priority') {
+           return {p1:'🔥 Приоритет 1', p2:'🟠 Приоритет 2', p3:'🔵 Приоритет 3', p4:'⚪ Без приоритета'}[k] || k;
+         }
+         if (this.groupBy === 'date') {
+           return {overdue:'⚠ Просрочено', today:'📅 Сегодня', tomorrow:'➡ Завтра', week:'📆 На этой неделе', later:'⏳ Позже', _none:'∅ Без даты'}[k] || k;
+         }
+         return k;
+       },
+       _groupOrder() {
+         if (this.groupBy === 'priority') return ['p1','p2','p3','p4'];
+         if (this.groupBy === 'date') return ['overdue','today','tomorrow','week','later','_none'];
+         return [];
+       },
        apply() {
+         this._restoreSnapshot();
          document.querySelectorAll('.sortable-tasks').forEach(el => {
            var rows = Array.from(el.children).filter(c => c.id && c.id.startsWith('task-wrap-'));
            if (this.sort === 'manual') return;
@@ -63,12 +122,49 @@
            });
            rows.forEach(r => el.appendChild(r));
          });
+         if (this.groupBy !== 'none') {
+           const allRows = Array.from(document.querySelectorAll('.sortable-tasks > [id^=&quot;task-wrap-&quot;]'));
+           const snapshot = allRows.map(r => ({id: r.id, parent: r.parentNode, next: r.nextSibling}));
+           const buckets = new Map();
+           for (const row of allRows) {
+             const k = this._groupKey(row);
+             if (!buckets.has(k)) buckets.set(k, []);
+             buckets.get(k).push(row);
+           }
+           const order = this._groupOrder();
+           const keys = order.length
+             ? order.filter(k => buckets.has(k)).concat(Array.from(buckets.keys()).filter(k => !order.includes(k)))
+             : Array.from(buckets.keys()).sort();
+           const gv = this._ensureGroupView();
+           gv.innerHTML = '';
+           for (const k of keys) {
+             const rows = buckets.get(k);
+             if (!rows || !rows.length) continue;
+             const header = document.createElement('h3');
+             header.className = 'text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mt-6 mb-2 first:mt-0 flex items-center gap-2';
+             header.innerHTML = '<span>' + this._groupLabel(k) + '</span><span class=&quot;text-xs font-normal text-[var(--text-muted)]/70&quot;>· ' + rows.length + '</span>';
+             gv.appendChild(header);
+             const grp = document.createElement('div');
+             grp.className = 'space-y-2 mb-2';
+             for (const row of rows) grp.appendChild(row);
+             gv.appendChild(grp);
+           }
+           document.querySelectorAll('section[data-section-id]').forEach(s => s.style.display = 'none');
+           const ns = document.getElementById('no-section-block');
+           if (ns) ns.style.display = 'none';
+           this._snapshot = snapshot;
+         }
          var completed = document.getElementById('completed-block');
          if (completed) completed.style.display = this.showCompleted ? '' : 'none';
        },
        setSort(s) {
          this.sort = s;
          localStorage.setItem('doday-sort-{{ project.id }}', s);
+         this.apply();
+       },
+       setGroup(g) {
+         this.groupBy = g;
+         localStorage.setItem('doday-group-{{ project.id }}', g);
          this.apply();
        },
        toggleCompleted() {
@@ -96,6 +192,22 @@
       {% endfor %}
     </div>
   </div>
+  <div x-data="{ open: false }" class="relative">
+    <button type="button" @click="open = !open"
+            class="px-2.5 py-1 rounded-lg hover:bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--text)] transition flex items-center gap-1.5">
+      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7"/></svg>
+      <span>Группа: <span x-text="{none:'нет',priority:'приоритет',date:'дата'}[groupBy]"></span></span>
+    </button>
+    <div x-show="open" x-cloak @click.outside="open = false" x-transition
+         class="absolute top-full right-0 mt-1 z-30 card p-1 w-48 shadow-lg space-y-0.5">
+      {% set groups = [('none', 'Без группировки'), ('priority', 'По приоритету'), ('date', 'По дате')] %}
+      {% for key, label in groups %}
+        <button type="button" @click="open = false; setGroup('{{ key }}')"
+                :class="groupBy === '{{ key }}' ? 'bg-[var(--accent)]/15 text-[var(--accent)]' : 'hover:bg-[var(--surface-2)]'"
+                class="w-full text-left text-sm px-3 py-1.5 rounded transition">{{ label }}</button>
+      {% endfor %}
+    </div>
+  </div>
   <button type="button" @click="toggleCompleted()"
           :class="showCompleted ? 'bg-[var(--accent)]/15 text-[var(--accent)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'"
           class="px-2.5 py-1 rounded-lg hover:bg-[var(--surface-2)] transition flex items-center gap-1.5">
@@ -109,7 +221,7 @@
 
 {# Top-level tasks (no section) #}
 {% if no_section_active %}
-  <div class="space-y-2 mb-6 sortable-tasks" data-project-id="{{ project.id }}">
+  <div id="no-section-block" class="space-y-2 mb-6 sortable-tasks" data-project-id="{{ project.id }}">
     {% for task in no_section_active %}
       {% include "_partials/task_row.html" %}
     {% endfor %}
