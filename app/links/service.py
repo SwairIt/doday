@@ -117,3 +117,61 @@ async def list_all_links_for_user(
         )
     )
     return [(row[0], row[1]) for row in rows.all()]
+
+
+async def build_graph(session: AsyncSession, user_id: UUID) -> dict[str, list[dict[str, object]]]:
+    """Aggregate active tasks + their links + parent-child + project-clustering edges
+    into a node/edge JSON the /app/graph view can render."""
+    # Active tasks only (skip trash + completed older than a month).
+    from datetime import UTC, datetime, timedelta
+
+    cutoff = datetime.now(UTC) - timedelta(days=30)
+
+    rows = await session.execute(
+        select(
+            Task.id,
+            Task.title,
+            Task.is_completed,
+            Task.completed_at,
+            Task.parent_task_id,
+            Project.id,
+            Project.name,
+            Project.color,
+        )
+        .join(Project, Project.id == Task.project_id)
+        .where(
+            Task.user_id == user_id,
+            Task.deleted_at.is_(None),
+            ((Task.is_completed.is_(False)) | (Task.completed_at >= cutoff)),
+        )
+        .limit(800)
+    )
+    nodes: list[dict[str, object]] = []
+    parent_pairs: list[tuple[UUID, UUID]] = []
+    seen: set[UUID] = set()
+    for tid, title, done, _comp_at, parent_id, pid, pname, pcolor in rows.all():
+        seen.add(tid)
+        nodes.append(
+            {
+                "id": str(tid),
+                "title": title,
+                "is_completed": bool(done),
+                "project_id": str(pid),
+                "project_name": pname,
+                "project_color": pcolor,
+            }
+        )
+        if parent_id is not None:
+            parent_pairs.append((parent_id, tid))
+
+    edges: list[dict[str, object]] = []
+    for src, tgt in parent_pairs:
+        if src in seen and tgt in seen:
+            edges.append({"source": str(src), "target": str(tgt), "kind": "parent"})
+
+    link_pairs = await list_all_links_for_user(session, user_id)
+    for src, tgt in link_pairs:
+        if src in seen and tgt in seen:
+            edges.append({"source": str(src), "target": str(tgt), "kind": "link"})
+
+    return {"nodes": nodes, "edges": edges}

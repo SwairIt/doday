@@ -208,7 +208,15 @@ async def calendar_view(
             if t.due_at is not None:
                 by_day[t.due_at.date()].append(t)
         days = []
-        weekday_names = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"]
+        weekday_names = [
+            "Понедельник",
+            "Вторник",
+            "Среда",
+            "Четверг",
+            "Пятница",
+            "Суббота",
+            "Воскресенье",
+        ]
         for offset in range(7):
             d = monday + timedelta(days=offset)
             days.append(
@@ -389,6 +397,23 @@ async def stats_view(request: Request, user: RequiredUser, session: DbSession) -
             "current_view": "stats",
             "projects": projects,
             "stats": stats,
+        },
+    )
+
+
+@router.get("/graph", response_class=HTMLResponse)
+async def graph_view(
+    request: Request, user: RequiredUser, session: DbSession
+) -> HTMLResponse:
+    """Cosmic force-directed graph of all active tasks + their links + parent/child."""
+    projects = await list_projects(session, user.id)
+    return templates.TemplateResponse(
+        request,
+        "app/graph.html",
+        {
+            "current_user": user,
+            "current_view": "graph",
+            "projects": projects,
         },
     )
 

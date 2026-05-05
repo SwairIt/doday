@@ -18,6 +18,7 @@ from app.habits.router import router as habits_router
 from app.help.router import router as help_router
 from app.labels.router import router as labels_router
 from app.labels.router import task_labels_router
+from app.links.router import graph_router as links_graph_router
 from app.links.router import router as links_router
 from app.logging_setup import configure_logging
 from app.mood.router import router as mood_router
@@ -79,6 +80,7 @@ app.include_router(time_tracking_router)
 app.include_router(mood_router)
 app.include_router(achievements_router)
 app.include_router(links_router)
+app.include_router(links_graph_router)
 
 
 @app.get("/health")

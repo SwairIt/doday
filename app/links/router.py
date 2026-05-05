@@ -6,9 +6,16 @@ from fastapi import APIRouter, HTTPException, status
 
 from app.auth.deps import DbSession, RequiredUser
 from app.links.schemas import LinkedTaskOut, LinkIn
-from app.links.service import create_link, delete_link, list_links_for_task
+from app.links.service import build_graph, create_link, delete_link, list_links_for_task
 
 router = APIRouter(prefix="/api/tasks", tags=["links"])
+graph_router = APIRouter(prefix="/api/links", tags=["links"])
+
+
+@graph_router.get("/graph")
+async def get_graph(user: RequiredUser, session: DbSession) -> dict[str, list[dict[str, object]]]:
+    """Returns {nodes, edges} for the cosmic graph view."""
+    return await build_graph(session, user.id)
 
 
 @router.get("/{task_id}/links")
