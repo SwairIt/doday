@@ -1,7 +1,9 @@
 """FastAPI application entrypoint."""
 
-from fastapi import FastAPI
-from fastapi.responses import Response
+from collections.abc import Awaitable, Callable
+
+from fastapi import FastAPI, Request
+from fastapi.responses import PlainTextResponse, Response
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.achievements.router import router as achievements_router
@@ -51,6 +53,27 @@ app.add_middleware(
     # httpOnly is True by default in Starlette's SessionMiddleware
 )
 
+
+# Defence-in-depth: nginx adds these too, but if someone hits uvicorn directly
+# (or runs without nginx for a quick test), we still ship safe defaults.
+@app.middleware("http")
+async def _security_headers(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "same-origin")
+    response.headers.setdefault(
+        "Permissions-Policy", "geolocation=(), microphone=(), camera=()"
+    )
+    if _is_prod:
+        # 6 months HSTS once HTTPS is wired up; nginx will be terminating TLS.
+        response.headers.setdefault(
+            "Strict-Transport-Security", "max-age=15552000; includeSubDomains"
+        )
+    return response
+
 app.include_router(auth_router)
 app.include_router(pages_router)
 app.include_router(projects_router)
@@ -86,6 +109,34 @@ app.include_router(links_graph_router)
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/robots.txt", include_in_schema=False)
+async def robots_txt() -> PlainTextResponse:
+    """Allow indexing of marketing pages, disallow the logged-in app shell."""
+    body = (
+        "User-agent: *\n"
+        "Disallow: /app/\n"
+        "Disallow: /api/\n"
+        "Disallow: /htmx/\n"
+        "Disallow: /auth/\n"
+        f"Sitemap: {_settings.app_base_url.rstrip('/')}/sitemap.xml\n"
+    )
+    return PlainTextResponse(body)
+
+
+@app.get("/sitemap.xml", include_in_schema=False)
+async def sitemap_xml() -> Response:
+    """Static sitemap for the public marketing pages."""
+    base = _settings.app_base_url.rstrip("/")
+    paths = ["/", "/privacy", "/terms", "/help/start"]
+    items = "".join(f"<url><loc>{base}{p}</loc></url>" for p in paths)
+    body = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+        f"{items}</urlset>"
+    )
+    return Response(content=body, media_type="application/xml")
 
 
 # ---------------------------------------------------------------------------

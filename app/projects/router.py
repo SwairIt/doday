@@ -78,9 +78,7 @@ async def counts_endpoint(user: RequiredUser, session: DbSession) -> dict[UUID, 
 
 
 @router.get("/sidebar-counts")
-async def sidebar_counts_endpoint(
-    user: RequiredUser, session: DbSession
-) -> dict[str, int]:
+async def sidebar_counts_endpoint(user: RequiredUser, session: DbSession) -> dict[str, int]:
     """One-shot counts for sidebar nav badges: inbox / today / upcoming / overdue / trash."""
     from datetime import UTC, datetime, timedelta
 
@@ -95,10 +93,14 @@ async def sidebar_counts_endpoint(
     today_end = datetime(now.year, now.month, now.day, 23, 59, 59, tzinfo=UTC)
     upcoming_end = datetime(now.year, now.month, now.day, tzinfo=UTC) + timedelta(days=8)
 
-    base = select(func.count()).select_from(Task).where(
-        Task.user_id == user.id,
-        Task.deleted_at.is_(None),
-        Task.parent_task_id.is_(None),
+    base = (
+        select(func.count())
+        .select_from(Task)
+        .where(
+            Task.user_id == user.id,
+            Task.deleted_at.is_(None),
+            Task.parent_task_id.is_(None),
+        )
     )
 
     inbox_count = int(
@@ -143,17 +145,17 @@ async def sidebar_counts_endpoint(
         ).scalar_one()
     )
     trash_count_row = await session.execute(
-        select(func.count()).select_from(Task).where(
-            Task.user_id == user.id, Task.deleted_at.is_not(None)
-        )
+        select(func.count())
+        .select_from(Task)
+        .where(Task.user_id == user.id, Task.deleted_at.is_not(None))
     )
     trash_count = int(trash_count_row.scalar_one())
 
     # Project archive count is also handy in sidebar.
     archive_count_row = await session.execute(
-        select(func.count()).select_from(Project).where(
-            Project.user_id == user.id, Project.is_archived.is_(True)
-        )
+        select(func.count())
+        .select_from(Project)
+        .where(Project.user_id == user.id, Project.is_archived.is_(True))
     )
     archive_count = int(archive_count_row.scalar_one())
 

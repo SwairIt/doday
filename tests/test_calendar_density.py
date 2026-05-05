@@ -17,9 +17,7 @@ async def test_month_view_has_clickable_more_when_overflow(
 ) -> None:
     today = datetime.now(UTC).date().isoformat() + "T18:00:00Z"
     for n in range(5):
-        await logged_in_client.post(
-            "/api/tasks", json={"title": f"Overflow {n}", "due_at": today}
-        )
+        await logged_in_client.post("/api/tasks", json={"title": f"Overflow {n}", "due_at": today})
     body = (await logged_in_client.get("/app/calendar")).text
     # Server-rendered "+N ещё" is now a button (was just text before).
     assert "ещё" in body
@@ -38,9 +36,7 @@ async def test_week_view_shows_tasks_in_correct_day(
     logged_in_client: AsyncClient,
 ) -> None:
     today_iso = datetime.now(UTC).date().isoformat() + "T18:00:00Z"
-    await logged_in_client.post(
-        "/api/tasks", json={"title": "WeekViewTask42", "due_at": today_iso}
-    )
+    await logged_in_client.post("/api/tasks", json={"title": "WeekViewTask42", "due_at": today_iso})
     body = (await logged_in_client.get("/app/calendar?view=week")).text
     assert "WeekViewTask42" in body
 

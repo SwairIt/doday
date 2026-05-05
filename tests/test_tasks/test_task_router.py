@@ -86,9 +86,7 @@ async def test_delete_task(logged_in_client: AsyncClient) -> None:
     assert task_id in [t["id"] for t in trash]
 
     # A truly unknown UUID returns 404.
-    missing = await logged_in_client.delete(
-        "/api/tasks/00000000-0000-0000-0000-000000000000"
-    )
+    missing = await logged_in_client.delete("/api/tasks/00000000-0000-0000-0000-000000000000")
     assert missing.status_code == 404
 
 

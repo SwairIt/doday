@@ -57,7 +57,9 @@ async def change_password(
     if len(new_password) < 8:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Минимум 8 символов")
     if new_password == current_password:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Новый пароль совпадает с текущим")
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY, "Новый пароль совпадает с текущим"
+        )
     user.password_hash = hash_password(new_password)
     await session.commit()
     return {"status": "ok"}

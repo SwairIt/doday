@@ -1,0 +1,47 @@
+# systemd unit for non-Docker deploys.
+# Install:
+#   sudo cp deploy/doday.service /etc/systemd/system/doday.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now doday
+#   sudo journalctl -u doday -f
+#
+# Assumes:
+#   - Code at /opt/doday (git clone target)
+#   - venv at /opt/doday/.venv (`uv sync` populates it)
+#   - .env at /opt/doday/.env (chmod 600, owned by doday user)
+#   - Postgres reachable per DATABASE_URL in .env
+[Unit]
+Description=Doday FastAPI app
+Documentation=https://github.com/SwairIt/SchoolProject
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=exec
+User=doday
+Group=doday
+WorkingDirectory=/opt/doday
+EnvironmentFile=/opt/doday/.env
+Environment=PATH=/opt/doday/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/doday/scripts/start.sh
+Restart=on-failure
+RestartSec=5
+KillMode=mixed
+TimeoutStopSec=20
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/opt/doday
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+RestrictRealtime=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target

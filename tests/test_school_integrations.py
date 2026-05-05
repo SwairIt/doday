@@ -190,9 +190,7 @@ async def test_paste_import_creates_tasks(logged_in_client: AsyncClient) -> None
 
     # Idempotent on second call.
     again = (
-        await logged_in_client.post(
-            "/api/school/integrations/school_mo/import", json=payload
-        )
+        await logged_in_client.post("/api/school/integrations/school_mo/import", json=payload)
     ).json()
     assert again["created"] == 0
 

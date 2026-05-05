@@ -1,0 +1,35 @@
+# Don't bake secrets, caches, or local junk into the image.
+.git
+.github
+.venv
+venv
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.coverage
+htmlcov
+node_modules
+
+# Local-only files
+.env
+.env.local
+.env.*.local
+.uvicorn.log
+.uvicorn.err
+*.log
+
+# Editor / OS
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Docs/dev artefacts not needed at runtime
+docs
+tests
+.claude
+**/*.md
+!README.md

@@ -1,0 +1,57 @@
+# Production-ready compose: Postgres 16 + Doday web app + persistent volume.
+# Pairs with nginx running on the host (deploy/nginx.conf) which terminates TLS
+# and proxies to 127.0.0.1:9100.
+#
+# Usage:
+#   cp .env.example .env && edit .env
+#   docker compose up -d --build
+#   docker compose logs -f web
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-doday}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-doday}
+      # Force UTC so func.date(timestamptz) matches Python's datetime.now(UTC).
+      TZ: UTC
+      PGTZ: UTC
+    volumes:
+      - doday_pgdata:/var/lib/postgresql/data
+    # Don't expose Postgres to the public internet — web service connects via
+    # the internal compose network. Bind only to loopback for local debugging.
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  web:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_ENV: prod
+      APP_SECRET_KEY: ${APP_SECRET_KEY:?APP_SECRET_KEY must be set in .env (≥32 chars)}
+      APP_BASE_URL: ${APP_BASE_URL:?APP_BASE_URL must be set in .env (e.g. https://doday.ru)}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-doday}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-doday}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_FROM: ${SMTP_FROM:-noreply@doday.ru}
+      SMTP_START_TLS: ${SMTP_START_TLS:-true}
+      UVICORN_WORKERS: ${UVICORN_WORKERS:-2}
+    # Exposed only on loopback — nginx on the host proxies to it.
+    ports:
+      - "127.0.0.1:9100:9100"
+
+volumes:
+  doday_pgdata:

@@ -93,9 +93,7 @@ async def sync_now(session: AsyncSession, user_id: UUID, provider: Provider) -> 
         await session.commit()  # persist last_error from _save_error
         return _save_error(session, integ, str(e))
 
-    created = await _create_tasks_from_payload(
-        session, user_id, integ.target_project_id, payload
-    )
+    created = await _create_tasks_from_payload(session, user_id, integ.target_project_id, payload)
 
     integ.last_sync_at = datetime.now(UTC)
     integ.last_error = None
@@ -190,16 +188,12 @@ async def _fetch_with_aupd_token(
                     f"Сервер портала ответил {response.status_code}. Попробуй позже."
                 )
             if response.status_code != 200:
-                raise _PortalError(
-                    f"{url} → HTTP {response.status_code}: "
-                    f"{response.text[:200]!s}"
-                )
+                raise _PortalError(f"{url} → HTTP {response.status_code}: {response.text[:200]!s}")
             try:
                 data = response.json()
             except ValueError:
                 raise _PortalError(
-                    f"Сервер вернул не JSON по {url} (вероятно, страница логина). "
-                    "Проверь токен."
+                    f"Сервер вернул не JSON по {url} (вероятно, страница логина). Проверь токен."
                 ) from None
             return _normalize_homework_payload(data)
     raise _PortalError(
@@ -230,19 +224,8 @@ def _normalize_homework_payload(raw: object) -> list[dict[str, object]]:
             subject = subj_field.get("name") or ""
         else:
             subject = subj_field or it.get("subject_name") or ""
-        body = (
-            it.get("task")
-            or it.get("description")
-            or it.get("text")
-            or it.get("homework")
-            or ""
-        )
-        deadline = (
-            it.get("deadline")
-            or it.get("due_at")
-            or it.get("date_to")
-            or it.get("date")
-        )
+        body = it.get("task") or it.get("description") or it.get("text") or it.get("homework") or ""
+        deadline = it.get("deadline") or it.get("due_at") or it.get("date_to") or it.get("date")
         external_id = str(it.get("id") or it.get("homework_id") or "")
         if not body and not subject:
             continue
@@ -280,9 +263,7 @@ async def import_pasted_payload(
             "В JSON не нашёл записей с предметом или текстом. "
             "Проверь что вставил полный response от /api/.../homeworks.",
         )
-    created = await _create_tasks_from_payload(
-        session, user_id, integ.target_project_id, payload
-    )
+    created = await _create_tasks_from_payload(session, user_id, integ.target_project_id, payload)
     integ.last_sync_at = datetime.now(UTC)
     integ.last_error = None
     await session.commit()
