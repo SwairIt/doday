@@ -271,3 +271,29 @@ Analytics, Privacy, Smart) и реализованы крупные блоки.
 
 Бэклог в `docs/feature-gaps-2026-05-05.md` обновлён — 8 пунктов помечены ✅,
 остальные ~70 ждут следующих итераций.
+
+### 2026-05-05 (поздний вечер) — батч «связи + космический граф»
+
+После запроса «попользуйся todoist опять и реализуй фишки + связи как в Obsidian
++ красивый граф» — добавлены крупные UX-блоки и пофикшен баг.
+
+| Батч | Что | Commit |
+|---|---|---|
+| FIX | Поле подзадачи не очищалось после создания (баг operator-precedence в `successful && input.value = ''`) — заменено на `if (...)` форму | `a13c5f7` (вместе с links UI) |
+| LINKS | Миграция 0020 `task_links` (source/target/note/UNIQUE/CHECK), модуль `app/links/` (models/schemas/service/router), эндпоинты `GET/POST/DELETE /api/tasks/{id}/links`, поддержка cross-project | `a13c5f7` (~) |
+| LINKS UI | Панель «Связи» в детальной панели задачи: поиск задач (`/htmx/search?format=json`), добавление с подписью, клик→переход к связанной задаче, ✕→удалить, входящие/исходящие маркируются ←/→ | `a13c5f7` |
+| GRAPH | Эндпоинт `/api/links/graph` (узлы = задачи, рёбра = связи + parent→child), страница `/app/graph` с canvas-космосом: force-directed физика (springs+repulsion+centering), мерцающие звёзды на фоне, drag/zoom/pan, hover-tooltip, цвет по проекту, glow-эффекты, кликабельные узлы→detail, кнопки «В центр» и «Перезапустить физику», тогл «Показать выполненные» | `99917dc` |
+| RECUR | Inline-редактор повторения в детальной панели — кнопки день/неделя/месяц/год через hx-patch, превью текущей рекуррентности, предупреждение при отсутствии due_at | `99917dc` |
+| TYPES | Уточнил типы возврата в test_task_links для mypy strict | `561cbd5` |
+
+Новые модули: `app/links/` (полностью).
+Новые миграции: 0020 (task_links).
+Новые экраны: `/app/graph` (космический граф задач).
+Новые эндпоинты: `/api/tasks/{id}/links` (GET/POST/DELETE), `/api/links/graph`,
+`/htmx/search?format=json`.
+Новые партиалы: блоки «Связи» и «Повтор» в `task_detail.html`.
+Новый ссылочный пункт в сайдбаре: **Граф**.
+
+**Прогон новых тестов: 21 passed (test_task_links: 7, test_links_ui: 4,
+test_graph: 6, test_recurrence_editor: 4).** Ruff strict + mypy strict
+зелёные на 222 файлах (+9 файлов с прошлой ночи).
