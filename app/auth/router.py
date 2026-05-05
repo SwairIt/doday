@@ -89,28 +89,32 @@ async def register_submit(
     settings = get_settings()
     token = create_email_verification_token(str(user.id))
     verify_url = f"{settings.app_base_url}/auth/verify?token={token}"
+    smtp_failed = False
     try:
         await send_verification_email(to=user.email, verification_url=verify_url)
     except Exception as e:
-        # SMTP unreachable — common in dev (no aiosmtpd) and in misconfigured
-        # prod. We don't want to lose the freshly-created user. In dev we
-        # auto-verify so the flow keeps working; in prod we surface a clear
-        # error and keep the user (they can request resend later).
+        smtp_failed = True
         _log.warning(
             "verification_email_send_failed",
             email=user.email,
             error=str(e),
             verify_url=verify_url,
         )
-        if settings.app_env != "prod":
-            from app.auth.service import mark_email_verified as _verify
 
-            await _verify(session, str(user.id))
-            return templates.TemplateResponse(
-                request,
-                "auth/verify_pending.html",
-                {"dev_skipped_email": True, "dev_verify_url": verify_url},
-            )
+    # In dev (any non-prod env) auto-verify and render the success page with
+    # the verify URL on screen — handy when SMTP either fails or only goes to
+    # a local debug server (aiosmtpd) that doesn't actually deliver mail.
+    if settings.app_env != "prod":
+        from app.auth.service import mark_email_verified as _verify
+
+        await _verify(session, str(user.id))
+        return templates.TemplateResponse(
+            request,
+            "auth/verify_pending.html",
+            {"dev_skipped_email": True, "dev_verify_url": verify_url},
+        )
+
+    if smtp_failed:
         return templates.TemplateResponse(
             request,
             "auth/register.html",
