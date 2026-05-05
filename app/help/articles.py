@@ -381,11 +381,11 @@ ARTICLES.append(
 Туда можно вставить <code>auth_token</code> со школьного портала, чтобы домашка
 сама подтягивалась задачами в твой Doday.</p>
 
-<h3>Школьный портал МО (school.mosreg.ru)</h3>
+<h3>Школьный портал МО (authedu.mosreg.ru)</h3>
 <ol>
   <li>Открой портал в браузере и войди под своим логином.</li>
   <li>Нажми <kbd>F12</kbd> — откроются DevTools.</li>
-  <li>Перейди в таб <strong>Application → Cookies → https://school.mosreg.ru</strong>.</li>
+  <li>Перейди в таб <strong>Application → Cookies → https://authedu.mosreg.ru</strong>.</li>
   <li>Найди cookie с именем <code>aupd_token</code>. Скопируй её значение целиком.</li>
   <li>Вернись в Doday → Профиль → Школьный дневник, выбери «Школьный портал МО»,
       вставь токен и нажми «Сохранить».</li>

@@ -123,11 +123,15 @@ _USER_AGENT = "Doday/0.1 (+self-hosted; contact via .env SMTP_FROM)"
 
 
 async def _fetch_school_mo(auth_token: str) -> list[dict[str, object]]:
-    """Pull homework from Школьный портал МО using `aupd_token` cookie."""
+    """Pull homework from Школьный портал МО using `aupd_token` cookie.
+
+    Host is authedu.mosreg.ru (the auth+edu unified portal). Older docs may
+    say school.mosreg.ru — that hostname now redirects to authedu anyway.
+    """
     today = datetime.now(UTC).date()
     end = today + timedelta(days=21)
     return await _fetch_with_aupd_token(
-        host="https://school.mosreg.ru",
+        host="https://authedu.mosreg.ru",
         token=auth_token,
         date_from=today.isoformat(),
         date_to=end.isoformat(),
