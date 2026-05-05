@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Form, HTTPException, Request, status
+from fastapi import APIRouter, Form, HTTPException, Query, Request, status
 from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func, or_, select
@@ -403,6 +403,7 @@ async def task_detail(
     """Full task panel: title + description + labels + subtasks + comments."""
     from app.comments.service import list_comments
     from app.labels.service import list_labels, list_task_labels
+    from app.links.service import list_links_for_task
     from app.projects.service import get_project
 
     try:
@@ -414,6 +415,7 @@ async def task_detail(
     attached = await list_task_labels(session, user.id, task_id)
     all_labels = await list_labels(session, user.id)
     comments = await list_comments(session, user.id, task_id)
+    links = await list_links_for_task(session, user.id, task_id)
     return templates.TemplateResponse(
         request,
         "_partials/task_detail.html",
@@ -425,6 +427,7 @@ async def task_detail(
             "all_labels": all_labels,
             "attached_label_ids": {lab.id for lab in attached},
             "comments": comments,
+            "links": links,
             "project_color_map": await _project_color_map(session, user.id),
         },
     )
@@ -577,11 +580,19 @@ async def comment_delete(comment_id: UUID, user: RequiredUser, session: DbSessio
 
 @router.get("/search", response_class=HTMLResponse)
 async def search_endpoint(
-    request: Request, user: RequiredUser, session: DbSession, q: str = ""
+    request: Request,
+    user: RequiredUser,
+    session: DbSession,
+    q: str = "",
+    format_: Annotated[str, Query(alias="format")] = "html",
 ) -> Response:
     """Live search across task titles + descriptions + project names. Case-insensitive ILIKE."""
+    from fastapi.responses import JSONResponse
+
     q = q.strip()
     if len(q) < 2:
+        if format_ == "json":
+            return JSONResponse({"tasks": [], "projects": []})
         return templates.TemplateResponse(
             request, "_partials/search_results.html", {"q": q, "tasks": [], "projects": []}
         )
@@ -593,6 +604,7 @@ async def search_endpoint(
         select(Task)
         .where(
             Task.user_id == user.id,
+            Task.deleted_at.is_(None),
             or_(
                 func.lower(Task.title).like(pattern),
                 func.lower(Task.description).like(pattern),
@@ -612,6 +624,30 @@ async def search_endpoint(
     projects = list(project_rows.scalars().all())
 
     color_map = await _project_color_map(session, user.id)
+
+    if format_ == "json":
+        # Project lookup for project_name on each task hit.
+        proj_name_rows = await session.execute(
+            select(Project.id, Project.name).where(Project.user_id == user.id)
+        )
+        names = {pid: pname for pid, pname in proj_name_rows.all()}
+        return JSONResponse(
+            {
+                "tasks": [
+                    {
+                        "id": str(t.id),
+                        "title": t.title,
+                        "is_completed": t.is_completed,
+                        "project_id": str(t.project_id),
+                        "project_name": names.get(t.project_id, ""),
+                    }
+                    for t in tasks
+                ],
+                "projects": [
+                    {"id": str(p.id), "name": p.name, "slug": p.slug} for p in projects
+                ],
+            }
+        )
 
     return templates.TemplateResponse(
         request,

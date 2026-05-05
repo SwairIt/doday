@@ -380,6 +380,123 @@
         </form>
       </div>
 
+    <div class="px-5 py-4 border-b border-[var(--border)]"
+         x-data="{
+           query: '',
+           candidates: [],
+           searching: false,
+           note: '',
+           open: false,
+           async search() {
+             const q = this.query.trim();
+             if (!q) { this.candidates = []; return; }
+             this.searching = true;
+             try {
+               const r = await fetch('/htmx/search?q=' + encodeURIComponent(q) + '&format=json',
+                                     {credentials:'include'});
+               if (r.ok) {
+                 const data = await r.json();
+                 // exclude the current task itself
+                 this.candidates = (data.tasks || []).filter(t => t.id !== '{{ task.id }}').slice(0, 8);
+               }
+             } catch(e) {}
+             finally { this.searching = false; }
+           },
+           async link(target) {
+             try {
+               const r = await fetch('/api/tasks/{{ task.id }}/links', {
+                 method: 'POST', credentials: 'include',
+                 headers: {'Content-Type': 'application/json'},
+                 body: JSON.stringify({target_task_id: target.id, note: this.note || null}),
+               });
+               if (r.ok) {
+                 this.query = ''; this.note = ''; this.candidates = []; this.open = false;
+                 htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/detail',
+                           {target: '#task-detail-slot', swap: 'innerHTML'});
+               }
+             } catch(e) {}
+           },
+           async unlink(linkId) {
+             if (!confirm('Удалить связь?')) return;
+             try {
+               const r = await fetch('/api/tasks/{{ task.id }}/links/' + linkId,
+                                     {method: 'DELETE', credentials: 'include'});
+               if (r.status === 204) {
+                 htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/detail',
+                           {target: '#task-detail-slot', swap: 'innerHTML'});
+               }
+             } catch(e) {}
+           },
+         }">
+      <div class="flex items-center justify-between mb-2">
+        <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+          Связи · {{ links|length }}
+        </div>
+        <button type="button" @click="open = !open; if (open) $nextTick(() => $refs.linkInput.focus())"
+                class="text-xs text-[var(--accent)] hover:underline">
+          <span x-text="open ? '✕ Закрыть' : '+ Добавить связь'"></span>
+        </button>
+      </div>
+
+      {% if links %}
+        <div class="space-y-1.5 mb-3">
+          {% for l in links %}
+            <div class="flex items-center gap-2 p-2 rounded-lg bg-[var(--surface-2)] border border-[var(--border)] group">
+              <span class="shrink-0 w-1.5 h-1.5 rounded-full" style="background: currentColor"
+                    {% if l.direction == 'outgoing' %}title="связь от этой задачи"{% else %}title="на эту задачу ссылаются"{% endif %}></span>
+              <span class="text-[10px] text-[var(--text-muted)] tabular-nums shrink-0"
+                    title="{% if l.direction == 'outgoing' %}→ исходящая{% else %}← входящая{% endif %}">
+                {% if l.direction == 'outgoing' %}→{% else %}←{% endif %}
+              </span>
+              <button type="button"
+                      onclick="htmx.ajax('GET','/htmx/tasks/{{ l.task_id }}/detail',{target:'#task-detail-slot',swap:'innerHTML'})"
+                      class="flex-1 min-w-0 text-left text-sm truncate {% if l.is_completed %}line-through text-[var(--text-muted)]{% endif %} hover:text-[var(--accent)] transition">
+                {{ l.title }}
+              </button>
+              <span class="text-[10px] text-[var(--text-muted)] shrink-0 truncate max-w-[100px]"
+                    title="проект: {{ l.project_name }}">{{ l.project_name }}</span>
+              {% if l.note %}
+                <span class="text-[10px] text-[var(--text-muted)] italic shrink-0 truncate max-w-[100px]"
+                      title="{{ l.note }}">«{{ l.note }}»</span>
+              {% endif %}
+              <button type="button" @click="unlink('{{ l.link_id }}')"
+                      class="opacity-0 group-hover:opacity-100 text-rose-400 hover:text-rose-300 text-xs px-1 transition shrink-0"
+                      title="Удалить связь">✕</button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div x-show="open" x-transition class="space-y-2">
+        <div class="relative">
+          <input x-ref="linkInput" x-model="query" @input.debounce.250ms="search()"
+                 type="text" placeholder="Поиск задачи для связи…"
+                 class="w-full bg-[var(--surface-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm outline-none focus:border-[var(--accent)] transition">
+          <template x-if="searching">
+            <div class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-[var(--text-muted)]">…</div>
+          </template>
+          <template x-if="candidates.length">
+            <div class="absolute z-10 left-0 right-0 mt-1 card max-h-60 overflow-y-auto p-1 shadow-lg">
+              <template x-for="c in candidates" :key="c.id">
+                <button type="button" @click="link(c)"
+                        class="w-full text-left p-2 rounded hover:bg-[var(--surface-2)] flex items-center gap-2">
+                  <span class="text-sm truncate" :class="c.is_completed ? 'line-through text-[var(--text-muted)]' : ''" x-text="c.title"></span>
+                  <span class="text-[10px] text-[var(--text-muted)] ml-auto shrink-0" x-text="c.project_name"></span>
+                </button>
+              </template>
+            </div>
+          </template>
+        </div>
+        <input x-model="note" type="text" maxlength="200"
+               placeholder="Подпись (опционально): «зависит от», «дубликат», «блокирует»…"
+               class="w-full bg-[var(--surface-2)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-xs outline-none focus:border-[var(--accent)] transition">
+        <p class="text-[10px] text-[var(--text-muted)]">
+          🔗 Связи двунаправлены — после добавления подсветится и в исходной, и в целевой задаче, даже если они в разных проектах.
+        </p>
+      </div>
+    </div>
+
     <div class="px-5 py-4">
       <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider mb-2">Комментарии · {{ comments|length }}</div>
       <div class="space-y-2 mb-3">
