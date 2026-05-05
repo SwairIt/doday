@@ -36,9 +36,9 @@ async def test_register_creates_user_and_sends_email(
     assert response.status_code in (200, 303)
 
     result = await db_session.execute(select(User).where(User.email == "kid@school.ru"))
-    user = result.scalar_one()
     # In dev the user is auto-verified; in prod they wait for the email click.
     # Either way, the row exists — that's the contract this test cares about.
+    result.scalar_one()
 
     _no_smtp.assert_awaited_once()
 
