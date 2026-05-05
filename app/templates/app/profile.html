@@ -212,6 +212,45 @@
 
   <section class="card p-6"
            x-data="{
+             on: localStorage.getItem('doday-reminders-off') !== '1',
+             status: '',
+             toggle() {
+               this.on = !this.on;
+               try {
+                 if (this.on) localStorage.removeItem('doday-reminders-off');
+                 else localStorage.setItem('doday-reminders-off', '1');
+               } catch(e){}
+             },
+             ask() {
+               if (typeof Notification === 'undefined') { this.status = 'Браузер не поддерживает уведомления'; return; }
+               Notification.requestPermission().then(p => { this.status = p === 'granted' ? '✓ Доступ разрешён' : '⚠ Доступ не выдан (' + p + ')'; });
+             },
+             permission() {
+               return typeof Notification === 'undefined' ? 'unsupported' : Notification.permission;
+             },
+           }">
+    <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">Напоминания о задачах</h2>
+    <p class="text-sm text-[var(--text-muted)] mb-4">
+      Когда у задачи проходит срок (due_at), Doday показывает уведомление в браузере —
+      работает пока вкладка открыта. Для системных пушей нужно разрешение.
+    </p>
+    <div class="flex flex-wrap items-center gap-3">
+      <button type="button" @click="toggle()" :aria-pressed="on"
+              :class="on ? 'grad-bg text-white' : 'bg-[var(--surface-2)] text-[var(--text)] border border-[var(--border)]'"
+              class="px-4 py-2 rounded-lg font-medium text-sm inline-flex items-center gap-2 transition">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        </svg>
+        <span x-text="on ? 'Включены' : 'Выключены'"></span>
+      </button>
+      <button type="button" @click="ask()" class="btn-ghost px-3 py-2 text-sm">Запросить разрешение браузера</button>
+      <span class="text-xs text-[var(--text-muted)]" x-text="'Статус: ' + permission()"></span>
+      <span x-show="status" x-cloak class="text-xs text-emerald-400" x-text="status"></span>
+    </div>
+  </section>
+
+  <section class="card p-6"
+           x-data="{
              importing: false,
              result: null,
              error: null,

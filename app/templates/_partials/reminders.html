@@ -1,0 +1,91 @@
+{# In-page reminder agent — polls /api/tasks/today every minute and surfaces a
+   browser notification (Notification API) for tasks whose due_at just passed.
+   No backend / service-worker required. Permission asked once on first poll. #}
+<script>
+(function() {
+  if (typeof window === 'undefined' || typeof Notification === 'undefined') return;
+  // Honour an opt-out via localStorage so the user can disable reminders.
+  if (localStorage.getItem('doday-reminders-off') === '1') return;
+
+  const STORAGE_KEY = 'doday-reminded-ids-v1';
+  const POLL_MS = 60 * 1000;
+  const MATCH_WINDOW_MS = 5 * 60 * 1000;  // notify if task came due in last 5 min
+
+  function loadNotified() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return new Set();
+      const arr = JSON.parse(raw);
+      // Auto-prune anything older than 24h to keep storage bounded.
+      const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+      const fresh = arr.filter(item => item.ts > cutoff);
+      if (fresh.length !== arr.length) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
+      }
+      return new Set(fresh.map(x => x.id));
+    } catch(e) { return new Set(); }
+  }
+  function rememberNotified(id) {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      arr.push({id, ts: Date.now()});
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+    } catch(e) {}
+  }
+
+  async function poll() {
+    try {
+      const r = await fetch('/api/tasks/today', {credentials: 'include'});
+      if (!r.ok) return;
+      const tasks = await r.json();
+      const notified = loadNotified();
+      const now = Date.now();
+      for (const t of tasks) {
+        if (!t.due_at || t.is_completed) continue;
+        if (notified.has(t.id)) continue;
+        const dueMs = new Date(t.due_at).getTime();
+        if (isNaN(dueMs)) continue;
+        const diff = now - dueMs;
+        if (diff >= 0 && diff <= MATCH_WINDOW_MS) {
+          if (Notification.permission === 'granted') {
+            const n = new Notification('Doday — пора: ' + (t.title || 'задача'), {
+              body: t.description ? t.description.slice(0, 140) : 'Срок наступил',
+              tag: 'doday-' + t.id,
+              icon: '/manifest.webmanifest',
+            });
+            n.onclick = () => {
+              window.focus();
+              if (window.htmx) {
+                htmx.ajax('GET', '/htmx/tasks/' + t.id + '/detail',
+                          {target: '#task-detail-slot', swap: 'innerHTML'});
+              }
+              n.close();
+            };
+          }
+          rememberNotified(t.id);
+        }
+      }
+    } catch(e) {}
+  }
+
+  function arm() {
+    if (Notification.permission === 'default') {
+      // Don't ask immediately on page load — wait for any user-initiated click.
+      const askOnce = () => {
+        document.removeEventListener('click', askOnce, true);
+        try { Notification.requestPermission(); } catch(e) {}
+      };
+      document.addEventListener('click', askOnce, true);
+    }
+    poll();
+    setInterval(poll, POLL_MS);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', arm);
+  } else {
+    arm();
+  }
+})();
+</script>
