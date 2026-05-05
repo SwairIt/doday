@@ -26,6 +26,7 @@ from app.sections.router import router as sections_router
 from app.stats.router import router as stats_router
 from app.tasks.router import reorder_router as tasks_reorder_router
 from app.tasks.router import router as tasks_router
+from app.time_tracking.router import router as time_tracking_router
 from app.user_templates.router import router as user_templates_router
 from app.user_templates.router import save_router as save_as_template_router
 from app.views.htmx import router as htmx_router
@@ -71,6 +72,7 @@ app.include_router(stats_router)
 app.include_router(calendar_feed_router)
 app.include_router(calendar_token_router)
 app.include_router(habits_router)
+app.include_router(time_tracking_router)
 
 
 @app.get("/health")
