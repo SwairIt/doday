@@ -1,0 +1,86 @@
+{# Page-local live filter — Ctrl+F (or `/`) opens a slim bar that hides
+   task rows whose text doesn't match the query. Esc clears + closes. #}
+<div
+  x-data="{
+    open: false,
+    q: '',
+    matches: 0,
+    total: 0,
+    init() {
+      window.addEventListener('keydown', (e) => {
+        const tag = (e.target && e.target.tagName) || '';
+        const inField = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT'
+          || (e.target && e.target.isContentEditable);
+        // Ctrl+F / ⌘F — only intercept when we have task rows to filter
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+          if (document.querySelectorAll('[id^=&quot;task-wrap-&quot;]').length === 0) return;
+          e.preventDefault();
+          this.show();
+          return;
+        }
+        // Slash — vim-style — only when not typing
+        if (!inField && !e.ctrlKey && !e.metaKey && !e.altKey && e.key === '/') {
+          if (document.querySelectorAll('[id^=&quot;task-wrap-&quot;]').length === 0) return;
+          e.preventDefault();
+          this.show();
+        }
+      });
+    },
+    show() {
+      this.open = true;
+      this.$nextTick(() => this.$refs.input && this.$refs.input.focus());
+    },
+    close() {
+      this.open = false;
+      this.q = '';
+      this.apply();
+    },
+    apply() {
+      const needle = this.q.trim().toLowerCase();
+      const rows = document.querySelectorAll('[id^=&quot;task-wrap-&quot;]');
+      this.total = rows.length;
+      let m = 0;
+      rows.forEach(row => {
+        if (!needle) {
+          row.style.removeProperty('display');
+          m++;
+          return;
+        }
+        const txt = (row.innerText || '').toLowerCase();
+        if (txt.includes(needle)) {
+          row.style.removeProperty('display');
+          m++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+      this.matches = m;
+    },
+  }"
+  @keydown.escape.window="if (open) close()"
+  x-cloak
+  x-show="open"
+  x-transition.opacity
+  class="fixed top-3 right-3 z-40 max-w-[calc(100vw-1.5rem)]"
+>
+  <div class="card flex items-center gap-2 px-3 py-2 shadow-glow border border-[var(--border)]">
+    <svg class="w-4 h-4 text-[var(--text-muted)] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"/>
+    </svg>
+    <input
+      x-ref="input"
+      x-model="q"
+      @input="apply()"
+      @keydown.enter.prevent="apply()"
+      @keydown.escape.prevent="close()"
+      type="search"
+      placeholder="Фильтр на этой странице…"
+      class="flex-1 min-w-[12rem] bg-transparent border-none outline-none text-sm">
+    <span class="text-[10px] text-[var(--text-muted)] tabular-nums whitespace-nowrap">
+      <span x-text="matches"></span> / <span x-text="total"></span>
+    </span>
+    <button @click="close()" type="button"
+            class="text-[var(--text-muted)] hover:text-[var(--text)] text-xs px-1"
+            aria-label="Закрыть">✕</button>
+  </div>
+</div>
