@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.responses import Response
 from starlette.middleware.sessions import SessionMiddleware
 
+from app.achievements.router import router as achievements_router
 from app.auth.router import router as auth_router
 from app.backup.router import router as backup_router
 from app.billing.router import router as billing_router
@@ -75,6 +76,7 @@ app.include_router(calendar_token_router)
 app.include_router(habits_router)
 app.include_router(time_tracking_router)
 app.include_router(mood_router)
+app.include_router(achievements_router)
 
 
 @app.get("/health")

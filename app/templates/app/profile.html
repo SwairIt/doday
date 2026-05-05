@@ -31,6 +31,56 @@
     </div>
   </section>
 
+  <section class="card p-6"
+           x-data="{
+             items: [],
+             unlocked: 0, total: 0,
+             showLocked: false,
+             async load() {
+               try {
+                 const r = await fetch('/api/achievements', {credentials:'include'});
+                 if (r.ok) {
+                   const d = await r.json();
+                   this.items = d.items;
+                   this.unlocked = d.unlocked;
+                   this.total = d.total;
+                 }
+               } catch(e){}
+             },
+             visible() {
+               return this.showLocked ? this.items : this.items.filter(i => i.unlocked);
+             },
+           }"
+           x-init="load()">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)]">Достижения</h2>
+      <div class="flex items-center gap-3">
+        <span class="text-xs text-[var(--text-muted)]">
+          <span class="grad-text font-semibold" x-text="unlocked"></span>
+          / <span x-text="total"></span>
+        </span>
+        <button @click="showLocked = !showLocked" class="btn-ghost px-2.5 py-1 text-xs">
+          <span x-text="showLocked ? 'Только открытые' : 'Показать все'"></span>
+        </button>
+      </div>
+    </div>
+    <template x-if="!items.length">
+      <div class="text-xs text-[var(--text-muted)]">Загружаю…</div>
+    </template>
+    <template x-if="items.length && !visible().length">
+      <div class="text-xs text-[var(--text-muted)]">Пока ничего не открыто — добавь и закрой первую задачу.</div>
+    </template>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+      <template x-for="a in visible()" :key="a.code">
+        <div :class="a.unlocked ? 'border-[var(--accent)]/30 bg-[var(--accent)]/5' : 'border-[var(--border)] opacity-60'"
+             class="rounded-xl border p-3 text-center" :title="a.description">
+          <div class="text-2xl mb-1" x-text="a.emoji"></div>
+          <div class="text-xs font-semibold" x-text="a.title"></div>
+        </div>
+      </template>
+    </div>
+  </section>
+
   <section class="card p-6">
     <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-4">Статистика</h2>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
