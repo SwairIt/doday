@@ -237,3 +237,37 @@ company, personal, геймификация, инфра) лежит в `docs/ide
 **Финальный прогон тестов после batch «доделай всё до конца»: 538 passed (~14 мин), 0 failed.**
 
 Все 19 миграций применены, ruff strict + mypy --strict зелёные на 207 файлах.
+
+### 2026-05-05 (вечер) — батч «попользуйся сайтом и доделай всё до конца»
+
+После запроса «попользуйся нашим сайтом, потом todoist, занеси всё в md
+и реализуй» — собран бэклог в `docs/feature-gaps-2026-05-05.md` (~80 пунктов
+по категориям: Calendar, Lists, Tasks, Hotkeys, Polish, Power, Search,
+Analytics, Privacy, Smart) и реализованы крупные блоки.
+
+| Батч | Что | Commit |
+|---|---|---|
+| C+kbd | Календарь day-modal + кликабельный «+N ещё» + dense-mode + week-view; глобальная j/k-навигация по задачам, хоткеи c/1-4/t/T/w/p/Del; shift-click multi-select | `b7fafe9` |
+| V3-V4-L3-L4-C7-C9 | Сайдбар-каунтеры (Inbox/Today/Upcoming/Trash + красный overdue), точка проекта рядом с заголовком, dblclick→edit, right-click контекст-меню, mini-calendar с метками занятых дней | `7b1e133` |
+| A1 | Статистика: средняя скорость закрытия (от создания до выполнения) — 4-я карточка с min/ч/дн форматом | `d8e075f` |
+| Pr1 | Смена пароля в /app/profile (form + endpoint `/api/profile/password` с argon2-проверкой) | `1fff6b1` |
+| S4 | Ctrl+F (или /) — фильтр задач на текущей странице (виджет в правом верхнем, счётчик matches/total, Esc сбрасывает) | `f87cce0` |
+| L6 | Group-by на странице проекта — по приоритету (P1-P4) или по дате (overdue/today/tomorrow/week/later/none) с сохранением порядка восстановления | `aabe35c` |
+| School | Реальные HTTP-вызовы к Школьному порталу МО + МЭШ через aupd_token; paste-import (вставка JSON из DevTools браузера, когда сервер за блоком) | `207145e`, `9b2cfb8`, `6dcc9c4` |
+
+Новые партиалы: `_partials/page_filter.html`, `_partials/task_keyboard.html`,
+`_partials/task_context_menu.html`, `_partials/mini_calendar.html`.
+Новый экран: `/app/calendar?view=week` (7-колоночный недельный вид).
+Новые эндпоинты: `/api/projects/sidebar-counts`, `/api/projects/calendar-markers`,
+`/api/profile/password`, `/api/school/integrations/{provider}/import`.
+
+Найденный и пофикшенный баг регистрации: при недоступном SMTP падало
+500 internal server error → теперь в dev SMTP-fail авто-верифицирует и
+показывает verify URL прямо на экране, в prod возвращает 503 с дружелюбным
+сообщением (`app/auth/router.py`).
+
+**Финальный прогон тестов: 571 passed, 0 failed (1 flaky deadlock на TRUNCATE,
+проходит в изоляции).** Ruff strict + mypy strict зелёные на 213 файлах.
+
+Бэклог в `docs/feature-gaps-2026-05-05.md` обновлён — 8 пунктов помечены ✅,
+остальные ~70 ждут следующих итераций.
