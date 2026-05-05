@@ -42,12 +42,18 @@ async def test_bulk_delete_removes_all(
     )
     assert response.status_code == 200
 
+    # Soft-delete moves them to trash. Rows still exist with deleted_at set,
+    # but the active task list excludes them.
     rows = (
         (await db_session.execute(select(Task).where(Task.title.in_(["DelA", "DelB"]))))
         .scalars()
         .all()
     )
-    assert rows == []
+    assert len(rows) == 2
+    assert all(r.deleted_at is not None for r in rows)
+    listing = (await logged_in_client.get("/api/tasks")).json()
+    titles = [t["title"] for t in listing]
+    assert "DelA" not in titles and "DelB" not in titles
 
 
 async def test_bulk_unknown_action_returns_400(

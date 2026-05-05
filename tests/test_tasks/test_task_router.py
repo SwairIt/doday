@@ -75,8 +75,21 @@ async def test_delete_task(logged_in_client: AsyncClient) -> None:
     delete = await logged_in_client.delete(f"/api/tasks/{task_id}")
     assert delete.status_code == 204
 
+    # Soft-delete: the task is now in trash; a 2nd DELETE is idempotent.
     again = await logged_in_client.delete(f"/api/tasks/{task_id}")
-    assert again.status_code == 404
+    assert again.status_code == 204
+
+    # Active list excludes it; trash includes it.
+    listing = (await logged_in_client.get("/api/tasks")).json()
+    assert task_id not in [t["id"] for t in listing]
+    trash = (await logged_in_client.get("/api/tasks/trash")).json()
+    assert task_id in [t["id"] for t in trash]
+
+    # A truly unknown UUID returns 404.
+    missing = await logged_in_client.delete(
+        "/api/tasks/00000000-0000-0000-0000-000000000000"
+    )
+    assert missing.status_code == 404
 
 
 async def test_patch_task(logged_in_client: AsyncClient) -> None:

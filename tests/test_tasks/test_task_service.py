@@ -124,11 +124,16 @@ async def test_update_task_changes_fields(db_session: AsyncSession) -> None:
 
 
 async def test_delete_task(db_session: AsyncSession) -> None:
+    from uuid import uuid4
+
     user = await _user(db_session)
     task = await create_task(db_session, user.id, title="Bye")
     await delete_task(db_session, user.id, task.id)
+    # Soft-delete: the row still exists with deleted_at set, so a second
+    # delete is idempotent. Real "task not found" only fires for a missing UUID.
+    await delete_task(db_session, user.id, task.id)
     with pytest.raises(TaskNotFound):
-        await delete_task(db_session, user.id, task.id)
+        await delete_task(db_session, user.id, uuid4())
 
 
 async def test_task_isolation_per_user(db_session: AsyncSession) -> None:
