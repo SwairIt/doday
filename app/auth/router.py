@@ -2,6 +2,7 @@
 
 from typing import Annotated
 
+import structlog
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
@@ -26,6 +27,8 @@ from app.auth.service import (
     register_user,
 )
 from app.config import get_settings
+
+_log = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 templates = Jinja2Templates(directory="app/templates")
@@ -83,9 +86,42 @@ async def register_submit(
             status_code=400,
         )
 
+    settings = get_settings()
     token = create_email_verification_token(str(user.id))
-    verify_url = f"{get_settings().app_base_url}/auth/verify?token={token}"
-    await send_verification_email(to=user.email, verification_url=verify_url)
+    verify_url = f"{settings.app_base_url}/auth/verify?token={token}"
+    try:
+        await send_verification_email(to=user.email, verification_url=verify_url)
+    except Exception as e:
+        # SMTP unreachable — common in dev (no aiosmtpd) and in misconfigured
+        # prod. We don't want to lose the freshly-created user. In dev we
+        # auto-verify so the flow keeps working; in prod we surface a clear
+        # error and keep the user (they can request resend later).
+        _log.warning(
+            "verification_email_send_failed",
+            email=user.email,
+            error=str(e),
+            verify_url=verify_url,
+        )
+        if settings.app_env != "prod":
+            from app.auth.service import mark_email_verified as _verify
+
+            await _verify(session, str(user.id))
+            return templates.TemplateResponse(
+                request,
+                "auth/verify_pending.html",
+                {"dev_skipped_email": True, "dev_verify_url": verify_url},
+            )
+        return templates.TemplateResponse(
+            request,
+            "auth/register.html",
+            {
+                "error": (
+                    "Не удалось отправить письмо подтверждения. "
+                    "Аккаунт создан — попробуй войти или повторно запросить письмо."
+                )
+            },
+            status_code=503,
+        )
 
     return RedirectResponse(url="/auth/verify-pending", status_code=303)
 

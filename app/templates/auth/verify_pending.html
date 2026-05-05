@@ -20,18 +20,33 @@
           </svg>
         </div>
 
-        <h1 class="text-3xl font-bold mb-3 relative">Проверь почту</h1>
-        <p class="text-[var(--text-muted)] mb-2 relative leading-relaxed">
-          Мы отправили письмо со ссылкой для подтверждения.
-        </p>
-        <p class="text-[var(--text-muted)] text-sm relative">
-          Открой письмо и кликни по ссылке.<br>
-          Не пришло? Проверь спам или подожди пару минут.
-        </p>
+        {% if dev_skipped_email %}
+          <h1 class="text-3xl font-bold mb-3 relative">Аккаунт создан 🎉</h1>
+          <p class="text-[var(--text-muted)] mb-2 relative leading-relaxed">
+            SMTP-сервер недоступен (dev-режим), поэтому письмо не уйдёт —
+            почта подтверждена автоматически. Можешь сразу войти.
+          </p>
+          <details class="mt-4 text-left">
+            <summary class="text-xs text-[var(--text-muted)] cursor-pointer">Ссылка верификации (dev)</summary>
+            <code class="block mt-2 text-[10px] break-all bg-[var(--surface-2)] p-2 rounded">{{ dev_verify_url }}</code>
+          </details>
+          <div class="mt-8 pt-6 border-t border-[var(--border)] relative">
+            <a href="/auth/login" class="btn-primary px-4 py-2 text-sm">Войти</a>
+          </div>
+        {% else %}
+          <h1 class="text-3xl font-bold mb-3 relative">Проверь почту</h1>
+          <p class="text-[var(--text-muted)] mb-2 relative leading-relaxed">
+            Мы отправили письмо со ссылкой для подтверждения.
+          </p>
+          <p class="text-[var(--text-muted)] text-sm relative">
+            Открой письмо и кликни по ссылке.<br>
+            Не пришло? Проверь спам или подожди пару минут.
+          </p>
 
-        <div class="mt-8 pt-6 border-t border-[var(--border)] relative">
-          <a href="/auth/login" class="text-[var(--accent)] hover:underline font-medium text-sm">← Вернуться ко входу</a>
-        </div>
+          <div class="mt-8 pt-6 border-t border-[var(--border)] relative">
+            <a href="/auth/login" class="text-[var(--accent)] hover:underline font-medium text-sm">← Вернуться ко входу</a>
+          </div>
+        {% endif %}
       </div>
     </div>
   </main>

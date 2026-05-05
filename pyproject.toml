@@ -70,6 +70,7 @@ ignore = [
 "app/school/subjects.py" = ["RUF001"]           # intentional Cyrillic in subject + weekday names
 "app/auth/service.py" = ["RUF001"]              # intentional Cyrillic in starter task copy
 "app/achievements/service.py" = ["RUF001"]      # intentional Cyrillic in achievement titles
+"app/auth/router.py" = ["RUF001"]               # intentional Cyrillic in user-facing error messages
 
 [tool.mypy]
 python_version = "3.12"
