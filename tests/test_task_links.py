@@ -3,11 +3,14 @@
 from httpx import AsyncClient
 
 
-async def _new_task(client: AsyncClient, title: str, project_id: str | None = None) -> dict:
+async def _new_task(
+    client: AsyncClient, title: str, project_id: str | None = None
+) -> dict[str, object]:
     body: dict[str, object] = {"title": title}
     if project_id:
         body["project_id"] = project_id
-    return (await client.post("/api/tasks", json=body)).json()
+    result: dict[str, object] = (await client.post("/api/tasks", json=body)).json()
+    return result
 
 
 async def test_link_create_and_list(logged_in_client: AsyncClient) -> None:
