@@ -226,9 +226,14 @@ company, personal, геймификация, инфра) лежит в `docs/ide
 | MOOD | Mood tracker для personal — 1-5 emoji + заметка + 30-дневная цветная полоса (миграция 0019) | `41a94a9` |
 | ACH | Достижения — 18 бейджей, производных от данных (без новой таблицы), секция в /профиле | `b451101` |
 | WP | Week-plan widget на пн-вт — 3 главные цели на неделю + прогресс-бар (localStorage) | `b0c8eb2` |
+| FX | Подгон тестов под soft-delete (delete_task теперь идемпотентный, не raise при повторе) | `abbd519` |
 
 Новые модули: `app/time_tracking/`, `app/mood/`, `app/achievements/`.
 Новые миграции: 0016 (pinned_at), 0017 (deleted_at), 0018 (time_entries), 0019 (mood_entries).
 Новый экран: `/app/trash` (восстановление + permanent delete).
 Новые виджеты на /today: week_plan, mood_widget.
 Новая секция в /профиле: «Достижения» с 18 бейджами.
+
+**Финальный прогон тестов после batch «доделай всё до конца»: 538 passed (~14 мин), 0 failed.**
+
+Все 19 миграций применены, ruff strict + mypy --strict зелёные на 207 файлах.
