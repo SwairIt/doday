@@ -35,6 +35,9 @@ Thumbs.db
 .uvicorn.log
 .smtp.err
 .smtp.log
+.aiosmtpd.err
+.aiosmtpd.log
+.pytest_full*.log
 .claude/
 
 # Node (если будем добавлять Tailwind build)
