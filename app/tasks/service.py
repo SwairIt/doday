@@ -4,7 +4,7 @@ from calendar import monthrange
 from datetime import UTC, date, datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.projects.service import ensure_inbox, get_project
@@ -112,10 +112,10 @@ async def list_tasks(
         stmt = stmt.where(Task.is_completed.is_(False))
     if top_level_only:
         stmt = stmt.where(Task.parent_task_id.is_(None))
+    # Soft-deleted tasks live in the trash bin, never in regular lists.
+    stmt = stmt.where(Task.deleted_at.is_(None))
     # Pinned float to the top regardless of position; recent pins win ties.
-    stmt = stmt.order_by(
-        Task.pinned_at.desc().nulls_last(), Task.position, Task.created_at
-    )
+    stmt = stmt.order_by(Task.pinned_at.desc().nulls_last(), Task.position, Task.created_at)
     result = await session.execute(stmt)
     return list(result.scalars().all())
 
@@ -123,7 +123,11 @@ async def list_tasks(
 async def list_subtasks(session: AsyncSession, user_id: UUID, parent_id: UUID) -> list[Task]:
     stmt = (
         select(Task)
-        .where(Task.user_id == user_id, Task.parent_task_id == parent_id)
+        .where(
+            Task.user_id == user_id,
+            Task.parent_task_id == parent_id,
+            Task.deleted_at.is_(None),
+        )
         .order_by(Task.position, Task.created_at)
     )
     result = await session.execute(stmt)
@@ -141,6 +145,7 @@ async def list_today(session: AsyncSession, user_id: UUID) -> list[Task]:
             Task.is_completed.is_(False),
             Task.due_at.is_not(None),
             Task.due_at <= end_of_today,
+            Task.deleted_at.is_(None),
         )
         .order_by(Task.due_at, Task.priority, Task.position)
     )
@@ -160,6 +165,7 @@ async def list_upcoming(session: AsyncSession, user_id: UUID, *, days: int = 7) 
             Task.is_completed.is_(False),
             Task.due_at.is_not(None),
             and_(Task.due_at >= start, Task.due_at < end),
+            Task.deleted_at.is_(None),
         )
         .order_by(Task.due_at, Task.priority, Task.position)
     )
@@ -175,6 +181,7 @@ async def list_completed(session: AsyncSession, user_id: UUID, *, limit: int = 2
             Task.user_id == user_id,
             Task.is_completed.is_(True),
             Task.parent_task_id.is_(None),
+            Task.deleted_at.is_(None),
         )
         .order_by(Task.completed_at.desc().nulls_last(), Task.updated_at.desc())
         .limit(limit)
@@ -196,6 +203,7 @@ async def list_completed_today(
             Task.is_completed.is_(True),
             Task.completed_at.is_not(None),
             func.date(Task.completed_at) == today,
+            Task.deleted_at.is_(None),
         )
         .order_by(Task.completed_at.desc().nulls_last())
         .limit(limit)
@@ -217,11 +225,53 @@ async def list_in_range(
             Task.user_id == user_id,
             Task.due_at.is_not(None),
             and_(Task.due_at >= start, Task.due_at < end),
+            Task.deleted_at.is_(None),
         )
         .order_by(Task.due_at, Task.priority)
     )
     result = await session.execute(stmt)
     return list(result.scalars().all())
+
+
+async def list_trash(session: AsyncSession, user_id: UUID, *, max_age_days: int = 30) -> list[Task]:
+    """Return non-purged, soft-deleted tasks newer than max_age_days.
+
+    Older entries are auto-purged inside this call so the trash never grows
+    forever. Cleanup is best-effort — a failure here just leaves the rows.
+    """
+    cutoff = datetime.now(UTC) - timedelta(days=max_age_days)
+    # Hard-delete anything older than the window.
+    await session.execute(
+        delete(Task).where(
+            Task.user_id == user_id,
+            Task.deleted_at.is_not(None),
+            Task.deleted_at < cutoff,
+        )
+    )
+    await session.commit()
+
+    stmt = (
+        select(Task)
+        .where(Task.user_id == user_id, Task.deleted_at.is_not(None))
+        .order_by(Task.deleted_at.desc())
+    )
+    result = await session.execute(stmt)
+    return list(result.scalars().all())
+
+
+async def restore_task(session: AsyncSession, user_id: UUID, task_id: UUID) -> Task:
+    task = await get_task(session, user_id, task_id)
+    task.deleted_at = None
+    await session.commit()
+    await session.refresh(task)
+    return task
+
+
+async def purge_task(session: AsyncSession, user_id: UUID, task_id: UUID) -> None:
+    """Hard-delete from the trash (or anywhere). Use with care."""
+    task = await get_task(session, user_id, task_id)
+    await session.delete(task)
+    await session.commit()
 
 
 async def update_task(
@@ -415,8 +465,10 @@ async def uncomplete_task(session: AsyncSession, user_id: UUID, task_id: UUID) -
 
 
 async def delete_task(session: AsyncSession, user_id: UUID, task_id: UUID) -> None:
+    """Soft-delete: move to trash. The row is hard-deleted after 30 days
+    (or via /api/tasks/{id}/purge) by `list_trash`'s cleanup pass."""
     task = await get_task(session, user_id, task_id)
-    await session.delete(task)
+    task.deleted_at = datetime.now(UTC)
     await session.commit()
 
 

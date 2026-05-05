@@ -33,9 +33,7 @@ async def test_pin_floats_task_to_top(logged_in_client: AsyncClient) -> None:
 
 
 async def test_pin_unknown_task_404(logged_in_client: AsyncClient) -> None:
-    response = await logged_in_client.post(
-        "/api/tasks/00000000-0000-0000-0000-000000000000/pin"
-    )
+    response = await logged_in_client.post("/api/tasks/00000000-0000-0000-0000-000000000000/pin")
     assert response.status_code == 404
 
 

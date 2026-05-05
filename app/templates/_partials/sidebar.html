@@ -41,6 +41,7 @@
     {% if current_user and current_user.audience in ('personal', 'school') %}
       {% set _ = nav_items.append(('habits', '/app/habits', 'Привычки', 'M5 13l4 4L19 7')) %}
     {% endif %}
+    {% set _ = nav_items.append(('trash', '/app/trash', 'Корзина', 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3')) %}
     {% for key, href, label, icon in nav_items %}
       {% set active = view == key %}
       <a href="{{ href }}"

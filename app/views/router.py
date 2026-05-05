@@ -651,6 +651,28 @@ async def profile_view(request: Request, user: RequiredUser, session: DbSession)
     )
 
 
+@router.get("/trash", response_class=HTMLResponse)
+async def trash_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
+    from app.tasks.service import list_trash
+
+    projects = await list_projects(session, user.id)
+    project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
+    trashed = await list_trash(session, user.id, max_age_days=30)
+    project_name: dict[UUID, str] = {p.id: p.name for p in projects}
+    return templates.TemplateResponse(
+        request,
+        "app/trash.html",
+        {
+            "current_user": user,
+            "current_view": "trash",
+            "projects": projects,
+            "project_color_map": project_color_map,
+            "trashed": trashed,
+            "project_name": project_name,
+        },
+    )
+
+
 @router.get("/habits", response_class=HTMLResponse)
 async def habits_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
     projects = await list_projects(session, user.id)

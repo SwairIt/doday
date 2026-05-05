@@ -1,0 +1,60 @@
+{% extends "app_base.html" %}
+{% block title %}Корзина — Doday{% endblock %}
+{% block view_title %}Корзина{% endblock %}
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-3xl md:text-4xl font-bold mb-1">Корзина</h1>
+  <p class="text-[var(--text-muted)] text-sm">
+    Удалённые задачи живут здесь 30 дней — успеешь вернуть, если передумал.
+    После — пропадают навсегда.
+  </p>
+</div>
+
+{% if not trashed %}
+  <div class="card p-12 text-center">
+    <div class="text-5xl mb-3">🗑️</div>
+    <h2 class="text-xl font-semibold mb-1">Пусто</h2>
+    <p class="text-[var(--text-muted)] text-sm">Ты ничего не удалял за последние 30 дней.</p>
+  </div>
+{% endif %}
+
+{% if trashed %}
+<div class="space-y-2">
+  {% for task in trashed %}
+    <div id="trash-row-{{ task.id }}"
+         class="card p-3 flex items-center gap-3"
+         x-data="{
+           busy: false,
+           async restore() {
+             this.busy = true;
+             try {
+               const r = await fetch('/api/tasks/{{ task.id }}/restore', {method:'POST', credentials:'include'});
+               if (r.ok) document.getElementById('trash-row-{{ task.id }}').remove();
+             } finally { this.busy = false; }
+           },
+           async purge() {
+             if (!confirm('Удалить «{{ task.title|replace('\\', '\\\\')|replace('\'', '\\\'') }}» навсегда?')) return;
+             this.busy = true;
+             try {
+               const r = await fetch('/api/tasks/{{ task.id }}/purge', {method:'DELETE', credentials:'include'});
+               if (r.status === 204) document.getElementById('trash-row-{{ task.id }}').remove();
+             } finally { this.busy = false; }
+           },
+         }">
+      <span class="w-1.5 h-1.5 rounded-full bg-{{ project_color_map.get(task.project_id, 'slate') }}-400 shrink-0"></span>
+      <div class="flex-1 min-w-0">
+        <div class="font-medium truncate {% if task.is_completed %}line-through text-[var(--text-muted)]{% endif %}">{{ task.title }}</div>
+        <div class="text-xs text-[var(--text-muted)] flex items-center gap-2 mt-0.5">
+          {% if project_name.get(task.project_id) %}
+            <span>· {{ project_name[task.project_id] }}</span>
+          {% endif %}
+          <span class="ml-auto">удалено {{ task.deleted_at.strftime('%d.%m %H:%M') }}</span>
+        </div>
+      </div>
+      <button @click="restore()" :disabled="busy" class="btn-ghost px-3 py-1.5 text-xs">↶ Вернуть</button>
+      <button @click="purge()" :disabled="busy" class="text-xs text-rose-400 hover:underline px-2">Стереть</button>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

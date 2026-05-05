@@ -20,9 +20,12 @@ from app.tasks.service import (
     get_task,
     list_tasks,
     list_today,
+    list_trash,
     list_upcoming,
     pin_task,
+    purge_task,
     reorder_tasks,
+    restore_task,
     uncomplete_task,
     unpin_task,
     update_task,
@@ -263,6 +266,31 @@ async def unpin_endpoint(task_id: UUID, user: RequiredUser, session: DbSession) 
     except TaskNotFound as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
     return TaskOut.model_validate(task)
+
+
+@router.get("/trash", response_model=list[TaskOut])
+async def trash_endpoint(user: RequiredUser, session: DbSession) -> list[TaskOut]:
+    """Soft-deleted tasks newer than 30 days. Older are purged on access."""
+    rows = await list_trash(session, user.id, max_age_days=30)
+    return [TaskOut.model_validate(t) for t in rows]
+
+
+@router.post("/{task_id}/restore", response_model=TaskOut)
+async def restore_endpoint(task_id: UUID, user: RequiredUser, session: DbSession) -> TaskOut:
+    try:
+        task = await restore_task(session, user.id, task_id)
+    except TaskNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
+    return TaskOut.model_validate(task)
+
+
+@router.delete("/{task_id}/purge", status_code=status.HTTP_204_NO_CONTENT)
+async def purge_endpoint(task_id: UUID, user: RequiredUser, session: DbSession) -> None:
+    """Hard-delete a task permanently (typically already in trash)."""
+    try:
+        await purge_task(session, user.id, task_id)
+    except TaskNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
 
 
 @router.post("/{task_id}/uncomplete", response_model=TaskOut)

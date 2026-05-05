@@ -61,6 +61,9 @@ class Task(Base):
     # User-pinned tasks float to the top of every list. Timestamp instead of bool
     # so consistent ordering when several pins exist (most-recent pin first).
     pinned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Soft-delete: NULL = active, set = в корзине, real DELETE happens after 30
+    # days (or on user-initiated «удалить навсегда»).
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     # Recurrence: None | "daily" | "weekly" | "monthly" | "yearly". Validated in schemas.
     recurrence: Mapped[str | None] = mapped_column(String(20), nullable=True)
