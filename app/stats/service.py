@@ -31,6 +31,7 @@ class UserStats(TypedDict):
     best_weekday: str
     avg_per_active_day: float
     active_days: int
+    avg_completion_hours: float  # average time created→completed (across all done)
 
 
 async def _completed_dates(session: AsyncSession, user_id: UUID) -> list[date]:
@@ -153,6 +154,20 @@ async def compute_user_stats(session: AsyncSession, user_id: UUID) -> UserStats:
     else:
         avg_per_active_day = 0.0
 
+    # Average time-to-completion across all done tasks (hours).
+    pairs = await session.execute(
+        select(Task.created_at, Task.completed_at).where(
+            Task.user_id == user_id,
+            Task.is_completed.is_(True),
+            Task.completed_at.is_not(None),
+        )
+    )
+    durations: list[float] = []
+    for created, completed in pairs.all():
+        if created and completed and completed > created:
+            durations.append((completed - created).total_seconds() / 3600.0)
+    avg_completion_hours = round(sum(durations) / len(durations), 1) if durations else 0.0
+
     return {
         "current_streak": current,
         "longest_streak": longest,
@@ -165,4 +180,5 @@ async def compute_user_stats(session: AsyncSession, user_id: UUID) -> UserStats:
         "best_weekday": best_weekday,
         "avg_per_active_day": avg_per_active_day,
         "active_days": len(days),
+        "avg_completion_hours": avg_completion_hours,
     }

@@ -62,7 +62,7 @@
   </div>
 </div>
 
-<div class="grid md:grid-cols-3 gap-4">
+<div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
   <div class="card p-5">
     <div class="text-xs uppercase tracking-wider text-[var(--text-muted)] mb-2">Лучший день недели</div>
     <div class="text-2xl font-bold">{{ stats.best_weekday }}</div>
@@ -74,6 +74,19 @@
   <div class="card p-5">
     <div class="text-xs uppercase tracking-wider text-[var(--text-muted)] mb-2">Активных дней всего</div>
     <div class="text-2xl font-bold">{{ stats.active_days }}</div>
+  </div>
+  <div class="card p-5" title="Сколько в среднем проходит времени между созданием задачи и её закрытием">
+    <div class="text-xs uppercase tracking-wider text-[var(--text-muted)] mb-2">Скорость закрытия</div>
+    {% set h = stats.avg_completion_hours %}
+    {% if h == 0 %}
+      <div class="text-2xl font-bold text-[var(--text-muted)]">—</div>
+    {% elif h < 1 %}
+      <div class="text-2xl font-bold">{{ (h * 60)|round|int }}<span class="text-sm font-normal text-[var(--text-muted)] ml-1">мин</span></div>
+    {% elif h < 24 %}
+      <div class="text-2xl font-bold">{{ h }}<span class="text-sm font-normal text-[var(--text-muted)] ml-1">ч</span></div>
+    {% else %}
+      <div class="text-2xl font-bold">{{ (h / 24)|round(1) }}<span class="text-sm font-normal text-[var(--text-muted)] ml-1">дн</span></div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

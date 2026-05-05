@@ -93,6 +93,19 @@ async def test_compute_user_stats_after_completion(
     assert today_cell["count"] == 2
 
 
+async def test_compute_user_stats_avg_completion_hours(
+    db_session: AsyncSession,
+) -> None:
+    user = await _user(db_session)
+    t = await create_task(db_session, user.id, title="X")
+    await complete_task(db_session, user.id, t.id)
+    stats = await compute_user_stats(db_session, user.id)
+    assert "avg_completion_hours" in stats
+    assert isinstance(stats["avg_completion_hours"], float)
+    # Just-created and just-completed → near-zero hours
+    assert stats["avg_completion_hours"] >= 0.0
+
+
 async def test_stats_view_renders(logged_in_client: AsyncClient) -> None:
     response = await logged_in_client.get("/app/stats")
     assert response.status_code == 200
