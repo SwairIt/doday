@@ -24,6 +24,7 @@ from app.db import Base, get_session
 from app.habits import models as _habits_models  # noqa: F401
 from app.labels import models as _labels_models  # noqa: F401
 from app.main import app
+from app.mood import models as _mood_models  # noqa: F401
 from app.projects import models as _projects_models  # noqa: F401
 from app.school import models as _school_models  # noqa: F401
 from app.sections import models as _sections_models  # noqa: F401
