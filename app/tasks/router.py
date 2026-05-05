@@ -21,8 +21,10 @@ from app.tasks.service import (
     list_tasks,
     list_today,
     list_upcoming,
+    pin_task,
     reorder_tasks,
     uncomplete_task,
+    unpin_task,
     update_task,
 )
 
@@ -243,6 +245,24 @@ async def duplicate_endpoint(task_id: UUID, user: RequiredUser, session: DbSessi
     except TaskNotFound as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
     return TaskOut.model_validate(new)
+
+
+@router.post("/{task_id}/pin", response_model=TaskOut)
+async def pin_endpoint(task_id: UUID, user: RequiredUser, session: DbSession) -> TaskOut:
+    try:
+        task = await pin_task(session, user.id, task_id)
+    except TaskNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
+    return TaskOut.model_validate(task)
+
+
+@router.delete("/{task_id}/pin", response_model=TaskOut)
+async def unpin_endpoint(task_id: UUID, user: RequiredUser, session: DbSession) -> TaskOut:
+    try:
+        task = await unpin_task(session, user.id, task_id)
+    except TaskNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
+    return TaskOut.model_validate(task)
 
 
 @router.post("/{task_id}/uncomplete", response_model=TaskOut)

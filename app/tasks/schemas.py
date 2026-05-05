@@ -49,6 +49,7 @@ class TaskOut(BaseModel):
     priority: TaskPriority
     is_completed: bool
     completed_at: datetime | None
+    pinned_at: datetime | None = None
     position: int
     recurrence: str | None
     created_at: datetime

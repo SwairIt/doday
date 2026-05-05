@@ -58,6 +58,9 @@ class Task(Base):
     )
     is_completed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # User-pinned tasks float to the top of every list. Timestamp instead of bool
+    # so consistent ordering when several pins exist (most-recent pin first).
+    pinned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     # Recurrence: None | "daily" | "weekly" | "monthly" | "yearly". Validated in schemas.
     recurrence: Mapped[str | None] = mapped_column(String(20), nullable=True)

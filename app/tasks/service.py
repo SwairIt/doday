@@ -112,7 +112,10 @@ async def list_tasks(
         stmt = stmt.where(Task.is_completed.is_(False))
     if top_level_only:
         stmt = stmt.where(Task.parent_task_id.is_(None))
-    stmt = stmt.order_by(Task.position, Task.created_at)
+    # Pinned float to the top regardless of position; recent pins win ties.
+    stmt = stmt.order_by(
+        Task.pinned_at.desc().nulls_last(), Task.position, Task.created_at
+    )
     result = await session.execute(stmt)
     return list(result.scalars().all())
 
@@ -344,6 +347,24 @@ async def duplicate_task(session: AsyncSession, user_id: UUID, task_id: UUID) ->
     await session.commit()
     await session.refresh(new_root)
     return new_root
+
+
+async def pin_task(session: AsyncSession, user_id: UUID, task_id: UUID) -> Task:
+    """Pin a task to the top of every list. Idempotent — repins refresh the
+    timestamp so the most-recently pinned task is shown first."""
+    task = await get_task(session, user_id, task_id)
+    task.pinned_at = datetime.now(UTC)
+    await session.commit()
+    await session.refresh(task)
+    return task
+
+
+async def unpin_task(session: AsyncSession, user_id: UUID, task_id: UUID) -> Task:
+    task = await get_task(session, user_id, task_id)
+    task.pinned_at = None
+    await session.commit()
+    await session.refresh(task)
+    return task
 
 
 async def complete_task(session: AsyncSession, user_id: UUID, task_id: UUID) -> Task:
