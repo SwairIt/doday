@@ -311,3 +311,34 @@ test_graph: 6, test_recurrence_editor: 4).** Ruff strict + mypy strict
 
 **Прогон новых тестов: 5 passed (test_reminders: 2, test_move_task_context: 3).**
 Ruff strict + mypy strict зелёные на 224 файлах.
+
+### 2026-05-06 — prod-готовность + аудит-цикл
+
+**Prod-инфра** (`5451c06`):
+- `Dockerfile` (multi-stage, non-root, healthcheck) + `.dockerignore`
+- `docker-compose.yml` (postgres 16-alpine + web + persistent volume, postgres биндится на loopback)
+- `scripts/start.sh` (entrypoint: alembic upgrade head → uvicorn workers + proxy-headers)
+- `deploy/nginx.conf` (reverse-proxy, security headers, CSP, gzip, www→apex редирект, под `certbot --nginx`)
+- `deploy/doday.service` (systemd-юнит для bare-metal с hardening: NoNewPrivileges, ProtectHome, etc.)
+- Middleware с защитными заголовками (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `HSTS` в prod)
+- `/robots.txt` + `/sitemap.xml` эндпоинты
+- `.env.example` с полным prod-набором переменных
+- `DEPLOY.md` — двухтрековый гайд (Docker + bare-metal) с пред-чеклистом DNS, операционными командами, диагностикой
+
+**Loop-цикл аудита и доводки** (`fdc68a3`, `92141fe`, `f7226d6`, `579d4da`):
+
+| Что | Файл | Тип |
+|---|---|---|
+| Убран вложенный `x-data` на одном элементе с `x-text` (Alpine не разрешал родительский scope, кнопка показывала пустую строку) | `_partials/task_detail.html` | bug-fix |
+| Индикатор активного пункта в нижнем mobile-меню — `position: relative` на `<a>`, иначе позиционировался относительно всей панели | `_partials/mobile_nav.html` | bug-fix |
+| Print stylesheet — `@media print` скрывает sidebar/topbar/nav/modals/анимации, развернаёт `[href]` рядом со ссылками для бумаги, разрывает страницы между задачами | `base.html` | feat |
+| Markdown в комментариях (раньше были plain-text) | `_partials/task_detail.html` | feat |
+| Markdown-парсер вынесен из inline x-data в глобальный `window.dodayMd(s)` — устранена дупликация между описанием и комментариями | `base.html` + `_partials/task_detail.html` | refactor |
+| Snooze-опции в right-click контекст-меню: «Через 1 час», «Через 3 часа», «Завтра утром», «На выходные» (в дополнение к «На сегодня/завтра/неделю») | `_partials/task_context_menu.html` | feat |
+| Bulk-чекбокс на задачах теперь виден на мобиле (`opacity-50` без hover, `md:opacity-0 md:group-hover:opacity-100` на десктопе) — раньше выбрать ничего нельзя было на тачскрине | `_partials/task_row.html` | mobile-fix |
+
+Аудит подтвердил что **bulk-paste add** (вставка нескольких строк → создание N задач) полностью работает — UI в `quick_add.html` + API endpoint `/api/tasks/bulk` + cap 200 строк.
+
+**Финальное качество:** 37 целевых тестов pass (test_recurrence_editor: 4, test_links_ui: 4, test_prod_hardening: 3, test_move_task_context: 3, test_reminders: 2, test_task_links: 7, test_graph: 6, test_page_filter: 2, test_sidebar_counts: 6). Ruff strict + mypy strict зелёные на 225 файлах.
+
+**Пробелов от типичных туду-апп паттернов** в нашем коде на 2026-05-06 НЕ найдено критичных. Что осталось как «nice-to-have» для следующих сессий: drag задачи между днями календаря, attachment uploads, sub-projects (вложенные проекты), email-to-task через входящий SMTP. Все они — вторая волна, не блокеры.
