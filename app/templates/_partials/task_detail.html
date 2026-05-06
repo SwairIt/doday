@@ -68,34 +68,6 @@
       <div x-data="{
              text: {{ (task.description or '')|tojson }},
              editing: false,
-             render(s) {
-               if (!s) return '';
-               // Escape HTML first to prevent injection.
-               let h = s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-               // Code blocks first (greedy fence), then inline code.
-               h = h.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
-               h = h.replace(/`([^`\n]+)`/g, '<code>$1</code>');
-               // Headings.
-               h = h.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-               h = h.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-               h = h.replace(/^# (.+)$/gm, '<h1>$1</h1>');
-               // Bold + italic.
-               h = h.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
-               h = h.replace(/(?:^|[^*])\*([^*\n]+)\*/g, function(m, g){ return m[0] === '*' ? '*' + g + '*' : m[0] + '<em>' + g + '</em>'; });
-               // Links [text](url).
-               h = h.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href=\"$2\" target=\"_blank\" rel=\"noopener\">$1</a>');
-               // Bullet lists.
-               h = h.replace(/(?:^|\n)((?:- .+\n?)+)/g, function(m, block){
-                 const items = block.trim().split(/\n/).map(l => '<li>' + l.replace(/^- /, '') + '</li>').join('');
-                 return '\n<ul>' + items + '</ul>';
-               });
-               // Paragraph breaks.
-               h = h.replace(/\n{2,}/g, '</p><p>');
-               h = '<p>' + h + '</p>';
-               // Cleanup: don't wrap headings/lists/pre in <p>.
-               h = h.replace(/<p>(\s*<(h[1-3]|ul|pre)>)/g, '$1').replace(/(<\/(h[1-3]|ul|pre)>)\s*<\/p>/g, '$1');
-               return h;
-             }
            }">
         <textarea
           name="description"
@@ -107,7 +79,7 @@
         ></textarea>
         <div x-show="text && !editing" x-cloak
              class="md-preview mt-2 px-3 py-2 rounded-lg bg-[var(--surface-2)]/40 text-sm leading-relaxed"
-             x-html="render(text)"></div>
+             x-html="window.dodayMd(text)"></div>
         <div x-show="editing && text" x-cloak class="text-[10px] text-[var(--text-muted)] mt-1 px-1">
           Снимешь фокус — увидишь preview. Поддержка: # / ## / ###, **bold**, *italic*, `code`, [link](url), - lists.
         </div>
@@ -529,7 +501,9 @@
       <div class="space-y-2 mb-3">
         {% for c in comments %}
           <div class="bg-[var(--surface-2)] border border-[var(--border)] rounded-lg p-2.5 text-sm group relative">
-            <div class="whitespace-pre-wrap break-words">{{ c.body }}</div>
+            <div class="md-preview break-words"
+                 x-data="{ body: {{ c.body|tojson }} }"
+                 x-html="window.dodayMd(body)"></div>
             <div class="flex items-center justify-between mt-1.5">
               <span class="text-[10px] text-[var(--text-muted)]">{{ c.created_at.strftime('%d.%m %H:%M') }}</span>
               <button type="button"
