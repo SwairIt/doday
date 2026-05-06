@@ -15,6 +15,11 @@
   <button data-ctx="due-today" class="ctx-item">📅 На сегодня</button>
   <button data-ctx="due-tomorrow" class="ctx-item">📅 На завтра</button>
   <button data-ctx="due-week" class="ctx-item">📅 К концу недели</button>
+  <button data-ctx="due-weekend" class="ctx-item">📅 На выходные</button>
+  <hr class="my-1 border-[var(--border)]">
+  <button data-ctx="snooze-1h" class="ctx-item">⏰ Напомнить через 1 час</button>
+  <button data-ctx="snooze-3h" class="ctx-item">⏰ Через 3 часа</button>
+  <button data-ctx="snooze-morning" class="ctx-item">🌅 Завтра утром (9:00)</button>
   <button data-ctx="due-clear" class="ctx-item">📅 Убрать дату</button>
   <hr class="my-1 border-[var(--border)]">
   <button data-ctx="pin" class="ctx-item">📌 Закрепить / открепить</button>
@@ -104,6 +109,24 @@
       const target = new Date(now.getFullYear(), now.getMonth(), now.getDate() + days);
       return target.toISOString().slice(0, 10) + 'T23:59:00Z';
     }
+    function nextWeekend() {
+      // Next Saturday (or today if today IS Saturday and it's morning).
+      const now = new Date();
+      const dow = now.getDay();  // 0 = Sun, 6 = Sat
+      const daysToSat = dow === 6 ? 0 : (6 - dow + 7) % 7 || 7;
+      const target = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysToSat);
+      return target.toISOString().slice(0, 10) + 'T10:00:00Z';
+    }
+    function snoozeHours(h) {
+      const t = new Date(Date.now() + h * 3600 * 1000);
+      return t.toISOString().slice(0, 19) + 'Z';
+    }
+    function tomorrowMorning() {
+      const t = new Date();
+      t.setDate(t.getDate() + 1);
+      t.setHours(9, 0, 0, 0);
+      return t.toISOString().slice(0, 19) + 'Z';
+    }
 
     function showAt(x, y) {
       menu.style.display = 'block';
@@ -170,6 +193,10 @@
       if (action === 'due-today') { await patch({due_at: todayISO(0), due_date_only: true}); location.reload(); return; }
       if (action === 'due-tomorrow') { await patch({due_at: todayISO(1), due_date_only: true}); location.reload(); return; }
       if (action === 'due-week') { await patch({due_at: endOfWeek(), due_date_only: true}); location.reload(); return; }
+      if (action === 'due-weekend') { await patch({due_at: nextWeekend(), due_date_only: true}); location.reload(); return; }
+      if (action === 'snooze-1h') { await patch({due_at: snoozeHours(1), due_date_only: false}); location.reload(); return; }
+      if (action === 'snooze-3h') { await patch({due_at: snoozeHours(3), due_date_only: false}); location.reload(); return; }
+      if (action === 'snooze-morning') { await patch({due_at: tomorrowMorning(), due_date_only: false}); location.reload(); return; }
       if (action === 'due-clear') { await patch({due_at: null}); location.reload(); return; }
       if (action === 'pin') {
         // Try POST (set); ignore 200/duplicate. To unpin, user repeats — service is idempotent on POST.

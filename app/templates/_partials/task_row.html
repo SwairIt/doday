@@ -17,10 +17,11 @@
   :class="$store.selection.has('{{ tid }}') ? 'ring-2 ring-[var(--accent)] bg-[var(--surface-2)]' : ''"
   x-data="{ subsOpen: false, commentsOpen: false }"
 >
-  {# Bulk-selection checkbox — visible on hover OR when something is selected. #}
+  {# Bulk-selection checkbox — visible by default on mobile (no hover state),
+     visible-on-hover on desktop, always visible when anything's selected. #}
   <label
     class="shrink-0 transition cursor-pointer
-           opacity-0 group-hover:opacity-100"
+           opacity-50 md:opacity-0 md:group-hover:opacity-100"
     :class="$store.selection.count() > 0 ? 'opacity-100' : ''"
   >
     <input
