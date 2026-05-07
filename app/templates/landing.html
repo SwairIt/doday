@@ -403,6 +403,314 @@
       </div>
     </section>
 
+    {# ───── SCREENSHOTS ───── #}
+    {# Пока нет реальных скринов с iPhone — фиолетовые SVG-mockup'ы #}
+    {# в стилистике приложения. Заменить на реальные PNG'и когда будут. #}
+    <section id="screenshots" class="max-w-6xl mx-auto px-6 pb-28">
+      <div class="text-center mb-14">
+        <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Как выглядит</p>
+        <h2 class="text-3xl md:text-4xl font-bold mb-3">Тёмный, светлый — на твой вкус</h2>
+        <p class="text-[var(--text-muted)] text-lg max-w-2xl mx-auto">
+          Четыре главных экрана. Внутри — то же самое, никаких сюрпризов после регистрации.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+
+        <div class="reveal card p-5">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-xs px-2 py-0.5 rounded-md bg-violet-500/15 text-violet-400 font-medium">/app/today</span>
+            <span class="text-sm font-medium ml-1">Сегодня</span>
+          </div>
+          <svg viewBox="0 0 480 280" class="w-full h-auto rounded-lg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Скриншот экрана Сегодня">
+            <defs>
+              <linearGradient id="ss1" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#1f1638"/><stop offset="1" stop-color="#0d0820"/>
+              </linearGradient>
+              <linearGradient id="ssg1" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#d946ef"/>
+              </linearGradient>
+            </defs>
+            <rect width="480" height="280" rx="12" fill="url(#ss1)"/>
+            <rect x="20" y="20" width="160" height="14" rx="3" fill="#a78bfa" opacity="0.85"/>
+            <rect x="20" y="42" width="100" height="8" rx="2" fill="#6b6587"/>
+            <rect x="20" y="62" width="220" height="4" rx="2" fill="#2a2048"/>
+            <rect x="20" y="62" width="135" height="4" rx="2" fill="url(#ssg1)"/>
+            <g>
+              <rect x="20" y="86" width="440" height="48" rx="8" fill="#161028" stroke="#2a2048"/>
+              <circle cx="44" cy="110" r="9" fill="none" stroke="#fb7185" stroke-width="2"/>
+              <rect x="62" y="100" width="240" height="8" rx="2" fill="#ddd6fe"/>
+              <rect x="62" y="115" width="80" height="6" rx="2" fill="#6b6587"/>
+              <rect x="410" y="102" width="40" height="16" rx="8" fill="#fb7185" opacity="0.2"/>
+              <text x="430" y="113" font-family="Inter,Arial" font-size="9" font-weight="700" fill="#fb7185" text-anchor="middle">!1</text>
+            </g>
+            <g>
+              <rect x="20" y="146" width="440" height="48" rx="8" fill="#161028" stroke="#2a2048"/>
+              <circle cx="44" cy="170" r="9" fill="none" stroke="#fbbf24" stroke-width="2"/>
+              <rect x="62" y="160" width="200" height="8" rx="2" fill="#ddd6fe"/>
+              <rect x="62" y="175" width="60" height="6" rx="2" fill="#6b6587"/>
+              <rect x="380" y="162" width="64" height="14" rx="6" fill="#a78bfa" opacity="0.2"/>
+            </g>
+            <g>
+              <rect x="20" y="206" width="440" height="48" rx="8" fill="#0d0820" opacity="0.5"/>
+              <circle cx="44" cy="230" r="9" fill="url(#ssg1)"/>
+              <path d="M40 230 L43 233 L48 226" stroke="#fff" stroke-width="2" fill="none"/>
+              <line x1="62" y1="230" x2="240" y2="230" stroke="#6b6587" stroke-width="1"/>
+              <rect x="62" y="220" width="180" height="8" rx="2" fill="#6b6587" opacity="0.5"/>
+            </g>
+          </svg>
+        </div>
+
+        <div class="reveal reveal-delay-100 card p-5">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-xs px-2 py-0.5 rounded-md bg-violet-500/15 text-violet-400 font-medium">/app/calendar</span>
+            <span class="text-sm font-medium ml-1">Календарь</span>
+          </div>
+          <svg viewBox="0 0 480 280" class="w-full h-auto rounded-lg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Скриншот экрана Календарь">
+            <defs>
+              <linearGradient id="ss2" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#1f1638"/><stop offset="1" stop-color="#0d0820"/>
+              </linearGradient>
+              <linearGradient id="ssg2" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#d946ef"/>
+              </linearGradient>
+            </defs>
+            <rect width="480" height="280" rx="12" fill="url(#ss2)"/>
+            <rect x="20" y="20" width="120" height="14" rx="3" fill="#a78bfa"/>
+            <g font-family="Inter,Arial" font-size="9" fill="#6b6587" text-anchor="middle">
+              {% for d, x in [('пн', 50), ('вт', 110), ('ср', 170), ('чт', 230), ('пт', 290), ('сб', 350), ('вс', 410)] %}
+              <text x="{{ x }}" y="58">{{ d }}</text>
+              {% endfor %}
+            </g>
+            {% for row in range(4) %}
+              {% for col in range(7) %}
+              <rect x="{{ 20 + col * 60 }}" y="{{ 70 + row * 50 }}" width="56" height="46" rx="6" fill="#161028" stroke="#2a2048"/>
+              {% endfor %}
+            {% endfor %}
+            <rect x="200" y="120" width="56" height="46" rx="6" fill="url(#ssg2)" opacity="0.85"/>
+            <text x="228" y="148" font-family="Inter,Arial" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">8</text>
+            <circle cx="44" cy="92" r="2" fill="#a78bfa"/>
+            <circle cx="50" cy="92" r="2" fill="#a78bfa"/>
+            <circle cx="164" cy="142" r="2" fill="#fb7185"/>
+            <circle cx="170" cy="142" r="2" fill="#fbbf24"/>
+            <circle cx="344" cy="192" r="2" fill="#34d399"/>
+          </svg>
+        </div>
+
+        <div class="reveal reveal-delay-200 card p-5">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-xs px-2 py-0.5 rounded-md bg-violet-500/15 text-violet-400 font-medium">/app/projects/<i>id</i></span>
+            <span class="text-sm font-medium ml-1">Канбан-доска</span>
+          </div>
+          <svg viewBox="0 0 480 280" class="w-full h-auto rounded-lg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Скриншот канбан-доски">
+            <defs>
+              <linearGradient id="ss3" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#1f1638"/><stop offset="1" stop-color="#0d0820"/>
+              </linearGradient>
+            </defs>
+            <rect width="480" height="280" rx="12" fill="url(#ss3)"/>
+            <rect x="20" y="20" width="180" height="12" rx="3" fill="#a78bfa"/>
+            {% for col, color, label, items in [
+              (0, '#38bdf8', 'Сделать', 4),
+              (1, '#fbbf24', 'В работе', 3),
+              (2, '#34d399', 'Готово', 5),
+            ] %}
+            <g transform="translate({{ 20 + col * 150 }}, 50)">
+              <rect width="140" height="220" rx="8" fill="#161028" stroke="#2a2048"/>
+              <circle cx="14" cy="20" r="4" fill="{{ color }}"/>
+              <text x="24" y="24" font-family="Inter,Arial" font-size="10" font-weight="700" fill="#ddd6fe">{{ label }}</text>
+              <text x="125" y="24" font-family="Inter,Arial" font-size="10" fill="#6b6587" text-anchor="end">{{ items }}</text>
+              {% for i in range(items) %}
+              <rect x="8" y="{{ 36 + i * 32 }}" width="124" height="26" rx="4" fill="#0d0820" stroke="#2a2048"/>
+              <rect x="14" y="{{ 44 + i * 32 }}" width="{{ 70 + (i * 7) % 40 }}" height="4" rx="2" fill="#a78bfa" opacity="0.6"/>
+              <rect x="14" y="{{ 52 + i * 32 }}" width="{{ 30 + (i * 11) % 30 }}" height="3" rx="1" fill="#6b6587"/>
+              {% endfor %}
+            </g>
+            {% endfor %}
+          </svg>
+        </div>
+
+        <div class="reveal reveal-delay-300 card p-5">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-xs px-2 py-0.5 rounded-md bg-violet-500/15 text-violet-400 font-medium">/app/graph</span>
+            <span class="text-sm font-medium ml-1">Граф связей задач</span>
+          </div>
+          <svg viewBox="0 0 480 280" class="w-full h-auto rounded-lg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Скриншот графа задач">
+            <defs>
+              <linearGradient id="ss4" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#1f1638"/><stop offset="1" stop-color="#0d0820"/>
+              </linearGradient>
+              <radialGradient id="ssGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0" stop-color="#a78bfa" stop-opacity="0.3"/>
+                <stop offset="1" stop-color="#a78bfa" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <rect width="480" height="280" rx="12" fill="url(#ss4)"/>
+            <circle cx="240" cy="140" r="120" fill="url(#ssGlow)"/>
+            <g stroke="#7c3aed" stroke-width="1.5" opacity="0.55" fill="none">
+              <line x1="240" y1="140" x2="120" y2="80"/>
+              <line x1="240" y1="140" x2="380" y2="90"/>
+              <line x1="240" y1="140" x2="100" y2="200"/>
+              <line x1="240" y1="140" x2="380" y2="210"/>
+              <line x1="240" y1="140" x2="240" y2="50"/>
+              <line x1="120" y1="80" x2="100" y2="200"/>
+              <line x1="380" y1="90" x2="380" y2="210"/>
+            </g>
+            <g>
+              <circle cx="240" cy="140" r="18" fill="url(#ssg1)"/>
+              <text x="240" y="145" font-family="Inter,Arial" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">★</text>
+              <circle cx="120" cy="80" r="11" fill="#fb7185"/>
+              <circle cx="380" cy="90" r="11" fill="#fbbf24"/>
+              <circle cx="100" cy="200" r="11" fill="#34d399"/>
+              <circle cx="380" cy="210" r="11" fill="#a78bfa"/>
+              <circle cx="240" cy="50" r="11" fill="#38bdf8"/>
+            </g>
+          </svg>
+        </div>
+
+      </div>
+      <p class="text-center text-xs text-[var(--text-muted)] mt-6">Это иллюстрации — реальное приложение работает живо, перетаскивай и нажимай.</p>
+    </section>
+
+    {# ───── COMPARISON ───── #}
+    <section id="comparison" class="max-w-5xl mx-auto px-6 pb-28">
+      <div class="text-center mb-12">
+        <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Сравнение</p>
+        <h2 class="text-3xl md:text-4xl font-bold mb-3">Бесплатно — навсегда. Не trial.</h2>
+        <p class="text-[var(--text-muted)] text-lg max-w-2xl mx-auto">
+          Многие конкуренты в Free режут даже базовое: лимит на 5 проектов, фильтры под платой, ассистент без планировщика. Doday Free — настоящее Free.
+        </p>
+      </div>
+
+      <div class="card overflow-x-auto">
+        <table class="w-full text-sm min-w-[640px]">
+          <thead>
+            <tr class="border-b border-[var(--border)] text-left">
+              <th class="px-5 py-4 font-semibold text-[var(--text-muted)] uppercase text-xs tracking-wider">Что есть</th>
+              <th class="px-5 py-4 font-semibold text-center">
+                <span class="grad-text">Doday Free</span>
+                <div class="text-xs text-[var(--text-muted)] font-normal mt-0.5">0 ₽ навсегда</div>
+              </th>
+              <th class="px-5 py-4 font-semibold text-center text-[var(--text-muted)]">
+                Todoist Free
+                <div class="text-xs text-[var(--text-muted)] font-normal mt-0.5">по их публичному прайсу</div>
+              </th>
+              <th class="px-5 py-4 font-semibold text-center text-[var(--text-muted)]">
+                TickTick Free
+                <div class="text-xs text-[var(--text-muted)] font-normal mt-0.5">по их публичному прайсу</div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {% set rows = [
+              ('Активных проектов', '10', '5', '9 списков'),
+              ('Задач в проекте', '500 на аккаунт', '300 на проект', '99 на список'),
+              ('Канбан-доски', '✓', '— только Pro', '✓'),
+              ('Подзадачи без лимита', '✓', '✓', '✓'),
+              ('Кастомные фильтры', '3 (Pro: ∞)', '— только Pro', '— только Pro'),
+              ('Граф связей задач', '✓', '✗', '✗'),
+              ('Помодоро встроен', '✓', '✗', '— только Pro'),
+              ('Привычки и стрики', '✓', '✗', '— только Pro'),
+              ('Russian-natural-language', '«завтра», «след пн»', 'английский лучше', 'английский лучше'),
+              ('Реклама', 'нет', 'нет', 'нет'),
+              ('Открытый исходник', '✓ MIT', '✗', '✗'),
+              ('Хостинг данных', 'РФ, PostgreSQL', 'США', 'Сингапур'),
+            ] %}
+            {% for name, doday, todoist, tt in rows %}
+            <tr class="border-b border-[var(--border)] last:border-0 hover:bg-[var(--surface-2)] transition">
+              <td class="px-5 py-3 font-medium">{{ name }}</td>
+              <td class="px-5 py-3 text-center">
+                {% if doday == '✓' %}<svg class="w-5 h-5 text-emerald-400 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                {% elif doday == '✗' %}<span class="text-rose-400">✗</span>
+                {% else %}<span class="text-emerald-400 font-medium">{{ doday }}</span>{% endif %}
+              </td>
+              <td class="px-5 py-3 text-center text-[var(--text-muted)]">
+                {% if todoist == '✓' %}<svg class="w-5 h-5 text-emerald-400/60 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                {% elif todoist == '✗' %}<span class="text-rose-400/60">✗</span>
+                {% else %}{{ todoist }}{% endif %}
+              </td>
+              <td class="px-5 py-3 text-center text-[var(--text-muted)]">
+                {% if tt == '✓' %}<svg class="w-5 h-5 text-emerald-400/60 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                {% elif tt == '✗' %}<span class="text-rose-400/60">✗</span>
+                {% else %}{{ tt }}{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="text-xs text-[var(--text-muted)] mt-3 text-center">
+        Сведения о конкурентах — на дату публикации, по их собственным сравнительным таблицам. Может меняться, проверь у них.
+      </p>
+    </section>
+
+    {# ───── TESTIMONIAL PLACEHOLDER ───── #}
+    {# Прозрачно: «Будь первым» — лучше чем фейковые отзывы. #}
+    <section id="testimonials" class="max-w-4xl mx-auto px-6 pb-28">
+      <div class="text-center mb-10">
+        <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Отзывы</p>
+        <h2 class="text-3xl md:text-4xl font-bold mb-3">Здесь будут отзывы пользователей</h2>
+        <p class="text-[var(--text-muted)] text-lg max-w-2xl mx-auto">
+          Doday запустился совсем недавно — пока мы не публикуем фейковых «5 звёзд»
+          с фотобанка. Будем добавлять настоящие отзывы по мере появления.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-5">
+        {% for i in range(3) %}
+        <div class="reveal card p-6 border-2 border-dashed border-[var(--border)] bg-transparent text-center">
+          <div class="w-12 h-12 mx-auto rounded-full bg-[var(--surface-2)] flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+          </div>
+          <p class="text-sm text-[var(--text-muted)] italic mb-4">
+            «Место для твоего отзыва»
+          </p>
+          <a href="mailto:hello@doday.app?subject=Отзыв%20о%20Doday" class="text-xs text-[var(--accent)] hover:underline">
+            Отправить отзыв →
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    {# ───── 3 STEPS — START IN A MINUTE ───── #}
+    <section id="three-steps" class="max-w-5xl mx-auto px-6 pb-28">
+      <div class="text-center mb-14">
+        <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Старт за минуту</p>
+        <h2 class="text-3xl md:text-4xl font-bold mb-3">Три шага — и ты внутри</h2>
+        <p class="text-[var(--text-muted)] text-lg max-w-2xl mx-auto">
+          Никакой анкеты на 12 полей. Никакого «выбери 5 целей и оцени себя».
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-6">
+        {% set steps = [
+          ('1', '⏱️ 15 сек', 'Email и пароль', 'Без СМС, без капчи. Подтверди почту по ссылке.'),
+          ('2', '🎯 10 сек', 'Учёба, работа, жизнь?', 'Доday подберёт стартовые задачи и виджеты под твой случай. Можно пропустить.'),
+          ('3', '✏️ 20 сек', 'Первая задача', 'Пиши «купить хлеб завтра !!! @дом». Doday сам поймёт дату, приоритет и лейбл.'),
+        ] %}
+        {% for n, time, title, body in steps %}
+          <div class="reveal card p-7 relative">
+            <div class="absolute -top-4 -left-4 w-10 h-10 rounded-full grad-bg flex items-center justify-center text-white font-bold shadow-glow">{{ n }}</div>
+            <div class="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold mb-2">{{ time }}</div>
+            <h3 class="text-xl font-bold mb-2">{{ title }}</h3>
+            <p class="text-sm text-[var(--text-muted)] leading-relaxed">{{ body }}</p>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="text-center mt-10">
+        <a href="/auth/register" class="btn-primary px-7 py-3.5">
+          Начать прямо сейчас
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+          </svg>
+        </a>
+      </div>
+    </section>
+
     {# ───── FAQ ───── #}
     <section id="faq" class="max-w-3xl mx-auto px-6 pb-28">
       <div class="text-center mb-12">
