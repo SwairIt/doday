@@ -12,10 +12,10 @@
 
 <div
   x-data="{
-    grid: {{ grid|tojson|safe }},
-    subjects: {{ subjects|tojson|safe }},
-    weekdays: {{ weekdays_short|tojson|safe }},
-    periods: {{ periods|tojson|safe }},
+    grid: {{ grid|tojson|forceescape }},
+    subjects: {{ subjects|tojson|forceescape }},
+    weekdays: {{ weekdays_short|tojson|forceescape }},
+    periods: {{ periods|tojson|forceescape }},
     editing: null,
     form: { weekday: 0, period: 1, subject_code: 'math', room: '', teacher: '' },
     saving: false,

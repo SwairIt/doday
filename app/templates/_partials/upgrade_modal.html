@@ -1,0 +1,114 @@
+{# Upgrade modal — listens for `doday-upgrade` event from anywhere on the page.
+   Triggered automatically when the API returns 402 with code=limit_reached.
+   Shows the relevant Pro feature + a clear CTA to /pricing. #}
+<div x-data="{
+       open: false,
+       feature: '',
+       message: '',
+       tier: 'free',
+       FEATURE_LABELS: {
+         projects: 'Активных проектов больше 10',
+         tasks: 'Активных задач больше 500',
+         custom_filters: 'Кастомных фильтров больше 3',
+         bulk_paste: 'Bulk-paste более 50 строк',
+         premium_themes: 'Темы Forest и Minimal',
+         email_digest: 'Email-дайджест на утро',
+         tg_bot: 'Telegram-бот',
+         family: 'Семейный доступ (5 аккаунтов)',
+       },
+       openWith(detail) {
+         this.feature = detail.feature || '';
+         this.message = detail.message || '';
+         this.tier = detail.tier || 'free';
+         this.open = true;
+       },
+     }"
+     @doday-upgrade.window="openWith($event.detail)"
+     @keydown.escape.window="open = false">
+
+  <div x-show="open" x-cloak x-transition.opacity
+       @click.self="open = false"
+       class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div x-show="open"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+         class="card w-full max-w-md p-0 overflow-hidden shadow-glow">
+
+      {# Hero header with gradient #}
+      <div class="grad-bg px-6 pt-6 pb-12 text-center text-white relative">
+        <div class="text-5xl mb-2">✨</div>
+        <h2 class="text-xl font-bold mb-1">Pro нужен здесь</h2>
+        <p class="text-sm text-white/85" x-text="FEATURE_LABELS[feature] || 'Эта функция доступна на тарифе Pro'"></p>
+      </div>
+
+      <div class="px-6 -mt-6">
+        <div class="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-4 shadow-lg">
+          <p class="text-sm text-[var(--text)] text-center" x-text="message"></p>
+        </div>
+      </div>
+
+      <div class="px-6 py-5">
+        <div class="flex items-baseline justify-center gap-2 mb-3">
+          <span class="text-3xl font-extrabold grad-text">199₽</span>
+          <span class="text-sm text-[var(--text-muted)]">в месяц</span>
+        </div>
+        <p class="text-xs text-center text-[var(--text-muted)] mb-4">
+          Или 1990₽ за год — ~17% экономии. Отменить можно в любой момент.
+        </p>
+
+        <ul class="text-xs text-[var(--text)] space-y-1.5 mb-5">
+          <li class="flex items-start gap-2"><span class="text-emerald-400">✓</span>Безлимит на проекты и задачи</li>
+          <li class="flex items-start gap-2"><span class="text-emerald-400">✓</span>Все темы (Forest, Minimal)</li>
+          <li class="flex items-start gap-2"><span class="text-emerald-400">✓</span>Корзина 30 дней</li>
+          <li class="flex items-start gap-2"><span class="text-emerald-400">✓</span>Email-дайджест и Telegram-бот (когда выкатим)</li>
+          <li class="flex items-start gap-2"><span class="text-emerald-400">✓</span>Bulk-paste до 200 строк</li>
+        </ul>
+
+        <a href="/pricing" class="btn-primary w-full py-2.5 text-sm justify-center">
+          Посмотреть тарифы →
+        </a>
+        <button type="button" @click="open = false"
+                class="w-full mt-2 py-2 text-xs text-[var(--text-muted)] hover:text-[var(--text)] transition">
+          Не сейчас
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Global fetch interceptor: convert 402 limit_reached responses into the modal event.
+  (function () {
+    const orig = window.fetch;
+    window.fetch = async function (...args) {
+      const response = await orig.apply(this, args);
+      if (response.status === 402) {
+        try {
+          const clone = response.clone();
+          const data = await clone.json();
+          const detail = data.detail || data;
+          if (detail && detail.code === 'limit_reached') {
+            window.dispatchEvent(new CustomEvent('doday-upgrade', { detail }));
+          }
+        } catch (e) { /* not a JSON 402 — ignore */ }
+      }
+      return response;
+    };
+
+    // HTMX hook: htmx uses XMLHttpRequest under the hood, not fetch — so intercept its
+    // afterRequest event for 402 responses.
+    document.addEventListener('htmx:beforeSwap', function (evt) {
+      if (evt.detail.xhr && evt.detail.xhr.status === 402) {
+        evt.detail.shouldSwap = false;
+        try {
+          const data = JSON.parse(evt.detail.xhr.responseText);
+          const detail = data.detail || data;
+          if (detail && detail.code === 'limit_reached') {
+            window.dispatchEvent(new CustomEvent('doday-upgrade', { detail }));
+          }
+        } catch (e) {}
+      }
+    });
+  })();
+</script>

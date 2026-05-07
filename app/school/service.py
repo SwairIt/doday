@@ -177,8 +177,11 @@ async def _fetch_with_aupd_token(
                 continue
             if response.status_code == 401 or response.status_code == 403:
                 raise _PortalError(
-                    f"Сервер ответил {response.status_code}. "
-                    "Скорее всего токен истёк — обнови aupd_token в браузере и сохрани заново."
+                    f"Портал ответил {response.status_code} — наш сервер не пускают. "
+                    "Возможные причины: (1) токен истёк (войди заново на портал и обнови по закладке), "
+                    "(2) портал блокирует запросы из-за рубежа (наш Yesbeat-сервер на Azure EU). "
+                    "Воркэраунд: используй кнопку «📋 Импорт JSON» — там копируешь ответ портала из своего браузера, "
+                    "и Doday создаёт задачи без обращения к API."
                 )
             if response.status_code == 404:
                 last_error = f"{url} → 404"

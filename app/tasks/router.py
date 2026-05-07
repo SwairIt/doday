@@ -126,9 +126,30 @@ async def bulk_create_endpoint(
     Empty / whitespace-only lines are silently dropped. Each surviving line
     becomes a top-level task in the chosen project (or Inbox if none).
     """
+    from app.billing.service import can_create_task, can_paste_n_lines, limits_for
+
     cleaned = [t.strip() for t in payload.titles if t and t.strip()]
     if not cleaned:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "пустой список задач")
+
+    if not can_paste_n_lines(user, len(cleaned)):
+        cap = limits_for(user)["max_bulk_paste_lines"]
+        raise HTTPException(
+            402,
+            {
+                "code": "limit_reached",
+                "feature": "bulk_paste",
+                "limit": cap,
+                "tier": "free",
+                "message": f"Вставка более {cap} строк за раз — на Pro. Сейчас можно до {cap}.",
+            },
+        )
+    allowed, reason = await can_create_task(session, user)
+    if not allowed:
+        raise HTTPException(
+            402,
+            {"code": "limit_reached", "feature": "tasks", "tier": "free", "message": reason},
+        )
 
     out: list[TaskOut] = []
     try:
@@ -149,6 +170,22 @@ async def bulk_create_endpoint(
 
 @router.post("", response_model=TaskOut, status_code=status.HTTP_201_CREATED)
 async def create_endpoint(payload: TaskCreate, user: RequiredUser, session: DbSession) -> TaskOut:
+    from app.billing.service import can_create_task
+
+    # Subtasks don't count against the limit (they're sub-units of a parent task).
+    if payload.parent_task_id is None:
+        allowed, reason = await can_create_task(session, user)
+        if not allowed:
+            raise HTTPException(
+                402,
+                {
+                    "code": "limit_reached",
+                    "feature": "tasks",
+                    "tier": "free",
+                    "message": reason,
+                },
+            )
+
     try:
         task = await create_task(
             session,

@@ -142,17 +142,22 @@
   <section class="card p-6">
     <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-4">Тема оформления</h2>
     <p class="text-sm text-[var(--text-muted)] mb-4">Светлая/тёмная — иконкой луны в правом верхнем углу. Цветовая палитра — здесь:</p>
+    {% set is_pro = current_user.tier in ('pro', 'family', 'team') %}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3" x-data="{ current: localStorage.getItem('doday-accent') || 'default' }">
       {% set palettes = [
-        ('default', 'Doday', 'from-violet-600 to-fuchsia-500'),
-        ('sunset',  'Закат', 'from-orange-500 to-pink-500'),
-        ('forest',  'Лес',   'from-emerald-500 to-cyan-500'),
-        ('minimal', 'Минимал', 'from-zinc-500 to-zinc-800'),
+        ('default', 'Doday',   'from-violet-600 to-fuchsia-500',   false),
+        ('sunset',  'Закат',   'from-orange-500 to-pink-500',      false),
+        ('forest',  'Лес',     'from-emerald-500 to-cyan-500',     true),
+        ('minimal', 'Минимал', 'from-zinc-500 to-zinc-800',        true),
       ] %}
-      {% for theme_id, theme_name, gradient in palettes %}
+      {% for theme_id, theme_name, gradient, pro_only in palettes %}
+        {% set locked = pro_only and not is_pro %}
         <button
           type="button"
           @click="
+            {% if locked %}
+            window.dispatchEvent(new CustomEvent('doday-upgrade', {detail: {feature: 'premium_themes', tier: 'free', message: 'Тема «{{ theme_name }}» доступна на тарифе Pro. Default и Закат — бесплатно.'}}));
+            {% else %}
             current = '{{ theme_id }}';
             if ('{{ theme_id }}' === 'default') {
               document.documentElement.removeAttribute('data-accent');
@@ -161,15 +166,33 @@
               document.documentElement.setAttribute('data-accent', '{{ theme_id }}');
               try { localStorage.setItem('doday-accent', '{{ theme_id }}'); } catch(e) {}
             }
+            {% endif %}
           "
           :class="current === '{{ theme_id }}' ? 'ring-2 ring-[var(--accent)] shadow-glow' : ''"
-          class="card p-3 text-left transition hover:-translate-y-0.5"
+          class="card p-3 text-left transition hover:-translate-y-0.5 relative {% if locked %}opacity-75{% endif %}"
+          {% if locked %}title="Pro-тема — клик для деталей"{% endif %}
         >
-          <div class="h-12 rounded-lg bg-gradient-to-br {{ gradient }} mb-2 shadow-sm"></div>
-          <div class="text-sm font-medium">{{ theme_name }}</div>
+          <div class="h-12 rounded-lg bg-gradient-to-br {{ gradient }} mb-2 shadow-sm relative">
+            {% if locked %}
+              <div class="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-[1px] rounded-lg">
+                <span class="text-xs font-bold text-white tracking-wider">🔒 PRO</span>
+              </div>
+            {% endif %}
+          </div>
+          <div class="text-sm font-medium flex items-center gap-1.5">
+            {{ theme_name }}
+            {% if pro_only %}
+              <span class="text-[9px] px-1 py-0.5 rounded bg-[var(--accent)]/20 text-[var(--accent)] font-bold uppercase">Pro</span>
+            {% endif %}
+          </div>
         </button>
       {% endfor %}
     </div>
+    {% if not is_pro %}
+      <p class="text-[11px] text-[var(--text-muted)] mt-3">
+        Forest и Minimal — на <a href="/pricing" class="text-[var(--accent)] hover:underline">Pro</a>. Default и Закат — навсегда бесплатно.
+      </p>
+    {% endif %}
   </section>
 
   <section class="card p-6"

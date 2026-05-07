@@ -32,6 +32,21 @@ async def list_endpoint(user: RequiredUser, session: DbSession) -> list[CustomFi
 async def create_endpoint(
     payload: CustomFilterCreate, user: RequiredUser, session: DbSession
 ) -> CustomFilterOut:
+    from fastapi import HTTPException
+
+    from app.billing.service import can_create_custom_filter
+
+    allowed, reason = await can_create_custom_filter(session, user)
+    if not allowed:
+        raise HTTPException(
+            402,
+            {
+                "code": "limit_reached",
+                "feature": "custom_filters",
+                "tier": "free",
+                "message": reason,
+            },
+        )
     obj = await create_custom_filter(
         session,
         user.id,
