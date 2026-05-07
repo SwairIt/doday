@@ -8,19 +8,21 @@
          transition-transform duration-200 md:translate-x-0 flex flex-col h-screen overflow-y-auto"
   :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
 >
-  <a href="/" class="flex items-center gap-2.5 font-bold text-xl px-6 py-5">
-    <span class="grad-bg w-9 h-9 rounded-xl flex items-center justify-center text-white font-extrabold shadow-glow">D</span>
-    <span class="grad-text">Doday</span>
+  <div class="px-6 pt-5 pb-3">
+    <a href="/" class="flex items-center gap-2.5 font-bold text-xl">
+      <span class="grad-bg w-9 h-9 rounded-xl flex items-center justify-center text-white font-extrabold shadow-glow">D</span>
+      <span class="grad-text">Doday</span>
+    </a>
     {% if current_user and current_user.audience %}
       {% set aud_emoji = {'school': '🎓', 'company': '💼', 'personal': '🌱'} %}
       {% set aud_label = {'school': 'Учёба', 'company': 'Работа', 'personal': 'Жизнь'} %}
-      <a href="/app/profile" title="Сменить режим"
-         class="ml-auto text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-[var(--surface)] border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition inline-flex items-center gap-1">
-        <span>{{ aud_emoji[current_user.audience] }}</span>
-        <span>{{ aud_label[current_user.audience] }}</span>
+      <a href="/app/profile" title="Сменить режим в настройках"
+         class="mt-2 text-[10px] uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--accent)] transition inline-flex items-center gap-1.5 group">
+        <span class="opacity-70 group-hover:opacity-100">{{ aud_emoji[current_user.audience] }}</span>
+        <span>режим: {{ aud_label[current_user.audience] }}</span>
       </a>
     {% endif %}
-  </a>
+  </div>
 
   <nav class="px-3 flex-1 space-y-0.5">
     <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider px-3 pt-2 pb-1">Главное</div>
@@ -176,6 +178,12 @@
         <div class="text-sm font-medium truncate">{{ current_user.email if current_user else 'Профиль' }}</div>
         <div class="text-xs text-[var(--text-muted)]">Профиль</div>
       </div>
+    </a>
+    <a href="/pricing" title="Тарифы и Pro-подписка"
+       class="p-2 rounded-lg hover:bg-[var(--surface)] text-[var(--text-muted)] hover:text-[var(--accent)] transition shrink-0">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+      </svg>
     </a>
     <a href="/?preview=1" title="Посмотреть лендинг"
        class="p-2 rounded-lg hover:bg-[var(--surface)] text-[var(--text-muted)] hover:text-[var(--accent)] transition shrink-0">

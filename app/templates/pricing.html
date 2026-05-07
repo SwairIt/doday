@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block title %}Тарифы — Doday{% endblock %}
+{% block seo_description %}Doday бесплатный для всех. Pro 199₽/мес — безлимит проектов, email-дайджест, Telegram-бот. Family 299₽/мес для всей семьи (5 аккаунтов + parent dashboard).{% endblock %}
+
+{% block layout %}
+<header class="sticky top-0 z-20 glass border-b border-[var(--border)] px-6 py-3 flex items-center gap-4">
+  <a href="/" class="flex items-center gap-2 font-bold text-lg">
+    <span class="grad-bg w-8 h-8 rounded-lg flex items-center justify-center text-white font-extrabold shadow-glow text-sm">D</span>
+    <span class="grad-text">Doday</span>
+  </a>
+  <div class="flex-1"></div>
+  {% if user %}
+    <a href="/app/today" class="btn-ghost px-3 py-1.5 text-sm">В приложение →</a>
+  {% else %}
+    <a href="/auth/login" class="btn-ghost px-3 py-1.5 text-sm">Войти</a>
+    <a href="/auth/register" class="btn-primary px-3 py-1.5 text-sm">Зарегистрироваться</a>
+  {% endif %}
+</header>
+
+<main class="max-w-6xl mx-auto px-4 md:px-8 py-12 md:py-16">
+
+  <div class="text-center mb-12 max-w-2xl mx-auto">
+    <h1 class="text-4xl md:text-5xl font-extrabold mb-3">
+      <span class="grad-text">Бесплатно</span> — для всех.
+      <br>Pro — когда захочешь.
+    </h1>
+    <p class="text-[var(--text-muted)] text-lg">
+      Без рекламы, без слежки, без скрытых лимитов на ровном месте.
+      Школьник пользуется бесплатно вечно. Семья платит 299₽ в месяц если нужны бонусы.
+    </p>
+  </div>
+
+  {# Annual / monthly toggle — saves users a click #}
+  <div x-data="{ annual: true }" class="space-y-8">
+
+    <div class="flex items-center justify-center gap-3 mb-2">
+      <button @click="annual = false" :class="!annual ? 'grad-bg text-white shadow-glow' : 'bg-[var(--surface-2)] text-[var(--text-muted)] border border-[var(--border)]'"
+              class="px-4 py-2 rounded-lg text-sm font-semibold transition">Помесячно</button>
+      <button @click="annual = true" :class="annual ? 'grad-bg text-white shadow-glow' : 'bg-[var(--surface-2)] text-[var(--text-muted)] border border-[var(--border)]'"
+              class="px-4 py-2 rounded-lg text-sm font-semibold transition inline-flex items-center gap-2">
+        Годовая
+        <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/25 text-emerald-300 font-bold">−17%</span>
+      </button>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6">
+
+      {# FREE #}
+      <div class="card p-6 flex flex-col">
+        <div class="text-xs uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">Free</div>
+        <h2 class="text-2xl font-bold mb-2">Бесплатно</h2>
+        <div class="flex items-baseline gap-2 mb-4">
+          <span class="text-4xl font-extrabold">0₽</span>
+          <span class="text-sm text-[var(--text-muted)]">навсегда</span>
+        </div>
+        <p class="text-sm text-[var(--text-muted)] mb-4">Покрывает 95% реальной потребности — школьнику, студенту, любому индивидуальному пользователю</p>
+        <ul class="space-y-2 text-sm flex-1 mb-6">
+          <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span><strong>10</strong> активных проектов</span></li>
+          <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span><strong>500</strong> активных задач</span></li>
+          <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span>Календарь, граф связей, помодоро, привычки, лейблы — все UI</span></li>
+          <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span>Уведомления в браузере</span></li>
+          <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span>Подписка календаря (.ics)</span></li>
+          <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span>Бэкап JSON / CSV / Markdown</span></li>
+          <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span>Корзина — 14 дней восстановления</span></li>
+          <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span>2 темы оформления</span></li>
+          <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span>3 кастомных фильтра</span></li>
+        </ul>
+        {% if user %}
+          <a href="/app/today" class="btn-ghost py-2 text-center">В приложение</a>
+        {% else %}
+          <a href="/auth/register" class="btn-ghost py-2 text-center">Начать бесплатно</a>
+        {% endif %}
+      </div>
+
+      {# PRO — featured #}
+      <div class="card p-6 flex flex-col relative ring-2 ring-[var(--accent)] shadow-glow">
+        <div class="absolute -top-3 left-1/2 -translate-x-1/2 grad-bg text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">
+          Большинство берёт
+        </div>
+        <div class="text-xs uppercase tracking-wider font-semibold text-[var(--accent)] mb-2">Pro</div>
+        <h2 class="text-2xl font-bold mb-2">Для тех кто въехал</h2>
+        <div class="flex items-baseline gap-2 mb-1">
+          <span class="text-4xl font-extrabold grad-text" x-text="annual ? '166₽' : '199₽'"></span>
+          <span class="text-sm text-[var(--text-muted)]">в месяц</span>
+        </div>
+        <div class="text-xs text-[var(--text-muted)] mb-4">
+          <span x-show="annual">1990₽ в год · экономия 398₽</span>
+          <span x-show="!annual" x-cloak>Списывается ежемесячно · можно отменить в любой момент</span>
+        </div>
+        <p class="text-sm text-[var(--text-muted)] mb-4">Безлимиты, email-дайджест, Telegram-бот — для тех кому одного кофе в месяц не жалко за tool, который ты юзаешь каждый день</p>
+        <ul class="space-y-2 text-sm flex-1 mb-6">
+          <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span>Всё из <strong>Free</strong></span></li>
+          <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span><strong>Безлимит</strong> на проекты и задачи</span></li>
+          <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span>Корзина — <strong>30 дней</strong></span></li>
+          <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span>Все темы (Forest, Minimal — Pro-only)</span></li>
+          <li class="flex items-start gap-2"><span class="text-amber-400 mt-0.5">◐</span><span>Email-дайджест на утро <span class="text-[10px] text-amber-400">скоро</span></span></li>
+          <li class="flex items-start gap-2"><span class="text-amber-400 mt-0.5">◐</span><span>Telegram-бот @DodayBot <span class="text-[10px] text-amber-400">скоро</span></span></li>
+          <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span>Bulk-paste до 200 строк</span></li>
+          <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span>Безлимит кастомных фильтров</span></li>
+          <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span>Priority support</span></li>
+        </ul>
+        <button class="btn-primary py-2 opacity-90 cursor-not-allowed" disabled
+                title="Платежи скоро — настраиваем ЮKassa">
+          Оформить — <span class="ml-1 px-1.5 py-0.5 rounded bg-white/20 text-[10px]">Скоро</span>
+        </button>
+        <p class="text-[10px] text-center text-[var(--text-muted)] mt-2">
+          Подключаем ЮKassa — карта РФ, СБП, ApplePay
+        </p>
+      </div>
+
+      {# FAMILY #}
+      <div class="card p-6 flex flex-col">
+        <div class="text-xs uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">Family</div>
+        <h2 class="text-2xl font-bold mb-2">Для семьи</h2>
+        <div class="flex items-baseline gap-2 mb-1">
+          <span class="text-4xl font-extrabold" x-text="annual ? '249₽' : '299₽'"></span>
+          <span class="text-sm text-[var(--text-muted)]">в месяц / до 5 чел.</span>
+        </div>
+        <div class="text-xs text-[var(--text-muted)] mb-4">
+          <span x-show="annual">2990₽ в год на всю семью</span>
+          <span x-show="!annual" x-cloak>≈ 60₽ с человека</span>
+        </div>
+        <p class="text-sm text-[var(--text-muted)] mb-4">Родитель видит прогресс ребёнка, бабушка ведёт свой список, общий проект «Семья» для дома и быта</p>
+        <ul class="space-y-2 text-sm flex-1 mb-6">
+          <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span>Всё из <strong>Pro</strong> для каждого члена</span></li>
+          <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span><strong>5</strong> аккаунтов под одной подпиской</span></li>
+          <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span>Общий проект <strong>«Семья»</strong></span></li>
+          <li class="flex items-start gap-2"><span class="text-amber-400 mt-0.5">◐</span><span>Parent dashboard <span class="text-[10px] text-amber-400">скоро</span></span></li>
+          <li class="flex items-start gap-2"><span class="text-amber-400 mt-0.5">◐</span><span>Уведомления родителю <span class="text-[10px] text-amber-400">скоро</span></span></li>
+          <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span>Один счёт, не нужно платить за каждого ребёнка</span></li>
+        </ul>
+        <button class="btn-ghost py-2 cursor-not-allowed" disabled>
+          Оформить — <span class="ml-1 px-1.5 py-0.5 rounded bg-[var(--surface-2)] text-[10px]">Скоро</span>
+        </button>
+      </div>
+
+    </div>
+
+    {# FAQ #}
+    <div class="max-w-3xl mx-auto pt-12 space-y-3">
+      <h2 class="text-2xl font-bold mb-4 text-center">Частые вопросы</h2>
+
+      <details class="card p-4 cursor-pointer">
+        <summary class="font-semibold flex items-center justify-between">
+          <span>Бесплатный тариф — это правда навсегда?</span>
+          <span class="text-[var(--text-muted)] text-sm">+</span>
+        </summary>
+        <p class="mt-3 text-sm text-[var(--text-muted)]">Да. У нас нет цели через 3 месяца сказать «всё, теперь плати или иди». Free покрывает 95% обычного использования — Pro берут те, кому реально нужны безлимиты и email-дайджесты. Школьники могут пользоваться вечно бесплатно.</p>
+      </details>
+
+      <details class="card p-4 cursor-pointer">
+        <summary class="font-semibold flex items-center justify-between">
+          <span>Как платить из России?</span>
+          <span class="text-[var(--text-muted)] text-sm">+</span>
+        </summary>
+        <p class="mt-3 text-sm text-[var(--text-muted)]">ЮKassa — принимает карты МИР, Visa/Mastercard выпущенные российскими банками, СБП, кошельки YooMoney. Без VPN, без проблем. Платежи появятся в ближайшую неделю-другую — сейчас регистрируем магазин.</p>
+      </details>
+
+      <details class="card p-4 cursor-pointer">
+        <summary class="font-semibold flex items-center justify-between">
+          <span>Можно отменить подписку?</span>
+          <span class="text-[var(--text-muted)] text-sm">+</span>
+        </summary>
+        <p class="mt-3 text-sm text-[var(--text-muted)]">В любой момент. Аккаунт переходит на Free; задачи и проекты остаются — просто новые лимиты применяются к будущим. Старые проекты сверх лимита не удаляются, но новый создать без апгрейда не получится.</p>
+      </details>
+
+      <details class="card p-4 cursor-pointer">
+        <summary class="font-semibold flex items-center justify-between">
+          <span>А скидка для школьников/студентов?</span>
+          <span class="text-[var(--text-muted)] text-sm">+</span>
+        </summary>
+        <p class="mt-3 text-sm text-[var(--text-muted)]">Скидка для них уже встроена — это весь Free-тариф навсегда. Если школьник на классной серьёзной системе и хочется Pro — попроси родителей: 199₽ в месяц (≈ 1 поход в Starbucks) или 1990₽ за год.</p>
+      </details>
+
+      <details class="card p-4 cursor-pointer">
+        <summary class="font-semibold flex items-center justify-between">
+          <span>Free пользуюсь сейчас — что станет с проектами если их больше 10?</span>
+          <span class="text-[var(--text-muted)] text-sm">+</span>
+        </summary>
+        <p class="mt-3 text-sm text-[var(--text-muted)]">Лимиты вводим мягко: всё что было создано до запуска лимитов — остаётся. Просто новый 11-й проект без апгрейда не создашь. Никто ничего не удаляет; всё что есть — твоё.</p>
+      </details>
+    </div>
+
+    <div class="text-center pt-12">
+      <p class="text-sm text-[var(--text-muted)] mb-3">Ещё не решил?</p>
+      <a href="/auth/register" class="btn-primary px-6 py-3 text-sm">Начать с Free →</a>
+    </div>
+
+  </div>
+</main>
+
+<footer class="border-t border-[var(--border)] mt-16 py-8 text-center text-sm text-[var(--text-muted)]">
+  <a href="/" class="hover:text-[var(--accent)]">Главная</a> ·
+  <a href="/help" class="hover:text-[var(--accent)]">Помощь</a> ·
+  <a href="/privacy" class="hover:text-[var(--accent)]">Приватность</a>
+</footer>
+{% endblock %}

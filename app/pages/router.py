@@ -22,3 +22,10 @@ async def landing(request: Request, user: CurrentUser) -> Response:
 @router.get("/privacy", response_class=HTMLResponse)
 async def privacy(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(request, "privacy.html", {})
+
+
+@router.get("/pricing", response_class=HTMLResponse)
+async def pricing(request: Request, user: CurrentUser) -> HTMLResponse:
+    """Three-tier pricing page — Free / Pro / Family. Real checkout disabled
+    until ЮKassa shop is registered (CTA shows 'Скоро')."""
+    return templates.TemplateResponse(request, "pricing.html", {"user": user})
