@@ -70,12 +70,23 @@ async def mark_email_verified(session: AsyncSession, user_id: str) -> User:
     return user
 
 
+_WELCOME_COMMENT = (
+    "👋 Это Doday — твой бесплатный туду-лист.\n\n"
+    "Я подкинул 5 обучающих задач — закрой их по порядку, и узнаешь все "
+    "ключевые фишки за пару минут.\n\n"
+    "Когда разберёшься — удали этот Inbox-список и начни добавлять свои "
+    "задачи через «+» вверху или горячую клавишу `q`."
+)
+
+
 async def provision_new_user(session: AsyncSession, user: User) -> None:
     """One-time onboarding: ensure Inbox + audience-specific starter tasks.
 
     Sample set is picked by `user.audience` so a schoolchild, an office worker
     and a "for me" user each see relevant first impressions. Idempotent.
+    Первой задаче ещё прикладывается приветственный комментарий.
     """
+    from app.comments.service import create_comment
     from app.projects.service import ensure_inbox
     from app.tasks.service import create_task, list_tasks
 
@@ -85,8 +96,9 @@ async def provision_new_user(session: AsyncSession, user: User) -> None:
         return
 
     samples = _starter_samples_for(user.audience)
-    for title, due, prio in samples:
-        await create_task(
+    first_task_id = None
+    for idx, (title, due, prio) in enumerate(samples):
+        task = await create_task(
             session,
             user.id,
             project_id=inbox.id,
@@ -94,51 +106,83 @@ async def provision_new_user(session: AsyncSession, user: User) -> None:
             due_at=due,
             priority=prio,
         )
+        if idx == 0:
+            first_task_id = task.id
+
+    if first_task_id is not None:
+        await create_comment(
+            session,
+            user.id,
+            task_id=first_task_id,
+            body=_WELCOME_COMMENT,
+        )
 
 
 def _starter_samples_for(
     audience: str | None,
 ) -> list[tuple[str, datetime | None, TaskPriority]]:
-    """Pick the right onboarding sample set for the chosen audience."""
+    """5 educational starter tasks — teach the user how Doday works.
+
+    Tasks go from simplest (tick the checkbox) to advanced (filters, projects).
+    Дедлайны сегодня/завтра/через 3 дня — чтобы пользователь увидел задачи
+    и в /app/today, и в /app/upcoming, и понял разницу.
+    """
     from datetime import timedelta
 
     today = datetime.now(UTC).replace(hour=23, minute=59, second=0, microsecond=0)
     tomorrow = today + timedelta(days=1)
     in_three_days = today + timedelta(days=3)
 
-    if audience == "school":
-        return [
-            ("📚 Сделать домашку на завтра", today, TaskPriority.P1),
-            ("📝 Подготовиться к контрольной", tomorrow, TaskPriority.P2),
-            ("🎒 Собрать рюкзак вечером", today, TaskPriority.P3),
-            ("📖 Прочитать главу по литературе", in_three_days, TaskPriority.P3),
-            ("💡 Совет: ⌘K (или Ctrl+K) — быстрый поиск по задачам", None, TaskPriority.P4),
-        ]
-    if audience == "company":
-        return [
-            ("☕ Утренний стендап в 10:00", today, TaskPriority.P2),
-            ("📊 Подготовить статус-репорт", today, TaskPriority.P1),
-            ("🤝 1:1 встреча с тимлидом", tomorrow, TaskPriority.P2),
-            ("🚀 Закрыть тикет из спринта", in_three_days, TaskPriority.P3),
-            ("💡 Совет: shift+пробел — добавить задачу из любого экрана", None, TaskPriority.P4),
-        ]
-    if audience == "personal":
-        return [
-            ("🌱 Выпить стакан воды — простой первый чек-ин", today, TaskPriority.P3),
-            ("🛒 Купить продукты на неделю", today, TaskPriority.P2),
-            ("📞 Позвонить близкому человеку", tomorrow, TaskPriority.P3),
-            ("📚 30 минут чтения перед сном", in_three_days, TaskPriority.P4),
-            ("💡 Совет: жми ⌘K (Ctrl+K) — поиск и быстрые команды", None, TaskPriority.P4),
-        ]
+    school_flavour = (
+        "📚 Школьный режим: открой ⌘K → набери «расписание» — там урок-таблица",
+        in_three_days,
+        TaskPriority.P4,
+    )
+    company_flavour = (
+        "💼 Команда: проверь «Сегодняшний стендап» в виджете на /app/today",
+        in_three_days,
+        TaskPriority.P4,
+    )
+    personal_flavour = (
+        "🧘 Привычки: загляни в /app/habits — отметь привычку, которую хочешь",
+        in_three_days,
+        TaskPriority.P4,
+    )
+
+    flavour: tuple[str, datetime | None, TaskPriority] = {
+        "school": school_flavour,
+        "company": company_flavour,
+        "personal": personal_flavour,
+    }.get(audience or "", personal_flavour)
+
     return [
-        ("Попробуй закрыть эту задачу — кликни кружок слева", today, TaskPriority.P2),
-        ("Создай свою задачу через «+» вверху", today, TaskPriority.P3),
+        # 1. Самое простое действие — обучает, как закрыть задачу.
         (
-            "Открой задачу мышкой и наведи — появятся кнопки редактировать и удалить",
-            tomorrow,
-            TaskPriority.P4,
+            "✅ Кликни кружок слева, чтобы закрыть задачу — попробуй на этой",
+            today,
+            TaskPriority.P1,
         ),
-        ("Нажми ⌘K (или Ctrl+K) — откроется поиск", None, TaskPriority.P4),
+        # 2. Создание задачи — учит главному действию приложения.
+        (
+            "➕ Нажми «+» вверху или клавишу `q` — создай свою первую задачу",
+            today,
+            TaskPriority.P2,
+        ),
+        # 3. Естественные даты — киллер-фича quick-add.
+        (
+            "📅 Попробуй: добавь задачу с текстом «купить хлеб завтра» — поймёт "
+            "слово «завтра» как дедлайн",
+            tomorrow,
+            TaskPriority.P3,
+        ),
+        # 4. Поиск/командное меню — наша Cmd-K.
+        (
+            "🔍 Жми ⌘K (или Ctrl+K) — откроется поиск + быстрые команды по всему приложению",
+            tomorrow,
+            TaskPriority.P3,
+        ),
+        # 5. Audience-specific — указывает на самую полезную фичу для роли.
+        flavour,
     ]
 
 
