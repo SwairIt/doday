@@ -235,6 +235,7 @@ async def quickadd_endpoint(
     session: DbSession,
     text: Annotated[str, Form()],
     project_id: Annotated[UUID | None, Form()] = None,
+    section_id: Annotated[UUID | None, Form()] = None,
 ) -> Response:
     """Parse a free-form quick-add string, create the task, attach labels."""
     parsed = parse_quick_add(text)
@@ -259,6 +260,7 @@ async def quickadd_endpoint(
         user.id,
         title=parsed.title,
         project_id=target_project_id,
+        section_id=section_id,
         due_at=parsed.due_at,
         due_date_only=parsed.date_only,
         priority=parsed.priority,

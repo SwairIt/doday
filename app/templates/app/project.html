@@ -276,12 +276,40 @@
         </svg>
       </button>
     </div>
-    <div x-show="open" x-transition class="space-y-2 ml-7 sortable-tasks" data-project-id="{{ project.id }}">
-      {% for task in group.tasks %}
-        {% include "_partials/task_row.html" %}
-      {% else %}
-        <div class="px-3 py-3 text-sm text-[var(--text-muted)] italic">Пока пусто</div>
-      {% endfor %}
+    <div x-show="open" x-transition class="ml-7">
+      <div class="space-y-2 sortable-tasks" data-project-id="{{ project.id }}" data-section-id="{{ s.id }}">
+        {% for task in group.tasks %}
+          {% include "_partials/task_row.html" %}
+        {% endfor %}
+      </div>
+      {# Inline add — task lands directly in this section #}
+      <form
+        x-data="{ open: false }"
+        hx-post="/htmx/quickadd"
+        hx-target="this"
+        hx-swap="beforebegin swap:120ms"
+        hx-on::after-request="if (event.detail.successful) { this.querySelector('input[name=text]').value = ''; }"
+        class="mt-1.5">
+        <input type="hidden" name="project_id" value="{{ project.id }}">
+        <input type="hidden" name="section_id" value="{{ s.id }}">
+        <button type="button"
+                x-show="!open"
+                @click="open = true; $nextTick(() => $refs.sec_input_{{ s.id|replace('-', '_') }}.focus())"
+                class="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] transition flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-[var(--surface-2)] w-full text-left">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          Добавить задачу в «{{ s.name }}»
+        </button>
+        <div x-show="open" x-cloak x-transition
+             class="card flex items-center gap-2 p-2 border-l-2 border-l-[var(--accent)]">
+          <input type="text" name="text" x-ref="sec_input_{{ s.id|replace('-', '_') }}"
+                 placeholder="Задача в «{{ s.name }}»…"
+                 class="flex-1 bg-transparent border-none outline-none text-sm placeholder:text-[var(--text-muted)]"
+                 required
+                 @keydown.escape="open = false">
+          <button type="submit" class="btn-primary px-3 py-1 text-xs">Добавить</button>
+          <button type="button" class="btn-ghost px-2 py-1 text-xs" @click="open = false">Отмена</button>
+        </div>
+      </form>
     </div>
   </section>
 {% endfor %}
