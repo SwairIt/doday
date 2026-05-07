@@ -98,7 +98,7 @@
                   {% if not cell.in_month %}opacity-40{% endif %}
                   {% if cell.is_today %}ring-2 ring-inset ring-[var(--accent)]{% endif %}
                   hover:bg-[var(--surface-2)]"
-           @click.self="openDay('{{ day_iso }}', {{ cell.day }}, '{{ month_label }}', {{ day_tasks_json|tojson|safe|e }})">
+           @click.self="openDay('{{ day_iso }}', {{ cell.day }}, '{{ month_label }}', {{ day_tasks_json|tojson|forceescape }})">
         <div class="flex items-baseline justify-between mb-1 pointer-events-none">
           <span class="text-xs font-semibold
                        {% if cell.is_today %}grad-text{% else %}{% if cell.is_weekend %}text-[var(--text-muted)]{% else %}text-[var(--text)]{% endif %}{% endif %}">
@@ -137,7 +137,7 @@
           {% endfor %}
           {% if cell.tasks|length > 3 %}
             <button type="button"
-                    @click.stop="openDay('{{ day_iso }}', {{ cell.day }}, '{{ month_label }}', {{ day_tasks_json|tojson|safe|e }})"
+                    @click.stop="openDay('{{ day_iso }}', {{ cell.day }}, '{{ month_label }}', {{ day_tasks_json|tojson|forceescape }})"
                     class="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] px-2 underline-offset-2 hover:underline">
               +{{ cell.tasks|length - 3 }} ещё
             </button>
