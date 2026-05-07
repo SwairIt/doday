@@ -111,7 +111,7 @@ async def register_submit(
         return templates.TemplateResponse(
             request,
             "auth/verify_pending.html",
-            {"dev_skipped_email": True, "dev_verify_url": verify_url},
+            {"dev_skipped_email": True, "dev_verify_url": verify_url, "fire_signup_goal": True},
         )
 
     if smtp_failed:
@@ -127,7 +127,7 @@ async def register_submit(
             status_code=503,
         )
 
-    return RedirectResponse(url="/auth/verify-pending", status_code=303)
+    return RedirectResponse(url="/auth/verify-pending?signup=1", status_code=303)
 
 
 @router.get("/verify-pending", response_class=HTMLResponse)
@@ -188,7 +188,7 @@ async def login_submit(
         )
     reset(rl_key)
     request.session["user_id"] = str(user.id)
-    return RedirectResponse(url="/app/today", status_code=303)
+    return RedirectResponse(url="/app/today?welcome=1", status_code=303)
 
 
 @router.post("/logout", response_model=None)

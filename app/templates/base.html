@@ -469,6 +469,67 @@
       ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
       ::-webkit-scrollbar-thumb:hover { background: color-mix(in oklab, var(--accent) 50%, var(--border)); }
     </style>
+
+    {# ---- Yandex.Metrika — only emitted when YA_METRIKA_ID is set in env. ---- #}
+    {# Empty in dev so we never count test sessions or load mc.yandex.ru locally. #}
+    {% if request.state.ya_metrika_id %}
+    <script type="text/javascript">
+       (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+       m[i].l=1*new Date();
+       for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+       k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+       (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+
+       ym({{ request.state.ya_metrika_id }}, "init", {
+            clickmap: true,
+            trackLinks: true,
+            accurateTrackBounce: true,
+            webvisor: true
+       });
+
+       // Тонкая обёртка вокруг ym(...,'reachGoal',...) — шаблоны и Alpine
+       // дёргают window.dodayGoal('signup') без знания counter ID.
+       window.dodayGoal = function(name, params) {
+         try {
+           if (typeof ym !== 'undefined') {
+             ym({{ request.state.ya_metrika_id }}, 'reachGoal', name, params || {});
+           }
+         } catch (e) { /* swallow — never break UX for analytics */ }
+       };
+    </script>
+    <noscript><div><img src="https://mc.yandex.ru/watch/{{ request.state.ya_metrika_id }}" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+    {% else %}
+    <script>
+      // Stub в dev: dodayGoal — no-op, чтобы шаблоны не падали.
+      window.dodayGoal = function() {};
+    </script>
+    {% endif %}
+
+    <script>
+      // ── Авто-триггеры целей по query-параметрам после редиректов
+      // Пример: после /auth/register бэк редиректит на /auth/verify-pending?signup=1
+      // — тут мы это ловим, дёргаем reachGoal и чистим URL чтобы при F5
+      // не сработало повторно.
+      (function() {
+        try {
+          var url = new URL(window.location.href);
+          var fired = false;
+          if (url.searchParams.get('signup') === '1') {
+            window.dodayGoal && window.dodayGoal('signup');
+            url.searchParams.delete('signup');
+            fired = true;
+          }
+          if (url.searchParams.get('welcome') === '1') {
+            window.dodayGoal && window.dodayGoal('login');
+            url.searchParams.delete('welcome');
+            fired = true;
+          }
+          if (fired) {
+            window.history.replaceState({}, '', url.pathname + (url.search || '') + (url.hash || ''));
+          }
+        } catch (e) { /* старые браузеры — ну и ладно */ }
+      })();
+    </script>
 </head>
 <body>
     {% block layout %}

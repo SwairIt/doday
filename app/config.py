@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     smtp_from: str = "noreply@schooltodo.local"
     smtp_start_tls: bool = False  # set true for real providers like Resend/Brevo on port 587
 
+    # Yandex.Metrika counter ID (числовой — например 12345678).
+    # Empty в dev — скрипт не подключается. Задаётся в .env прода.
+    ya_metrika_id: str = ""
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

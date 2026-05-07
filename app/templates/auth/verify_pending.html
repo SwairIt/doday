@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Проверь почту — Doday{% endblock %}
 {% block layout %}
+{% if fire_signup_goal %}
+<script>window.addEventListener('DOMContentLoaded', function(){ window.dodayGoal && window.dodayGoal('signup'); });</script>
+{% endif %}
 <div class="min-h-screen flex flex-col">
   <header class="px-6 py-4">
     <a href="/" class="inline-flex items-center gap-2.5 font-bold text-xl">

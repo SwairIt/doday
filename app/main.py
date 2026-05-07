@@ -60,19 +60,21 @@ app.add_middleware(
 async def _security_headers(
     request: Request, call_next: Callable[[Request], Awaitable[Response]]
 ) -> Response:
+    # Expose Yandex.Metrika counter ID to all templates via request.state.
+    # Empty string in dev → base.html silently skips the <script> block.
+    request.state.ya_metrika_id = _settings.ya_metrika_id
     response = await call_next(request)
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("X-Frame-Options", "DENY")
     response.headers.setdefault("Referrer-Policy", "same-origin")
-    response.headers.setdefault(
-        "Permissions-Policy", "geolocation=(), microphone=(), camera=()"
-    )
+    response.headers.setdefault("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
     if _is_prod:
         # 6 months HSTS once HTTPS is wired up; nginx will be terminating TLS.
         response.headers.setdefault(
             "Strict-Transport-Security", "max-age=15552000; includeSubDomains"
         )
     return response
+
 
 app.include_router(auth_router)
 app.include_router(pages_router)

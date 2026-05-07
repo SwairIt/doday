@@ -63,7 +63,7 @@
   hx-post="/htmx/quickadd"
   hx-target="#quickadd-list"
   hx-swap="afterbegin swap:240ms"
-  hx-on::after-request="event.detail.successful && this.reset()"
+  hx-on::after-request="if(event.detail.successful){this.reset();try{if(!localStorage.getItem('doday-fired-first-task')){window.dodayGoal&&window.dodayGoal('first_task');localStorage.setItem('doday-fired-first-task','1');}}catch(e){}}"
   class="mb-4"
 >
   <div class="card flex items-center gap-2 p-2 shadow-sm focus-within:shadow-glow transition">

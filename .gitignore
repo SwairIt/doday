@@ -42,3 +42,6 @@ Thumbs.db
 
 # Node (если будем добавлять Tailwind build)
 node_modules/
+
+# Temporary local SSH/deploy scripts (используют SSH_PASS из .env)
+.tmp_ssh_*.py
