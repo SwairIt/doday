@@ -234,7 +234,15 @@ async def create_endpoint(
 
     allowed, reason = await can_create_project(session, user)
     if not allowed:
-        raise HTTPException(status.HTTP_402_PAYMENT_REQUIRED, reason or "tier limit reached")
+        raise HTTPException(
+            status.HTTP_402_PAYMENT_REQUIRED,
+            {
+                "code": "limit_reached",
+                "feature": "projects",
+                "tier": "free",
+                "message": reason or "Достигнут лимит активных проектов",
+            },
+        )
     project = await create_project(session, user.id, name=payload.name, color=payload.color)
     return ProjectOut.model_validate(project)
 
