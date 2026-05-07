@@ -1,5 +1,14 @@
 {% extends "base.html" %}
-{% block title %}Doday — твой тихий помощник для дел{% endblock %}
+{% block title %}Doday — бесплатный туду-лист для школы, работы и жизни{% endblock %}
+{% block seo_description %}Doday — бесплатный туду-лист и менеджер задач на русском. Проекты, секции, лейблы, фильтры, календарь, граф связей, помодоро, привычки, статистика, импорт-экспорт. Без рекламы, без слежки, работает на компьютере и телефоне.{% endblock %}
+{% block seo_keywords %}бесплатный туду лист, todo list русский, планировщик задач онлайн, ежедневник, менеджер задач бесплатно, помодоро таймер, привычки, расписание уроков, doday, getdoday, аналог todoist, аналог things, kanban доска, заметки и задачи{% endblock %}
+{% block og_title %}Doday — бесплатный туду-лист, который не мешает{% endblock %}
+{% block tw_title %}Doday — бесплатный туду-лист, который не мешает{% endblock %}
+{% block ld_json %}
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Doday","url":"https://getdoday.ru/","description":"Бесплатный туду-лист на русском: проекты, секции, лейблы, фильтры, календарь, граф связей задач, помодоро, привычки, статистика. Работает в браузере и как PWA, без рекламы.","applicationCategory":"BusinessApplication","operatingSystem":"Any","browserRequirements":"Requires JavaScript","inLanguage":"ru","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"RUB"},"creator":{"@type":"Organization","name":"Doday","url":"https://getdoday.ru/"},"featureList":["Проекты и секции","Лейблы и собственные фильтры","Календарь, недельный и месячный вид","Граф связей задач","Помодоро-таймер","Привычки и стрики","Расписание для школы","Импорт и экспорт JSON, CSV, Markdown, ICS","PWA (можно поставить на телефон)","Без рекламы, без слежки"]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Doday","url":"https://getdoday.ru/","logo":"https://getdoday.ru/favicon.ico","sameAs":[]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Doday","url":"https://getdoday.ru/","inLanguage":"ru","potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://getdoday.ru/help?q={search_term_string}"},"query-input":"required name=search_term_string"}}</script>
+{% endblock %}
 {% block layout %}
 <style>
   .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease; }

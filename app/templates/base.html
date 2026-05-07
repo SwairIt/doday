@@ -6,7 +6,43 @@
     <meta name="color-scheme" content="dark light">
     <title>{% block title %}Doday — твой свободный туду-лист{% endblock %}</title>
 
+    {# ---- SEO: defaults; overridable per page ---- #}
+    {% set _seo_desc = self.seo_description() if self.seo_description else 'Бесплатный туду-лист и менеджер задач для школьников, личных дел и команд: проекты, секции, лейблы, фильтры, календарь, граф связей задач, помодоро, привычки, статистика. Работает в браузере, на смартфоне и без рекламы.' %}
+    {% set _seo_title = self.seo_title() if self.seo_title else self.title()|default('Doday — бесплатный туду-лист') %}
+    {% set _seo_url = self.seo_url() if self.seo_url else 'https://getdoday.ru/' %}
+    {% set _seo_image = self.seo_image() if self.seo_image else 'https://getdoday.ru/og.svg' %}
+    {% set _seo_robots = self.seo_robots() if self.seo_robots else 'index,follow' %}
+
+    <meta name="description" content="{% block seo_description %}{{ _seo_desc }}{% endblock %}">
+    <meta name="keywords" content="{% block seo_keywords %}туду лист, бесплатный туду лист, менеджер задач, todo list на русском, планировщик дел, список дел онлайн, ежедневник для школьников, помодоро, привычки, расписание, doday, getdoday{% endblock %}">
+    <meta name="robots" content="{% block seo_robots %}{{ _seo_robots }}{% endblock %}">
+    <meta name="author" content="Doday">
+    <link rel="canonical" href="{% block seo_canonical %}{{ _seo_url }}{% endblock %}">
+    <link rel="alternate" hreflang="ru" href="{{ _seo_url }}">
+    <link rel="alternate" hreflang="x-default" href="{{ _seo_url }}">
+
+    {# OpenGraph for Facebook / Telegram / VK / LinkedIn / Slack #}
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Doday">
+    <meta property="og:locale" content="ru_RU">
+    <meta property="og:title" content="{% block og_title %}{{ _seo_title }}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{{ _seo_desc }}{% endblock %}">
+    <meta property="og:url" content="{% block og_url %}{{ _seo_url }}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ _seo_image }}{% endblock %}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Doday — бесплатный туду-лист">
+
+    {# Twitter Card — also used by other previewers as fallback #}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block tw_title %}{{ _seo_title }}{% endblock %}">
+    <meta name="twitter:description" content="{% block tw_description %}{{ _seo_desc }}{% endblock %}">
+    <meta name="twitter:image" content="{% block tw_image %}{{ _seo_image }}{% endblock %}">
+
+    {% block ld_json %}{% endblock %}
+
     <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="icon" href="/favicon.ico" type="image/svg+xml">
     <meta name="theme-color" content="#7c3aed">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Doday">

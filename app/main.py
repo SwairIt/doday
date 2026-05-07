@@ -127,10 +127,17 @@ async def robots_txt() -> PlainTextResponse:
 
 @app.get("/sitemap.xml", include_in_schema=False)
 async def sitemap_xml() -> Response:
-    """Static sitemap for the public marketing pages."""
+    """Static sitemap for the public marketing pages + every help article."""
+    from app.help.articles import ARTICLES
+
     base = _settings.app_base_url.rstrip("/")
-    paths = ["/", "/privacy", "/help", "/help/quick-start"]
-    items = "".join(f"<url><loc>{base}{p}</loc></url>" for p in paths)
+    static_paths = ["/", "/privacy", "/help"]
+    article_paths = [f"/help/{a['slug']}" for a in ARTICLES]
+    items = "".join(
+        f"<url><loc>{base}{p}</loc><changefreq>weekly</changefreq>"
+        f"<priority>{'1.0' if p == '/' else '0.7'}</priority></url>"
+        for p in static_paths + article_paths
+    )
     body = (
         '<?xml version="1.0" encoding="UTF-8"?>'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
@@ -143,6 +150,52 @@ async def sitemap_xml() -> Response:
 async def favicon() -> Response:
     """Inline SVG favicon — same gradient D as the PWA icon."""
     return Response(content=_PWA_ICON_SVG, media_type="image/svg+xml")
+
+
+_OG_IMAGE_SVG = (
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">'
+    "<defs>"
+    '<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">'
+    '<stop offset="0" stop-color="#0d0820"/>'
+    '<stop offset="1" stop-color="#2e1065"/>'
+    "</linearGradient>"
+    '<linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'
+    '<stop offset="0" stop-color="#7c3aed"/>'
+    '<stop offset="1" stop-color="#d946ef"/>'
+    "</linearGradient>"
+    '<radialGradient id="glow" cx="50%" cy="50%" r="50%">'
+    '<stop offset="0%" stop-color="#a78bfa" stop-opacity="0.5"/>'
+    '<stop offset="100%" stop-color="#a78bfa" stop-opacity="0"/>'
+    "</radialGradient>"
+    "</defs>"
+    '<rect width="1200" height="630" fill="url(#bg)"/>'
+    '<circle cx="950" cy="200" r="320" fill="url(#glow)"/>'
+    '<rect x="80" y="225" width="180" height="180" rx="40" fill="url(#g)"/>'
+    '<text x="170" y="345" text-anchor="middle" '
+    'font-family="Inter,Arial,sans-serif" font-weight="800" '
+    'font-size="120" fill="white">D</text>'
+    '<text x="300" y="290" font-family="Inter,Arial,sans-serif" '
+    'font-weight="800" font-size="84" fill="white">Doday</text>'
+    '<text x="300" y="360" font-family="Inter,Arial,sans-serif" '
+    'font-weight="500" font-size="36" fill="#a78bfa">'
+    "Бесплатный туду-лист, который не мешает</text>"
+    '<text x="300" y="420" font-family="Inter,Arial,sans-serif" '
+    'font-weight="400" font-size="26" fill="#ddd6fe">'
+    "Проекты · Календарь · Граф связей · Помодоро · Привычки</text>"
+    '<text x="80" y="580" font-family="Inter,Arial,sans-serif" '
+    'font-weight="600" font-size="28" fill="#a78bfa">getdoday.ru</text>'
+    "</svg>"
+)
+
+
+@app.get("/og.svg", include_in_schema=False)
+async def og_image() -> Response:
+    """OpenGraph preview image — 1200x630 brand card for social sharing."""
+    return Response(
+        content=_OG_IMAGE_SVG,
+        media_type="image/svg+xml",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
 
 
 # ---------------------------------------------------------------------------
