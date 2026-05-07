@@ -309,7 +309,7 @@
            notify() {
              try {
                if ('Notification' in window && Notification.permission === 'granted') {
-                 new Notification(this.mode === 'work' ? '🍅 Готово, время отдохнуть' : 'Перерыв окончен — назад к делу', {body: '{{ task.title|tojson|safe }}'.replace(/^.|.$/g, '')});
+                 new Notification(this.mode === 'work' ? '🍅 Готово, время отдохнуть' : 'Перерыв окончен — назад к делу', {body: {{ task.title|tojson|forceescape }}});
                }
                const ctx = new (window.AudioContext || window.webkitAudioContext)();
                const o = ctx.createOscillator();

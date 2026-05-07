@@ -1,0 +1,189 @@
+{# Floating "?" button + slide-in help drawer with page-relevant articles.
+   Mounted globally in app_base.html so it's available on every authenticated page. #}
+<div x-data="{
+       open: false,
+       articles: [],
+       q: '',
+       loaded: false,
+       async load() {
+         if (this.loaded) return;
+         try {
+           const r = await fetch('/help/articles.json', {credentials: 'include'});
+           if (r.ok) { this.articles = await r.json(); this.loaded = true; }
+         } catch(e) {}
+       },
+       relevantSlugs() {
+         const path = window.location.pathname;
+         const map = {
+           '/app/today':    ['quick-start', 'quickadd-syntax', 'keyboard'],
+           '/app/upcoming': ['calendar-upcoming', 'quickadd-syntax'],
+           '/app/inbox':    ['quick-start', 'projects'],
+           '/app/calendar': ['calendar-upcoming', 'calendar-subscription'],
+           '/app/graph':    ['graph-and-links', 'subtasks-comments-recurrence'],
+           '/app/stats':    ['mood-achievements', 'pomodoro-goal'],
+           '/app/profile':  ['mood-achievements', 'calendar-subscription', 'import-export'],
+           '/app/labels':   ['labels-filters'],
+           '/app/done':     ['trash-restore', 'mood-achievements'],
+           '/app/trash':    ['trash-restore'],
+           '/app/habits':   ['habits'],
+           '/app/schedule': ['school-integrations'],
+           '/app/projects': ['projects', 'kanban', 'subtasks-comments-recurrence'],
+           '/app/filters':  ['labels-filters'],
+           '/app/activity': ['mood-achievements'],
+         };
+         for (const prefix of Object.keys(map)) {
+           if (path.startsWith(prefix)) return map[prefix];
+         }
+         return ['quick-start', 'quickadd-syntax', 'keyboard'];
+       },
+       relevant() {
+         const set = new Set(this.relevantSlugs());
+         return this.articles.filter(a => set.has(a.slug));
+       },
+       filtered() {
+         if (!this.q.trim()) return this.articles;
+         const needle = this.q.trim().toLowerCase();
+         return this.articles.filter(a =>
+           a.title.toLowerCase().includes(needle) ||
+           a.summary.toLowerCase().includes(needle));
+       },
+       toggle() {
+         this.open = !this.open;
+         if (this.open) this.load();
+       },
+     }"
+     @keydown.escape.window="if (open) open = false">
+
+  {# Floating "?" button — bottom right, always visible above bottom-nav on mobile #}
+  <button type="button"
+          @click="toggle()"
+          x-show="!open"
+          title="Помощь и руководства"
+          aria-label="Открыть помощь"
+          class="fixed z-30 bottom-36 right-4 md:bottom-5 md:right-5
+                 w-11 h-11 md:w-12 md:h-12 rounded-full grad-bg shadow-glow
+                 flex items-center justify-center text-white text-lg md:text-xl font-bold
+                 active:scale-95 transition hover:scale-105"
+          style="border:2px solid rgba(255,255,255,0.18);">
+    ?
+  </button>
+
+  {# Drawer #}
+  <div x-show="open" x-cloak x-transition.opacity
+       @click.self="open = false"
+       class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm">
+    <aside x-show="open"
+           x-transition:enter="transition transform ease-out duration-200"
+           x-transition:enter-start="translate-x-full"
+           x-transition:enter-end="translate-x-0"
+           x-transition:leave="transition transform ease-in duration-150"
+           x-transition:leave-start="translate-x-0"
+           x-transition:leave-end="translate-x-full"
+           class="absolute right-0 top-0 bottom-0 w-full sm:w-[420px]
+                  bg-[var(--surface)] border-l border-[var(--border)]
+                  shadow-2xl overflow-y-auto"
+           @click.stop>
+
+      <div class="sticky top-0 z-10 bg-[var(--surface)] border-b border-[var(--border)]
+                  px-5 py-4 flex items-center justify-between gap-3">
+        <div>
+          <div class="text-lg font-semibold flex items-center gap-2">
+            <span class="grad-bg w-6 h-6 rounded-md flex items-center justify-center text-white text-xs font-bold">?</span>
+            Помощь
+          </div>
+          <div class="text-[11px] text-[var(--text-muted)] mt-0.5">
+            22 статьи · поиск по всем функциям сайта
+          </div>
+        </div>
+        <button @click="open = false"
+                class="p-2 rounded-lg hover:bg-[var(--surface-2)] text-[var(--text-muted)]"
+                aria-label="Закрыть">✕</button>
+      </div>
+
+      <div class="px-5 py-4 space-y-5">
+
+        {# Search #}
+        <div class="relative">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]"
+               fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"/>
+          </svg>
+          <input type="search" x-model="q"
+                 placeholder="Поиск по статьям…"
+                 class="w-full pl-10 pr-3 py-2 bg-[var(--surface-2)] border border-[var(--border)]
+                        rounded-lg outline-none focus:border-[var(--accent)] text-sm">
+        </div>
+
+        {# Page-relevant block (hidden when searching) #}
+        <template x-if="!q.trim() && relevant().length">
+          <div>
+            <div class="text-[10px] uppercase tracking-wider font-semibold text-[var(--accent)] mb-2 flex items-center gap-1.5">
+              <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.366 2.446a1 1 0 00-.364 1.118l1.287 3.957c.299.921-.755 1.688-1.539 1.118l-3.366-2.446a1 1 0 00-1.176 0l-3.366 2.446c-.783.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.07 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z"/></svg>
+              Подсказки для этой страницы
+            </div>
+            <div class="space-y-2">
+              <template x-for="a in relevant()" :key="'rel-' + a.slug">
+                <a :href="'/help/' + a.slug" target="_blank" rel="noopener"
+                   class="flex items-start gap-3 p-3 rounded-lg
+                          bg-[var(--accent)]/8 border border-[var(--accent)]/30
+                          hover:bg-[var(--accent)]/15 hover:border-[var(--accent)]/50
+                          transition no-underline">
+                  <div class="w-7 h-7 rounded-lg grad-bg flex items-center justify-center shrink-0 mt-0.5">
+                    <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+                         x-html="'&lt;path stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot; d=&quot;' + a.icon + '&quot;/&gt;'">
+                    </svg>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <div class="text-sm font-semibold text-[var(--text)]" x-text="a.title"></div>
+                    <div class="text-xs text-[var(--text-muted)] mt-0.5 line-clamp-2" x-text="a.summary"></div>
+                  </div>
+                  <svg class="w-4 h-4 text-[var(--text-muted)] shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                  </svg>
+                </a>
+              </template>
+            </div>
+          </div>
+        </template>
+
+        {# All articles list #}
+        <div>
+          <div class="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2"
+               x-text="q.trim() ? ('Найдено: ' + filtered().length) : 'Все руководства'"></div>
+          <template x-if="!filtered().length">
+            <div class="text-xs text-[var(--text-muted)] italic py-4 text-center">
+              Ничего не найдено по запросу.
+            </div>
+          </template>
+          <div class="space-y-1">
+            <template x-for="a in filtered()" :key="a.slug">
+              <a :href="'/help/' + a.slug" target="_blank" rel="noopener"
+                 class="flex items-start gap-3 p-2.5 rounded-lg
+                        hover:bg-[var(--surface-2)] transition no-underline">
+                <div class="w-6 h-6 rounded-md bg-[var(--surface-2)] flex items-center justify-center shrink-0 mt-0.5
+                            border border-[var(--border)]">
+                  <svg class="w-3.5 h-3.5 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+                       x-html="'&lt;path stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot; d=&quot;' + a.icon + '&quot;/&gt;'">
+                  </svg>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <div class="text-sm font-medium text-[var(--text)]" x-text="a.title"></div>
+                  <div class="text-[11px] text-[var(--text-muted)] mt-0.5 line-clamp-1" x-text="a.summary"></div>
+                </div>
+              </a>
+            </template>
+          </div>
+        </div>
+
+        {# Footer link #}
+        <div class="pt-3 border-t border-[var(--border)] text-center">
+          <a href="/help" target="_blank" rel="noopener"
+             class="text-xs text-[var(--accent)] hover:underline">
+            Открыть всю помощь на отдельной странице →
+          </a>
+        </div>
+
+      </div>
+    </aside>
+  </div>
+</div>
