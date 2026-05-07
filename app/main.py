@@ -129,7 +129,7 @@ async def robots_txt() -> PlainTextResponse:
 async def sitemap_xml() -> Response:
     """Static sitemap for the public marketing pages."""
     base = _settings.app_base_url.rstrip("/")
-    paths = ["/", "/privacy", "/terms", "/help/start"]
+    paths = ["/", "/privacy", "/help", "/help/quick-start"]
     items = "".join(f"<url><loc>{base}{p}</loc></url>" for p in paths)
     body = (
         '<?xml version="1.0" encoding="UTF-8"?>'
@@ -137,6 +137,12 @@ async def sitemap_xml() -> Response:
         f"{items}</urlset>"
     )
     return Response(content=body, media_type="application/xml")
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon() -> Response:
+    """Inline SVG favicon — same gradient D as the PWA icon."""
+    return Response(content=_PWA_ICON_SVG, media_type="image/svg+xml")
 
 
 # ---------------------------------------------------------------------------
