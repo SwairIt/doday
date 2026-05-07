@@ -342,3 +342,21 @@ Ruff strict + mypy strict зелёные на 224 файлах.
 **Финальное качество:** 37 целевых тестов pass (test_recurrence_editor: 4, test_links_ui: 4, test_prod_hardening: 3, test_move_task_context: 3, test_reminders: 2, test_task_links: 7, test_graph: 6, test_page_filter: 2, test_sidebar_counts: 6). Ruff strict + mypy strict зелёные на 225 файлах.
 
 **Пробелов от типичных туду-апп паттернов** в нашем коде на 2026-05-06 НЕ найдено критичных. Что осталось как «nice-to-have» для следующих сессий: drag задачи между днями календаря, attachment uploads, sub-projects (вложенные проекты), email-to-task через входящий SMTP. Все они — вторая волна, не блокеры.
+
+### 2026-05-08 (overnight) — pre-launch фаза 1: маркетинг-готовность
+
+Закрыли все 4 пункта Phase 1 из `PRELAUNCH.md`:
+
+| # | Что | Commit |
+|---|---|---|
+| 1.1 | Yandex.Metrika scaffolding: conditional `<script>` в `base.html` (webvisor + accurateTrackBounce + clickmap), `dodayGoal()` обёртка, авто-триггеры `signup`/`login`/`first_task` через query-params (`?signup=1`, `?welcome=1`) и localStorage. В dev — no-op stub. ENV `YA_METRIKA_ID` пустой → счётчик не подключается. | `9ed9b47` |
+| 1.2 | Educational starter-tasks: переписан `_starter_samples_for` на 5 обучающих задач (закрой чекбокс → создай свою → natural-language даты → Cmd-K → audience-specific tip). К первой задаче через `create_comment` приклеен welcome-комментарий. | `b291753` |
+| 1.3 | Landing 4 новых блока перед FAQ: `#screenshots` (4 SVG-mockup'а в фиолетовых тонах — today/calendar/kanban/graph), `#comparison` (Doday Free vs Todoist Free vs TickTick Free по их публичному прайсу), `#testimonials` (прозрачный плейсхолдер «здесь будут отзывы»), `#three-steps` (3 пронумерованных шага с финальным CTA). | `8591e20` |
+| 1.4 | Mobile-аудит: sidebar overlay z-30 → z-[35] (раньше mobile_nav рендерился поверх), page_filter ✕-кнопка 16px → 36px, subtask caret 20px → 28px, поповер приоритетов 28px → 36px. | `6e052bf` |
+| Final | `calendar.html`: `\|tojson\|safe\|e` → `\|tojson\|forceescape` — унификация с остальной кодовой базой. | `e004587` |
+
+**Smoke-тесты live https://getdoday.ru:** все публичные эндпоинты 200, защищённые 401, новые секции лендинга присутствуют, `?signup=1`/`?welcome=1` на verify-pending/today работают.
+
+**BLOCKED (нужны действия пользователя):** см. `TODO.md` — Yandex.Metrika ID, реальные iPhone-скриншоты, ЮKassa-интеграция.
+
+**Архитектура не тронута**, все 22 help-статьи + лимиты + модалы продолжают работать.
