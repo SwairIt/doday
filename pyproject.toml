@@ -71,6 +71,7 @@ ignore = [
 "app/auth/service.py" = ["RUF001"]              # intentional Cyrillic in starter task copy
 "app/achievements/service.py" = ["RUF001"]      # intentional Cyrillic in achievement titles
 "app/auth/router.py" = ["RUF001"]               # intentional Cyrillic in user-facing error messages
+"app/auth/email.py" = ["RUF001"]                # intentional Cyrillic in branded HTML email body
 "app/profile/router.py" = ["RUF001"]            # intentional Cyrillic in user-facing error messages
 "app/links/service.py" = ["RUF001"]             # intentional Cyrillic in user-facing error messages
 
