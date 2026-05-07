@@ -36,7 +36,7 @@
   <button
     type="button"
     title="Подзадачи"
-    class="shrink-0 w-5 h-5 rounded text-[var(--text-muted)] hover:text-[var(--accent)] transition"
+    class="shrink-0 w-7 h-7 rounded inline-flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--accent)] transition"
     :class="subsOpen ? 'rotate-90' : ''"
     style="transition: transform 150ms"
     @click="
@@ -99,7 +99,7 @@
             <button
               type="button"
               title="Приоритет {{ p }}"
-              class="w-7 h-7 rounded text-xs font-bold bg-{{ pc }}-500/15 text-{{ pc }}-400 hover:bg-{{ pc }}-500/30 transition"
+              class="w-9 h-9 rounded text-xs font-bold bg-{{ pc }}-500/15 text-{{ pc }}-400 hover:bg-{{ pc }}-500/30 transition"
               hx-post="/htmx/tasks/{{ task.id }}/priority"
               hx-vals='{"priority": "{{ p }}"}'
               hx-target="#task-{{ task.id }}"
