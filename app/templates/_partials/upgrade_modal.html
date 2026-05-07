@@ -35,37 +35,41 @@
          x-transition:enter-end="opacity-100 scale-100 translate-y-0"
          class="card w-full max-w-md p-0 overflow-hidden shadow-glow">
 
-      {# Hero header with gradient #}
-      <div class="grad-bg px-6 pt-6 pb-12 text-center text-white relative">
-        <div class="text-5xl mb-2">✨</div>
-        <h2 class="text-xl font-bold mb-1">Pro нужен здесь</h2>
-        <p class="text-sm text-white/85" x-text="FEATURE_LABELS[feature] || 'Эта функция доступна на тарифе Pro'"></p>
-      </div>
-
-      <div class="px-6 -mt-6">
-        <div class="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-4 shadow-lg">
-          <p class="text-sm text-[var(--text)] text-center" x-text="message"></p>
+      {# Hero header with gradient — clean spacing, no overlap #}
+      <div class="grad-bg px-6 pt-7 pb-7 text-center text-white relative overflow-hidden">
+        <div class="absolute inset-0 opacity-30 pointer-events-none"
+             style="background:radial-gradient(circle at 50% 0%, rgba(255,255,255,0.4) 0%, transparent 60%)"></div>
+        <div class="relative">
+          <div class="text-5xl mb-2 leading-none drop-shadow">✨</div>
+          <h2 class="text-2xl font-extrabold mb-1 tracking-tight">Pro нужен здесь</h2>
+          <p class="text-sm text-white/90 font-medium" x-text="FEATURE_LABELS[feature] || 'Эта функция доступна на тарифе Pro'"></p>
         </div>
       </div>
 
-      <div class="px-6 py-5">
-        <div class="flex items-baseline justify-center gap-2 mb-3">
-          <span class="text-3xl font-extrabold grad-text">199₽</span>
+      {# Body — message + price + features + CTA #}
+      <div class="px-6 pt-5 pb-6">
+
+        <div class="bg-[var(--surface-2)] border border-[var(--border)] rounded-xl p-3.5 mb-5">
+          <p class="text-sm text-[var(--text)] text-center leading-relaxed" x-text="message"></p>
+        </div>
+
+        <div class="flex items-baseline justify-center gap-2 mb-1">
+          <span class="text-4xl font-extrabold grad-text leading-none">199₽</span>
           <span class="text-sm text-[var(--text-muted)]">в месяц</span>
         </div>
-        <p class="text-xs text-center text-[var(--text-muted)] mb-4">
-          Или 1990₽ за год — ~17% экономии. Отменить можно в любой момент.
+        <p class="text-[11px] text-center text-[var(--text-muted)] mb-5">
+          Или <strong class="text-[var(--text)]">1990₽ в год</strong> · −17% · отменить в любой момент
         </p>
 
-        <ul class="text-xs text-[var(--text)] space-y-1.5 mb-5">
-          <li class="flex items-start gap-2"><span class="text-emerald-400">✓</span>Безлимит на проекты и задачи</li>
-          <li class="flex items-start gap-2"><span class="text-emerald-400">✓</span>Все темы (Forest, Minimal)</li>
-          <li class="flex items-start gap-2"><span class="text-emerald-400">✓</span>Корзина 30 дней</li>
-          <li class="flex items-start gap-2"><span class="text-emerald-400">✓</span>Email-дайджест и Telegram-бот (когда выкатим)</li>
-          <li class="flex items-start gap-2"><span class="text-emerald-400">✓</span>Bulk-paste до 200 строк</li>
+        <ul class="text-sm space-y-2 mb-6">
+          <li class="flex items-start gap-2.5"><span class="text-emerald-400 shrink-0 mt-0.5">✓</span><span>Безлимит на проекты и задачи</span></li>
+          <li class="flex items-start gap-2.5"><span class="text-emerald-400 shrink-0 mt-0.5">✓</span><span>Все темы оформления</span></li>
+          <li class="flex items-start gap-2.5"><span class="text-emerald-400 shrink-0 mt-0.5">✓</span><span>Корзина — 30 дней восстановления</span></li>
+          <li class="flex items-start gap-2.5"><span class="text-emerald-400 shrink-0 mt-0.5">✓</span><span>Bulk-paste до 200 строк</span></li>
+          <li class="flex items-start gap-2.5"><span class="text-emerald-400/60 shrink-0 mt-0.5">○</span><span class="text-[var(--text-muted)]">Email-дайджест и Telegram-бот <span class="text-amber-400 text-[10px] font-semibold">скоро</span></span></li>
         </ul>
 
-        <a href="/pricing" class="btn-primary w-full py-2.5 text-sm justify-center">
+        <a href="/pricing" class="btn-primary w-full py-3 text-sm justify-center font-semibold">
           Посмотреть тарифы →
         </a>
         <button type="button" @click="open = false"
