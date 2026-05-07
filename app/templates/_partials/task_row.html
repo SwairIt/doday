@@ -295,11 +295,11 @@
         hx-target="#task-wrap-{{ task.id }}"
         hx-swap="outerHTML swap:160ms"
         hx-on:htmx:after-request="if (event.detail.successful) window.dispatchEvent(new CustomEvent('doday-task-deleted', {detail: {
-          title: {{ task.title|tojson }},
-          project_id: {{ task.project_id|string|tojson }},
-          due_at: {{ (task.due_at.isoformat() if task.due_at else None)|tojson }},
-          priority: {{ task.priority.value|tojson }},
-          description: {{ (task.description or '')|tojson }}
+          title: {{ task.title|tojson|forceescape }},
+          project_id: {{ task.project_id|string|tojson|forceescape }},
+          due_at: {{ (task.due_at.isoformat() if task.due_at else None)|tojson|forceescape }},
+          priority: {{ task.priority.value|tojson|forceescape }},
+          description: {{ (task.description or '')|tojson|forceescape }}
         }}))"
       >
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

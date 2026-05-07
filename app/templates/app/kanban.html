@@ -55,7 +55,7 @@
     {% for group in section_groups %}
       {% set s = group.section %}
       <div class="kanban-col w-72 shrink-0 card flex flex-col" data-section-id="{{ s.id }}"
-           x-data="{ editing: false, name: {{ s.name|tojson }} }">
+           x-data="{ editing: false, name: {{ s.name|tojson|forceescape }} }">
         <div class="px-4 py-3 border-b border-[var(--border)] flex items-center gap-2 group">
           <span data-section-handle class="cursor-grab active:cursor-grabbing text-[var(--text-muted)] opacity-0 group-hover:opacity-60 hover:opacity-100 -ml-1">
             <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
@@ -66,7 +66,7 @@
           <input x-show="editing" x-cloak x-model="name" x-ref="input"
                  @blur="editing = false; if(name.trim()) fetch('/api/sections/{{ s.id }}',{method:'PATCH',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({name: name.trim()})})"
                  @keydown.enter.prevent="$el.blur()"
-                 @keydown.escape="name = {{ s.name|tojson }}; editing = false"
+                 @keydown.escape="name = {{ s.name|tojson|forceescape }}; editing = false"
                  class="font-semibold flex-1 bg-[var(--surface-2)] border border-[var(--accent)] rounded px-2 py-0.5 outline-none">
           <span class="text-xs text-[var(--text-muted)]" data-count>{{ group.tasks|length }}</span>
           <button

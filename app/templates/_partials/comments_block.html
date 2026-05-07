@@ -4,7 +4,7 @@
     <div class="space-y-1.5">
       {% for c in comments %}
         <div id="comment-{{ c.id }}"
-             x-data="{ editing: false, body: {{ c.body|tojson }}, original: {{ c.body|tojson }}, async save() {
+             x-data="{ editing: false, body: {{ c.body|tojson|forceescape }}, original: {{ c.body|tojson|forceescape }}, async save() {
                if (!this.body.trim() || this.body === this.original) { this.editing = false; this.body = this.original; return; }
                const r = await fetch('/api/comments/{{ c.id }}', {method:'PATCH', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({body: this.body.trim()})});
                if (r.ok) { this.original = this.body.trim(); }

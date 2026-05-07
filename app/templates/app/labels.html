@@ -37,11 +37,11 @@
       <div class="card p-3 flex items-center gap-3"
            x-data="{
              editing: false,
-             name: {{ lab.name|tojson }},
+             name: {{ lab.name|tojson|forceescape }},
              color: '{{ lab.color }}',
              async save() {
                this.editing = false;
-               if (!this.name.trim()) { this.name = {{ lab.name|tojson }}; return; }
+               if (!this.name.trim()) { this.name = {{ lab.name|tojson|forceescape }}; return; }
                const r = await fetch('/api/labels/{{ lab.id }}', {method:'PATCH', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name: this.name.trim(), color: this.color})});
                if (r.ok) location.reload();
              }
@@ -57,7 +57,7 @@
           <input x-show="editing" x-cloak x-model="name" x-ref="lname"
                  @blur="save()"
                  @keydown.enter.prevent="$el.blur()"
-                 @keydown.escape="name = {{ lab.name|tojson }}; editing = false"
+                 @keydown.escape="name = {{ lab.name|tojson|forceescape }}; editing = false"
                  maxlength="40"
                  class="text-sm font-medium bg-[var(--surface-2)] border border-[var(--accent)] rounded px-2 py-0.5 outline-none w-full">
         </div>

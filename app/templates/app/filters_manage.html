@@ -33,7 +33,7 @@
           </div>
         </a>
         <button type="button"
-                @click="$dispatch('open-filter-editor', {mode: 'edit', id: '{{ cf.id }}', name: {{ cf.name|tojson }}, color: '{{ cf.color }}', query: {{ cf.query|tojson }} })"
+                @click="$dispatch('open-filter-editor', {mode: 'edit', id: '{{ cf.id }}', name: {{ cf.name|tojson|forceescape }}, color: '{{ cf.color }}', query: {{ cf.query|tojson|forceescape }} })"
                 class="btn-ghost px-3 py-1.5 text-sm">Изменить</button>
         <button type="button"
                 onclick="if(confirm('Удалить фильтр «{{ cf.name }}»?')) fetch('/api/custom-filters/{{ cf.id }}', {method:'DELETE',credentials:'include'}).then(()=>location.reload())"

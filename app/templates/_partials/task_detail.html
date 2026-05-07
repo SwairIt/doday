@@ -66,7 +66,7 @@
         >
       </div>
       <div x-data="{
-             text: {{ (task.description or '')|tojson }},
+             text: {{ (task.description or '')|tojson|forceescape }},
              editing: false,
            }">
         <textarea
@@ -133,7 +133,7 @@
       <div x-data="{
              open: false,
              sections: [],
-             currentSectionId: {{ (task.section_id|string)|tojson if task.section_id else 'null' }},
+             currentSectionId: {{ ((task.section_id|string)|tojson if task.section_id else 'null')|forceescape }},
              async load() {
                try {
                  const r = await fetch('/api/sections?project_id={{ task.project_id }}', {credentials: 'include'});
@@ -226,7 +226,7 @@
             {% for val, label in recur_opts %}
               <button type="button"
                       hx-patch="/htmx/tasks/{{ task.id }}/detail"
-                      hx-vals='{"title": {{ task.title|tojson }}, "description": {{ (task.description or "")|tojson }}, "recurrence": "{{ val }}"}'
+                      hx-vals='{"title": {{ task.title|tojson|forceescape }}, "description": {{ (task.description or "")|tojson|forceescape }}, "recurrence": "{{ val }}"}'
                       hx-target="#task-detail-slot" hx-swap="innerHTML"
                       class="text-xs px-2.5 py-1 rounded-md border transition
                              {% if (task.recurrence or '') == val %}border-emerald-400 bg-emerald-500/15 text-emerald-400{% else %}border-[var(--border)] hover:border-[var(--accent)]{% endif %}">
@@ -502,7 +502,7 @@
         {% for c in comments %}
           <div class="bg-[var(--surface-2)] border border-[var(--border)] rounded-lg p-2.5 text-sm group relative">
             <div class="md-preview break-words"
-                 x-data="{ body: {{ c.body|tojson }} }"
+                 x-data="{ body: {{ c.body|tojson|forceescape }} }"
                  x-html="window.dodayMd(body)"></div>
             <div class="flex items-center justify-between mt-1.5">
               <span class="text-[10px] text-[var(--text-muted)]">{{ c.created_at.strftime('%d.%m %H:%M') }}</span>
