@@ -38,6 +38,13 @@ class Violation:
 # Negative lookahead skips the legitimate-but-verbose `|tojson|safe|e` form.
 _TOJSON_SAFE_PATTERN = re.compile(r"\|\s*tojson\s*\|\s*safe(?!\s*\|\s*(?:e\b|forceescape))")
 
+# Rule 2: text-[Npx] where N < 11 — too small for mobile readability.
+_TEXT_PX_PATTERN = re.compile(r"text-\[(\d+)px\]")
+
+
+def _small_text_check(match: re.Match[str]) -> bool:
+    return int(match.group(1)) < 11
+
 
 RULES: list[Rule] = [
     Rule(
@@ -49,7 +56,39 @@ RULES: list[Rule] = [
         ),
         pattern=_TOJSON_SAFE_PATTERN,
     ),
+    Rule(
+        name="small-text",
+        level="warning",
+        message=(
+            "text-[<N>px] меньше 11px — плохо читается на мобиле. "
+            "Если намеренно (PRO-badge, счётчик) — добавь "
+            "`{# lint-ignore-next-line: small-text #}` строкой выше."
+        ),
+        pattern=_TEXT_PX_PATTERN,
+        extra_check=_small_text_check,
+    ),
 ]
+
+_SUPPRESS_PATTERN = re.compile(r"\{#\s*lint-ignore-next-line:\s*([\w,\s-]+?)\s*#\}")
+
+
+def _suppressed_rules_for_line(text: str, line_no: int) -> set[str]:
+    """Return rule names suppressed for the given 1-based line.
+
+    Suppression is inline `{# lint-ignore-next-line: <names> #}` placed
+    exactly on the line above the offending code. Multiple names are
+    comma-separated.
+    """
+    if line_no < 2:
+        return set()
+    lines = text.splitlines()
+    if line_no - 2 >= len(lines):
+        return set()
+    prev = lines[line_no - 2]
+    m = _SUPPRESS_PATTERN.search(prev)
+    if not m:
+        return set()
+    return {r.strip() for r in m.group(1).split(",") if r.strip()}
 
 
 def check_text(text: str, file: Path) -> list[Violation]:
@@ -62,6 +101,8 @@ def check_text(text: str, file: Path) -> list[Violation]:
             line_no = text.count("\n", 0, match.start()) + 1
             line_start = text.rfind("\n", 0, match.start()) + 1
             col = match.start() - line_start + 1
+            if rule.name in _suppressed_rules_for_line(text, line_no):
+                continue
             snippet = text.splitlines()[line_no - 1].strip() if text else ""
             violations.append(Violation(file, line_no, col, rule, snippet))
     return violations
