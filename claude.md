@@ -53,6 +53,12 @@ Pre-commit hook (после `uv run pre-commit install`) гоняет `ruff form
 
 CI на GitHub Actions запускает то же самое + полный `pytest -q` на каждый push в master. Бейдж зелёный — baseline.
 
+- ruff rule set: `E,F,I,UP,B,S,A,RUF`
+- mypy `--strict`, no `# type: ignore` without an explanatory comment
+- pydantic v2 `BaseModel` for any data crossing a boundary
+- Tests: pytest-asyncio mode=auto, TRUNCATE between functions
+- Per-feature folders `app/<feature>/{router,service,models,schemas}.py`
+
 ## Git workflow
 
 - Repo: `https://github.com/SwairIt/SchoolProject.git`
