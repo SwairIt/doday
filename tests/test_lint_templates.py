@@ -67,19 +67,12 @@ def test_text_16px_clean(fake_path: Path) -> None:
 
 
 def test_suppression_disables_warning(fake_path: Path) -> None:
-    text = (
-        "{# lint-ignore-next-line: small-text #}\n"
-        '<span class="text-[10px]">PRO</span>'
-    )
+    text = '{# lint-ignore-next-line: small-text #}\n<span class="text-[10px]">PRO</span>'
     violations = check_text(text, fake_path)
     assert violations == []
 
 
 def test_suppression_only_affects_immediate_next_line(fake_path: Path) -> None:
-    text = (
-        "{# lint-ignore-next-line: small-text #}\n"
-        "<br>\n"
-        '<span class="text-[10px]">PRO</span>'
-    )
+    text = '{# lint-ignore-next-line: small-text #}\n<br>\n<span class="text-[10px]">PRO</span>'
     violations = check_text(text, fake_path)
     assert len(violations) == 1
