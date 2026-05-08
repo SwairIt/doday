@@ -160,3 +160,20 @@ def test_main_returns_0_on_warnings_only(tmp_path: Path) -> None:
     warn.write_text('<span class="text-[8px]">tiny</span>')
     rc = main([str(tmp_path)])
     assert rc == 0
+
+
+def test_main_handles_non_ascii_snippets(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Snippets with ✓ or Russian chars must not crash on Windows cp1251."""
+    from scripts.lint_templates import main
+
+    bad = tmp_path / "bad.html"
+    bad.write_text(
+        '<div class="text-[8px]">✓ Готово</div>',
+        encoding="utf-8",
+    )
+    rc = main([str(tmp_path)])
+    assert rc == 0  # warning-only → 0
+    captured = capsys.readouterr()
+    assert "small-text" in captured.out

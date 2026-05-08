@@ -150,6 +150,13 @@ def format_violation(v: Violation) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # Force UTF-8 stdout — Windows console defaults to cp1251 which can't
+    # encode ✓ U+2713 from snippets or Russian text from rule messages.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
     args = sys.argv[1:] if argv is None else argv
     root = Path(args[0]) if args else Path("app/templates")
     if not root.exists():
