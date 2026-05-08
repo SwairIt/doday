@@ -80,11 +80,11 @@ def check_endpoints(
 
 def format_result(r: Result) -> str:
     if r.actual_status is None:
-        return f"  X  {r.endpoint.path:32}  {r.error}"
+        return f"  ✗  {r.endpoint.path:32}  {r.error}"
     if r.actual_status == r.endpoint.expected_status:
-        return f"  OK {r.endpoint.path:32}  {r.actual_status}"
+        return f"  ✓  {r.endpoint.path:32}  {r.actual_status}"
     return (
-        f"  X  {r.endpoint.path:32}  got {r.actual_status}, expected {r.endpoint.expected_status}"
+        f"  ✗  {r.endpoint.path:32}  got {r.actual_status}, expected {r.endpoint.expected_status}"
     )
 
 
