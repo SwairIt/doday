@@ -8,8 +8,10 @@ async def test_schedule_view_renders_for_logged_in(logged_in_client: AsyncClient
     assert response.status_code == 200
     body = response.text
     assert "Расписание уроков" in body
-    # subject codes go through JSON, so check codes (ASCII) rather than Cyrillic names
-    assert '"math"' in body and '"physics"' in body
+    # subjects = {{ ... |tojson|forceescape }} produces HTML-escaped JSON in the
+    # x-data attribute — Alpine decodes &quot; → " at runtime, so we check the
+    # HTML-encoded form.
+    assert "&quot;math&quot;" in body and "&quot;physics&quot;" in body
     assert "/api/school/schedule" in body
 
 

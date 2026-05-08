@@ -1,4 +1,4 @@
-"""Tests for the onboarding-on-verify flow (Inbox + 4 sample tasks)."""
+"""Tests for the onboarding-on-verify flow (Inbox + 5 educational sample tasks)."""
 
 from datetime import UTC, datetime
 
@@ -14,7 +14,7 @@ from app.auth.service import (
 from app.projects.models import Project
 from app.tasks.models import Task
 
-EXPECTED_SAMPLE_COUNT = 4
+EXPECTED_SAMPLE_COUNT = 5
 
 
 async def test_verify_seeds_inbox_and_samples(db_session: AsyncSession) -> None:

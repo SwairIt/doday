@@ -31,8 +31,8 @@ async def test_tier_catalog_listed(logged_in_client: AsyncClient) -> None:
     response = await logged_in_client.get("/api/billing/tiers")
     assert response.status_code == 200
     body = response.json()
-    assert set(body.keys()) == {"free", "pro", "team"}
-    assert body["free"]["max_active_projects"] == 5
+    assert set(body.keys()) == {"free", "pro", "team", "family"}
+    assert body["free"]["max_active_projects"] == 10
     assert body["pro"]["max_active_projects"] is None
 
 
@@ -48,13 +48,16 @@ async def test_project_limit_blocks_after_trial_expires(
 ) -> None:
     await _expire_trial(db_session)
 
-    for i in range(5):
+    for i in range(10):
         r = await logged_in_client.post("/api/projects", json={"name": f"P{i}"})
         assert r.status_code == 201, r.text
 
-    r = await logged_in_client.post("/api/projects", json={"name": "P6"})
+    r = await logged_in_client.post("/api/projects", json={"name": "P11"})
     assert r.status_code == 402
-    assert "Free" in r.json()["detail"]
+    detail = r.json()["detail"]
+    # 402 detail is now structured ({"code": "limit_reached", "feature": "projects",
+    # "tier": "free", "message": "..."}) — check the message field.
+    assert "проект" in detail.get("message", "").lower() or detail.get("code") == "limit_reached"
 
 
 async def test_project_limit_does_not_count_archived_or_inbox(

@@ -28,9 +28,9 @@ async def _make_user(session: AsyncSession, audience: str | None) -> User:
 @pytest.mark.parametrize(
     ("audience", "marker"),
     [
-        ("school", "домашку"),
+        ("school", "расписание"),
         ("company", "стендап"),
-        ("personal", "воды"),
+        ("personal", "Привычки"),
     ],
 )
 async def test_audience_specific_starter_tasks(
@@ -52,7 +52,8 @@ async def test_no_audience_falls_back_to_generic(db_session: AsyncSession) -> No
     inbox = await ensure_inbox(db_session, user.id)
     tasks = await list_tasks(db_session, user.id, project_id=inbox.id, include_completed=True)
     titles = [t.title for t in tasks]
-    assert any("кликни кружок" in t for t in titles)
+    # First universal sample teaches the user to tick the checkbox.
+    assert any("Кликни кружок" in t for t in titles)
 
 
 async def test_provisioning_is_idempotent(db_session: AsyncSession) -> None:

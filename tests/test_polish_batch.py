@@ -81,8 +81,8 @@ async def test_task_detail_includes_markdown_preview(logged_in_client: AsyncClie
         )
     ).json()
     body = (await logged_in_client.get(f"/htmx/tasks/{task['id']}/detail")).text
-    # Render function and md-preview wrapper present.
+    # md-preview wrapper present + uses the global window.dodayMd() renderer.
     assert "md-preview" in body
-    assert "render(" in body
+    assert "dodayMd" in body
     # Description is wired into x-data text.
     assert "**bold** test" in body
