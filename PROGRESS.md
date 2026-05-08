@@ -360,3 +360,28 @@ Ruff strict + mypy strict зелёные на 224 файлах.
 **BLOCKED (нужны действия пользователя):** см. `TODO.md` — Yandex.Metrika ID, реальные iPhone-скриншоты, ЮKassa-интеграция.
 
 **Архитектура не тронута**, все 22 help-статьи + лимиты + модалы продолжают работать.
+
+### 2026-05-08 (вечер) — guardrails: pre-commit + CI + Jinja-линтер + smoke-test + recipes
+
+По плану `docs/superpowers/plans/2026-05-08-project-structure-guardrails.md`. 17 задач, 20 локальных коммитов в master. Subagent-driven execution: implementer + spec-reviewer + code-quality-reviewer на каждой задаче (где не было — controller-side review).
+
+**Что добавлено:**
+
+| Компонент | Файлы | Commits |
+|---|---|---|
+| pre-commit framework | `pyproject.toml` (+pre-commit dep), `.pre-commit-config.yaml` (4 hooks: ruff-format, ruff-check, mypy --strict, lint-templates) | `cedaeff`, `1637af2` |
+| `scripts/` package | `scripts/__init__.py`, `scripts/lint_templates.py`, `scripts/smoke_test.py` | `67c245a`, `5fa54bb`-`a4bc4c4`, `d7a67de` |
+| Jinja-линтер | 3 правила: `tojson-safe-attr` (error), `small-text` (warning, text<11px), `long-inline-script` (warning, >60 строк). Suppression через `{# lint-ignore-next-line: <name> #}`. 19 тестов. | `5fa54bb`, `c8ed6ba`, `7c3d02d`, `a4bc4c4`, `fbd059d` |
+| Smoke-test | 18 endpoint'ов проверяются после redeploy. 6 тестов на `httpx.MockTransport`. Вшито в `.tmp_ssh_inspect.py` после `/health`. | `d7a67de`, `9104e9c`, `7310af9` |
+| GitHub Actions CI | `.github/workflows/ci.yml`: postgres service + pre-commit + alembic + pytest на каждый push в master. | `5037bae` (локально, push blocked) |
+| Документация | `docs/CONTRIBUTING.md` + 4 recipes (add-feature/add-migration/add-template/add-test). | `3b1312d`-`dc3c63d` |
+| CLAUDE.md | Обновил Quality bar — упомянул pre-commit, smoke-test, CI. | `bb34104`, `e6024cc` |
+
+**Финальная проверка (controller-side):**
+- `uv run pre-commit run --all-files` — все 4 hook'а Passed
+- `uv run python scripts/smoke_test.py https://getdoday.ru` — 18/18 green, exit 0
+- 19 тестов линтера + 6 тестов smoke-test'а — все зелёные
+
+**BLOCKED:** push `.github/workflows/ci.yml` отвергается GitHub'ом — текущий PAT не имеет `workflow` scope. Нужно: `github.com/settings/tokens` → найти TOKEN из `.env` → добавить permission `Workflows: Read and write` → пересохранить (значение токена не меняется). После этого один `git push` отправит все 20 коммитов разом.
+
+**Архитектура `app/<feature>/` не тронута, существующие 310+ тестов не сломаны.**
