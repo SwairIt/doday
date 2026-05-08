@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: schooltodo_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/schooltodo_test
+      TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/schooltodo_test
+      APP_SECRET_KEY: ci-test-secret-key-needs-to-be-at-least-32-chars
+      APP_ENV: test
+      APP_BASE_URL: http://localhost:8000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: latest
+          enable-cache: true
+
+      - name: Setup Python 3.12
+        run: uv python install 3.12
+
+      - name: Sync dependencies
+        run: uv sync --all-groups
+
+      - name: Pre-commit checks (ruff + mypy + jinja-lint)
+        run: uv run pre-commit run --all-files --show-diff-on-failure
+
+      - name: Apply Alembic migrations to test DB
+        run: uv run alembic upgrade head
+
+      - name: Run pytest
+        run: uv run pytest -q
