@@ -76,3 +76,27 @@ def test_suppression_only_affects_immediate_next_line(fake_path: Path) -> None:
     text = '{# lint-ignore-next-line: small-text #}\n<br>\n<span class="text-[10px]">PRO</span>'
     violations = check_text(text, fake_path)
     assert len(violations) == 1
+
+
+def test_long_script_warns(fake_path: Path) -> None:
+    body = "\n".join(["x = 1;"] * 70)
+    text = f"<script>{body}</script>"
+    violations = check_text(text, fake_path)
+    assert len(violations) == 1
+    assert violations[0].rule.name == "long-inline-script"
+    assert violations[0].rule.level == "warning"
+
+
+def test_short_script_clean(fake_path: Path) -> None:
+    body = "\n".join(["x = 1;"] * 10)
+    text = f"<script>{body}</script>"
+    violations = check_text(text, fake_path)
+    assert violations == []
+
+
+def test_script_at_60_lines_clean(fake_path: Path) -> None:
+    """60 lines is the boundary — only >60 warns."""
+    body = "\n".join(["x = 1;"] * 60)
+    text = f"<script>{body}</script>"
+    violations = check_text(text, fake_path)
+    assert violations == []

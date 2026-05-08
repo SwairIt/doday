@@ -46,6 +46,14 @@ def _small_text_check(match: re.Match[str]) -> bool:
     return int(match.group(1)) < 11
 
 
+# Rule 3: inline <script> longer than 60 lines — extract to partial.
+_SCRIPT_PATTERN = re.compile(r"<script[^>]*>(.*?)</script>", re.DOTALL)
+
+
+def _long_script_check(match: re.Match[str]) -> bool:
+    return match.group(1).count("\n") > 60
+
+
 RULES: list[Rule] = [
     Rule(
         name="tojson-safe-attr",
@@ -66,6 +74,16 @@ RULES: list[Rule] = [
         ),
         pattern=_TEXT_PX_PATTERN,
         extra_check=_small_text_check,
+    ),
+    Rule(
+        name="long-inline-script",
+        level="warning",
+        message=(
+            "inline <script> длиннее 60 строк — пора выносить в отдельный "
+            "_partials/-файл или statics. Большая JS-логика в шаблоне ломается тихо."
+        ),
+        pattern=_SCRIPT_PATTERN,
+        extra_check=_long_script_check,
     ),
 ]
 
