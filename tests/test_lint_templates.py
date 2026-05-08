@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.lint_templates import check_text
+from scripts.lint_templates import check_text, format_violation, lint_directory
 
 
 # Override the session-scoped DB fixture from conftest — this module needs no DB.
@@ -100,3 +100,63 @@ def test_script_at_60_lines_clean(fake_path: Path) -> None:
     text = f"<script>{body}</script>"
     violations = check_text(text, fake_path)
     assert violations == []
+
+
+def test_format_violation_includes_file_line_col_message(fake_path: Path) -> None:
+    text = '<div x-data="{{ data|tojson|safe }}"></div>'
+    violations = check_text(text, fake_path)
+    assert len(violations) == 1
+    output = format_violation(violations[0])
+    assert str(fake_path) in output
+    assert ":1:" in output  # line number
+    assert "tojson-safe-attr" in output
+    assert "error" in output
+
+
+def test_lint_directory_walks_html_files(tmp_path: Path) -> None:
+    bad = tmp_path / "bad.html"
+    bad.write_text('<div x-data="{{ data|tojson|safe }}"></div>')
+    good = tmp_path / "good.html"
+    good.write_text('<div x-data="{{ data|tojson|forceescape }}"></div>')
+    nested = tmp_path / "subdir" / "nested.html"
+    nested.parent.mkdir()
+    nested.write_text('<span class="text-[8px]">tiny</span>')
+
+    violations = lint_directory(tmp_path)
+    rule_names = {v.rule.name for v in violations}
+    assert rule_names == {"tojson-safe-attr", "small-text"}
+
+
+def test_lint_directory_ignores_non_html(tmp_path: Path) -> None:
+    py = tmp_path / "x.py"
+    py.write_text("data|tojson|safe")  # would match rule, but .py not scanned
+    violations = lint_directory(tmp_path)
+    assert violations == []
+
+
+def test_main_returns_1_on_errors(tmp_path: Path) -> None:
+    from scripts.lint_templates import main
+
+    bad = tmp_path / "bad.html"
+    bad.write_text('<div x-data="{{ data|tojson|safe }}"></div>')
+    rc = main([str(tmp_path)])
+    assert rc == 1
+
+
+def test_main_returns_0_on_clean(tmp_path: Path) -> None:
+    from scripts.lint_templates import main
+
+    good = tmp_path / "good.html"
+    good.write_text('<div x-data="{{ data|tojson|forceescape }}"></div>')
+    rc = main([str(tmp_path)])
+    assert rc == 0
+
+
+def test_main_returns_0_on_warnings_only(tmp_path: Path) -> None:
+    """Warnings shouldn't block — only errors."""
+    from scripts.lint_templates import main
+
+    warn = tmp_path / "warn.html"
+    warn.write_text('<span class="text-[8px]">tiny</span>')
+    rc = main([str(tmp_path)])
+    assert rc == 0

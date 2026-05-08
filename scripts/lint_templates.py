@@ -126,13 +126,47 @@ def check_text(text: str, file: Path) -> list[Violation]:
     return violations
 
 
+def check_file(path: Path) -> list[Violation]:
+    """Lint a single .html file."""
+    text = path.read_text(encoding="utf-8")
+    return check_text(text, path)
+
+
+def lint_directory(root: Path) -> list[Violation]:
+    """Lint all .html files under root (recursive)."""
+    violations: list[Violation] = []
+    for path in sorted(root.rglob("*.html")):
+        violations.extend(check_file(path))
+    return violations
+
+
+def format_violation(v: Violation) -> str:
+    """Pretty-print one violation: path, line:col, level, name, snippet, message."""
+    return (
+        f"{v.file}:{v.line}:{v.col}: {v.rule.level}  {v.rule.name}\n"
+        f"   {v.snippet}\n"
+        f"   {v.rule.message}\n"
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     args = sys.argv[1:] if argv is None else argv
     root = Path(args[0]) if args else Path("app/templates")
     if not root.exists():
         print(f"path does not exist: {root}", file=sys.stderr)
         return 2
-    return 0
+
+    violations = lint_directory(root)
+    if not violations:
+        print(f"checked {root} — all clean")
+        return 0
+
+    errors = [v for v in violations if v.rule.level == "error"]
+    warnings = [v for v in violations if v.rule.level == "warning"]
+    for v in violations:
+        print(format_violation(v))
+    print(f"\n{len(errors)} error(s), {len(warnings)} warning(s)")
+    return 1 if errors else 0
 
 
 if __name__ == "__main__":
