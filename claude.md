@@ -47,13 +47,11 @@ New audience-aware modules live in `app/school/` (integrations + schedule),
 
 ## Quality bar (non-negotiable)
 
-`uv run ruff check .` + `uv run ruff format --check .` + `uv run mypy .` must all pass before any commit.
+Pre-commit hook (после `uv run pre-commit install`) гоняет `ruff format --check`, `ruff check`, `mypy --strict app/ scripts/` и `python scripts/lint_templates.py` автоматом на каждом `git commit`. Всё должно быть зелёное.
 
-- ruff rule set: `E,F,I,UP,B,S,A,RUF`
-- mypy `--strict`, no `# type: ignore` without an explanatory comment
-- pydantic v2 `BaseModel` for any data crossing a boundary
-- Tests: pytest-asyncio mode=auto, TRUNCATE between functions
-- Per-feature folders `app/<feature>/{router,service,models,schemas}.py`
+После redeploy `.tmp_ssh_inspect.py` зовёт `python scripts/smoke_test.py https://getdoday.ru` — проверяет 18 ключевых endpoint'ов. Если красный — диагностируй до того как считать деплой завершённым.
+
+CI на GitHub Actions запускает то же самое + полный `pytest -q` на каждый push в master. Бейдж зелёный — baseline.
 
 ## Git workflow
 
