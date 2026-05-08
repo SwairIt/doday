@@ -649,9 +649,7 @@ async def search_endpoint(
                     }
                     for t in tasks
                 ],
-                "projects": [
-                    {"id": str(p.id), "name": p.name, "slug": p.slug} for p in projects
-                ],
+                "projects": [{"id": str(p.id), "name": p.name, "slug": p.slug} for p in projects],
             }
         )
 

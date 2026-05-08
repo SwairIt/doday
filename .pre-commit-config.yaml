@@ -1,0 +1,32 @@
+# pre-commit hooks. Install once after clone: `uv run pre-commit install`.
+# Each hook runs on `git commit` against changed files.
+# Bypass (only for emergencies): `git commit --no-verify`.
+
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-format
+        name: ruff format
+        entry: uv run ruff format
+        language: system
+        types: [python]
+
+      - id: ruff-check
+        name: ruff check
+        entry: uv run ruff check --fix
+        language: system
+        types: [python]
+
+      - id: mypy
+        name: mypy --strict
+        entry: uv run mypy --strict app/ scripts/
+        language: system
+        pass_filenames: false
+        types: [python]
+
+      - id: lint-templates
+        name: lint Jinja templates
+        entry: uv run python scripts/lint_templates.py
+        language: system
+        pass_filenames: false
+        files: ^app/templates/.*\.html$

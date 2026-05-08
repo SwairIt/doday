@@ -19,9 +19,7 @@ async def get_graph(user: RequiredUser, session: DbSession) -> dict[str, list[di
 
 
 @router.get("/{task_id}/links")
-async def get_links(
-    task_id: UUID, user: RequiredUser, session: DbSession
-) -> list[LinkedTaskOut]:
+async def get_links(task_id: UUID, user: RequiredUser, session: DbSession) -> list[LinkedTaskOut]:
     return await list_links_for_task(session, user.id, task_id)
 
 

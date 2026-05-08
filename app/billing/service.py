@@ -24,7 +24,7 @@ class TierLimits(TypedDict):
     max_custom_filters: int | None
     max_bulk_paste_lines: int
     trash_retention_days: int
-    custom_filters: bool       # legacy: kept True everywhere now (was Pro-only)
+    custom_filters: bool  # legacy: kept True everywhere now (was Pro-only)
     user_templates: bool
     kanban_view: bool
     icalendar_export: bool
@@ -33,10 +33,10 @@ class TierLimits(TypedDict):
     daily_goal: bool
     label_count: int | None
     bulk_actions: bool
-    premium_themes: bool       # forest, minimal — Pro+
-    email_digest: bool         # Pro+ (when feature ships)
-    tg_bot: bool               # Pro+ (when feature ships)
-    family_seats: int          # only Family has >1
+    premium_themes: bool  # forest, minimal — Pro+
+    email_digest: bool  # Pro+ (when feature ships)
+    tg_bot: bool  # Pro+ (when feature ships)
+    family_seats: int  # only Family has >1
 
 
 TIERS: dict[str, TierLimits] = {
@@ -46,14 +46,14 @@ TIERS: dict[str, TierLimits] = {
         "max_custom_filters": 3,
         "max_bulk_paste_lines": 50,
         "trash_retention_days": 14,
-        "custom_filters": True,    # allowed but capped via max_custom_filters
+        "custom_filters": True,  # allowed but capped via max_custom_filters
         "user_templates": False,
         "kanban_view": True,
         "icalendar_export": True,
         "pomodoro": True,
         "activity_feed": True,
         "daily_goal": True,
-        "label_count": None,       # uncapped
+        "label_count": None,  # uncapped
         "bulk_actions": True,
         "premium_themes": False,
         "email_digest": False,
@@ -168,8 +168,7 @@ async def can_create_project(session: AsyncSession, user: User) -> tuple[bool, s
     current = row.scalar_one()
     if current >= cap:
         return False, (
-            f"Достигнут лимит Free-тарифа: {cap} активных проектов. "
-            "Pro снимает лимит за 199₽/мес."
+            f"Достигнут лимит Free-тарифа: {cap} активных проектов. Pro снимает лимит за 199₽/мес."
         )
     return True, None
 
@@ -192,15 +191,12 @@ async def can_create_task(session: AsyncSession, user: User) -> tuple[bool, str 
     current = row.scalar_one()
     if current >= cap:
         return False, (
-            f"Достигнут лимит Free-тарифа: {cap} активных задач. "
-            "Pro снимает лимит за 199₽/мес."
+            f"Достигнут лимит Free-тарифа: {cap} активных задач. Pro снимает лимит за 199₽/мес."
         )
     return True, None
 
 
-async def can_create_custom_filter(
-    session: AsyncSession, user: User
-) -> tuple[bool, str | None]:
+async def can_create_custom_filter(session: AsyncSession, user: User) -> tuple[bool, str | None]:
     """Returns (allowed, reason_if_blocked)."""
     limits = limits_for(user)
     cap = limits["max_custom_filters"]

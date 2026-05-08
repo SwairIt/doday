@@ -23,9 +23,7 @@ async def test_graph_includes_links_and_parents(logged_in_client: AsyncClient) -
             "/api/tasks", json={"title": "gamma child", "parent_task_id": a["id"]}
         )
     ).json()
-    await logged_in_client.post(
-        f"/api/tasks/{a['id']}/links", json={"target_task_id": b["id"]}
-    )
+    await logged_in_client.post(f"/api/tasks/{a['id']}/links", json={"target_task_id": b["id"]})
 
     body = (await logged_in_client.get("/api/links/graph")).json()
     ids = {n["id"] for n in body["nodes"]}
@@ -33,10 +31,7 @@ async def test_graph_includes_links_and_parents(logged_in_client: AsyncClient) -
     assert b["id"] in ids
     assert c["id"] in ids
 
-    kinds_for_a = [
-        e for e in body["edges"]
-        if a["id"] in (e["source"], e["target"])
-    ]
+    kinds_for_a = [e for e in body["edges"] if a["id"] in (e["source"], e["target"])]
     assert any(e["kind"] == "link" for e in kinds_for_a)
     assert any(e["kind"] == "parent" for e in kinds_for_a)
 

@@ -15,9 +15,7 @@ async def test_move_task_to_another_project(logged_in_client: AsyncClient) -> No
         )
     ).json()
 
-    r = await logged_in_client.patch(
-        f"/api/tasks/{t['id']}", json={"project_id": dst["id"]}
-    )
+    r = await logged_in_client.patch(f"/api/tasks/{t['id']}", json={"project_id": dst["id"]})
     assert r.status_code == 200
     assert r.json()["project_id"] == dst["id"]
 

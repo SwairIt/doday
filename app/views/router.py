@@ -402,9 +402,7 @@ async def stats_view(request: Request, user: RequiredUser, session: DbSession) -
 
 
 @router.get("/graph", response_class=HTMLResponse)
-async def graph_view(
-    request: Request, user: RequiredUser, session: DbSession
-) -> HTMLResponse:
+async def graph_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
     """Cosmic force-directed graph of all active tasks + their links + parent/child."""
     projects = await list_projects(session, user.id)
     return templates.TemplateResponse(

@@ -107,14 +107,10 @@ async def list_links_for_task(
     return out
 
 
-async def list_all_links_for_user(
-    session: AsyncSession, user_id: UUID
-) -> list[tuple[UUID, UUID]]:
+async def list_all_links_for_user(session: AsyncSession, user_id: UUID) -> list[tuple[UUID, UUID]]:
     """Return all (source_id, target_id) pairs the user owns — used by the graph view."""
     rows = await session.execute(
-        select(TaskLink.source_task_id, TaskLink.target_task_id).where(
-            TaskLink.user_id == user_id
-        )
+        select(TaskLink.source_task_id, TaskLink.target_task_id).where(TaskLink.user_id == user_id)
     )
     return [(row[0], row[1]) for row in rows.all()]
 

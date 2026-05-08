@@ -65,9 +65,7 @@ async def test_link_cross_project(logged_in_client: AsyncClient) -> None:
     a = await _new_task(logged_in_client, "in P1", project_id=p1["id"])
     b = await _new_task(logged_in_client, "in P2", project_id=p2["id"])
 
-    r = await logged_in_client.post(
-        f"/api/tasks/{a['id']}/links", json={"target_task_id": b["id"]}
-    )
+    r = await logged_in_client.post(f"/api/tasks/{a['id']}/links", json={"target_task_id": b["id"]})
     assert r.status_code == 201
 
     out = (await logged_in_client.get(f"/api/tasks/{a['id']}/links")).json()
@@ -100,7 +98,5 @@ async def test_link_delete_idempotent_missing(logged_in_client: AsyncClient) -> 
 
 
 async def test_link_anon_blocked(client: AsyncClient) -> None:
-    r = await client.get(
-        "/api/tasks/00000000-0000-0000-0000-000000000000/links"
-    )
+    r = await client.get("/api/tasks/00000000-0000-0000-0000-000000000000/links")
     assert r.status_code == 401

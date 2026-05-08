@@ -18,9 +18,7 @@ async def test_detail_panel_renders_recurrence_picker(logged_in_client: AsyncCli
 async def test_set_recurrence_via_detail_endpoint(logged_in_client: AsyncClient) -> None:
     """PATCH /htmx/tasks/{id}/detail with recurrence=weekly persists the value."""
     due = (datetime.now(UTC) + timedelta(days=1)).isoformat()
-    t = (
-        await logged_in_client.post("/api/tasks", json={"title": "Weekly", "due_at": due})
-    ).json()
+    t = (await logged_in_client.post("/api/tasks", json={"title": "Weekly", "due_at": due})).json()
     r = await logged_in_client.patch(
         f"/htmx/tasks/{t['id']}/detail",
         data={"title": "Weekly", "description": "", "recurrence": "weekly"},
