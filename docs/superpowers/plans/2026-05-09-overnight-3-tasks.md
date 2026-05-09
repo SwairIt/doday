@@ -168,7 +168,7 @@ Top-1 запрашиваемая фича пред-launch. Утренний emai
 
 ## Прогресс
 
-- [ ] Chunk 1 — Landing pricing fix
+- [x] Chunk 1 — Landing pricing fix ✅ `6ef8aae`
 - [ ] Chunk 2 — Help articles audit
 - [ ] Chunk 3 — Email digest MVP
 
