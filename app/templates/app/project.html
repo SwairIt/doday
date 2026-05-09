@@ -2,40 +2,42 @@
 {% block title %}{{ project.name }} — Doday{% endblock %}
 {% block view_title %}{{ project.name }}{% endblock %}
 {% block content %}
-<div class="mb-8 flex items-start gap-4">
-  <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-{{ project.color }}-500/20 shrink-0">
-    <span class="w-3 h-3 rounded-full bg-{{ project.color }}-500"></span>
-  </div>
-  <div class="flex-1 min-w-0">
-    <h1 class="text-3xl md:text-4xl font-bold mb-1 truncate flex items-center gap-2">
-      {{ project.name }}
-      {% if project.is_favorite %}
-        <svg class="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.366 2.446a1 1 0 00-.364 1.118l1.287 3.957c.299.921-.755 1.688-1.539 1.118l-3.366-2.446a1 1 0 00-1.176 0l-3.366 2.446c-.783.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.07 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z"/></svg>
+<div class="mb-8">
+  <div class="flex items-start gap-3 sm:gap-4">
+    <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-{{ project.color }}-500/20 shrink-0">
+      <span class="w-3 h-3 rounded-full bg-{{ project.color }}-500"></span>
+    </div>
+    <div class="flex-1 min-w-0">
+      <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-1 truncate flex items-center gap-2">
+        {{ project.name }}
+        {% if project.is_favorite %}
+          <svg class="w-5 h-5 text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.366 2.446a1 1 0 00-.364 1.118l1.287 3.957c.299.921-.755 1.688-1.539 1.118l-3.366-2.446a1 1 0 00-1.176 0l-3.366 2.446c-.783.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.07 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z"/></svg>
+        {% endif %}
+      </h1>
+      {% if project.description %}
+        <p class="text-sm mb-1.5 text-[var(--text)]">{{ project.description }}</p>
       {% endif %}
-    </h1>
-    {% if project.description %}
-      <p class="text-sm mb-1.5 text-[var(--text)]">{{ project.description }}</p>
-    {% endif %}
-    {% set total_active = namespace(n=no_section_active|length) %}
-    {% for g in section_groups %}{% set total_active.n = total_active.n + g.tasks|length %}{% endfor %}
-    {% set total = total_active.n + completed|length %}
-    {% set pct = (completed|length * 100 // total) if total else 0 %}
-    <p class="text-[var(--text-muted)] text-sm">
-      {{ total_active.n }} активных
-      {% if completed %}· {{ completed|length }} выполнено{% endif %}
-      {% if section_groups %}· {{ section_groups|length }} секций{% endif %}
-      {% if project.is_inbox %}· системный проект{% endif %}
-    </p>
-    {% if total %}
-      <div class="mt-2 flex items-center gap-2 text-xs text-[var(--text-muted)]">
-        <div class="flex-1 h-1.5 bg-[var(--surface-2)] rounded-full overflow-hidden max-w-xs">
-          <div class="h-full grad-bg transition-all duration-500" style="width: {{ pct }}%"></div>
+      {% set total_active = namespace(n=no_section_active|length) %}
+      {% for g in section_groups %}{% set total_active.n = total_active.n + g.tasks|length %}{% endfor %}
+      {% set total = total_active.n + completed|length %}
+      {% set pct = (completed|length * 100 // total) if total else 0 %}
+      <p class="text-[var(--text-muted)] text-sm">
+        {{ total_active.n }} активных
+        {% if completed %}· {{ completed|length }} выполнено{% endif %}
+        {% if section_groups %}· {{ section_groups|length }} секций{% endif %}
+        {% if project.is_inbox %}· системный проект{% endif %}
+      </p>
+      {% if total %}
+        <div class="mt-2 flex items-center gap-2 text-xs text-[var(--text-muted)]">
+          <div class="flex-1 h-1.5 bg-[var(--surface-2)] rounded-full overflow-hidden max-w-xs">
+            <div class="h-full grad-bg transition-all duration-500" style="width: {{ pct }}%"></div>
+          </div>
+          <span class="tabular-nums">{{ pct }}%</span>
         </div>
-        <span class="tabular-nums">{{ pct }}%</span>
-      </div>
-    {% endif %}
+      {% endif %}
+    </div>
   </div>
-  <div class="flex items-center gap-1 p-1 rounded-xl bg-[var(--surface-2)] text-sm">
+  <div class="mt-4 flex items-center gap-1 p-1 rounded-xl bg-[var(--surface-2)] text-sm w-fit">
     <span class="px-3 py-1.5 rounded-lg grad-bg text-white font-semibold">Список</span>
     <a href="?view=kanban" class="px-3 py-1.5 rounded-lg hover:bg-[var(--surface)] transition">Доска</a>
   </div>

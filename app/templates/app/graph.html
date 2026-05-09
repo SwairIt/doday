@@ -10,10 +10,10 @@
       Тащи мышью, крути колесом, кликни звезду чтобы открыть.
     </p>
   </div>
-  <div class="flex items-center gap-2 text-xs">
-    <button id="graph-recenter" class="btn-ghost px-3 py-1.5">⌖ В центр</button>
-    <button id="graph-replay" class="btn-ghost px-3 py-1.5">↻ Перезапустить физику</button>
-    <label class="flex items-center gap-1.5 cursor-pointer">
+  <div class="flex items-center gap-2 text-xs flex-wrap">
+    <button id="graph-recenter" class="btn-ghost px-3 py-1.5 whitespace-nowrap">⌖ В центр</button>
+    <button id="graph-replay" class="btn-ghost px-3 py-1.5 whitespace-nowrap"><span class="hidden sm:inline">↻ Перезапустить физику</span><span class="sm:hidden">↻ Сброс</span></button>
+    <label class="flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
       <input type="checkbox" id="graph-show-completed" class="accent-[var(--accent)]">
       <span class="text-[var(--text-muted)]">Показать выполненные</span>
     </label>

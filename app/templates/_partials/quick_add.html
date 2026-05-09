@@ -97,8 +97,8 @@
           });
         }
       }"
-      placeholder="Добавить задачу — попробуй «Сходить в зал завтра !!! @спорт»"
-      class="flex-1 bg-transparent border-none outline-none text-sm md:text-base placeholder:text-[var(--text-muted)]"
+      placeholder="Новая задача"
+      class="flex-1 min-w-0 bg-transparent border-none outline-none text-sm md:text-base placeholder:text-[var(--text-muted)]"
       autocomplete="off"
       required
       @paste="onPaste($event)"
@@ -106,7 +106,7 @@
     {% if project %}
       <input type="hidden" name="project_id" value="{{ project.id }}">
     {% endif %}
-    <button type="submit" class="btn-primary px-4 py-2 text-sm">Добавить</button>
+    <button type="submit" class="btn-primary px-3 py-2 text-sm whitespace-nowrap shrink-0"><span class="hidden sm:inline">Добавить</span><span class="sm:hidden">+</span></button>
   </div>
   <div class="mt-1.5 text-xs text-[var(--text-muted)] px-2 leading-relaxed">
     Подсказки:
