@@ -2,44 +2,46 @@
 {% block title %}{{ project.name }} — Kanban — Doday{% endblock %}
 {% block view_title %}{{ project.name }}{% endblock %}
 {% block content %}
-<div class="mb-6 flex items-start gap-4">
-  <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-{{ project.color }}-500/20 shrink-0">
-    <span class="w-3 h-3 rounded-full bg-{{ project.color }}-500"></span>
-  </div>
-  <div class="flex-1 min-w-0">
-    <h1 class="text-3xl font-bold mb-1 truncate flex items-center gap-2">
-      {{ project.name }}
-      {% if project.is_favorite %}
-        <svg class="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.366 2.446a1 1 0 00-.364 1.118l1.287 3.957c.299.921-.755 1.688-1.539 1.118l-3.366-2.446a1 1 0 00-1.176 0l-3.366 2.446c-.783.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.07 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z"/></svg>
+<div class="mb-6 space-y-3 sm:space-y-0 sm:flex sm:items-start sm:gap-4">
+  <div class="flex items-start gap-3 min-w-0 sm:flex-1">
+    <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-{{ project.color }}-500/20 shrink-0">
+      <span class="w-3 h-3 rounded-full bg-{{ project.color }}-500"></span>
+    </div>
+    <div class="flex-1 min-w-0">
+      <h1 class="text-2xl sm:text-3xl font-bold mb-1 break-words flex items-start gap-2">
+        <span class="min-w-0">{{ project.name }}</span>
+        {% if project.is_favorite %}
+          <svg class="w-5 h-5 text-amber-400 shrink-0 mt-1" fill="currentColor" viewBox="0 0 24 24"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.366 2.446a1 1 0 00-.364 1.118l1.287 3.957c.299.921-.755 1.688-1.539 1.118l-3.366-2.446a1 1 0 00-1.176 0l-3.366 2.446c-.783.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.07 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z"/></svg>
+        {% endif %}
+      </h1>
+      {% if project.description %}
+        <p class="text-sm mb-1.5 text-[var(--text)]">{{ project.description }}</p>
       {% endif %}
-    </h1>
-    {% if project.description %}
-      <p class="text-sm mb-1.5 text-[var(--text)]">{{ project.description }}</p>
-    {% endif %}
-    <p class="text-[var(--text-muted)] text-sm">Kanban-доска · перетаскивай задачи между колонками</p>
-    {% set total_active_k = namespace(n=no_section_active|length) %}
-    {% for g in section_groups %}{% set total_active_k.n = total_active_k.n + g.tasks|length %}{% endfor %}
-    {% set total_k = total_active_k.n + completed|length %}
-    {% set pct_k = (completed|length * 100 // total_k) if total_k else 0 %}
-    {% if total_k %}
-      <div class="mt-2 flex items-center gap-2 text-xs text-[var(--text-muted)]">
-        <div class="flex-1 h-1.5 bg-[var(--surface-2)] rounded-full overflow-hidden max-w-xs">
-          <div class="h-full grad-bg transition-all duration-500" style="width: {{ pct_k }}%"></div>
+      <p class="text-[var(--text-muted)] text-sm">Kanban-доска · перетаскивай задачи между колонками</p>
+      {% set total_active_k = namespace(n=no_section_active|length) %}
+      {% for g in section_groups %}{% set total_active_k.n = total_active_k.n + g.tasks|length %}{% endfor %}
+      {% set total_k = total_active_k.n + completed|length %}
+      {% set pct_k = (completed|length * 100 // total_k) if total_k else 0 %}
+      {% if total_k %}
+        <div class="mt-2 flex items-center gap-2 text-xs text-[var(--text-muted)]">
+          <div class="flex-1 h-1.5 bg-[var(--surface-2)] rounded-full overflow-hidden max-w-xs">
+            <div class="h-full grad-bg transition-all duration-500" style="width: {{ pct_k }}%"></div>
+          </div>
+          <span class="tabular-nums">{{ completed|length }} / {{ total_k }} · {{ pct_k }}%</span>
         </div>
-        <span class="tabular-nums">{{ completed|length }} / {{ total_k }} · {{ pct_k }}%</span>
-      </div>
-    {% endif %}
+      {% endif %}
+    </div>
   </div>
-  <div class="flex items-center gap-1 p-1 rounded-xl bg-[var(--surface-2)] text-sm">
+  <div class="flex items-center gap-1 p-1 rounded-xl bg-[var(--surface-2)] text-sm self-start shrink-0">
     <a href="/app/projects/{{ project.slug }}" class="px-3 py-1.5 rounded-lg hover:bg-[var(--surface)] transition">Список</a>
     <span class="px-3 py-1.5 rounded-lg grad-bg text-white font-semibold">Доска</span>
   </div>
 </div>
 
-<div class="overflow-x-auto pb-4">
-  <div class="flex gap-4 min-h-[60vh]" id="kanban-board">
+<div class="overflow-x-auto pb-4 -mx-4 sm:mx-0 px-4 sm:px-0">
+  <div class="flex gap-3 sm:gap-4 min-h-[60vh]" id="kanban-board">
     {# Column for tasks without a section #}
-    <div class="w-72 shrink-0 card flex flex-col" data-section-id="">
+    <div class="w-64 sm:w-72 shrink-0 card flex flex-col" data-section-id="">
       <div class="px-4 py-3 border-b border-[var(--border)] flex items-center gap-2">
         <span class="w-2 h-2 rounded-full bg-slate-500"></span>
         <h2 class="font-semibold flex-1">Без секции</h2>
@@ -54,7 +56,7 @@
 
     {% for group in section_groups %}
       {% set s = group.section %}
-      <div class="kanban-col w-72 shrink-0 card flex flex-col" data-section-id="{{ s.id }}"
+      <div class="kanban-col w-64 sm:w-72 shrink-0 card flex flex-col" data-section-id="{{ s.id }}"
            x-data="{ editing: false, name: {{ s.name|tojson|forceescape }} }">
         <div class="px-4 py-3 border-b border-[var(--border)] flex items-center gap-2 group">
           <span data-section-handle class="cursor-grab active:cursor-grabbing text-[var(--text-muted)] opacity-0 group-hover:opacity-60 hover:opacity-100 -ml-1">
@@ -90,7 +92,7 @@
 
     {# Add-column form #}
     <form
-      class="w-72 shrink-0"
+      class="w-64 sm:w-72 shrink-0"
       hx-post="/htmx/sections"
       hx-target="this"
       hx-swap="beforebegin"
