@@ -2,14 +2,14 @@
 {% block title %}Мои фильтры — Doday{% endblock %}
 {% block view_title %}Мои фильтры{% endblock %}
 {% block content %}
-<div class="mb-8 flex items-start gap-4">
+<div class="mb-8 flex flex-col sm:flex-row sm:items-start gap-4">
   <div class="flex-1 min-w-0">
     <h1 class="text-3xl md:text-4xl font-bold mb-1">Мои фильтры</h1>
     <p class="text-[var(--text-muted)] text-sm">Сохрани часто используемый набор условий — он появится в сайдбаре.</p>
   </div>
   <button type="button"
           @click="$dispatch('open-filter-editor', {mode: 'create'})"
-          class="btn-primary px-4 py-2 text-sm inline-flex items-center gap-2">
+          class="btn-primary px-4 py-2 text-sm inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0">
     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
     Новый фильтр
   </button>
