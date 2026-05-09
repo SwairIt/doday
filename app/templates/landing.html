@@ -48,12 +48,12 @@
         <a href="/help" class="hover:text-[var(--text)] transition">Помощь</a>
         <a href="#faq" class="hover:text-[var(--text)] transition">FAQ</a>
       </div>
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 md:gap-3">
         {% if user %}
-          <a href="/app/today" class="btn-primary">Мои задачи</a>
+          <a href="/app/today" class="btn-primary whitespace-nowrap">Мои задачи</a>
         {% else %}
-          <a href="/auth/login" class="btn-ghost">Войти</a>
-          <a href="/auth/register" class="btn-primary">Начать бесплатно</a>
+          <a href="/auth/login" class="btn-ghost whitespace-nowrap">Войти</a>
+          <a href="/auth/register" class="btn-primary whitespace-nowrap"><span class="hidden sm:inline">Начать </span>бесплатно</a>
         {% endif %}
       </div>
     </nav>
