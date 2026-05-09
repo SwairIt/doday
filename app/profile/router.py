@@ -44,6 +44,19 @@ async def update_audience(
     return {"audience": new_value}
 
 
+@router.post("/morning-digest")
+async def update_morning_digest(
+    user: RequiredUser,
+    session: DbSession,
+    enabled: Annotated[str, Form()],
+) -> dict[str, bool]:
+    """Toggle the morning digest opt-in for the signed-in user."""
+    new_value = enabled.lower() in ("1", "true", "on", "yes")
+    user.morning_digest_enabled = new_value
+    await session.commit()
+    return {"enabled": new_value}
+
+
 @router.post("/password")
 async def change_password(
     user: RequiredUser,
