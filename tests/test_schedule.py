@@ -9,9 +9,9 @@ async def test_schedule_view_renders_for_logged_in(logged_in_client: AsyncClient
     body = response.text
     assert "Расписание уроков" in body
     # subjects = {{ ... |tojson|forceescape }} produces HTML-escaped JSON in the
-    # x-data attribute — Alpine decodes &quot; → " at runtime, so we check the
-    # HTML-encoded form.
-    assert "&quot;math&quot;" in body and "&quot;physics&quot;" in body
+    # x-data attribute — Jinja's forceescape uses `&#34;` for `"` (HTML5 numeric
+    # entity, not the named `&quot;`). Alpine decodes both at attribute-read time.
+    assert "&#34;math&#34;" in body and "&#34;physics&#34;" in body
     assert "/api/school/schedule" in body
 
 
