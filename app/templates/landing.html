@@ -36,9 +36,9 @@
 
 <div class="min-h-screen flex flex-col">
   <header class="sticky top-0 z-30 glass">
-    <nav class="max-w-7xl mx-auto px-6 py-3.5 flex items-center justify-between">
-      <a href="/" class="flex items-center gap-2.5 font-bold text-xl">
-        <span class="grad-bg w-9 h-9 rounded-xl flex items-center justify-center text-white font-extrabold shadow-glow">D</span>
+    <nav class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-2">
+      <a href="/" class="flex items-center gap-2 sm:gap-2.5 font-bold text-lg sm:text-xl min-w-0">
+        <span class="grad-bg w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-white font-extrabold shadow-glow flex-shrink-0">D</span>
         <span class="grad-text">Doday</span>
       </a>
       <div class="hidden md:flex items-center gap-7 text-sm text-[var(--text-muted)]">
@@ -48,12 +48,12 @@
         <a href="/help" class="hover:text-[var(--text)] transition">Помощь</a>
         <a href="#faq" class="hover:text-[var(--text)] transition">FAQ</a>
       </div>
-      <div class="flex items-center gap-2 md:gap-3">
+      <div class="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
         {% if user %}
-          <a href="/app/today" class="btn-primary whitespace-nowrap">Мои задачи</a>
+          <a href="/app/today" class="btn-primary whitespace-nowrap text-sm sm:text-base !py-2 !px-3 sm:!py-[11px] sm:!px-5">Мои задачи</a>
         {% else %}
-          <a href="/auth/login" class="btn-ghost whitespace-nowrap">Войти</a>
-          <a href="/auth/register" class="btn-primary whitespace-nowrap"><span class="hidden sm:inline">Начать </span>бесплатно</a>
+          <a href="/auth/login" class="btn-ghost whitespace-nowrap text-sm sm:text-base !py-2 !px-3 sm:!py-[11px] sm:!px-5">Войти</a>
+          <a href="/auth/register" class="btn-primary whitespace-nowrap text-sm sm:text-base !py-2 !px-3 sm:!py-[11px] sm:!px-5"><span class="hidden sm:inline">Начать </span>бесплатно</a>
         {% endif %}
       </div>
     </nav>
@@ -62,35 +62,35 @@
   <main class="flex-1">
 
     {# ───── HERO ───── #}
-    <section class="relative max-w-5xl mx-auto px-6 pt-20 pb-24 text-center">
+    <section class="relative max-w-5xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-16 sm:pb-24 text-center">
       <div class="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
         <div class="absolute top-10 left-1/4 w-72 h-72 bg-violet-500/20 rounded-full blur-3xl float-slow"></div>
         <div class="absolute top-32 right-1/4 w-72 h-72 bg-fuchsia-500/20 rounded-full blur-3xl float-slow" style="animation-delay: -3s"></div>
       </div>
 
-      <p class="reveal inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium glass mb-10">
-        <span class="w-2 h-2 rounded-full grad-bg"></span>
-        14 дней Pro бесплатно при регистрации, без карты
+      <p class="reveal inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium glass mb-8 sm:mb-10">
+        <span class="w-2 h-2 rounded-full grad-bg flex-shrink-0"></span>
+        <span>14 дней Pro бесплатно при регистрации, без карты</span>
       </p>
 
-      <h1 class="reveal text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 leading-[1.05]">
+      <h1 class="reveal text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 leading-[1.05]">
         Тудулист, в котором<br>
         <span class="grad-text shimmer bg-clip-text">приятно жить</span>
       </h1>
 
-      <p class="reveal text-lg md:text-xl text-[var(--text-muted)] max-w-2xl mx-auto mb-10 leading-relaxed">
+      <p class="reveal text-base sm:text-lg md:text-xl text-[var(--text-muted)] max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed">
         Задачи, проекты, канбан, календарь, лейблы, повторы, помидор-таймер.
         Один сайт — для дома, учёбы, работы и команд. Без рекламы и без писем «вернись к нам».
       </p>
 
-      <div class="reveal flex flex-wrap items-center justify-center gap-4">
-        <a href="/auth/register" class="btn-primary text-base px-7 py-3.5">
+      <div class="reveal flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-center gap-3 sm:gap-4">
+        <a href="/auth/register" class="btn-primary text-base px-7 py-3.5 justify-center">
           Создать аккаунт
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
           </svg>
         </a>
-        <a href="#features" class="btn-ghost text-base px-7 py-3.5">Посмотреть возможности</a>
+        <a href="#features" class="btn-ghost text-base px-7 py-3.5 justify-center">Посмотреть возможности</a>
       </div>
 
       <div class="reveal mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-[var(--text-muted)]">
@@ -101,15 +101,15 @@
     </section>
 
     {# ───── MOCK SCREENSHOT ───── #}
-    <section class="reveal max-w-5xl mx-auto px-6 pb-28">
+    <section class="reveal max-w-5xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
       <div class="relative">
         <div class="absolute inset-x-0 -top-8 h-32 grad-bg blur-3xl opacity-25 -z-10"></div>
         <div class="card overflow-hidden shadow-card">
           <div class="flex items-center gap-2 px-4 py-3 border-b border-[var(--border)] bg-[var(--surface-2)]">
-            <span class="w-3 h-3 rounded-full bg-rose-400/60"></span>
-            <span class="w-3 h-3 rounded-full bg-amber-400/60"></span>
-            <span class="w-3 h-3 rounded-full bg-emerald-400/60"></span>
-            <span class="ml-3 text-xs text-[var(--text-muted)]">doday.app · Сегодня</span>
+            <span class="w-3 h-3 rounded-full bg-rose-400/60 flex-shrink-0"></span>
+            <span class="w-3 h-3 rounded-full bg-amber-400/60 flex-shrink-0"></span>
+            <span class="w-3 h-3 rounded-full bg-emerald-400/60 flex-shrink-0"></span>
+            <span class="ml-3 text-xs text-[var(--text-muted)] truncate">doday.app · Сегодня</span>
           </div>
           <div class="grid md:grid-cols-[220px_1fr]">
             <aside class="p-4 border-r border-[var(--border)] bg-[var(--surface-2)] hidden md:block space-y-1">
@@ -123,25 +123,28 @@
               <div class="px-3 py-2 rounded-lg flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-400"></span>Работа</div>
               <div class="px-3 py-2 rounded-lg flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-400"></span>Дом</div>
             </aside>
-            <div class="p-6 space-y-3">
-              <h3 class="text-2xl font-bold mb-1">Сегодня <span class="text-[var(--text-muted)] text-base font-normal">· пятница, 3 мая</span></h3>
+            <div class="p-4 sm:p-6 space-y-3 min-w-0">
+              <h3 class="text-lg sm:text-2xl font-bold mb-1">
+                Сегодня
+                <span class="block sm:inline text-[var(--text-muted)] text-xs sm:text-base font-normal">· пятница, 3 мая</span>
+              </h3>
               <p class="text-xs text-[var(--text-muted)] mb-4">🎯 Цель: 5 задач · выполнено 1</p>
-              <div class="flex items-center gap-3 p-3 rounded-xl border border-[var(--border)] hover:border-[var(--accent)] transition">
-                <span class="w-5 h-5 rounded-full border-2 border-rose-400"></span>
-                <span class="flex-1">Контрольная по алгебре</span>
-                <span class="text-xs px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-400 font-medium">!1</span>
+              <div class="flex items-center gap-3 p-3 rounded-xl border border-[var(--border)] hover:border-[var(--accent)] transition min-w-0">
+                <span class="w-5 h-5 rounded-full border-2 border-rose-400 flex-shrink-0"></span>
+                <span class="flex-1 min-w-0 truncate">Контрольная по алгебре</span>
+                <span class="text-xs px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-400 font-medium flex-shrink-0">!1</span>
               </div>
-              <div class="flex items-center gap-3 p-3 rounded-xl border border-[var(--border)] hover:border-[var(--accent)] transition">
-                <span class="w-5 h-5 rounded-full border-2 border-amber-400"></span>
-                <span class="flex-1">Прогуляться 30 мин</span>
-                <span class="text-xs px-2 py-0.5 rounded-md bg-violet-500/15 text-violet-400">@дом</span>
-                <span class="text-xs px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400">↻ ежедневно</span>
+              <div class="flex items-center gap-2 p-3 rounded-xl border border-[var(--border)] hover:border-[var(--accent)] transition flex-wrap min-w-0">
+                <span class="w-5 h-5 rounded-full border-2 border-amber-400 flex-shrink-0"></span>
+                <span class="flex-1 min-w-0 truncate">Прогуляться 30 мин</span>
+                <span class="text-xs px-2 py-0.5 rounded-md bg-violet-500/15 text-violet-400 flex-shrink-0">@дом</span>
+                <span class="text-xs px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 flex-shrink-0 hidden sm:inline-block">↻ ежедневно</span>
               </div>
-              <div class="flex items-center gap-3 p-3 rounded-xl border border-[var(--border)] opacity-60">
-                <span class="w-5 h-5 rounded-full grad-bg flex items-center justify-center">
+              <div class="flex items-center gap-3 p-3 rounded-xl border border-[var(--border)] opacity-60 min-w-0">
+                <span class="w-5 h-5 rounded-full grad-bg flex items-center justify-center flex-shrink-0">
                   <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                 </span>
-                <span class="flex-1 line-through">Купить хлеб</span>
+                <span class="flex-1 min-w-0 line-through truncate">Купить хлеб</span>
               </div>
             </div>
           </div>
@@ -150,7 +153,7 @@
     </section>
 
     {# ───── STATS ───── #}
-    <section class="reveal max-w-5xl mx-auto px-6 pb-24">
+    <section class="reveal max-w-5xl mx-auto px-4 sm:px-6 pb-20 sm:pb-24">
       <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
         {% for n, label in [
           ('14', 'дней Pro в подарок'),
@@ -167,7 +170,7 @@
     </section>
 
     {# ───── FEATURES ───── #}
-    <section id="features" class="max-w-7xl mx-auto px-6 pb-28">
+    <section id="features" class="max-w-7xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
       <div class="text-center mb-16">
         <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Возможности</p>
         <h2 class="text-3xl md:text-4xl font-bold mb-3">Всё, что нужно. Ничего лишнего.</h2>
@@ -206,7 +209,7 @@
     </section>
 
     {# ───── WORKFLOW SHOWCASE ───── #}
-    <section id="workflow" class="max-w-6xl mx-auto px-6 pb-28">
+    <section id="workflow" class="max-w-6xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
       <div class="text-center mb-14">
         <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Как это работает</p>
         <h2 class="text-3xl md:text-4xl font-bold">Три привычки, которые меняют день</h2>
@@ -329,7 +332,7 @@
     </section>
 
     {# ───── PRICING ───── #}
-    <section id="pricing" class="max-w-6xl mx-auto px-6 pb-28">
+    <section id="pricing" class="max-w-6xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
       <div class="text-center mb-14">
         <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Тарифы</p>
         <h2 class="text-3xl md:text-4xl font-bold mb-3">Честно: бесплатно работает на полную</h2>
@@ -406,7 +409,7 @@
     {# ───── SCREENSHOTS ───── #}
     {# Пока нет реальных скринов с iPhone — фиолетовые SVG-mockup'ы #}
     {# в стилистике приложения. Заменить на реальные PNG'и когда будут. #}
-    <section id="screenshots" class="max-w-6xl mx-auto px-6 pb-28">
+    <section id="screenshots" class="max-w-6xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
       <div class="text-center mb-14">
         <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Как выглядит</p>
         <h2 class="text-3xl md:text-4xl font-bold mb-3">Тёмный, светлый — на твой вкус</h2>
@@ -573,7 +576,7 @@
     </section>
 
     {# ───── COMPARISON ───── #}
-    <section id="comparison" class="max-w-5xl mx-auto px-6 pb-28">
+    <section id="comparison" class="max-w-5xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
       <div class="text-center mb-12">
         <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Сравнение</p>
         <h2 class="text-3xl md:text-4xl font-bold mb-3">Бесплатно — навсегда. Не trial.</h2>
@@ -646,7 +649,7 @@
 
     {# ───── TESTIMONIAL PLACEHOLDER ───── #}
     {# Прозрачно: «Будь первым» — лучше чем фейковые отзывы. #}
-    <section id="testimonials" class="max-w-4xl mx-auto px-6 pb-28">
+    <section id="testimonials" class="max-w-4xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
       <div class="text-center mb-10">
         <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Отзывы</p>
         <h2 class="text-3xl md:text-4xl font-bold mb-3">Здесь будут отзывы пользователей</h2>
@@ -676,7 +679,7 @@
     </section>
 
     {# ───── 3 STEPS — START IN A MINUTE ───── #}
-    <section id="three-steps" class="max-w-5xl mx-auto px-6 pb-28">
+    <section id="three-steps" class="max-w-5xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
       <div class="text-center mb-14">
         <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Старт за минуту</p>
         <h2 class="text-3xl md:text-4xl font-bold mb-3">Три шага — и ты внутри</h2>
@@ -712,7 +715,7 @@
     </section>
 
     {# ───── FAQ ───── #}
-    <section id="faq" class="max-w-3xl mx-auto px-6 pb-28">
+    <section id="faq" class="max-w-3xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
       <div class="text-center mb-12">
         <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">FAQ</p>
         <h2 class="text-3xl md:text-4xl font-bold">Что обычно спрашивают</h2>

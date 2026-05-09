@@ -3,24 +3,24 @@
 {% block layout %}
 <div class="min-h-screen flex flex-col">
   <header class="sticky top-0 z-30 glass">
-    <nav class="max-w-7xl mx-auto px-6 py-3.5 flex items-center justify-between">
-      <a href="/" class="flex items-center gap-2.5 font-bold text-xl">
-        <span class="grad-bg w-9 h-9 rounded-xl flex items-center justify-center text-white font-extrabold shadow-glow">D</span>
+    <nav class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-2">
+      <a href="/" class="flex items-center gap-2 sm:gap-2.5 font-bold text-lg sm:text-xl min-w-0">
+        <span class="grad-bg w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-white font-extrabold shadow-glow flex-shrink-0">D</span>
         <span class="grad-text">Doday</span>
       </a>
-      <div class="flex items-center gap-2 md:gap-3">
+      <div class="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
         {% if user %}
-          <a href="/app/today" class="btn-primary whitespace-nowrap">Мои задачи</a>
+          <a href="/app/today" class="btn-primary whitespace-nowrap text-sm sm:text-base !py-2 !px-3 sm:!py-[11px] sm:!px-5">Мои задачи</a>
         {% else %}
-          <a href="/auth/login" class="btn-ghost whitespace-nowrap">Войти</a>
-          <a href="/auth/register" class="btn-primary whitespace-nowrap"><span class="hidden sm:inline">Начать </span>бесплатно</a>
+          <a href="/auth/login" class="btn-ghost whitespace-nowrap text-sm sm:text-base !py-2 !px-3 sm:!py-[11px] sm:!px-5">Войти</a>
+          <a href="/auth/register" class="btn-primary whitespace-nowrap text-sm sm:text-base !py-2 !px-3 sm:!py-[11px] sm:!px-5"><span class="hidden sm:inline">Начать </span>бесплатно</a>
         {% endif %}
       </div>
     </nav>
   </header>
 
   <main class="flex-1">
-    <section class="max-w-5xl mx-auto px-6 pt-16 pb-12 text-center">
+    <section class="max-w-5xl mx-auto px-4 sm:px-6 pt-16 pb-12 text-center">
       <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">База знаний</p>
       <h1 class="text-4xl md:text-5xl font-bold mb-4">Как пользоваться Doday</h1>
       <p class="text-[var(--text-muted)] text-lg max-w-2xl mx-auto">
@@ -30,7 +30,7 @@
       </p>
     </section>
 
-    <section class="max-w-5xl mx-auto px-6 pb-24">
+    <section class="max-w-5xl mx-auto px-4 sm:px-6 pb-24">
       <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {% for article in articles %}
           <a href="/help/{{ article.slug }}"
