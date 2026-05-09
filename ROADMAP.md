@@ -15,10 +15,7 @@
   - Pricing-card «Free» говорит «До 5 активных проектов» → реально 10 (правильный лимит в `app/billing/service.py::TIERS["free"]`)
   - Pricing-card «Free» помечает «Канбан, кастомные фильтры, активность» как недоступные → реально все три доступны во Free (канбан полностью, фильтры до 3 штук, активность включена)
   - 14-days Pro trial упоминание — текущая логика тоже есть, но проверить что landing соответствует реальности
-- [ ] **App-страницы — глубокий responsive-аудит с реальными данными**
-  - У текущего тест-юзера (`responsive-test@doday.local`) 0 проектов → пустые состояния везде. Нужно создать проект с задачами и заново снять today/inbox/project/kanban на mobile
-  - `kanban.html` сейчас не проверен с реальными колонками + карточками
-  - `task_detail.html` (модальная панель справа) — на mobile занимает full-width, проверить scroll и close-button reachability
+- [x] ~~**App-страницы — глубокий responsive-аудит с реальными данными**~~ — ✅ done 2026-05-09 (полный responsive-спринт 320/375/414/768, см. PROGRESS.md). Закрыто: kanban с 4 колонками, task_detail full title в textarea с auto-resize, profile.html чисто.
 - [ ] **Help-articles контент-аудит**
   - 22 статьи в `app/help/articles.py` — некоторые могут ссылаться на старые поля/маршруты
   - Прочитать каждую статью, сверить с актуальной реальностью
@@ -108,13 +105,13 @@
 Накопилось из аудитов и сессий. Не блокеры, но можно сделать в любую свободную минуту.
 
 ### Responsive / UX
-- [ ] **Comparison table на landing на mobile** — сейчас работает через `overflow-x-auto`, но 3 колонки плохо умещаются. Альтернатива: переделать в стек карточек на mobile (Doday Free карточка + Todoist Free карточка + TickTick Free карточка)
-- [ ] **Calendar grid на mobile** — 7 колонок очень узкие, dotting-точки и numbers видны но плохо. Можно: per-week view как дефолт на mobile, с кнопкой переключения на месяц
-- [ ] **Schedule horizontal scroll** — стандарт но не идеально. Идеально — single-day view на mobile с табами по дням
+- [x] ~~**Comparison table на landing на mobile**~~ — ✅ done 2026-05-09 (стек 3 карточек md:hidden / hidden md:block в landing.html)
+- [x] ~~**Calendar grid на mobile**~~ — ✅ done 2026-05-09 (auto-redirect на ?view=week при viewport <768; week-view с day-tabs на mobile)
+- [x] ~~**Schedule horizontal scroll**~~ — ✅ done 2026-05-09 (mobile day-tabs + вертикальный список slots; desktop grid сохранён)
 - [ ] **Quick-add placeholder** — потеряли длинный пример «Сходить в зал завтра !!! @спорт» на всех viewport'ах при responsive-фиксе. Можно вернуть как Alpine `:placeholder` с проверкой viewport
-- [ ] **Bottom-nav на iPad portrait (768px)** — сейчас прячется на md+ (768px+). На iPad portrait нет sidebar'а тоже скрыт за hamburger'ом. Проверить, может стоит показать nav и на iPad portrait
+- [x] ~~**Bottom-nav на iPad portrait (768px)**~~ — ✅ verified 2026-05-09: sidebar при `md:` уже виден на 768px, дополнительный bottom-nav не нужен
 - [ ] **Темы профиля Forest/Minimal** — Pro-only, но на free-юзера показываем locked-state с замочком. Проверить что lockstate понятен
-- [ ] **`profile.html` (208 классов)** — самая большая страница. Гипотетически могут быть subtle responsive-issues которые я не поймал. Сделать deep-dive snapshot когда будет время
+- [x] ~~**`profile.html` (208 классов)** deep-dive~~ — ✅ done 2026-05-09 (docW=310 на 320px чисто, layout стекается через card-system)
 
 ### Автоматизация / DX
 - [ ] **Автоматический redeploy на push в master** — сейчас вручную через `python .tmp_ssh_inspect.py`. Можно: GitHub Actions step после успешного pytest, через SSH с deploy-key. Не критично — текущий поток работает

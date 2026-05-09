@@ -431,3 +431,97 @@ Ruff strict + mypy strict зелёные на 224 файлах.
 **Финальная проверка:** smoke-test 18/18 green, jinja-линтер 0 errors, re-snapshots после redeploy подтверждают исчезновение всех найденных issues.
 
 **Test-account для повторных аудитов:** `responsive-test@doday.local` / `TestPass1234!` (создан через `.tmp_ssh_create_test_user.py`, audience=personal, email_verified).
+
+### 2026-05-09 (продолжение 2) — полный responsive-спринт 320/375/414/768
+
+По спеке `docs/superpowers/specs/2026-05-09-full-responsive-design.md`. 7 фаз:
+real test data → 320px публичных → 320px app с реальными данными →
+ROADMAP NEXT deep-dive → UX-redesign из бэклога → regression check 414/768
+→ verify+ship.
+
+**Real test data**: новый скрипт `.tmp_local_seed.py` создаёт юзера
+`responsive-test@doday.local` локально + 4 проекта (Inbox, «Работа Q3 —
+переезд офиса и онбординг» с 4 секциями, «Дом», «Учёба в магистратуре» с
+3 секциями), 17 root-задач + 3 подзадачи (приоритеты P1-P4, due overdue/
+сегодня/завтра/неделя/20дн/none, 1 завершённая, 2 в «Готово» секции),
+4 лейбла (срочно/дом/работа/идеи), 2 комментария с markdown, 1 task-link.
+
+**320px публичные** (8 шт — landing/pricing/help×2/privacy/auth×3): page
+overflow на 358px виновником был hero h1 `text-5xl` (48px на 320=overflow)
+и header CTA-кнопки в полный размер. Фикс: hero h1 `text-4xl sm:text-5xl`,
+CTA-кнопки `!py-2 !px-3 sm:!py-[11px] sm:!px-5` и text-sm; section padding
+`px-6` → `px-4 sm:px-6` (даёт +32px usable); mock-card heading flex-wrap,
+flex-shrink-0 на бейджах. После — все 8 страниц docW=310 на 320px чисто.
+
+**320px app** (20 страниц с реальными данными): через автоматический
+скан-iframe — все 20 страниц docW=310 чисто без правок (наследие
+прошлого спринта + правки app_base shell).
+
+**ROADMAP NEXT deep-dive**:
+- `kanban.html` с 4 секциями + 8 карточками: header стекается на mobile
+  (icon+title-block верху, Список/Доска снизу), title `break-words` вместо
+  `truncate` (чтобы «Работа Q3 — переезд офиса и онбординг» не обрезался
+  до «Раб»), columns `w-72` → `w-64 sm:w-72` (256px на mobile, край
+  следующей колонки виден), kanban scroll area `-mx-4 sm:mx-0 px-4 sm:px-0`
+  для full-bleed.
+- `task_detail.html` модал: title input → textarea с auto-resize (длинные
+  названия задач переносятся, а не cut'аются). text-xl → text-lg sm:text-xl.
+  Header padding mobile-aware.
+- `profile.html` (208 классов): docW=310 без правок, layout стекается
+  благодаря card-system. UX-проверка пройдена.
+
+**UX-redesign из бэклога** (Phase 5, 4 пункта из ROADMAP «Responsive/UX»):
+- **Comparison table → cards**: на mobile (`md:hidden`) теперь 3 стек-
+  карточки (Doday Free / Todoist Free / TickTick Free), каждая со всеми
+  12 строками сравнения. Doday Free — с ring/glow accent. Desktop
+  (`hidden md:block`) — оригинальная таблица сохранена.
+- **Calendar mobile week-default**: inline JS на старте `calendar.html`,
+  если viewport < 768 и нет ?view= параметра — `window.location.replace`
+  на ?view=week. Mobile получает читаемый недельный вид по умолчанию.
+- **Calendar week → day-tabs на mobile**: tabs Пн-Вс с числом, выбранный
+  день автоматом сегодняшний. На mobile одна колонка во всю ширину для
+  выбранного дня (task chips читаются полностью), на desktop остаётся
+  7-колоночная сетка.
+- **Schedule single-day на mobile**: tabs Пн-Сб + вертикальный список
+  8 уроков для выбранного дня (touch-target 44px+). Desktop 7×8 таблица
+  сохранена через `hidden md:block`.
+- **Bottom-nav на iPad portrait** проверен — sidebar уже виден на 768px,
+  дополнительный nav не нужен (ROADMAP item был основан на ошибке).
+
+**Regression check 414/768**: автоматический iframe-скан 12 ключевых
+страниц на обоих viewports — все docW в норме (404/758 для 414/768
+с учётом scrollbar), 0 culprits. Visual: на 768 landing nav-links
+overlap'или brand из-за `hidden md:flex` — поправил на `hidden lg:flex`
+(nav теперь только при >= 1024px, на iPad portrait виден brand+CTA).
+
+**Финальная проверка:**
+- `uv run python scripts/lint_templates.py` — 0 errors / 101 warnings
+  (warnings не изменились от baseline)
+- `uv run python scripts/smoke_test.py http://127.0.0.1:8000` — 18/18 green
+- `uv run pre-commit run --all-files` — все 4 hook'а Passed (ruff format,
+  ruff check, mypy --strict, lint Jinja templates)
+
+**Изменённые файлы (8 коммитов в master):**
+
+| Файл | Что |
+|---|---|
+| `docs/superpowers/specs/2026-05-09-full-responsive-design.md` | spec |
+| `.tmp_local_seed.py` | local seed скрипт (gitignored .tmp_*) |
+| `landing.html` | hero+header+mock-card 320px + comparison cards mobile + nav lg:flex |
+| `help/index.html` | header CTA 320px + section padding |
+| `help/article.html` | header CTA 320px |
+| `privacy.html` | header + main padding 320px |
+| `app/kanban.html` | header стекается + columns w-64 sm:w-72 |
+| `_partials/task_detail.html` | title input → textarea auto-resize |
+| `app/calendar.html` | inline JS auto-redirect mobile → week view |
+| `app/calendar_week.html` | day-tabs mobile + grid-cols-1 md:grid-cols-7 |
+| `app/schedule.html` | day-tabs mobile + vertical slot list |
+
+**Закрыты ROADMAP NEXT items** (см. `ROADMAP.md` обновлён):
+- ✅ App-страницы deep responsive с реальными данными
+- ✅ kanban.html с реальными колонками
+- ✅ task_detail.html модал — scroll/close/title wrap
+- ✅ Comparison table mobile cards
+- ✅ Calendar mobile week-default
+- ✅ Schedule single-day mobile
+- ✅ Bottom-nav iPad portrait (verified — sidebar уже виден)
