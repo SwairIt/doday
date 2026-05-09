@@ -12,7 +12,7 @@
      data-created="{{ task.created_at.isoformat() }}">
 <div
   id="task-{{ task.id }}"
-  class="task-row group flex items-start sm:items-center gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap p-2.5 sm:p-3 rounded-xl border border-[var(--border)]
+  class="task-row group flex items-start lg:items-center gap-1.5 sm:gap-2 flex-wrap lg:flex-nowrap p-2.5 sm:p-3 rounded-xl border border-[var(--border)]
          hover:border-[var(--accent)] transition {% if task.is_completed %}opacity-60{% endif %}"
   :class="$store.selection.has('{{ tid }}') ? 'ring-2 ring-[var(--accent)] bg-[var(--surface-2)]' : ''"
   x-data="{ subsOpen: false, commentsOpen: false }"
@@ -68,7 +68,7 @@
     {% endif %}
   </button>
 
-  <div class="flex-1 min-w-0 basis-[70%] sm:basis-auto">
+  <div class="flex-1 min-w-0 basis-[70%] lg:basis-auto">
     <div class="flex items-center gap-2 flex-wrap">
       {% if task.pinned_at %}
         <span class="text-amber-400 text-xs shrink-0" title="Закреплено">📌</span>
@@ -152,7 +152,7 @@
     {% endif %}
   </div>
 
-  <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto pl-12 sm:pl-0 flex-wrap sm:flex-nowrap">
+  <div class="flex items-center gap-2 shrink-0 w-full lg:w-auto pl-12 lg:pl-0 flex-wrap lg:flex-nowrap">
     {% if task.recurrence %}
       {% set ru_label = {'daily': 'каждый день', 'weekly': 'еженедельно', 'monthly': 'ежемесячно', 'yearly': 'ежегодно'}.get(task.recurrence, task.recurrence) %}
       <span class="text-xs px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-400 font-medium inline-flex items-center gap-1" title="Повторяется: {{ ru_label }}">
@@ -210,7 +210,29 @@
         {% endif %}
       </div>
     </div>
-    <div class="opacity-0 group-hover:opacity-100 transition flex items-center gap-1">
+    {# Mobile/tablet kebab — dispatches contextmenu to reuse the right-click
+       menu (full action set with project-move submenu). Hidden on lg+ where
+       hover icons are reachable. #}
+    <button
+      type="button"
+      title="Действия"
+      aria-label="Открыть меню задачи"
+      class="lg:hidden shrink-0 w-9 h-9 rounded-md inline-flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--surface-2)] transition"
+      @click.stop="
+        const btn = $event.currentTarget;
+        const wrap = btn.closest('[id^=task-wrap-]');
+        if (!wrap) return;
+        const r = btn.getBoundingClientRect();
+        wrap.dispatchEvent(new MouseEvent('contextmenu', {clientX: r.left, clientY: r.bottom + 4, bubbles: true, cancelable: true}));
+      "
+    >
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+        <circle cx="12" cy="6" r="1.4" fill="currentColor" stroke="none"/>
+        <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/>
+        <circle cx="12" cy="18" r="1.4" fill="currentColor" stroke="none"/>
+      </svg>
+    </button>
+    <div class="hidden lg:flex lg:opacity-0 lg:group-hover:opacity-100 transition items-center gap-1">
       <div x-data="{ open: false, daysToNextMon() { const d = new Date(); const dow = (d.getDay() + 6) % 7; return ((7 - dow) % 7) || 7; } }" class="relative">
         <button
           type="button"

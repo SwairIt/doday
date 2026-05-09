@@ -552,3 +552,30 @@ overlap'или brand из-за `hidden md:flex` — поправил на `hidde
 - `app/templates/app/calendar_week.html`
 - `app/templates/app/profile.html`
 - `app/templates/app/stats.html`
+
+### 2026-05-09 (продолжение 4) — task_row mobile redesign + kebab menu
+
+После запроса «исправь задачи, в мобильной версии немного криво» — на 320
+title-блок задачи был сжат до ~78px (~1-2 слова в строку), а полный
+toolbar (snooze/pin/labels/comments/edit/delete) был полностью спрятан на
+mobile через `opacity-0 group-hover:opacity-100` (на тач без hover —
+никогда не виден, при этом занимает 188px layout-space → давит title).
+
+| Изменение | Что |
+|---|---|
+| Layout breakpoint sm: → lg: | Action-area (chips + toolbar) уезжает на отдельную строку под заголовком при ширине < 1024 (mobile + iPad portrait + iPad landscape с sidebar). На lg+ остаётся inline как раньше |
+| Hover toolbar `opacity-0 group-hover:opacity-100` → `hidden lg:flex lg:opacity-0 lg:group-hover:opacity-100` | Теперь убирается из layout-flow на < lg, не давит ширину title-блока |
+| Новая кнопка «⋯» kebab (`lg:hidden`) | Touch-friendly, 36×36px. Диспатчит programmatic `contextmenu` на task-wrap → переиспользует существующий `task_context_menu.html` со всеми 18 действиями + project-move submenu (zero дупликации) |
+
+**Метрики до/после:**
+- 320: title_block_w **78px → 256px** (× 3.3)
+- 768 (iPad portrait, sidebar visible): title_block_w **67px → 320px** (× 4.8)
+- 1280: kebab `display: none`, hover toolbar `display: flex` opacity 0 → раскрывается на hover (поведение десктопа не изменилось)
+
+**Финальная проверка:**
+- Playwright на 320/375/768/1280 — 0 overflow, title читается, kebab открывает меню со всеми действиями
+- `uv run pre-commit run --all-files` — ruff format / ruff check / mypy strict / jinja-линтер: **Passed**
+- `uv run python scripts/smoke_test.py http://127.0.0.1:8000`: **18/18 green**
+
+**Изменённые файлы:**
+- `app/templates/_partials/task_row.html`
