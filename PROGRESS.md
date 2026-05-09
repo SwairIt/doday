@@ -407,3 +407,27 @@ Ruff strict + mypy strict зелёные на 224 файлах.
 **Финальная проверка:** jinja-линтер 0 errors / 100 warnings (warnings unchanged), smoke-test 18/18 green против https://getdoday.ru. Re-snapshots после redeploy подтверждают исчезновение всех найденных issues.
 
 **Out-of-scope:** app-страницы `/app/*` — отдельный спринт.
+
+### 2026-05-09 (продолжение) — app-pages responsive адаптив
+
+Расширил спринт на все приватные страницы. Создал test-account `responsive-test@doday.local` через SSH (direct DB insert верифицированного юзера), залогинился через Playwright, прошёл все 16 app-страниц на 375px viewport.
+
+**Чисто из коробки** (без изменений): `today.html`, `inbox/today/upcoming/calendar/done/trash/habits/stats/activity/projects-archive` — заголовки, карточки, пустые состояния стекаются нормально благодаря `app_base.html` shell'у с mobile-nav и sidebar drawer'ом.
+
+**Найдены и пофикшены реальные мобильные баги:**
+
+| Page | Issue | Fix |
+|---|---|---|
+| `app/project.html` (incl. `/app/projects/inbox`) | header сжат: icon + title + view-toggle (Список/Доска) перекрывали друг друга на 375px | Stack: title-block верху, view-toggle ниже отдельной строкой; title `text-2xl sm:text-3xl md:text-4xl` |
+| `_partials/quick_add.html` | placeholder + кнопка «Добавить» cut'ались за viewport на 375px | Короткий placeholder «Новая задача», кнопка стала «+» на mobile (полное «Добавить» на sm+), `min-w-0` на input |
+| `app/graph.html` | кнопки «В центр» и «Перезапустить физику» wrap'али на 2 строки | `flex-wrap`, `whitespace-nowrap` на каждой кнопке, «↻ Сброс» вместо «↻ Перезапустить физику» на mobile |
+| `app/labels.html` | title и форма создания лейбла наложены друг на друга, описание сжато до 1 символа на строку | `flex-col md:flex-row`, форма full-width на mobile с `min-w-0` на input |
+| `app/filters_manage.html` | title сжат справа кнопкой «+ Новый фильтр» | `flex-col sm:flex-row`, кнопка `whitespace-nowrap` под title на mobile |
+
+**Schedule** оставлен как есть (table 7×N с `overflow-x-auto` — стандартный паттерн horizontal scroll для широких таблиц на mobile, по дизайну).
+
+**Calendar** оставлен как есть (7-col grid жмётся, но цифры дней и индикаторы видны — для нового туду-листа без 100 событий в день нормально).
+
+**Финальная проверка:** smoke-test 18/18 green, jinja-линтер 0 errors, re-snapshots после redeploy подтверждают исчезновение всех найденных issues.
+
+**Test-account для повторных аудитов:** `responsive-test@doday.local` / `TestPass1234!` (создан через `.tmp_ssh_create_test_user.py`, audience=personal, email_verified).
