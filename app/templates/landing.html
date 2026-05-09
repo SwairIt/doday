@@ -585,7 +585,23 @@
         </p>
       </div>
 
-      <div class="card overflow-x-auto">
+      {% set rows = [
+        ('Активных проектов', '10', '5', '9 списков'),
+        ('Задач в проекте', '500 на аккаунт', '300 на проект', '99 на список'),
+        ('Канбан-доски', '✓', '— только Pro', '✓'),
+        ('Подзадачи без лимита', '✓', '✓', '✓'),
+        ('Кастомные фильтры', '3 (Pro: ∞)', '— только Pro', '— только Pro'),
+        ('Граф связей задач', '✓', '✗', '✗'),
+        ('Помодоро встроен', '✓', '✗', '— только Pro'),
+        ('Привычки и стрики', '✓', '✗', '— только Pro'),
+        ('Russian-natural-language', '«завтра», «след пн»', 'английский лучше', 'английский лучше'),
+        ('Реклама', 'нет', 'нет', 'нет'),
+        ('Открытый исходник', '✓ MIT', '✗', '✗'),
+        ('Хостинг данных', 'РФ, PostgreSQL', 'США', 'Сингапур'),
+      ] %}
+
+      {# Desktop / tablet: full table #}
+      <div class="hidden md:block card overflow-x-auto">
         <table class="w-full text-sm min-w-[640px]">
           <thead>
             <tr class="border-b border-[var(--border)] text-left">
@@ -605,20 +621,6 @@
             </tr>
           </thead>
           <tbody>
-            {% set rows = [
-              ('Активных проектов', '10', '5', '9 списков'),
-              ('Задач в проекте', '500 на аккаунт', '300 на проект', '99 на список'),
-              ('Канбан-доски', '✓', '— только Pro', '✓'),
-              ('Подзадачи без лимита', '✓', '✓', '✓'),
-              ('Кастомные фильтры', '3 (Pro: ∞)', '— только Pro', '— только Pro'),
-              ('Граф связей задач', '✓', '✗', '✗'),
-              ('Помодоро встроен', '✓', '✗', '— только Pro'),
-              ('Привычки и стрики', '✓', '✗', '— только Pro'),
-              ('Russian-natural-language', '«завтра», «след пн»', 'английский лучше', 'английский лучше'),
-              ('Реклама', 'нет', 'нет', 'нет'),
-              ('Открытый исходник', '✓ MIT', '✗', '✗'),
-              ('Хостинг данных', 'РФ, PostgreSQL', 'США', 'Сингапур'),
-            ] %}
             {% for name, doday, todoist, tt in rows %}
             <tr class="border-b border-[var(--border)] last:border-0 hover:bg-[var(--surface-2)] transition">
               <td class="px-5 py-3 font-medium">{{ name }}</td>
@@ -641,6 +643,45 @@
             {% endfor %}
           </tbody>
         </table>
+      </div>
+
+      {# Mobile: 3 stacked cards (no horizontal scroll). Same data as the table. #}
+      <div class="md:hidden space-y-4">
+        {% set products = [
+          ('Doday Free', '0 ₽ навсегда', 'doday-free', 'grad', 0),
+          ('Todoist Free', 'по их публичному прайсу', 'todoist-free', 'muted', 1),
+          ('TickTick Free', 'по их публичному прайсу', 'ticktick-free', 'muted', 2),
+        ] %}
+        {% for prod_name, prod_sub, prod_id, prod_style, col_idx in products %}
+          <div id="{{ prod_id }}" class="card p-5 {% if col_idx == 0 %}ring-1 ring-[var(--accent)]/40 shadow-glow{% endif %}">
+            <div class="mb-4">
+              <div class="font-semibold text-base {% if prod_style == 'grad' %}grad-text{% else %}text-[var(--text-muted)]{% endif %}">{{ prod_name }}</div>
+              <div class="text-xs text-[var(--text-muted)]">{{ prod_sub }}</div>
+            </div>
+            <ul class="space-y-2.5 text-sm">
+              {% for name, doday, todoist, tt in rows %}
+                {% set value = [doday, todoist, tt][col_idx] %}
+                <li class="flex items-start gap-3">
+                  <span class="shrink-0 w-5 mt-0.5">
+                    {% if value == '✓' %}
+                      <svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    {% elif value == '✗' %}
+                      <span class="text-rose-400 text-base">✗</span>
+                    {% else %}
+                      <span class="w-1.5 h-1.5 mt-2 rounded-full bg-[var(--text-muted)] inline-block"></span>
+                    {% endif %}
+                  </span>
+                  <span class="flex-1 min-w-0">
+                    <span class="text-[var(--text-muted)]">{{ name }}:</span>
+                    {% if value not in ('✓', '✗') %}
+                      <span class="{% if col_idx == 0 %}text-emerald-400 font-medium{% else %}text-[var(--text)]{% endif %}">{{ value }}</span>
+                    {% endif %}
+                  </span>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endfor %}
       </div>
       <p class="text-xs text-[var(--text-muted)] mt-3 text-center">
         Сведения о конкурентах — на дату публикации, по их собственным сравнительным таблицам. Может меняться, проверь у них.

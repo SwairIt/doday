@@ -19,9 +19,24 @@
   </div>
 </div>
 
-<div class="grid grid-cols-7 gap-2" id="week-grid">
+<div x-data="{ activeIdx: Math.min(6, Math.max(0, (new Date().getDay() + 6) % 7)) }">
+  {# Mobile day-tabs — pick one day, see its tasks full-width #}
+  <div class="md:hidden flex gap-1 mb-3 -mx-1 overflow-x-auto pb-1">
+    {% for day in days %}
+      <button type="button"
+              @click="activeIdx = {{ loop.index0 }}"
+              :class="activeIdx === {{ loop.index0 }} ? 'grad-bg text-white shadow-glow' : 'bg-[var(--surface-2)] text-[var(--text-muted)]'"
+              class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition leading-tight flex flex-col items-center gap-0">
+        <span class="text-[9px] opacity-80">{{ ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'][loop.index0] }}</span>
+        <span class="text-sm font-bold">{{ day.date.day }}</span>
+      </button>
+    {% endfor %}
+  </div>
+
+<div class="grid grid-cols-1 md:grid-cols-7 gap-2" id="week-grid">
   {% for day in days %}
     <div data-week-day="{{ day.date.isoformat() }}"
+         x-show="window.innerWidth >= 768 || activeIdx === {{ loop.index0 }}"
          class="bg-[var(--surface)] rounded-xl border border-[var(--border)] p-2 min-h-[400px]
                 {% if day.is_today %}ring-2 ring-[var(--accent)]{% endif %}"
          x-data="{
@@ -83,6 +98,7 @@
       </div>
     </div>
   {% endfor %}
+</div>
 </div>
 
 <script>

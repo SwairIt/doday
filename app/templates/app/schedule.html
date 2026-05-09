@@ -19,6 +19,7 @@
     editing: null,
     form: { weekday: 0, period: 1, subject_code: 'math', room: '', teacher: '' },
     saving: false,
+    activeDay: Math.min(5, Math.max(0, (new Date().getDay() + 6) % 7)),
     key(w, p) { return w + '_' + p; },
     has(w, p) { return this.grid[this.key(w, p)] !== undefined; },
     cell(w, p) { return this.grid[this.key(w, p)] || null; },
@@ -58,8 +59,53 @@
       if (r.status === 204) { delete this.grid[this.key(w, p)]; this.close(); }
     },
   }"
-  class="card p-4 overflow-x-auto"
+  class="card p-4"
 >
+  {# Mobile (single-day view with tabs along the top) #}
+  <div class="md:hidden">
+    <div class="flex gap-1 mb-3 -mx-1 overflow-x-auto pb-1">
+      <template x-for="(w, idx) in weekdays.slice(0, 6)" :key="idx">
+        <button
+          type="button"
+          @click="activeDay = idx"
+          :class="activeDay === idx ? 'grad-bg text-white shadow-glow' : 'bg-[var(--surface-2)] text-[var(--text-muted)]'"
+          class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition"
+          x-text="w"></button>
+      </template>
+    </div>
+    <div class="space-y-2">
+      <template x-for="p in periods" :key="p">
+        <button
+          @click="open(activeDay, p)"
+          class="w-full text-left p-3 rounded-lg border transition flex items-center gap-3 hover:border-[var(--accent)]"
+          :class="has(activeDay, p) ? 'border-[var(--border)] bg-[var(--surface-2)]' : 'border-dashed border-[var(--border)]'"
+        >
+          <span class="w-7 h-7 rounded-full bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-xs font-mono shrink-0" x-text="p"></span>
+          <template x-if="has(activeDay, p)">
+            <div class="flex-1 min-w-0">
+              <div class="font-semibold flex items-center gap-1.5 text-sm">
+                <span x-text="subject(cell(activeDay, p).subject_code).emoji"></span>
+                <span x-text="subject(cell(activeDay, p).subject_code).name" class="truncate"></span>
+              </div>
+              <template x-if="cell(activeDay, p).room || cell(activeDay, p).teacher">
+                <div class="text-[11px] text-[var(--text-muted)] mt-0.5 truncate">
+                  <template x-if="cell(activeDay, p).room"><span>каб. <span x-text="cell(activeDay, p).room"></span></span></template>
+                  <template x-if="cell(activeDay, p).room && cell(activeDay, p).teacher"><span> · </span></template>
+                  <template x-if="cell(activeDay, p).teacher"><span x-text="cell(activeDay, p).teacher"></span></template>
+                </div>
+              </template>
+            </div>
+          </template>
+          <template x-if="!has(activeDay, p)">
+            <div class="flex-1 text-xs text-[var(--text-muted)]/60">+ Поставить предмет</div>
+          </template>
+        </button>
+      </template>
+    </div>
+  </div>
+
+  {# Desktop / tablet (full grid table) #}
+  <div class="hidden md:block overflow-x-auto">
   <table class="w-full text-sm border-separate" style="border-spacing: 4px">
     <thead>
       <tr>
@@ -101,6 +147,7 @@
       </template>
     </tbody>
   </table>
+  </div>
 
   <div x-show="editing" x-cloak
        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"

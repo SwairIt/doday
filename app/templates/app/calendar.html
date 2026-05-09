@@ -2,6 +2,20 @@
 {% block title %}Календарь — Doday{% endblock %}
 {% block view_title %}Календарь{% endblock %}
 {% block content %}
+{# Mobile-first: month grid is unreadable on narrow screens. If user lands on
+   default month view from a phone, jump to week view (still respect their
+   explicit ?view=month override on desktop). #}
+<script>
+  (function() {
+    if (window.innerWidth < 768) {
+      var qs = new URLSearchParams(window.location.search);
+      if (!qs.has('view')) {
+        qs.set('view', 'week');
+        window.location.replace(window.location.pathname + '?' + qs.toString() + window.location.hash);
+      }
+    }
+  })();
+</script>
 {% set days_json = {} %}
 {% for cell in cells %}
   {% set _ = days_json.update({cell.date.isoformat(): cell.tasks|map(attribute='id')|map('string')|list}) %}
