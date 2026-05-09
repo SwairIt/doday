@@ -169,7 +169,7 @@ Top-1 запрашиваемая фича пред-launch. Утренний emai
 ## Прогресс
 
 - [x] Chunk 1 — Landing pricing fix ✅ `6ef8aae`
-- [x] Chunk 2 — Help articles audit ✅ (4 статьи поправлены: bulk-add лимит, calendar-subscription token-feed, school-integrations paste-import, search-and-filter sidebar-фильтры)
+- [x] Chunk 2 — Help articles audit ✅ `3d5a51a` (4 статьи поправлены: bulk-add лимит, calendar-subscription token-feed, school-integrations paste-import, search-and-filter sidebar-фильтры)
 - [ ] Chunk 3 — Email digest MVP
 
 (Каждый чанк должен быть отмечен ✅ + commit-SHA после завершения.)
