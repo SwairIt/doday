@@ -2,13 +2,9 @@
 
 ## BLOCKED — нужны действия от пользователя
 
-- [ ] **Yandex.Metrika ID**
-  Получить счётчик на metrika.yandex.ru (новый счётчик → ввести `getdoday.ru`).
-  После получения цифрового ID (например `12345678`):
-  1. На сервере: `cd /var/www/getdoday/data/www/getdoday.ru/app && nano .env`,
-     заменить `YA_METRIKA_ID=` на `YA_METRIKA_ID=12345678`.
-  2. Перезапустить uvicorn (`lsof -ti:8011 | xargs kill -9 && python3 /var/www/getdoday/data/start_uvicorn.py`).
-  3. В Метрике добавить цели: `signup` (тип: JS-событие), `login`, `first_task`.
+- [x] ~~**Yandex.Metrika ID**~~ — ✅ done 2026-05-09. Счётчик `109132711`,
+  `YA_METRIKA_ID` в проде `.env`, цели `signup` / `login` / `first_task`
+  заведены как JS-события. Hits начнут собираться с первой регистрации.
 
 - [ ] **Реальные iPhone-скриншоты**
   Для landing-блока со скриншотами нужны 3-4 скриншота с реального iPhone:

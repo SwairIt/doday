@@ -63,7 +63,7 @@
 
 См. также [`TODO.md`](TODO.md). Краткая версия:
 
-- [ ] **Yandex.Metrika ID** — получить счётчик на metrika.yandex.ru → положить в `.env` на сервере → перезапустить uvicorn → завести 3 цели (`signup`, `login`, `first_task`)
+- [x] ~~**Yandex.Metrika ID**~~ — ✅ done 2026-05-09 (счётчик `109132711`, 3 цели заведены)
 - [ ] **Реальные iPhone-скриншоты** для landing-блока со скринами (сейчас фиолетовые SVG-плейсхолдеры)
 - [ ] **iPhone/Android live-тестирование** на реальном устройстве после responsive-спринта (DevTools-emulation ловит не всё)
 - [ ] **PWA-установка** — проверить «Поделиться → На главный экран» на iPhone и banner Chrome на Android

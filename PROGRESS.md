@@ -579,3 +579,31 @@ mobile через `opacity-0 group-hover:opacity-100` (на тач без hover 
 
 **Изменённые файлы:**
 - `app/templates/_partials/task_row.html`
+
+### 2026-05-09 (вечер) — Yandex.Metrika подключена
+
+После запроса «давай яндекс метрику потрубим» — провели полную интеграцию.
+
+1. Юзер завёл счётчик на metrika.yandex.ru с настройками: webvisor 2.0,
+   карта кликов, точный показатель отказов 15с, хеш в URL включён, Москва
+   GMT+3, профиль «онлайн-сервис планирования задач / SaaS / FastAPI».
+2. Получил ID **`109132711`**.
+3. Через `.tmp_ssh_set_metrika.py` (paramiko): backup `.env` → `sed`-патч
+   `YA_METRIKA_ID=109132711` → kill uvicorn :8011 → start →
+   `curl http://127.0.0.1:8011/` → видны `109132711` и
+   `mc.yandex.ru/metrika/tag.js` → smoke-test 18/18 green → внешняя
+   проверка `https://getdoday.ru/` подтвердила счётчик в HTML.
+4. Playwright проверил на проде: `window.ym` ✓ (function),
+   `window.dodayGoal` ✓, `tag.js` в DOM ✓, `ym.a` queue = 1 (init).
+5. Юзер завёл 3 цели в кабинете Метрики как JS-события (тип «совпадает»):
+   - `signup` — стреляет на `/auth/verify-pending` через
+     `verify_pending.html` inline-script
+   - `login` — стреляет после `?welcome=1` редиректа в `base.html`
+   - `first_task` — стреляет в `quick_add.html` `hx-on::after-request`,
+     с `localStorage` flag (один раз на юзера)
+
+Phase 1 PRELAUNCH полностью закрыта (1.1 Yandex.Metrika ✓, 1.2 Onboarding
+✓, 1.3 Landing блоки ✓, 1.4 Mobile-полировка ✓ + responsive-спринт).
+
+Изменены только `.env` на проде (вне репо) и docs (TODO.md, ROADMAP.md,
+PRELAUNCH.md, PROGRESS.md) — отметка что блокер закрыт.
