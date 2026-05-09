@@ -16,6 +16,7 @@ from app.comments.router import comments_router, task_comments_router
 from app.company.router import router as company_router
 from app.config import get_settings
 from app.custom_filters.router import router as custom_filters_router
+from app.digest.router import router as digest_router
 from app.habits.router import router as habits_router
 from app.help.router import router as help_router
 from app.labels.router import router as labels_router
@@ -106,6 +107,7 @@ app.include_router(mood_router)
 app.include_router(achievements_router)
 app.include_router(links_router)
 app.include_router(links_graph_router)
+app.include_router(digest_router)
 
 
 @app.get("/health")
