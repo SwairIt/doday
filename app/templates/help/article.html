@@ -24,12 +24,12 @@
         <span class="grad-bg w-9 h-9 rounded-xl flex items-center justify-center text-white font-extrabold shadow-glow">D</span>
         <span class="grad-text">Doday</span>
       </a>
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 md:gap-3">
         {% if user %}
-          <a href="/app/today" class="btn-primary">Мои задачи</a>
+          <a href="/app/today" class="btn-primary whitespace-nowrap">Мои задачи</a>
         {% else %}
-          <a href="/auth/login" class="btn-ghost">Войти</a>
-          <a href="/auth/register" class="btn-primary">Начать бесплатно</a>
+          <a href="/auth/login" class="btn-ghost whitespace-nowrap">Войти</a>
+          <a href="/auth/register" class="btn-primary whitespace-nowrap"><span class="hidden sm:inline">Начать </span>бесплатно</a>
         {% endif %}
       </div>
     </nav>
@@ -43,7 +43,7 @@
     </nav>
 
     <div class="grid md:grid-cols-[260px_1fr] gap-10">
-      <aside class="md:sticky md:top-24 md:self-start">
+      <aside class="hidden md:block md:sticky md:top-24 md:self-start">
         <div class="text-xs uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-3 px-2">Все статьи</div>
         <div class="space-y-1">
           {% for a in articles %}
