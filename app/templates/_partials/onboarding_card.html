@@ -21,43 +21,43 @@
     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
   </button>
 
-  <div class="flex items-start gap-4">
-    <div class="grad-bg w-12 h-12 rounded-2xl flex items-center justify-center text-white text-2xl shrink-0">👋</div>
+  <div class="flex items-start gap-3 sm:gap-4">
+    <div class="grad-bg w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-white text-xl sm:text-2xl shrink-0">👋</div>
     <div class="flex-1 min-w-0">
-      <h2 class="text-xl font-bold mb-1 grad-text">Добро пожаловать в Doday</h2>
+      <h2 class="text-lg sm:text-xl font-bold mb-1 grad-text">Добро пожаловать в Doday</h2>
       <p class="text-sm text-[var(--text-muted)] mb-4">Несколько подсказок, чтобы быстро войти в ритм:</p>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-        <div class="flex items-start gap-2">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-2.5 text-sm">
+        <div class="flex items-start gap-2 min-w-0">
           <kbd class="font-mono text-xs bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-0.5 shrink-0 mt-0.5">n</kbd>
-          <span>Нажми, чтобы добавить задачу — фокус на быстрое поле сверху</span>
+          <span class="min-w-0 break-words">Нажми, чтобы добавить задачу — фокус на быстрое поле сверху</span>
         </div>
-        <div class="flex items-start gap-2">
+        <div class="flex items-start gap-2 min-w-0">
           <kbd class="font-mono text-xs bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-0.5 shrink-0 mt-0.5">/</kbd>
-          <span>Поиск по всем задачам и проектам</span>
+          <span class="min-w-0 break-words">Поиск по всем задачам и проектам</span>
         </div>
-        <div class="flex items-start gap-2">
+        <div class="flex items-start gap-2 min-w-0">
           <kbd class="font-mono text-xs bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-0.5 shrink-0 mt-0.5">?</kbd>
-          <span>Список всех горячих клавиш</span>
+          <span class="min-w-0 break-words">Список всех горячих клавиш</span>
         </div>
-        <div class="flex items-start gap-2">
+        <div class="flex items-start gap-2 min-w-0">
           <kbd class="font-mono text-xs bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-0.5 shrink-0 mt-0.5">g + t</kbd>
-          <span>Перейти на «Сегодня» (есть и для других экранов)</span>
+          <span class="min-w-0 break-words">Перейти на «Сегодня» (есть и для других экранов)</span>
         </div>
-        <div class="flex items-start gap-2">
-          <span class="font-mono text-xs bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-0.5 shrink-0 mt-0.5">«завтра !!! @спорт»</span>
-          <span>В quickadd работают даты, приоритеты <code>!</code>—<code>!!!!</code> и лейблы <code>@</code></span>
+        <div class="flex flex-col gap-1 min-w-0">
+          <span class="font-mono text-xs bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-0.5 self-start break-all">«завтра !!! @спорт»</span>
+          <span class="min-w-0 break-words">В quickadd работают даты, приоритеты <code>!</code>—<code>!!!!</code> и лейблы <code>@</code></span>
         </div>
-        <div class="flex items-start gap-2">
-          <span class="font-mono text-xs bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-0.5 shrink-0 mt-0.5">клик по заголовку</span>
-          <span>Открывает панель задачи: описание, лейблы, подзадачи, комментарии, помидор-таймер</span>
+        <div class="flex flex-col gap-1 min-w-0">
+          <span class="font-mono text-xs bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-0.5 self-start">клик по заголовку</span>
+          <span class="min-w-0 break-words">Открывает панель задачи: описание, лейблы, подзадачи, комментарии, помидор-таймер</span>
         </div>
       </div>
 
-      <div class="mt-4 flex items-center gap-2">
+      <div class="mt-4 flex items-center flex-wrap gap-2">
         <button type="button" @click="dismiss()" class="btn-primary px-4 py-2 text-sm">Понятно</button>
-        <a href="/app/filters" class="btn-ghost px-4 py-2 text-sm">Свои фильтры</a>
-        <a href="/app/stats" class="btn-ghost px-4 py-2 text-sm">Статистика</a>
+        <a href="/app/filters" class="btn-ghost px-3 py-2 text-sm whitespace-nowrap">Свои фильтры</a>
+        <a href="/app/stats" class="btn-ghost px-3 py-2 text-sm whitespace-nowrap">Статистика</a>
       </div>
     </div>
   </div>
