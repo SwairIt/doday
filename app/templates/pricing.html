@@ -3,17 +3,17 @@
 {% block seo_description %}Doday бесплатный для всех. Pro 199₽/мес — безлимит проектов, email-дайджест, Telegram-бот. Family 299₽/мес для всей семьи (5 аккаунтов + parent dashboard).{% endblock %}
 
 {% block layout %}
-<header class="sticky top-0 z-20 glass border-b border-[var(--border)] px-6 py-3 flex items-center gap-4">
-  <a href="/" class="flex items-center gap-2 font-bold text-lg">
+<header class="sticky top-0 z-20 glass border-b border-[var(--border)] px-4 md:px-6 py-3 flex items-center gap-2 md:gap-4">
+  <a href="/" class="flex items-center gap-2 font-bold text-lg shrink-0">
     <span class="grad-bg w-8 h-8 rounded-lg flex items-center justify-center text-white font-extrabold shadow-glow text-sm">D</span>
     <span class="grad-text">Doday</span>
   </a>
   <div class="flex-1"></div>
   {% if user %}
-    <a href="/app/today" class="btn-ghost px-3 py-1.5 text-sm">В приложение →</a>
+    <a href="/app/today" class="btn-ghost px-3 py-1.5 text-sm whitespace-nowrap">В приложение →</a>
   {% else %}
-    <a href="/auth/login" class="btn-ghost px-3 py-1.5 text-sm">Войти</a>
-    <a href="/auth/register" class="btn-primary px-3 py-1.5 text-sm">Зарегистрироваться</a>
+    <a href="/auth/login" class="btn-ghost px-3 py-1.5 text-sm whitespace-nowrap">Войти</a>
+    <a href="/auth/register" class="btn-primary px-3 py-1.5 text-sm whitespace-nowrap"><span class="hidden sm:inline">Зарегистрироваться</span><span class="sm:hidden">Начать</span></a>
   {% endif %}
 </header>
 
