@@ -3,7 +3,7 @@
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, String
+from sqlalchemy import Boolean, DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -36,6 +36,14 @@ class User(Base):
     # Long-lived per-user token for unauthenticated calendar feeds (.ics). Lazy
     # — generated on first /api/calendar/feed request. Rotatable via /profile.
     ical_token: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
+    # Morning digest opt-in. False by default — explicit opt-in via /profile.
+    # Cron worker shells `last_sent_at` after each successful send to dedupe.
+    morning_digest_enabled: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
+    morning_digest_last_sent_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False
     )
