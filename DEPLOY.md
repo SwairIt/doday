@@ -193,7 +193,54 @@ sudo journalctl -u doday -f   # check startup log + migrations
 
 ---
 
-## E. If something goes wrong
+## E. Cron jobs
+
+Doday полагается на системный cron для одной задачи: утренний email-дайджест.
+
+### E1. Утренний дайджест (`/api/digest/cron-trigger`)
+
+Раз в день нужно дёрнуть endpoint, который собирает и шлёт письма всем
+opt-in юзерам. Endpoint защищён секретом — `X-Cron-Token` header сверяется
+с `CRON_TOKEN` из `.env`.
+
+**Как настроить:**
+
+1. Сгенерировать секрет (32 байта URL-safe):
+   ```bash
+   python -c "import secrets; print(secrets.token_urlsafe(32))"
+   ```
+2. Положить в прод-`.env`:
+   ```
+   CRON_TOKEN=<секрет>
+   ```
+3. Перезапустить uvicorn — endpoint начинает принимать с этим токеном.
+4. Добавить системный cron:
+   ```bash
+   crontab -e
+   # 04:00 UTC = 07:00 МСК
+   0 4 * * * curl -sS -m 60 -X POST -H "X-Cron-Token: <секрет>" \
+       http://127.0.0.1:8011/api/digest/cron-trigger \
+       >> /tmp/digest-cron.log 2>&1 # doday-morning-digest
+   ```
+   Маркер-комментарий `# doday-morning-digest` помогает идемпотентно
+   обновлять запись (re-run script-а его удаляет и вставляет заново).
+
+**Проверка:**
+- `crontab -l | grep doday` — видит свою строку
+- `curl -sS -X POST -H "X-Cron-Token: $CRON_TOKEN" http://127.0.0.1:8011/api/digest/cron-trigger`
+  должен вернуть JSON `{sent, skipped_already, skipped_empty, errored}`
+- На следующее утро (07:00 МСК) `tail /tmp/digest-cron.log` покажет результат
+- В кабинете SMTP-провайдера видно отправленные письма
+
+**Идемпотентность:** endpoint дедуп'ит по `users.morning_digest_last_sent_at >=
+сегодня 00:00 UTC` — повторный вызов в тот же день не отправляет повторно.
+
+**Disable:** убрать `CRON_TOKEN=` из `.env` (endpoint начнёт возвращать 503),
+ИЛИ удалить crontab-строку (`crontab -e` → удалить → сохранить).
+
+---
+
+## F. If something goes wrong
 
 | Symptom | Likely cause | Fix |
 |---|---|---|

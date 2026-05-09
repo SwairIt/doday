@@ -607,3 +607,32 @@ Phase 1 PRELAUNCH полностью закрыта (1.1 Yandex.Metrika ✓, 1.2
 
 Изменены только `.env` на проде (вне репо) и docs (TODO.md, ROADMAP.md,
 PRELAUNCH.md, PROGRESS.md) — отметка что блокер закрыт.
+
+### 2026-05-09 (ночь) — overnight loop: 3 чанка завершены
+
+По плану `docs/superpowers/plans/2026-05-09-overnight-3-tasks.md` —
+автономный self-paced loop. 3 чанка из 3 закрыты.
+
+| Chunk | Что | Commits |
+|---|---|---|
+| 1 | Landing pricing-card Free сверена с `TIERS["free"]` — 5→10 проектов, канбан/фильтры/активность теперь честно показаны как Free, Pro карточка перестала продавать Free-фичи | `96bfdf6` |
+| 2 | Help-articles аудит — 22 статьи, поправил 4: bulk-add лимит (50 Free / 200 Pro), calendar-subscription (token-feed описан), school-integrations (заглушка → реальные HTTP+paste-import), search-and-filter (sidebar-фильтры приведены к коду) | `3d5a51a` |
+| 3 | Email-дайджест MVP: миграция 0021, opt-in toggle на /app/profile, `app/digest/` модуль (compose+send+cron), HTML+text email-шаблоны, 11 тестов, system cron на проде в 04:00 UTC = 07:00 МСК | `cec2a4d` `51e6ee2` `ea0e760` `95e2d9a` + `.env` patch на проде |
+
+**Email-дайджест работает end-to-end:**
+- В Профиле есть toggle «Утренний email-дайджест» (Вкл/Выкл)
+- `users.morning_digest_enabled` хранит opt-in, `last_sent_at` для дедупа
+- `app/digest/service.py::send_morning_digests_for_all_users` — итератор
+  по opt-in юзерам с собственным compose (overdue/today/tomorrow секции,
+  audience-aware строка, HTML+text multipart)
+- `POST /api/digest/cron-trigger` — secret-token endpoint для системного
+  cron'а (X-Cron-Token header сверяется с `settings.cron_token`, пустой
+  → 503, неверный → 403)
+- На проде crontab: `0 4 * * * curl ... /api/digest/cron-trigger`
+- 11 unit/integration тестов (compose + gather + send + endpoints + dedup)
+
+**Документация:** `.env.example` получил `CRON_TOKEN=`, `DEPLOY.md` —
+секцию «E. Cron jobs» с инструкцией как настроить.
+
+**Все чанки:** pre-commit green (ruff/mypy strict/jinja-linter), smoke 18/18
+green локально и на проде, новые тесты проходят, существующие не сломаны.
