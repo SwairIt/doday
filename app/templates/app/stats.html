@@ -50,15 +50,17 @@
     <div class="text-xs uppercase tracking-wider text-[var(--text-muted)]">Последние 14 дней</div>
     <div class="text-xs text-[var(--text-muted)]">Макс: {{ stats.chart_max }} зад.</div>
   </div>
-  <div class="flex items-end justify-between gap-1 h-32">
-    {% for cell in stats.chart %}
-      {% set pct = (cell.count / stats.chart_max * 100) if stats.chart_max else 0 %}
-      <div class="flex-1 flex flex-col items-center gap-1.5 group cursor-default" title="{{ cell.label }}: {{ cell.count }} зад.">
-        <div class="text-[10px] text-[var(--text-muted)] opacity-0 group-hover:opacity-100 transition">{{ cell.count }}</div>
-        <div class="w-full grad-bg rounded-t-md transition-all" style="height: {{ pct if pct > 0 else 2 }}%; min-height: 2px; opacity: {{ 0.85 if cell.count > 0 else 0.15 }};"></div>
-        <div class="text-[10px] text-[var(--text-muted)] tabular-nums">{{ cell.label }}</div>
-      </div>
-    {% endfor %}
+  <div class="overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0 sm:overflow-visible">
+    <div class="flex items-end justify-between gap-1 h-32 min-w-[440px] sm:min-w-0">
+      {% for cell in stats.chart %}
+        {% set pct = (cell.count / stats.chart_max * 100) if stats.chart_max else 0 %}
+        <div class="flex-1 flex flex-col items-center gap-1.5 group cursor-default" title="{{ cell.label }}: {{ cell.count }} зад.">
+          <div class="text-[10px] text-[var(--text-muted)] opacity-0 group-hover:opacity-100 transition">{{ cell.count }}</div>
+          <div class="w-full grad-bg rounded-t-md transition-all" style="height: {{ pct if pct > 0 else 2 }}%; min-height: 2px; opacity: {{ 0.85 if cell.count > 0 else 0.15 }};"></div>
+          <div class="text-[10px] text-[var(--text-muted)] tabular-nums">{{ cell.label }}</div>
+        </div>
+      {% endfor %}
+    </div>
   </div>
 </div>
 

@@ -525,3 +525,30 @@ overlap'или brand из-за `hidden md:flex` — поправил на `hidde
 - ✅ Calendar mobile week-default
 - ✅ Schedule single-day mobile
 - ✅ Bottom-nav iPad portrait (verified — sidebar уже виден)
+
+### 2026-05-09 (продолжение 3) — финальная доводка адаптива
+
+После запроса «доделай весь адаптив» — Playwright-async-сканер 23 страниц
+× 5 viewports (320/375/414/768/1280) нашёл 9 реальных overflow'ов которые
+прошлый iframe-без-скриптов сканер пропустил (Tailwind CDN не применялся
+в iframe → ложные 0). Исправлено всё.
+
+| Page | Issue | Fix |
+|---|---|---|
+| `app/stats.html` | bar-chart 14 столбиков выходит за main на 320 (151px) / 375 (96px) / 414 (57px) | wrap в `overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0 sm:overflow-visible` + inner `min-w-[440px] sm:min-w-0` — full-bleed scroll на mobile |
+| `app/profile.html` | password-section flex-row не помещался на 320 (overflow 7px) | `flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4` + `self-start` на кнопке |
+| `app/calendar.html` | toolbar из 6 кнопок не wrap'ился, overflow на 320/375/414/768 (28-204px) | добавил `flex-wrap` + компактные `px-2.5 py-2 sm:px-3` для arrow-кнопок и `text-xs sm:text-sm` для «Сегодня» |
+| `app/calendar_week.html` | колонки на 768 — overflow 31px из-за длинных weekday-names и chip-titles | `min-w-0` на колонке, weekday-name `truncate` + abbr `[:3]` на md, чип `md:truncate lg:break-words` |
+| `_partials/task_row.html` | uncommitted regression: `flex-1 min-w-0 break-words` на title-button → char-per-line при сжатии < 200px (видно на 768 с sidebar) | убрал `flex-1 min-w-0` с button, оставил только `break-words` |
+
+**Финальная проверка:**
+- Playwright async-сканер 5 viewports × 23 pages = 115 проверок: **0 overflow**
+- `uv run pre-commit run --all-files`: ruff format / ruff check / mypy strict / jinja-линтер — все Passed
+- `uv run python scripts/smoke_test.py http://127.0.0.1:8000`: **18/18 green**
+
+**Изменённые файлы:**
+- `app/templates/_partials/task_row.html`
+- `app/templates/app/calendar.html`
+- `app/templates/app/calendar_week.html`
+- `app/templates/app/profile.html`
+- `app/templates/app/stats.html`

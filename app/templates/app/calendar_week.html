@@ -37,7 +37,7 @@
   {% for day in days %}
     <div data-week-day="{{ day.date.isoformat() }}"
          x-show="window.innerWidth >= 768 || activeIdx === {{ loop.index0 }}"
-         class="bg-[var(--surface)] rounded-xl border border-[var(--border)] p-2 min-h-[400px]
+         class="bg-[var(--surface)] rounded-xl border border-[var(--border)] p-2 min-h-[400px] min-w-0
                 {% if day.is_today %}ring-2 ring-[var(--accent)]{% endif %}"
          x-data="{
            adding: false, draftTitle: '',
@@ -53,9 +53,12 @@
            },
          }">
       <div class="px-2 pb-2 mb-1 border-b border-[var(--border)]">
-        <div class="flex items-baseline justify-between">
-          <div>
-            <div class="text-[10px] uppercase tracking-wider text-[var(--text-muted)] font-semibold">{{ day.weekday_name }}</div>
+        <div class="flex items-baseline justify-between gap-1">
+          <div class="min-w-0">
+            <div class="text-[10px] uppercase tracking-wider text-[var(--text-muted)] font-semibold truncate" title="{{ day.weekday_name }}">
+              <span class="md:hidden lg:inline">{{ day.weekday_name }}</span>
+              <span class="hidden md:inline lg:hidden">{{ day.weekday_name[:3] }}</span>
+            </div>
             <div class="text-xl font-bold {% if day.is_today %}grad-text{% elif day.is_weekend %}text-[var(--text-muted)]{% endif %}">
               {{ day.date.day }}.{{ "%02d"|format(day.date.month) }}
             </div>
@@ -91,7 +94,7 @@
                 {% set prio_class = {'p1':'rose','p2':'amber','p3':'sky'}[task.priority.value] %}
                 <span class="text-{{ prio_class }}-400 font-bold shrink-0">!{{ task.priority.value[1:] }}</span>
               {% endif %}
-              <span class="break-words leading-tight">{{ task.title }}</span>
+              <span class="break-words leading-tight md:truncate lg:whitespace-normal lg:break-words" title="{{ task.title }}">{{ task.title }}</span>
             </div>
           </div>
         {% endfor %}
