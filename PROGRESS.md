@@ -385,3 +385,25 @@ Ruff strict + mypy strict зелёные на 224 файлах.
 **BLOCKED:** push `.github/workflows/ci.yml` отвергается GitHub'ом — текущий PAT не имеет `workflow` scope. Нужно: `github.com/settings/tokens` → найти TOKEN из `.env` → добавить permission `Workflows: Read and write` → пересохранить (значение токена не меняется). После этого один `git push` отправит все 20 коммитов разом.
 
 **Архитектура `app/<feature>/` не тронута, существующие 310+ тестов не сломаны.**
+
+### 2026-05-09 — public-pages responsive адаптив
+
+По плану `docs/superpowers/plans/2026-05-09-public-pages-responsive.md`. 8 публичных шаблонов проверены на 3 viewport'ах (375 / 1024 / 1440) через Playwright MCP. Стиль и контент не тронуты — только Tailwind responsive-prefixes.
+
+**До этого зафиксил 12 stale-тестов которые отстали от PRELAUNCH** (commits `1f2fa81` + `4d5be43`): EXPECTED_SAMPLE_COUNT 4→5, новые маркеры audience-flavor'ов («расписание», «Привычки»), 'family' tier в catalog, лимиты 5→10 проектов, `dodayMd` вместо `render(`, `&#34;` вместо `"` в forceescape JSON, `?welcome=1` в login redirect. CI стал зелёный на baseline'е.
+
+**Что нашлось и пофикшено в самих шаблонах:**
+
+| Page | Issue | Fix |
+|---|---|---|
+| `landing.html` | header CTA «Начать бесплатно» wrap'ал на 2 строки на 375px | `whitespace-nowrap` + `<span class="hidden sm:inline">Начать </span>бесплатно` |
+| `pricing.html` | header CTA «Зарегистрироваться» cut'ался за viewport | `whitespace-nowrap` + 2-вариант текста («Начать» на mobile, «Зарегистрироваться» на sm+) + `gap-2 md:gap-4` + `px-4 md:px-6` |
+| `help/index.html` | тот же header-pattern | Аналогично landing |
+| `help/article.html` | header + sidebar TOC из 22 статей дублировался выше контента на mobile | header fix + `aside class="hidden md:block"` |
+| `privacy.html` | h1 «Политика конфиденциальности» overflow'ил viewport | `text-2xl sm:text-3xl md:text-4xl` + `break-words` + `card p-5 sm:p-8` |
+
+**Уже было адаптивно** (без изменений): `auth/register.html`, `auth/login.html`, `auth/verify_pending.html`.
+
+**Финальная проверка:** jinja-линтер 0 errors / 100 warnings (warnings unchanged), smoke-test 18/18 green против https://getdoday.ru. Re-snapshots после redeploy подтверждают исчезновение всех найденных issues.
+
+**Out-of-scope:** app-страницы `/app/*` — отдельный спринт.
