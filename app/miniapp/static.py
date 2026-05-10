@@ -101,6 +101,107 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
     tg.BackButton.onClick(() => window.history.back());
   }
 
+  // 7. Swipe-actions для task-card.
+  //    Свайп влево past 80px → POST /complete → carry off вверх + fade.
+  //    Свайп вправо past 80px → POST /snooze → carry off вниз + fade.
+  //    Меньше 80px → spring обратно.
+  const SWIPE_THRESHOLD = 80;
+  let swipeState = null;
+
+  function onTouchStart(e) {
+    const row = e.target.closest('[data-swipeable]');
+    if (!row) return;
+    const t = e.touches[0];
+    swipeState = {
+      row,
+      content: row.querySelector('.swipe-content'),
+      startX: t.clientX,
+      startY: t.clientY,
+      dx: 0,
+      locked: null,
+    };
+    row.classList.add('swiping');
+  }
+
+  function onTouchMove(e) {
+    if (!swipeState) return;
+    const t = e.touches[0];
+    const dx = t.clientX - swipeState.startX;
+    const dy = t.clientY - swipeState.startY;
+    if (swipeState.locked === null) {
+      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+        swipeState.locked = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+      }
+    }
+    if (swipeState.locked === 'x') {
+      e.preventDefault();
+      swipeState.dx = dx;
+      swipeState.content.style.transform = 'translateX(' + dx + 'px)';
+    }
+  }
+
+  async function commitComplete(taskId) {
+    try {
+      await fetch('/miniapp/api/tasks/' + taskId + '/complete', {
+        method: 'POST', credentials: 'include',
+      });
+    } catch (e) {}
+  }
+  async function commitSnooze(taskId) {
+    try {
+      await fetch('/miniapp/api/tasks/' + taskId + '/snooze', {
+        method: 'POST', credentials: 'include',
+      });
+    } catch (e) {}
+  }
+
+  function onTouchEnd() {
+    if (!swipeState) return;
+    const { row, content, dx, locked } = swipeState;
+    row.classList.remove('swiping');
+    if (locked !== 'x') {
+      content.style.transform = '';
+      swipeState = null;
+      return;
+    }
+    const taskId = row.getAttribute('data-task-id');
+    if (dx <= -SWIPE_THRESHOLD) {
+      // Complete (свайп влево)
+      window.dodayHaptic && window.dodayHaptic.success();
+      row.classList.add('removed');
+      commitComplete(taskId);
+      setTimeout(() => row.remove(), 300);
+    } else if (dx >= SWIPE_THRESHOLD) {
+      // Snooze (свайп вправо)
+      window.dodayHaptic && window.dodayHaptic.medium();
+      row.classList.add('snoozed');
+      commitSnooze(taskId);
+      setTimeout(() => row.remove(), 300);
+    } else {
+      // Cancel — spring back
+      content.style.transform = '';
+    }
+    swipeState = null;
+  }
+
+  document.addEventListener('touchstart', onTouchStart, { passive: true });
+  document.addEventListener('touchmove', onTouchMove, { passive: false });
+  document.addEventListener('touchend', onTouchEnd, { passive: true });
+  document.addEventListener('touchcancel', onTouchEnd, { passive: true });
+
+  // 8. Tap-on-checkbox — toggle complete (без свайпа, для desktop/удобства)
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-task-toggle]');
+    if (!btn) return;
+    e.preventDefault();
+    const taskId = btn.getAttribute('data-task-toggle');
+    const row = btn.closest('[data-task-id]');
+    if (row) row.classList.add('removed');
+    window.dodayHaptic && window.dodayHaptic.success();
+    await commitComplete(taskId);
+    setTimeout(() => row && row.remove(), 300);
+  });
+
   // Expose для отладки
   window.tg = tg;
 })();

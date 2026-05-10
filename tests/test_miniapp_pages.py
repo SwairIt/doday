@@ -90,6 +90,46 @@ async def test_api_create_task_empty_text_400(logged_in_client: AsyncClient) -> 
     assert r.status_code == 400
 
 
+async def test_api_snooze_task_sets_due_to_tomorrow(
+    db_session: AsyncSession, logged_in_client: AsyncClient
+) -> None:
+    """MB3: POST /miniapp/api/tasks/<id>/snooze ставит due_at на завтра 23:59."""
+    from sqlalchemy import select
+
+    from app.auth.models import User
+    from app.projects.service import ensure_inbox
+
+    user = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    inbox = await ensure_inbox(db_session, user.id)
+    from app.tasks.service import create_task as svc_create_task
+
+    task = await svc_create_task(db_session, user.id, title="To snooze", project_id=inbox.id)
+    await db_session.commit()
+
+    r = await logged_in_client.post(f"/miniapp/api/tasks/{task.id}/snooze")
+    assert r.status_code == 200
+    data = r.json()
+    assert data["due_at"]
+    # tomorrow
+    from datetime import UTC, datetime, timedelta
+
+    tomorrow = (datetime.now(UTC) + timedelta(days=1)).date()
+    assert data["due_at"].startswith(tomorrow.isoformat())
+
+
+async def test_swipe_handlers_in_js_bundle(client: AsyncClient) -> None:
+    """MB3: убеждаемся что swipe-handler присутствует в miniapp.js."""
+    r = await client.get("/miniapp/assets/miniapp.js")
+    assert r.status_code == 200
+    body = r.text
+    assert "SWIPE_THRESHOLD" in body
+    assert "commitComplete" in body
+    assert "commitSnooze" in body
+    assert "data-swipeable" in body or "swipeable" in body
+
+
 async def test_api_complete_task_toggles(
     db_session: AsyncSession, logged_in_client: AsyncClient
 ) -> None:

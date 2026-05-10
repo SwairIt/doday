@@ -95,6 +95,42 @@
     html, body { scrollbar-width: none; }
 
     [x-cloak] { display: none !important; }
+
+    /* Swipe-actions для task_card. .swipe-row — relative-контейнер;
+       .swipe-content — задача, она translateX'ится на touch.
+       .swipe-action скрыто за content'ом, проявляется при свайпе. */
+    .swipe-row {
+      position: relative;
+      overflow: hidden;
+      border-radius: 0.75rem;
+    }
+    .swipe-content {
+      position: relative;
+      z-index: 2;
+      transition: transform .25s cubic-bezier(.2,.7,.3,1);
+      will-change: transform;
+      touch-action: pan-y;
+    }
+    .swipe-row.swiping .swipe-content { transition: none; }
+    .swipe-row.removed .swipe-content { transform: translateX(-110%) !important; opacity: 0; transition: transform .3s ease, opacity .3s ease; }
+    .swipe-row.snoozed .swipe-content { transform: translateX(110%) !important; opacity: 0; transition: transform .3s ease, opacity .3s ease; }
+
+    .swipe-action {
+      position: absolute;
+      top: 0; bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      font-size: 10px;
+      font-weight: 600;
+      color: white;
+      width: 90px;
+      z-index: 1;
+    }
+    .swipe-action-left { left: 0; background: linear-gradient(to right, #f59e0b, #f59e0b 80%, transparent); padding-right: 12px; }
+    .swipe-action-right { right: 0; background: linear-gradient(to left, #10b981, #10b981 80%, transparent); padding-left: 12px; }
   </style>
 </head>
 <body>

@@ -253,7 +253,7 @@ async def api_complete_task(
     user: CurrentUser,
     session: DbSession,
 ) -> JSONResponse:
-    """Toggle complete. Используется в MB3 swipe-actions."""
+    """Toggle complete. Используется в MB3 swipe-actions (свайп влево)."""
     if user is None:
         return JSONResponse({"error": "auth_required"}, status_code=401)
     from uuid import UUID
@@ -275,6 +275,38 @@ async def api_complete_task(
         task.completed_at = datetime.now(UTC)
     await session.commit()
     return JSONResponse({"id": str(task.id), "is_completed": task.is_completed})
+
+
+@router.post("/api/tasks/{task_id}/snooze")
+async def api_snooze_task(
+    task_id: str,
+    user: CurrentUser,
+    session: DbSession,
+) -> JSONResponse:
+    """Снуз на завтра. Используется в MB3 swipe-actions (свайп вправо).
+
+    Логика: due_at = завтра 23:59 UTC, due_date_only=True. Если due_at не было
+    — ставим завтра. Так задача гарантированно «уходит» из Today.
+    """
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    from datetime import timedelta
+    from uuid import UUID
+
+    try:
+        tid = UUID(task_id)
+    except ValueError:
+        return JSONResponse({"error": "bad_id"}, status_code=400)
+    task = (
+        await session.execute(select(Task).where(Task.id == tid, Task.user_id == user.id))
+    ).scalar_one_or_none()
+    if task is None:
+        return JSONResponse({"error": "not_found"}, status_code=404)
+    tomorrow = (datetime.now(UTC) + timedelta(days=1)).date()
+    task.due_at = datetime(tomorrow.year, tomorrow.month, tomorrow.day, 23, 59, tzinfo=UTC)
+    task.due_date_only = True
+    await session.commit()
+    return JSONResponse({"id": str(task.id), "due_at": task.due_at.isoformat()})
 
 
 @router.get("/me", response_class=HTMLResponse)
