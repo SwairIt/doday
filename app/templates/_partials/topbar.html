@@ -1,5 +1,8 @@
-{# Topbar shown above main canvas inside app_base. #}
-<header class="sticky top-0 z-20 glass border-b border-[var(--border)] px-4 md:px-6 py-3 flex items-center gap-3">
+{# Topbar shown above main canvas inside app_base.
+   `pt-[env(safe-area-inset-top)]` — на iOS PWA padding-top растёт под status
+   bar (10px на iPhone X+, 0 в обычном Safari). Без этого виджеты сверху
+   страницы лезут под статусбар. #}
+<header class="sticky top-0 z-20 glass border-b border-[var(--border)] px-4 md:px-6 py-3 flex items-center gap-3 pt-[max(env(safe-area-inset-top),0.75rem)]">
   <button
     type="button"
     class="md:hidden p-2 rounded-lg hover:bg-[var(--surface-2)] transition"

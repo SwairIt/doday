@@ -7,7 +7,7 @@
   ('calendar', '/app/calendar', 'Календарь','M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'),
   ('profile',  '/app/profile',  'Профиль',  'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'),
 ] %}
-<nav class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-[var(--surface-2)] border-t border-[var(--border)] flex items-stretch backdrop-blur-md">
+<nav class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-[var(--surface-2)] border-t border-[var(--border)] flex items-stretch backdrop-blur-md pb-[env(safe-area-inset-bottom)]">
   {% for key, href, label, icon in items %}
     {% set active = view == key %}
     <a href="{{ href }}"
@@ -23,5 +23,6 @@
     </a>
   {% endfor %}
 </nav>
-{# Spacer so content doesn't end behind the nav. #}
-<div class="md:hidden h-16"></div>
+{# Spacer so content doesn't end behind the nav. h-16 (64px) для самой nav +
+   env(safe-area-inset-bottom) для home indicator iPhone X+. #}
+<div class="md:hidden h-16" style="height: calc(4rem + env(safe-area-inset-bottom));"></div>
