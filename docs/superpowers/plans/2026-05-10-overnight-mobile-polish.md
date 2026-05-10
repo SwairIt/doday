@@ -213,7 +213,7 @@ calendar_week.
 - [x] B2 — Закрытие всех найденных issues (итеративно) ✅ (нечего закрывать — 0 culprits)
 
 ### Фаза C — Visual polish
-- [ ] C1 — Typography passes
+- [x] C1 — Typography passes ✅ (text-wrap balance/pretty, focus-visible ring, code word-break)
 - [ ] C2 — Spacing & rhythm
 - [ ] C3 — Animations & polish details
 - [ ] C4 — Color & contrast
