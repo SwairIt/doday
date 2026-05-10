@@ -140,3 +140,18 @@ async def me(request: Request, user: CurrentUser) -> Response:
     if redir is not None:
         return redir
     return templates.TemplateResponse(request, "miniapp/me.html", _ctx(request, user))
+
+
+@router.get("/link", response_class=HTMLResponse)
+async def link_onboarding(
+    request: Request,
+    user: CurrentUser,
+    telegram_user_id: int | None = None,
+) -> Response:
+    """Onboarding-экран. Если юзер УЖЕ залогинен — редирект на Today (не нужен
+    onboarding). Иначе — рендерим инструкцию по привязке."""
+    if user is not None:
+        return RedirectResponse(url="/miniapp/", status_code=status.HTTP_303_SEE_OTHER)
+    ctx = _ctx(request, user)
+    ctx["telegram_user_id"] = telegram_user_id
+    return templates.TemplateResponse(request, "miniapp/link.html", ctx)
