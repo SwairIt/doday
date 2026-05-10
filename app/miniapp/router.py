@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Request, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
 from sqlalchemy import select
 
 from app.auth.deps import DbSession
 from app.config import get_settings
 from app.miniapp.auth import get_telegram_user_id, validate_init_data
+from app.miniapp.static import MINIAPP_JS
 from app.telegram.models import TelegramLink
 
 router = APIRouter(prefix="/miniapp", tags=["miniapp"])
@@ -17,6 +18,17 @@ router = APIRouter(prefix="/miniapp", tags=["miniapp"])
 
 class AuthIn(BaseModel):
     init_data: str
+
+
+@router.get("/assets/miniapp.js")
+async def miniapp_js() -> Response:
+    """Inline JS-bundle для Mini App. Cache на 1 час (короткий — пока итерируем
+    дизайн), потом увеличим."""
+    return Response(
+        content=MINIAPP_JS,
+        media_type="application/javascript; charset=utf-8",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
 
 
 @router.post("/auth")

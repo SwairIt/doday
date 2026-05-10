@@ -91,6 +91,7 @@ ignore = [
 "app/miniapp/__init__.py" = ["RUF002"]                # intentional Cyrillic in module docstring
 "app/miniapp/auth.py" = ["RUF001", "RUF002", "RUF003"]   # intentional Cyrillic in docstrings/comments
 "app/miniapp/router.py" = ["RUF001", "RUF002", "RUF003"] # intentional Cyrillic in docstrings/comments
+"app/miniapp/static.py" = ["RUF001", "RUF002", "RUF003"] # JS-bundle с русскими комментами
 
 [tool.mypy]
 python_version = "3.12"

@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#7c3aed">
+  <title>{% block title %}Doday{% endblock %}</title>
+
+  {# Telegram WebApp SDK — exposes window.Telegram.WebApp #}
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  {# Tailwind CDN — same as web-app для visual-consistency #}
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  {# Alpine для микро-state в шаблонах #}
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  {# HTMX — для swap'ов список задач, без full reload #}
+  <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
+
+  <style>
+    /* CSS-vars подтягиваются из Telegram WebApp themeParams через miniapp.js.
+       Дефолты — наш фирменный фиолетовый, чтоб mini-app смотрелся даже когда
+       открыт не из Telegram (debug-режим в браузере). */
+    :root {
+      --tg-bg: #0f0f1a;
+      --tg-text: #f5f5f7;
+      --tg-hint: #8e8e93;
+      --tg-link: #7c3aed;
+      --tg-button: #7c3aed;
+      --tg-button-text: #ffffff;
+      --tg-secondary-bg: #1c1c2e;
+
+      /* Маппинг на наши имена для удобства (matches веб-апа) */
+      --bg: var(--tg-bg);
+      --text: var(--tg-text);
+      --text-muted: var(--tg-hint);
+      --accent: var(--tg-button);
+      --surface: var(--tg-bg);
+      --surface-2: var(--tg-secondary-bg);
+      --border: rgba(255,255,255,0.08);
+    }
+
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overscroll-behavior: contain;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding-bottom: calc(64px + env(safe-area-inset-bottom));
+    }
+
+    /* Bottom-nav */
+    .miniapp-nav {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      background: var(--surface-2);
+      border-top: 1px solid var(--border);
+      padding-bottom: env(safe-area-inset-bottom);
+      z-index: 50;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+    }
+
+    .miniapp-nav a {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 4px;
+      color: var(--text-muted);
+      font-size: 10px;
+      text-decoration: none;
+      gap: 2px;
+      transition: color .15s ease;
+    }
+
+    .miniapp-nav a:active { transform: scale(0.96); }
+    .miniapp-nav a.active { color: var(--accent); font-weight: 600; }
+
+    .miniapp-nav svg {
+      width: 22px;
+      height: 22px;
+      stroke-width: 2;
+    }
+
+    /* Hide scrollbar but keep scroll */
+    ::-webkit-scrollbar { display: none; }
+    html, body { scrollbar-width: none; }
+
+    [x-cloak] { display: none !important; }
+  </style>
+</head>
+<body>
+  <main class="px-4 pt-4">
+    {% block content %}{% endblock %}
+  </main>
+
+  {# Bottom-nav — 5 вкладок. Active state через current_path передаётся endpoint'ом. #}
+  <nav class="miniapp-nav" role="navigation" aria-label="Mini App">
+    <a href="/miniapp/" class="{% if current_path == '/miniapp/' %}active{% endif %}" aria-label="Сегодня">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+      <span>Сегодня</span>
+    </a>
+    <a href="/miniapp/inbox" class="{% if current_path == '/miniapp/inbox' %}active{% endif %}" aria-label="Инбокс">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+      <span>Инбокс</span>
+    </a>
+    <a href="/miniapp/calendar" class="{% if current_path == '/miniapp/calendar' %}active{% endif %}" aria-label="Календарь">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      <span>Календарь</span>
+    </a>
+    <a href="/miniapp/projects" class="{% if current_path.startswith('/miniapp/projects') %}active{% endif %}" aria-label="Проекты">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+      <span>Проекты</span>
+    </a>
+    <a href="/miniapp/me" class="{% if current_path == '/miniapp/me' %}active{% endif %}" aria-label="Я">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+      <span>Я</span>
+    </a>
+  </nav>
+
+  <script src="/miniapp/assets/miniapp.js" defer></script>
+</body>
+</html>
