@@ -45,6 +45,12 @@ class Settings(BaseSettings):
     telegram_bot_token: str = ""
     telegram_bot_username: str = ""
 
+    # Beta-flag: если True — все юзеры получают Pro-фичи независимо от tier.
+    # Раннее grandfather-обещание: «всё бесплатно сейчас, ранним юзерам Pro
+    # останется навсегда когда введём оплату». Снимается в один клик в .env
+    # когда придёт время монетизации (для НОВЫХ юзеров; ранних — отдельно).
+    beta_free_for_all: bool = False
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

@@ -62,6 +62,22 @@ async def test_has_pro_features_pro(db_session: AsyncSession) -> None:
     assert has_pro_features(user) is True
 
 
+async def test_beta_free_for_all_promotes_free_to_pro(db_session: AsyncSession) -> None:
+    """Habr-launch flag: BETA_FREE_FOR_ALL=true → все юзеры получают Pro."""
+    from app.config import get_settings
+
+    user = await _make_user(db_session, "beta@test.com", tier="free", trial_active=False)
+    assert has_pro_features(user) is False  # baseline (autouse fixture disables flag)
+
+    s = get_settings()
+    s.beta_free_for_all = True
+    try:
+        assert effective_tier(user) == "pro"
+        assert has_pro_features(user) is True
+    finally:
+        s.beta_free_for_all = False
+
+
 async def test_require_pro_raises_402_for_free(db_session: AsyncSession) -> None:
     from fastapi import HTTPException
 

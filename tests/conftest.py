@@ -69,6 +69,14 @@ def _reset_rate_limit() -> None:
     reset_all()
 
 
+@pytest.fixture(autouse=True)
+def _disable_beta_free_for_all() -> None:
+    """Tests verify production tier-enforcement logic; override the .env override
+    BETA_FREE_FOR_ALL=true (set during Habr-launch beta) so unit-tests see the
+    default tier semantics. Re-enabled only by tests that explicitly opt-in."""
+    _settings.beta_free_for_all = False
+
+
 @pytest.fixture
 async def db_session() -> AsyncIterator[AsyncSession]:
     test_engine = create_async_engine(_settings.test_database_url, connect_args=_TEST_CONNECT_ARGS)

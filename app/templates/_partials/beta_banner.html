@@ -1,0 +1,28 @@
+{# Beta-launch top-banner. Виден на landing и pricing, когда settings.beta_free_for_all=True.
+   Закрывается через Alpine + localStorage чтобы не мозолить глаза вернувшимся.
+   Sticky-top перед основным sticky-header — браузеры стэкают sticky'и в одну колонку. #}
+{% if beta_free_for_all %}
+<div x-data="{ show: localStorage.getItem('doday-beta-dismissed') !== '1' }"
+     x-show="show"
+     x-cloak
+     class="sticky top-0 z-40 w-full">
+  <div class="grad-bg text-white text-xs sm:text-sm">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 py-2 flex items-center gap-2 sm:gap-3">
+      <span class="text-base sm:text-lg leading-none flex-shrink-0">🚀</span>
+      <p class="flex-1 leading-snug">
+        <strong class="font-semibold">Бета — все функции бесплатно.</strong>
+        <span class="opacity-90">Ранним юзерам Pro останется навсегда, когда вернём оплату.</span>
+        <a href="/changelog" class="underline underline-offset-2 hover:no-underline ml-1 hidden sm:inline">подробнее</a>
+      </p>
+      <button type="button"
+              @click="show = false; localStorage.setItem('doday-beta-dismissed', '1')"
+              class="flex-shrink-0 w-7 h-7 rounded-full hover:bg-white/15 transition flex items-center justify-center"
+              aria-label="Скрыть баннер">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+{% endif %}

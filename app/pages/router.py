@@ -5,6 +5,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 
 from app.auth.deps import CurrentUser
+from app.config import get_settings
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -16,7 +17,11 @@ async def landing(request: Request, user: CurrentUser) -> Response:
     preview = request.query_params.get("preview") == "1"
     if user is not None and not preview:
         return RedirectResponse(url="/app/today", status_code=302)
-    return templates.TemplateResponse(request, "landing.html", {"user": user})
+    return templates.TemplateResponse(
+        request,
+        "landing.html",
+        {"user": user, "beta_free_for_all": get_settings().beta_free_for_all},
+    )
 
 
 @router.get("/privacy", response_class=HTMLResponse)
@@ -28,4 +33,8 @@ async def privacy(request: Request) -> HTMLResponse:
 async def pricing(request: Request, user: CurrentUser) -> HTMLResponse:
     """Three-tier pricing page — Free / Pro / Family. Real checkout disabled
     until ЮKassa shop is registered (CTA shows 'Скоро')."""
-    return templates.TemplateResponse(request, "pricing.html", {"user": user})
+    return templates.TemplateResponse(
+        request,
+        "pricing.html",
+        {"user": user, "beta_free_for_all": get_settings().beta_free_for_all},
+    )

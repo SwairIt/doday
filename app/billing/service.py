@@ -131,7 +131,16 @@ def is_trial_active(user: User) -> bool:
 
 
 def effective_tier(user: User) -> str:
-    """During trial, free users get pro features; paid tiers stay as-is."""
+    """During trial, free users get pro features; paid tiers stay as-is.
+
+    Beta-flag override: если settings.beta_free_for_all=True — все юзеры
+    получают Pro. Используется в pre-launch периоде (Habr-launch grandfather
+    promise: «ранним юзерам Pro останется навсегда»).
+    """
+    from app.config import get_settings
+
+    if get_settings().beta_free_for_all:
+        return "pro"
     if user.tier in ("pro", "team"):
         return user.tier
     if is_trial_active(user):
