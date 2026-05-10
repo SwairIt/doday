@@ -1,0 +1,26 @@
+[Unit]
+Description=Doday Telegram bot worker (long-polling)
+After=network.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=getdoday
+Group=getdoday
+WorkingDirectory=/var/www/getdoday/data/www/getdoday.ru/app
+EnvironmentFile=/var/www/getdoday/data/www/getdoday.ru/app/.env
+ExecStart=/var/www/getdoday/data/www/getdoday.ru/app/.venv/bin/python -m app.telegram.bot
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/var/www/getdoday/data/logs/bot.log
+StandardError=append:/var/www/getdoday/data/logs/bot.log
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/var/www/getdoday/data/logs
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

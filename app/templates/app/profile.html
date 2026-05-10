@@ -318,20 +318,51 @@
         </button>
       </div>
 
-      {# 3. Telegram — soon #}
-      <div class="flex items-center gap-3 p-3 rounded-xl border border-[var(--border)] bg-[var(--surface-2)]/40 opacity-75">
-        <div class="w-9 h-9 rounded-lg bg-[var(--surface-2)] flex items-center justify-center shrink-0 text-[var(--text-muted)]">
+      {# 3. Telegram — backed by /api/profile/telegram-link #}
+      <div class="flex items-center gap-3 p-3 rounded-xl border border-[var(--border)] bg-[var(--surface-2)]/40"
+           x-data="{
+             busy: false,
+             err: '',
+             async link() {
+               this.busy = true; this.err = '';
+               try {
+                 const r = await fetch('/api/profile/telegram-link', {method: 'POST', credentials: 'include'});
+                 if (r.ok) {
+                   const j = await r.json();
+                   if (j.deeplink && j.deeplink.startsWith('https://t.me/')) {
+                     window.open(j.deeplink, '_blank', 'noopener');
+                   } else {
+                     this.err = 'Бот ещё не настроен на проде. Жми «Подключить» когда увидишь, что чат с @DodayTaskBot открывается';
+                   }
+                 } else { this.err = 'не получилось — попробуй ещё раз'; }
+               } catch(e) { this.err = 'нет сети'; }
+               this.busy = false;
+             },
+             async unlink() {
+               if (!confirm('Отвязать чат? Команды бота перестанут работать.')) return;
+               this.busy = true; this.err = '';
+               try {
+                 const r = await fetch('/api/profile/telegram-link', {method: 'DELETE', credentials: 'include'});
+                 if (r.ok || r.status === 204) location.reload();
+                 else this.err = 'не получилось отвязать';
+               } catch(e) { this.err = 'нет сети'; }
+               this.busy = false;
+             }
+           }">
+        <div class="w-9 h-9 rounded-lg bg-[var(--accent)]/15 flex items-center justify-center shrink-0 text-[var(--accent)]">
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>
         </div>
         <div class="flex-1 min-w-0">
           <div class="text-sm font-semibold flex items-center gap-2">Telegram-бот
-            <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 font-medium">Скоро</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-medium">Работает</span>
           </div>
-          <div class="text-xs text-[var(--text-muted)]">@DodayBot будет писать в личку: «через час сдавать домашку», «3 задачи на сегодня». Без рекламы и спама</div>
+          <div class="text-xs text-[var(--text-muted)]">Команды /add /today /upcoming /done из любого чата с ботом. Парсер понимает «купить молоко завтра !!! @дом»</div>
+          <div x-show="err" x-cloak class="text-[10px] text-rose-400 mt-1" x-text="err"></div>
         </div>
-        <button type="button" disabled
-                class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--surface)] text-[var(--text-muted)] border border-[var(--border)] cursor-not-allowed shrink-0">
-          Подключить
+        <button type="button" @click="link()" :disabled="busy"
+                class="px-3 py-1.5 rounded-lg text-xs font-semibold grad-bg text-white shrink-0 disabled:opacity-60 transition hover:scale-105 active:scale-95">
+          <span x-show="!busy">Подключить</span>
+          <span x-show="busy" x-cloak>...</span>
         </button>
       </div>
 

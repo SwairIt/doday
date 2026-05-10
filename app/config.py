@@ -38,6 +38,13 @@ class Settings(BaseSettings):
     # match. Empty in dev disables (503 with hint).
     admin_token: str = ""
 
+    # Telegram bot — задачи через чат-команды /add /today /done /upcoming.
+    # TOKEN получается у @BotFather, USERNAME — bot's @username (без @).
+    # Если оба пустые — endpoint /api/profile/telegram-link работает с
+    # placeholder URL, бот-воркер не запустится.
+    telegram_bot_token: str = ""
+    telegram_bot_username: str = ""
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

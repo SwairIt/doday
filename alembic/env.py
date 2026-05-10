@@ -8,6 +8,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
+from app.admin import models as _admin_models  # noqa: F401
 from app.auth import models as _auth_models  # noqa: F401  register tables with Base.metadata
 from app.config import get_settings
 from app.db import Base
@@ -16,6 +17,7 @@ from app.links import models as _links_models  # noqa: F401
 from app.projects import models as _projects_models  # noqa: F401
 from app.sections import models as _sections_models  # noqa: F401
 from app.tasks import models as _tasks_models  # noqa: F401
+from app.telegram import models as _telegram_models  # noqa: F401
 
 config = context.config
 if config.config_file_name is not None:

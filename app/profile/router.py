@@ -57,6 +57,23 @@ async def update_morning_digest(
     return {"enabled": new_value}
 
 
+@router.post("/telegram-link")
+async def request_telegram_link(user: RequiredUser, session: DbSession) -> dict[str, str]:
+    """Сгенерировать одноразовый токен + deeplink на бот для привязки чата."""
+    from app.telegram.service import request_link_token
+
+    token, deeplink = await request_link_token(session, user.id)
+    return {"token": token, "deeplink": deeplink}
+
+
+@router.delete("/telegram-link", status_code=204)
+async def remove_telegram_link(user: RequiredUser, session: DbSession) -> None:
+    """Отвязать Telegram-чат от аккаунта."""
+    from app.telegram.service import unlink
+
+    await unlink(session, user.id)
+
+
 @router.post("/password")
 async def change_password(
     user: RequiredUser,
