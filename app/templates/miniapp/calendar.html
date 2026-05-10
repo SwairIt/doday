@@ -71,4 +71,38 @@
   {% endif %}
 </section>
 
+{# Heatmap — 12 недель × 7 дней, GitHub-style. Цвет = activity-level. #}
+<section class="mt-8 pt-6 border-t border-[var(--border)]">
+  <h2 class="text-xs uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-3">
+    Активность · 12 недель
+  </h2>
+  <div class="flex gap-1 overflow-x-auto" style="scrollbar-width: none;">
+    {% for week in heatmap_weeks %}
+      <div class="flex flex-col gap-1 shrink-0">
+        {% for cell in week %}
+          {% if cell.is_future %}
+            <div class="w-3 h-3 rounded-sm bg-[var(--surface-2)]/30"></div>
+          {% else %}
+            <a href="/miniapp/calendar?date={{ cell.iso }}"
+               class="w-3 h-3 rounded-sm transition active:scale-90
+                      {% if cell.level == 0 %}bg-[var(--surface-2)]
+                      {% elif cell.level == 1 %}bg-[var(--accent)]/30
+                      {% elif cell.level == 2 %}bg-[var(--accent)]/60
+                      {% else %}bg-[var(--accent)]{% endif %}"
+               title="{{ cell.iso }} · закрыто {{ cell.count }}"></a>
+          {% endif %}
+        {% endfor %}
+      </div>
+    {% endfor %}
+  </div>
+  <div class="flex items-center gap-2 mt-3 text-[10px] text-[var(--text-muted)]">
+    <span>меньше</span>
+    <span class="w-2.5 h-2.5 rounded-sm bg-[var(--surface-2)]"></span>
+    <span class="w-2.5 h-2.5 rounded-sm bg-[var(--accent)]/30"></span>
+    <span class="w-2.5 h-2.5 rounded-sm bg-[var(--accent)]/60"></span>
+    <span class="w-2.5 h-2.5 rounded-sm bg-[var(--accent)]"></span>
+    <span>больше</span>
+  </div>
+</section>
+
 {% endblock %}

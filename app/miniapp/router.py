@@ -252,6 +252,42 @@ async def calendar(
     prev_week_iso = (week_start - timedelta(days=7)).isoformat()
     next_week_iso = (week_start + timedelta(days=7)).isoformat()
 
+    # Heatmap: 12 недель назад до сегодня, 84 cells.
+    heatmap_start = today_date - timedelta(days=12 * 7 - 1)
+    # Adjust to Monday-start of that week.
+    heatmap_start_monday = heatmap_start - timedelta(days=heatmap_start.weekday())
+    heatmap_rows = await session.execute(
+        select(func.date(Task.completed_at), func.count())
+        .where(
+            Task.user_id == user.id,
+            Task.is_completed.is_(True),
+            Task.completed_at.is_not(None),
+            func.date(Task.completed_at) >= heatmap_start_monday,
+            func.date(Task.completed_at) <= today_date,
+        )
+        .group_by(func.date(Task.completed_at))
+    )
+    heatmap_counts = {row[0]: int(row[1]) for row in heatmap_rows.all()}
+    # Build 12 weeks × 7 days, oldest → newest, in chunks per week
+    heatmap_weeks = []
+    for w in range(12):
+        wk_start = heatmap_start_monday + timedelta(days=w * 7)
+        week_cells = []
+        for i in range(7):
+            d = wk_start + timedelta(days=i)
+            cnt = heatmap_counts.get(d, 0)
+            # 0 → 0, 1-2 → 1, 3-4 → 2, 5+ → 3
+            level = 0 if cnt == 0 else (1 if cnt <= 2 else (2 if cnt <= 4 else 3))
+            week_cells.append(
+                {
+                    "iso": d.isoformat(),
+                    "count": cnt,
+                    "level": level,
+                    "is_future": d > today_date,
+                }
+            )
+        heatmap_weeks.append(week_cells)
+
     ctx = _ctx(request, user)
     ctx.update(
         selected_date=selected_date,
@@ -260,6 +296,7 @@ async def calendar(
         prev_week_iso=prev_week_iso,
         next_week_iso=next_week_iso,
         today_iso=today_date.isoformat(),
+        heatmap_weeks=heatmap_weeks,
     )
     return templates.TemplateResponse(request, "miniapp/calendar.html", ctx)
 
@@ -473,6 +510,31 @@ async def api_patch_task(
             "due_at": task.due_at.isoformat() if task.due_at else None,
         }
     )
+
+
+@router.get("/api/heatmap")
+async def api_heatmap(user: CurrentUser, session: DbSession) -> JSONResponse:
+    """Daily completion counts за последние 12 недель (84 дня) для heatmap'а
+    на /miniapp/calendar. Возвращает {date: count} only для дней с >0 done."""
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    from datetime import timedelta
+
+    today_date = datetime.now(UTC).date()
+    start_date = today_date - timedelta(days=12 * 7 - 1)
+    rows = await session.execute(
+        select(func.date(Task.completed_at), func.count())
+        .where(
+            Task.user_id == user.id,
+            Task.is_completed.is_(True),
+            Task.completed_at.is_not(None),
+            func.date(Task.completed_at) >= start_date,
+            func.date(Task.completed_at) <= today_date,
+        )
+        .group_by(func.date(Task.completed_at))
+    )
+    counts = {str(r[0]): int(r[1]) for r in rows.all()}
+    return JSONResponse({"start_date": start_date.isoformat(), "counts": counts})
 
 
 @router.get("/api/projects")

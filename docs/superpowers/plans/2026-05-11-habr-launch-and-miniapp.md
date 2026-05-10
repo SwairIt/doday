@@ -652,7 +652,7 @@ themeChanged: уже подключён в MA2, проверить что раб
 - [x] MB5 — Inbox + move-to-project ✅ `830a47a`
 
 ### Фаза C — Навигация
-- [ ] MC1 — Calendar week-view
+- [x] MC1 — Calendar week-view ✅ `4a86ede`
 - [ ] MC2 — Calendar heatmap
 - [ ] MC3 — Projects list + view
 - [ ] MC4 — Search + «Я» вкладка

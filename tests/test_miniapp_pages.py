@@ -335,6 +335,25 @@ async def test_calendar_invalid_date_falls_back_to_today(
     assert r.status_code == 200
 
 
+async def test_calendar_heatmap_renders(logged_in_client: AsyncClient) -> None:
+    """MC2: heatmap отрисован — 12 недель."""
+    r = await logged_in_client.get("/miniapp/calendar")
+    assert r.status_code == 200
+    body = r.text
+    assert "Активность" in body
+    assert "12 недель" in body
+
+
+async def test_api_heatmap_returns_counts(logged_in_client: AsyncClient) -> None:
+    """MC2: GET /miniapp/api/heatmap возвращает {start_date, counts}."""
+    r = await logged_in_client.get("/miniapp/api/heatmap")
+    assert r.status_code == 200
+    data = r.json()
+    assert "start_date" in data
+    assert "counts" in data
+    assert isinstance(data["counts"], dict)
+
+
 async def test_today_page_renders_overdue_and_today_tasks(
     db_session: AsyncSession, logged_in_client: AsyncClient
 ) -> None:
