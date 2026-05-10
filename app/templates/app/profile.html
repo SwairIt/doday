@@ -324,27 +324,65 @@
         </button>
       </div>
 
-      {# 3. Telegram — backed by /api/profile/telegram-link #}
-      <div class="flex items-center gap-3 p-3 rounded-xl border border-[var(--border)] bg-[var(--surface-2)]/40"
+      {# 3. Telegram — backed by /api/profile/telegram-link.
+         Три способа подключения: deeplink-кнопка / QR-code / ручное копирование
+         команды. Telegram иногда теряет ?start=token при повторном открытии,
+         поэтому fallback'и обязательны. #}
+      <div class="rounded-xl border border-[var(--border)] bg-[var(--surface-2)]/40 overflow-hidden"
            x-data="{
              busy: false,
              err: '',
-             async link() {
+             open: false,
+             token: '',
+             deeplink: '',
+             botUsername: '',
+             copied: false,
+             async generate() {
                this.busy = true; this.err = '';
                try {
                  const r = await fetch('/api/profile/telegram-link', {method: 'POST', credentials: 'include'});
                  if (r.status === 402) {
                    window.dispatchEvent(new CustomEvent('doday-upgrade', {detail: {feature: 'tg_bot', tier: 'free'}}));
-                 } else if (r.ok) {
-                   const j = await r.json();
-                   if (j.deeplink && j.deeplink.startsWith('https://t.me/')) {
-                     window.open(j.deeplink, '_blank', 'noopener');
-                   } else {
-                     this.err = 'Бот ещё не подключён на проде. Жми «Подключить» когда настроим.';
-                   }
-                 } else { this.err = 'не получилось — попробуй ещё раз'; }
+                   this.busy = false; return;
+                 }
+                 if (!r.ok) { this.err = 'не получилось — попробуй ещё раз'; this.busy = false; return; }
+                 const j = await r.json();
+                 this.token = j.token;
+                 this.deeplink = j.deeplink;
+                 const m = (j.deeplink || '').match(/t\.me\/([^?]+)/);
+                 this.botUsername = m ? m[1] : 'DodayTaskBot';
+                 this.open = true;
+                 this.$nextTick(() => this.drawQR());
                } catch(e) { this.err = 'нет сети'; }
                this.busy = false;
+             },
+             drawQR() {
+               if (!window.qrcode || !this.deeplink) return;
+               const el = this.$refs.qr;
+               el.innerHTML = '';
+               // qrcode-generator API: makeCode → toDataURL
+               const qr = window.qrcode(0, 'M');
+               qr.addData(this.deeplink);
+               qr.make();
+               // 4px module size, белый bg, чёрный fg, padding 2 модулей
+               el.innerHTML = qr.createSvgTag({cellSize: 5, margin: 2, scalable: true});
+               // подкрасить SVG в текущую тему
+               const svg = el.querySelector('svg');
+               if (svg) {
+                 svg.style.background = 'white';
+                 svg.style.borderRadius = '12px';
+                 svg.style.padding = '8px';
+                 svg.style.maxWidth = '180px';
+                 svg.style.width = '100%';
+                 svg.style.height = 'auto';
+               }
+             },
+             async copyCommand() {
+               try {
+                 await navigator.clipboard.writeText('/start ' + this.token);
+                 this.copied = true;
+                 setTimeout(() => this.copied = false, 2000);
+               } catch(e) {}
              },
              async unlink() {
                if (!confirm('Отвязать чат? Команды бота перестанут работать.')) return;
@@ -357,26 +395,87 @@
                this.busy = false;
              }
            }">
-        <div class="w-9 h-9 rounded-lg bg-[var(--accent)]/15 flex items-center justify-center shrink-0 text-[var(--accent)]">
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>
-        </div>
-        <div class="flex-1 min-w-0">
-          <div class="text-sm font-semibold flex items-center gap-2">Telegram-бот
-            {% if is_pro %}
-              <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-medium">Работает</span>
-            {% else %}
-              <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 font-medium">🔒 Pro</span>
-            {% endif %}
+
+        {# Header — collapsed state #}
+        <div class="flex items-center gap-3 p-3">
+          <div class="w-9 h-9 rounded-lg bg-[var(--accent)]/15 flex items-center justify-center shrink-0 text-[var(--accent)]">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>
           </div>
-          <div class="text-xs text-[var(--text-muted)]">Команды /add /today /upcoming /done из любого чата с ботом. Парсер понимает «купить молоко завтра !!! @дом»</div>
-          <div x-show="err" x-cloak class="text-[10px] text-rose-400 mt-1" x-text="err"></div>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-semibold flex items-center gap-2">Telegram-бот
+              {% if is_pro %}
+                <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-medium">Работает</span>
+              {% else %}
+                <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 font-medium">🔒 Pro</span>
+              {% endif %}
+            </div>
+            <div class="text-xs text-[var(--text-muted)]">Команды /add /today /upcoming /done из чата. Парсер понимает «купить молоко завтра !!! @дом»</div>
+            <div x-show="err" x-cloak class="text-[10px] text-rose-400 mt-1" x-text="err"></div>
+          </div>
+          <button type="button" @click="generate()" :disabled="busy"
+                  class="px-3 py-1.5 rounded-lg text-xs font-semibold grad-bg text-white shrink-0 disabled:opacity-60 transition hover:scale-105 active:scale-95">
+            <span x-show="!busy && !open">Подключить</span>
+            <span x-show="!busy && open">Обновить QR</span>
+            <span x-show="busy" x-cloak>...</span>
+          </button>
         </div>
-        <button type="button" @click="link()" :disabled="busy"
-                class="px-3 py-1.5 rounded-lg text-xs font-semibold grad-bg text-white shrink-0 disabled:opacity-60 transition hover:scale-105 active:scale-95">
-          <span x-show="!busy">Подключить</span>
-          <span x-show="busy" x-cloak>...</span>
-        </button>
+
+        {# Expanded: QR + 3 способа подключения #}
+        <div x-show="open" x-cloak x-transition class="px-3 pb-3 pt-2 border-t border-[var(--border)]">
+          <p class="text-[11px] text-[var(--text-muted)] mb-3 leading-relaxed">
+            Любой из трёх способов привяжет чат. Если в Telegram кнопка
+            <strong>Start</strong> отправляет просто «/start» без токена —
+            используй вариант <strong>2</strong> или <strong>3</strong>.
+          </p>
+
+          <div class="grid sm:grid-cols-[180px_1fr] gap-4">
+            {# QR column #}
+            <div class="flex flex-col items-center text-center">
+              <div x-ref="qr" class="bg-white rounded-xl p-2 inline-block"></div>
+              <div class="text-[10px] text-[var(--text-muted)] mt-1.5">📱 Способ 1<br>Сканируй с телефона</div>
+            </div>
+
+            {# Right column: deeplink + copy #}
+            <div class="space-y-3 min-w-0">
+              {# Способ 2 — кнопка-ссылка #}
+              <div>
+                <div class="text-[10px] uppercase font-semibold text-[var(--text-muted)] tracking-wider mb-1.5">🔗 Способ 2 — открыть в Telegram</div>
+                <a :href="deeplink" target="_blank" rel="noopener"
+                   class="block w-full text-center px-3 py-2 rounded-lg grad-bg text-white text-sm font-semibold transition hover:scale-[1.02] active:scale-95">
+                  Открыть @<span x-text="botUsername"></span>
+                </a>
+                <div class="text-[10px] text-[var(--text-muted)] mt-1">Откроется чат → нажми <strong>Start</strong>. Если только «/start» отправился — переходи к способу 3.</div>
+              </div>
+
+              {# Способ 3 — копирование команды #}
+              <div>
+                <div class="text-[10px] uppercase font-semibold text-[var(--text-muted)] tracking-wider mb-1.5">⌨️ Способ 3 — скопировать команду</div>
+                <div class="flex items-stretch gap-1.5">
+                  <code class="flex-1 min-w-0 px-2.5 py-2 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-xs font-mono truncate"
+                        x-text="'/start ' + token" :title="'/start ' + token"></code>
+                  <button type="button" @click="copyCommand()"
+                          class="px-3 py-2 rounded-lg bg-[var(--accent)]/15 text-[var(--accent)] text-xs font-semibold hover:bg-[var(--accent)]/25 transition shrink-0">
+                    <span x-show="!copied">Копировать</span>
+                    <span x-show="copied" x-cloak>✓ Скопировано</span>
+                  </button>
+                </div>
+                <div class="text-[10px] text-[var(--text-muted)] mt-1">Открой @<span x-text="botUsername"></span> в Telegram, вставь команду, отправь.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-[10px] text-[var(--text-muted)] mt-3 pt-3 border-t border-[var(--border)] flex items-center justify-between gap-2">
+            <span>Токен одноразовый. После привязки — недействителен.</span>
+            <button type="button" @click="unlink()"
+                    class="text-rose-400 hover:underline">Отвязать чат</button>
+          </div>
+        </div>
+
       </div>
+
+      {# QRCode generator (qrcode-generator 1.4.4 ~5KB MIT) — нужен для отрисовки
+         QR-кода в Telegram-блоке. Грузится один раз с jsdelivr CDN. #}
+      <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 
       {# 4. Push to mobile — soon #}
       <div class="flex items-center gap-3 p-3 rounded-xl border border-[var(--border)] bg-[var(--surface-2)]/40 opacity-75">
