@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Roadmap — Doday{% endblock %}
+{% block seo_description %}Roadmap Doday: над чем работаем сейчас, что планируем дальше, какие идеи в очереди. Прозрачно и без обещаний которые не выполним.{% endblock %}
+
+{% block layout %}
+{% include "_partials/beta_banner.html" with context %}
+
+<header class="sticky top-0 z-20 glass border-b border-[var(--border)] px-4 md:px-6 py-3 flex items-center gap-2 md:gap-4">
+  <a href="/" class="flex items-center gap-2 font-bold text-lg shrink-0">
+    <span class="grad-bg w-8 h-8 rounded-lg flex items-center justify-center text-white font-extrabold shadow-glow text-sm">D</span>
+    <span class="grad-text">Doday</span>
+  </a>
+  <div class="flex-1"></div>
+  <a href="/changelog" class="text-sm text-[var(--text-muted)] hover:text-[var(--text)] hidden sm:inline">← Changelog</a>
+  {% if user %}
+    <a href="/app/today" class="btn-ghost px-3 py-1.5 text-sm whitespace-nowrap">В приложение</a>
+  {% else %}
+    <a href="/auth/register" class="btn-primary px-3 py-1.5 text-sm whitespace-nowrap">Начать</a>
+  {% endif %}
+</header>
+
+<main class="max-w-4xl mx-auto px-4 md:px-8 py-12 md:py-16">
+  <div class="text-center mb-12">
+    <p class="text-xs uppercase tracking-widest grad-text font-semibold mb-3">Roadmap</p>
+    <h1 class="text-3xl md:text-5xl font-extrabold mb-4">
+      Куда <span class="grad-text">движемся</span>
+    </h1>
+    <p class="text-[var(--text-muted)] text-base md:text-lg max-w-xl mx-auto">
+      Прозрачно и честно. «Сейчас» — есть commit-активность. «Следующее» —
+      конкретный план на 2-3 месяца. «Может быть» — идеи без коммитмента.
+      Если идея застряла — её удалим, не будем имитировать.
+    </p>
+  </div>
+
+  <div class="space-y-8">
+    {% for section in sections %}
+      <section>
+        <header class="flex items-center gap-3 mb-4">
+          <span class="w-2 h-2 rounded-full bg-{{ section.color }}-500 shrink-0"></span>
+          <h2 class="text-xl md:text-2xl font-bold">{{ section.name }}</h2>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-{{ section.color }}-500/15 text-{{ section.color }}-400 font-semibold">
+            {{ section['items'] | length }}
+          </span>
+        </header>
+        <div class="grid sm:grid-cols-2 gap-3">
+          {% for item in section['items'] %}
+            <article class="card p-4">
+              <h3 class="font-semibold mb-2 flex items-start gap-2">
+                <span class="text-{{ section.color }}-400 shrink-0 mt-0.5">
+                  {% if section.name == 'Сейчас' %}⚙{% elif section.name == 'Следующее' %}→{% else %}?{% endif %}
+                </span>
+                <span>{{ item.title }}</span>
+              </h3>
+              <p class="text-sm text-[var(--text-muted)] leading-relaxed">{{ item.description }}</p>
+            </article>
+          {% endfor %}
+        </div>
+      </section>
+    {% endfor %}
+  </div>
+
+  <div class="text-center mt-12 pt-8 border-t border-[var(--border)]">
+    <p class="text-sm text-[var(--text-muted)] mb-3">
+      Не хватает идеи? Пиши через 🐞-кнопку в приложении или в TG-канал.
+    </p>
+    <a href="/changelog" class="btn-ghost px-5 py-2.5 text-sm">← Что уже сделано</a>
+  </div>
+</main>
+
+<footer class="border-t border-[var(--border)] mt-16 py-8 text-center text-sm text-[var(--text-muted)]">
+  <a href="/" class="hover:text-[var(--accent)]">Главная</a> ·
+  <a href="/changelog" class="hover:text-[var(--accent)]">Changelog</a> ·
+  <a href="/help" class="hover:text-[var(--accent)]">Помощь</a> ·
+  <a href="/privacy" class="hover:text-[var(--accent)]">Приватность</a>
+</footer>
+{% endblock %}

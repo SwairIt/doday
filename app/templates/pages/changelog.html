@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Changelog — Doday{% endblock %}
+{% block seo_description %}История апдейтов Doday: что и когда добавили в туду-лист. Прозрачно, по датам, на русском.{% endblock %}
+
+{% block layout %}
+{% include "_partials/beta_banner.html" with context %}
+
+<header class="sticky top-0 z-20 glass border-b border-[var(--border)] px-4 md:px-6 py-3 flex items-center gap-2 md:gap-4">
+  <a href="/" class="flex items-center gap-2 font-bold text-lg shrink-0">
+    <span class="grad-bg w-8 h-8 rounded-lg flex items-center justify-center text-white font-extrabold shadow-glow text-sm">D</span>
+    <span class="grad-text">Doday</span>
+  </a>
+  <div class="flex-1"></div>
+  <a href="/roadmap" class="text-sm text-[var(--text-muted)] hover:text-[var(--text)] hidden sm:inline">Roadmap →</a>
+  {% if user %}
+    <a href="/app/today" class="btn-ghost px-3 py-1.5 text-sm whitespace-nowrap">В приложение</a>
+  {% else %}
+    <a href="/auth/register" class="btn-primary px-3 py-1.5 text-sm whitespace-nowrap">Начать</a>
+  {% endif %}
+</header>
+
+<main class="max-w-3xl mx-auto px-4 md:px-8 py-12 md:py-16">
+  <div class="text-center mb-12">
+    <p class="text-xs uppercase tracking-widest grad-text font-semibold mb-3">Changelog</p>
+    <h1 class="text-3xl md:text-5xl font-extrabold mb-4">
+      <span class="grad-text">Что нового</span> в Doday
+    </h1>
+    <p class="text-[var(--text-muted)] text-base md:text-lg">
+      Публичная история апдейтов. Каждая запись — то что юзер реально почувствует.
+    </p>
+  </div>
+
+  <div class="space-y-6">
+    {% for entry in entries %}
+      <article class="card p-5 md:p-6">
+        <header class="flex items-start gap-3 flex-wrap mb-3">
+          <span class="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded bg-[var(--accent)]/15 text-[var(--accent)] shrink-0">
+            {{ entry.version }}
+          </span>
+          <time class="text-xs text-[var(--text-muted)] mt-1" datetime="{{ entry.date }}">{{ entry.date }}</time>
+          <h2 class="text-base md:text-lg font-bold w-full mt-1">{{ entry.title }}</h2>
+        </header>
+        <ul class="space-y-2 text-sm leading-relaxed">
+          {% for item in entry.notes %}
+            <li class="flex items-start gap-2">
+              <span class="text-[var(--accent)] mt-1 shrink-0">›</span>
+              <span>{{ item }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      </article>
+    {% endfor %}
+  </div>
+
+  <div class="text-center mt-12 pt-8 border-t border-[var(--border)]">
+    <p class="text-sm text-[var(--text-muted)] mb-3">Хочешь следить в реальном времени?</p>
+    {% if request.state.telegram_channel_url %}
+      <a href="{{ request.state.telegram_channel_url }}" target="_blank" rel="noopener" class="btn-primary px-5 py-2.5 text-sm inline-flex items-center gap-2">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>
+        Telegram-канал
+      </a>
+    {% else %}
+      <a href="https://github.com/SwairIt/SchoolProject" target="_blank" rel="noopener" class="btn-ghost px-5 py-2.5 text-sm">GitHub</a>
+    {% endif %}
+  </div>
+</main>
+
+<footer class="border-t border-[var(--border)] mt-16 py-8 text-center text-sm text-[var(--text-muted)]">
+  <a href="/" class="hover:text-[var(--accent)]">Главная</a> ·
+  <a href="/roadmap" class="hover:text-[var(--accent)]">Roadmap</a> ·
+  <a href="/help" class="hover:text-[var(--accent)]">Помощь</a> ·
+  <a href="/privacy" class="hover:text-[var(--accent)]">Приватность</a>
+</footer>
+{% endblock %}

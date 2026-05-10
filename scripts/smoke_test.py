@@ -34,6 +34,8 @@ ENDPOINTS: list[Endpoint] = [
     Endpoint("/", 200, "landing"),
     Endpoint("/privacy", 200, "privacy"),
     Endpoint("/pricing", 200, "pricing"),
+    Endpoint("/changelog", 200, "changelog"),
+    Endpoint("/roadmap", 200, "roadmap"),
     Endpoint("/help", 200, "help"),
     Endpoint("/help/articles.json", 200, "help-articles"),
     Endpoint("/sitemap.xml", 200, "sitemap"),

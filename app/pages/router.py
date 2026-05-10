@@ -6,6 +6,8 @@ from fastapi.templating import Jinja2Templates
 
 from app.auth.deps import CurrentUser
 from app.config import get_settings
+from app.pages.changelog_data import ENTRIES as CHANGELOG_ENTRIES
+from app.pages.roadmap_data import SECTIONS as ROADMAP_SECTIONS
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -37,4 +39,25 @@ async def pricing(request: Request, user: CurrentUser) -> HTMLResponse:
         request,
         "pricing.html",
         {"user": user, "beta_free_for_all": get_settings().beta_free_for_all},
+    )
+
+
+@router.get("/changelog", response_class=HTMLResponse)
+async def changelog(request: Request, user: CurrentUser) -> HTMLResponse:
+    """Public changelog feed. Источник: app/pages/changelog_data.py."""
+    return templates.TemplateResponse(
+        request,
+        "pages/changelog.html",
+        {"user": user, "entries": CHANGELOG_ENTRIES},
+    )
+
+
+@router.get("/roadmap", response_class=HTMLResponse)
+async def roadmap(request: Request, user: CurrentUser) -> HTMLResponse:
+    """Public roadmap — Now / Next / Maybe. Источник:
+    app/pages/roadmap_data.py."""
+    return templates.TemplateResponse(
+        request,
+        "pages/roadmap.html",
+        {"user": user, "sections": ROADMAP_SECTIONS},
     )
