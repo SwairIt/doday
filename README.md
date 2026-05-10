@@ -1,8 +1,8 @@
-# SchoolTodo
+# Doday
 
-Todo-list for Russian schoolchildren that auto-syncs homework from electronic school diaries.
+Free todo-list for everyone — kids, adults, companies. Hosted at **https://getdoday.ru**.
 
-See the [design doc](docs/superpowers/specs/2026-05-02-school-todo-design.md) for the full picture and [PROGRESS.md](PROGRESS.md) for current status.
+Was originally "SchoolTodo" with auto-sync of Russian electronic school diaries (МО / МЭШ); pivoted 2026-05-03 to a universal product. Diary parsing kept as an optional integration. See [pivot spec](docs/superpowers/specs/2026-05-03-pivot-design-spec.md) and [PROGRESS.md](PROGRESS.md) for current status.
 
 ## What's implemented (Plan 1 — auth foundation)
 
