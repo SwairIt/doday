@@ -1,22 +1,68 @@
 {% extends "miniapp/_base.html" %}
 {% block title %}Я — Doday{% endblock %}
 {% block content %}
-<header class="mb-4">
-  <h1 class="text-2xl font-bold">Я</h1>
-  <p class="text-sm text-[var(--text-muted)]">Твоя статистика и быстрые настройки.</p>
+
+<header class="mb-5">
+  <h1 class="text-2xl font-bold">{{ current_user.email if current_user else 'Гость' }}</h1>
+  <p class="text-sm text-[var(--text-muted)]">
+    Тариф: <strong class="text-[var(--text)]">{{ current_user.tier if current_user else '—' }}</strong>
+  </p>
 </header>
 
-<div class="card p-4 rounded-xl bg-[var(--surface-2)] mb-4">
-  <p class="text-sm">Привет, <strong>{{ current_user.email if current_user else 'Гость' }}</strong>!</p>
-  <p class="text-xs text-[var(--text-muted)] mt-1">Mini App в активной разработке.</p>
+{# Streak — главный wow-элемент #}
+<section class="mb-5">
+  <div class="card p-5 rounded-2xl bg-[var(--surface-2)] flex items-center gap-4">
+    <div class="text-5xl">🔥</div>
+    <div class="flex-1">
+      <div class="text-3xl font-extrabold leading-none">{{ streak }}</div>
+      <div class="text-xs text-[var(--text-muted)] uppercase tracking-wider mt-1">
+        {% if streak == 0 %}нет streak{% elif streak == 1 %}день streak{% elif streak < 5 %}дня streak{% else %}дней streak{% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+{# Stats — закрыто за периоды #}
+<section class="mb-5">
+  <h2 class="text-xs uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">Закрыто</h2>
+  <div class="grid grid-cols-3 gap-2">
+    <div class="rounded-xl bg-[var(--surface-2)] p-3 text-center">
+      <div class="text-2xl font-bold text-[var(--accent)]">{{ done_today }}</div>
+      <div class="text-[10px] text-[var(--text-muted)] uppercase tracking-wider mt-0.5">сегодня</div>
+    </div>
+    <div class="rounded-xl bg-[var(--surface-2)] p-3 text-center">
+      <div class="text-2xl font-bold">{{ done_week }}</div>
+      <div class="text-[10px] text-[var(--text-muted)] uppercase tracking-wider mt-0.5">7 дней</div>
+    </div>
+    <div class="rounded-xl bg-[var(--surface-2)] p-3 text-center">
+      <div class="text-2xl font-bold">{{ done_month }}</div>
+      <div class="text-[10px] text-[var(--text-muted)] uppercase tracking-wider mt-0.5">30 дней</div>
+    </div>
+  </div>
+</section>
+
+{# Поиск — кнопка которая открывает search-sheet #}
+<section class="mb-5">
+  <button type="button"
+          @click="$dispatch('doday-open-search')"
+          class="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-[var(--surface-2)] active:scale-95 transition text-[var(--text-muted)]">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"/>
+    </svg>
+    <span class="text-sm">Поиск по задачам…</span>
+  </button>
+</section>
+
+<section class="mb-5">
+  <a href="https://getdoday.ru/app/today" target="_blank"
+     onclick="if (window.tg) { event.preventDefault(); tg.openLink('https://getdoday.ru/app/today'); }"
+     class="block text-center px-4 py-3 rounded-xl bg-[var(--accent)] text-[var(--tg-button-text)] font-semibold text-sm active:scale-95 transition">
+    Открыть полную версию в браузере →
+  </a>
+</section>
+
+<div class="text-center text-[10px] text-[var(--text-muted)] mt-8">
+  Doday Mini App · бета
 </div>
 
-<a href="https://getdoday.ru/app/today" target="_blank"
-   class="block text-center px-4 py-3 rounded-xl bg-[var(--accent)] text-[var(--tg-button-text)] font-semibold mb-3">
-  Открыть полную версию в браузере
-</a>
-
-<div class="text-center py-6 opacity-60">
-  <p class="text-xs">скоро добавим streak, stats, переключение режима</p>
-</div>
 {% endblock %}

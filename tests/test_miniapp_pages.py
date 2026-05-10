@@ -486,3 +486,50 @@ async def test_today_page_renders_overdue_and_today_tasks(
     assert "Today task" in body
     assert "Просрочено" in body
     assert "P1" in body  # priority chip
+
+
+async def test_api_search_min_2_chars(logged_in_client: AsyncClient) -> None:
+    """MC4: search с <2 символов вернёт пустой массив."""
+    r = await logged_in_client.get("/miniapp/api/search?q=a")
+    assert r.status_code == 200
+    assert r.json() == {"results": []}
+
+
+async def test_api_search_finds_task(
+    db_session: AsyncSession, logged_in_client: AsyncClient
+) -> None:
+    """MC4: search возвращает совпадения по title (ILIKE)."""
+    from sqlalchemy import select
+
+    from app.auth.models import User
+    from app.projects.service import ensure_inbox
+
+    user = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    inbox = await ensure_inbox(db_session, user.id)
+    from app.tasks.service import create_task as svc_create_task
+
+    await svc_create_task(db_session, user.id, title="Купить молоко", project_id=inbox.id)
+    await svc_create_task(db_session, user.id, title="Сходить в зал", project_id=inbox.id)
+    await db_session.commit()
+
+    r = await logged_in_client.get("/miniapp/api/search?q=молок")
+    assert r.status_code == 200
+    data = r.json()
+    assert len(data["results"]) == 1
+    assert "молоко" in data["results"][0]["title"]
+
+
+async def test_me_page_shows_streak_and_stats(
+    db_session: AsyncSession, logged_in_client: AsyncClient
+) -> None:
+    """MC4: Me page renders streak + 3 stat-cards."""
+    r = await logged_in_client.get("/miniapp/me")
+    assert r.status_code == 200
+    body = r.text
+    assert "🔥" in body
+    assert "сегодня" in body
+    assert "7 дней" in body
+    assert "30 дней" in body
+    assert "Открыть полную версию" in body

@@ -1,0 +1,94 @@
+{# Search bottom-sheet. Открывается через event 'doday-open-search'.
+   Подключается в _base.html. Live-search 200ms debounced. Тап на результат
+   открывает task-sheet через 'doday-open-task'. #}
+
+<div x-data="dodaySearchSheet()" x-cloak class="fixed inset-0 z-50" x-show="open"
+     @keyup.escape.window="close()" @doday-open-search.window="open = true; $nextTick(() => $refs.input.focus())">
+  <div class="absolute inset-0 bg-black/40" @click="close()"
+       x-show="open" x-transition.opacity></div>
+
+  <div class="absolute left-0 right-0 top-0 bg-[var(--bg)] rounded-b-2xl shadow-2xl max-h-[80vh] overflow-y-auto"
+       style="padding-top: calc(env(safe-area-inset-top) + 8px);"
+       x-show="open"
+       x-transition:enter="transition transform duration-300 ease-out"
+       x-transition:enter-start="-translate-y-full"
+       x-transition:enter-end="translate-y-0"
+       x-transition:leave="transition transform duration-200 ease-in"
+       x-transition:leave-start="translate-y-0"
+       x-transition:leave-end="-translate-y-full">
+
+    <div class="flex items-center gap-2 px-3 pb-3">
+      <button @click="close()" class="text-[var(--text-muted)] active:scale-90 transition shrink-0">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <input type="search" x-model="q" x-ref="input" @input="search()"
+             placeholder="Поиск задач..."
+             class="flex-1 px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border)] text-sm focus:outline-none focus:border-[var(--accent)]">
+    </div>
+
+    <div class="px-3 pb-4 space-y-1.5">
+      <template x-if="q.trim().length < 2 && results.length === 0">
+        <p class="text-center text-[var(--text-muted)] text-sm py-8">Введи минимум 2 символа</p>
+      </template>
+      <template x-if="loading">
+        <p class="text-center text-[var(--text-muted)] text-sm py-4">⏳</p>
+      </template>
+      <template x-if="!loading && q.trim().length >= 2 && results.length === 0">
+        <p class="text-center text-[var(--text-muted)] text-sm py-8">Ничего не нашлось</p>
+      </template>
+      <template x-for="task in results" :key="task.id">
+        <button type="button" @click="openTask(task.id)"
+                class="w-full text-left px-3 py-2.5 rounded-xl bg-[var(--surface-2)] active:scale-95 transition flex items-start gap-2.5">
+          <span class="w-4 h-4 rounded-full border-2 mt-0.5 shrink-0"
+                :class="task.is_completed ? 'bg-[var(--accent)] border-[var(--accent)]' : 'border-[var(--text-muted)]'"></span>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm leading-snug truncate" :class="{'line-through opacity-50': task.is_completed}" x-text="task.title"></p>
+            <div class="flex items-center gap-1.5 mt-0.5 text-[10px] text-[var(--text-muted)]">
+              <template x-if="task.priority === 'p1'"><span class="px-1 rounded bg-rose-500/20 text-rose-400">P1</span></template>
+              <template x-if="task.priority === 'p2'"><span class="px-1 rounded bg-orange-500/20 text-orange-400">P2</span></template>
+              <template x-if="task.priority === 'p3'"><span class="px-1 rounded bg-blue-500/20 text-blue-400">P3</span></template>
+              <template x-if="task.due_at">
+                <span x-text="new Date(task.due_at).toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit'})"></span>
+              </template>
+            </div>
+          </div>
+        </button>
+      </template>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.dodaySearchSheet = function() {
+    return {
+      open: false,
+      q: '',
+      results: [],
+      loading: false,
+      timer: null,
+      close() { this.open = false; this.q = ''; this.results = []; },
+      search() {
+        clearTimeout(this.timer);
+        const q = this.q.trim();
+        if (q.length < 2) { this.results = []; this.loading = false; return; }
+        this.loading = true;
+        this.timer = setTimeout(async () => {
+          try {
+            const r = await fetch('/miniapp/api/search?q=' + encodeURIComponent(q), { credentials: 'include' });
+            if (r.ok) {
+              const data = await r.json();
+              this.results = data.results || [];
+            }
+          } catch (e) {}
+          this.loading = false;
+        }, 200);
+      },
+      openTask(taskId) {
+        this.close();
+        window.dispatchEvent(new CustomEvent('doday-open-task', {detail: {taskId}}));
+      },
+    };
+  };
+</script>

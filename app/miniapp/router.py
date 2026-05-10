@@ -645,6 +645,41 @@ async def api_patch_task(
     )
 
 
+@router.get("/api/search")
+async def api_search(q: str, user: CurrentUser, session: DbSession) -> JSONResponse:
+    """Простой ILIKE-search по title задач юзера. Min 2 chars, max 20 results."""
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    query = (q or "").strip()
+    if len(query) < 2:
+        return JSONResponse({"results": []})
+    rows = await session.execute(
+        select(Task)
+        .where(
+            Task.user_id == user.id,
+            Task.deleted_at.is_(None),
+            func.lower(Task.title).contains(query.lower()),
+        )
+        .order_by(Task.is_completed, Task.created_at.desc())
+        .limit(20)
+    )
+    tasks = list(rows.scalars().all())
+    return JSONResponse(
+        {
+            "results": [
+                {
+                    "id": str(t.id),
+                    "title": t.title,
+                    "priority": t.priority.value,
+                    "due_at": t.due_at.isoformat() if t.due_at else None,
+                    "is_completed": t.is_completed,
+                }
+                for t in tasks
+            ]
+        }
+    )
+
+
 @router.get("/api/heatmap")
 async def api_heatmap(user: CurrentUser, session: DbSession) -> JSONResponse:
     """Daily completion counts за последние 12 недель (84 дня) для heatmap'а
@@ -749,11 +784,89 @@ async def api_snooze_task(
 
 
 @router.get("/me", response_class=HTMLResponse)
-async def me(request: Request, user: CurrentUser) -> Response:
+async def me(request: Request, user: CurrentUser, session: DbSession) -> Response:
     redir = _require_user_or_redirect(user)
     if redir is not None:
         return redir
-    return templates.TemplateResponse(request, "miniapp/me.html", _ctx(request, user))
+    if user is None:  # pragma: no cover
+        return RedirectResponse(url="/miniapp/link", status_code=status.HTTP_303_SEE_OTHER)
+
+    from datetime import timedelta
+
+    today_date = datetime.now(UTC).date()
+    week_start = today_date - timedelta(days=6)
+    month_start = today_date - timedelta(days=29)
+
+    # Stats: закрыто сегодня / за неделю / за месяц
+    done_today = (
+        await session.execute(
+            select(func.count())
+            .select_from(Task)
+            .where(
+                Task.user_id == user.id,
+                Task.is_completed.is_(True),
+                Task.completed_at.is_not(None),
+                func.date(Task.completed_at) == today_date,
+            )
+        )
+    ).scalar_one()
+    done_week = (
+        await session.execute(
+            select(func.count())
+            .select_from(Task)
+            .where(
+                Task.user_id == user.id,
+                Task.is_completed.is_(True),
+                Task.completed_at.is_not(None),
+                func.date(Task.completed_at) >= week_start,
+            )
+        )
+    ).scalar_one()
+    done_month = (
+        await session.execute(
+            select(func.count())
+            .select_from(Task)
+            .where(
+                Task.user_id == user.id,
+                Task.is_completed.is_(True),
+                Task.completed_at.is_not(None),
+                func.date(Task.completed_at) >= month_start,
+            )
+        )
+    ).scalar_one()
+
+    # Streak: считаем подряд идущие дни с >=1 закрытой задачей до сегодня
+    daily_q = await session.execute(
+        select(func.date(Task.completed_at), func.count())
+        .where(
+            Task.user_id == user.id,
+            Task.is_completed.is_(True),
+            Task.completed_at.is_not(None),
+            func.date(Task.completed_at) >= month_start,
+        )
+        .group_by(func.date(Task.completed_at))
+    )
+    daily_set = {row[0] for row in daily_q.all() if row[1] > 0}
+    streak = 0
+    cursor_date = today_date
+    while cursor_date in daily_set:
+        streak += 1
+        cursor_date = cursor_date - timedelta(days=1)
+    # Если сегодня ещё ничего — допускаем что streak считается со вчера
+    if streak == 0:
+        cursor_date = today_date - timedelta(days=1)
+        while cursor_date in daily_set:
+            streak += 1
+            cursor_date = cursor_date - timedelta(days=1)
+
+    ctx = _ctx(request, user)
+    ctx.update(
+        done_today=int(done_today),
+        done_week=int(done_week),
+        done_month=int(done_month),
+        streak=streak,
+    )
+    return templates.TemplateResponse(request, "miniapp/me.html", ctx)
 
 
 @router.get("/link", response_class=HTMLResponse)
