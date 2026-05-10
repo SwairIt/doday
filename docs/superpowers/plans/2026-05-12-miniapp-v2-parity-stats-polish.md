@@ -353,7 +353,7 @@
 # Прогресс
 
 ## Группа V — Visual parity
-- [ ] V1 — Enrich /api/tasks payload + eager-load
+- [x] V1 — Enrich /api/tasks payload + eager-load ✅ `f65582f`
 - [ ] V2 — task_card.html parity с web
 - [ ] V3 — project_color_map во все views
 - [ ] V4 — Labels picker в task_sheet

@@ -588,6 +588,38 @@ async def _task_to_dict(session: DbSession, task: Task) -> dict[str, object]:
     }
 
 
+@router.get("/api/tasks/{task_id}/subtask-stats")
+async def api_subtask_stats(
+    task_id: str,
+    user: CurrentUser,
+    session: DbSession,
+) -> JSONResponse:
+    """Lightweight endpoint для task_card subtask-progress chip.
+    Возвращает только {done, total}."""
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    from uuid import UUID
+
+    try:
+        tid = UUID(task_id)
+    except ValueError:
+        return JSONResponse({"error": "bad_id"}, status_code=400)
+    # ownership check
+    parent_q = await session.execute(select(Task.id).where(Task.id == tid, Task.user_id == user.id))
+    if parent_q.scalar_one_or_none() is None:
+        return JSONResponse({"error": "not_found"}, status_code=404)
+    sub_rows = await session.execute(
+        select(
+            func.count().label("total"),
+            func.count().filter(Task.is_completed.is_(True)).label("done"),
+        ).where(Task.parent_task_id == tid, Task.deleted_at.is_(None))
+    )
+    sub_row = sub_rows.first()
+    total = int(sub_row[0]) if sub_row else 0
+    done = int(sub_row[1]) if sub_row else 0
+    return JSONResponse({"done": done, "total": total})
+
+
 @router.get("/api/tasks/{task_id}")
 async def api_get_task(
     task_id: str,

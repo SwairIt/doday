@@ -288,6 +288,70 @@ async def test_swipe_handlers_in_js_bundle(client: AsyncClient) -> None:
     assert "data-swipeable" in body or "swipeable" in body
 
 
+async def test_api_subtask_stats_endpoint(
+    db_session: AsyncSession, logged_in_client: AsyncClient
+) -> None:
+    """V2: GET /miniapp/api/tasks/<id>/subtask-stats — lightweight count."""
+    from sqlalchemy import select
+
+    from app.auth.models import User
+    from app.projects.service import ensure_inbox
+
+    user = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    inbox = await ensure_inbox(db_session, user.id)
+    from app.tasks.service import create_task as svc_create_task
+
+    parent = await svc_create_task(db_session, user.id, title="Parent", project_id=inbox.id)
+    await db_session.commit()
+
+    r = await logged_in_client.get(f"/miniapp/api/tasks/{parent.id}/subtask-stats")
+    assert r.status_code == 200
+    assert r.json() == {"done": 0, "total": 0}
+
+
+async def test_task_card_renders_pin_description_labels(
+    db_session: AsyncSession, logged_in_client: AsyncClient
+) -> None:
+    """V2: task_card показывает 📌, description, label-chips."""
+    from datetime import UTC, datetime
+
+    from sqlalchemy import select
+
+    from app.auth.models import User
+    from app.labels.models import Label
+    from app.projects.service import ensure_inbox
+
+    user = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    inbox = await ensure_inbox(db_session, user.id)
+    label = Label(user_id=user.id, name="home", slug="home", color="emerald")
+    db_session.add(label)
+    await db_session.flush()
+    from app.tasks.service import create_task as svc_create_task
+
+    task = await svc_create_task(
+        db_session,
+        user.id,
+        title="Pinned task",
+        project_id=inbox.id,
+        description="Кратко: купить молоко",
+    )
+    task.pinned_at = datetime.now(UTC)
+    task.labels.append(label)
+    await db_session.commit()
+
+    # Сегодня — но мы создали без due_at, попадёт в Inbox
+    r = await logged_in_client.get("/miniapp/inbox")
+    assert r.status_code == 200
+    body = r.text
+    assert "📌" in body
+    assert "Кратко: купить молоко" in body
+    assert "@home" in body
+
+
 async def test_polish_features_in_js_bundle(client: AsyncClient) -> None:
     """MD1-MD5: MainButton, haptic, pull-to-refresh присутствуют."""
     r = await client.get("/miniapp/assets/miniapp.js")
