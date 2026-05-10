@@ -51,6 +51,14 @@ class Settings(BaseSettings):
     # когда придёт время монетизации (для НОВЫХ юзеров; ранних — отдельно).
     beta_free_for_all: bool = False
 
+    # Sentry error-tracking. Если DSN пустой — init пропускается, ничего не
+    # ломается. environment различает prod/dev в дашборде. release — pin'ит
+    # версию приложения чтобы видеть когда регрессия появилась.
+    sentry_dsn: str = ""
+    sentry_environment: str = "dev"
+    sentry_traces_sample_rate: float = 0.1
+    sentry_release: str = "0.1.0"
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

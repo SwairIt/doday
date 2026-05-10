@@ -50,6 +50,37 @@ from app.views.router import router as views_router
 _settings = get_settings()
 configure_logging(_settings.log_level)
 
+
+def _init_sentry() -> None:
+    """Initialize Sentry SDK if SENTRY_DSN is set in env. No-op otherwise.
+
+    Импорт sentry_sdk внутри функции — чтобы dev-окружение без DSN не платило
+    за ленивые импорты при каждом перезапуске. На проде init выполняется один
+    раз на startup."""
+    if not _settings.sentry_dsn:
+        return
+    import sentry_sdk
+    from sentry_sdk.integrations.asyncio import AsyncioIntegration
+    from sentry_sdk.integrations.fastapi import FastApiIntegration
+    from sentry_sdk.integrations.starlette import StarletteIntegration
+
+    sentry_sdk.init(
+        dsn=_settings.sentry_dsn,
+        environment=_settings.sentry_environment,
+        release=_settings.sentry_release,
+        traces_sample_rate=_settings.sentry_traces_sample_rate,
+        profiles_sample_rate=_settings.sentry_traces_sample_rate,
+        send_default_pii=False,  # privacy: не отсылаем headers/cookies
+        integrations=[
+            FastApiIntegration(),
+            StarletteIntegration(),
+            AsyncioIntegration(),
+        ],
+    )
+
+
+_init_sentry()
+
 app = FastAPI(title="SchoolTodo")
 
 _is_prod = _settings.app_env == "prod"
