@@ -137,10 +137,20 @@ async def test_api_get_patch_delete_task(
     task = await svc_create_task(db_session, user.id, title="Original", project_id=inbox.id)
     await db_session.commit()
 
-    # GET
+    # GET — теперь с расширенным payload (V1)
     r = await logged_in_client.get(f"/miniapp/api/tasks/{task.id}")
     assert r.status_code == 200
-    assert r.json()["title"] == "Original"
+    data = r.json()
+    assert data["title"] == "Original"
+    # V1: новые поля
+    assert "project" in data
+    assert data["project"]["is_inbox"] is True  # task в Inbox
+    assert "labels" in data and isinstance(data["labels"], list)
+    assert "description" in data
+    assert "pinned_at" in data
+    assert "subtask_stats" in data
+    assert data["subtask_stats"] == {"done": 0, "total": 0}
+    assert "age_days" in data and data["age_days"] >= 0
 
     # PATCH title + priority
     r = await logged_in_client.patch(

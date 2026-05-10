@@ -531,13 +531,70 @@ async def api_complete_task(
     return JSONResponse({"id": str(task.id), "is_completed": task.is_completed})
 
 
+async def _task_to_dict(session: DbSession, task: Task) -> dict[str, object]:
+    """Сериализация Task в dict для JSON-ответов. DRY-helper для всех
+    endpoint'ов (GET/POST/PATCH) — гарантирует одинаковую форму payload.
+    Подтягивает project (одиночный fetch) + subtask-stats (subquery).
+    """
+    from app.projects.models import Project as _Project
+
+    project_dict: dict[str, object] | None = None
+    if task.project_id is not None:
+        proj = (
+            await session.execute(select(_Project).where(_Project.id == task.project_id))
+        ).scalar_one_or_none()
+        if proj is not None:
+            project_dict = {
+                "id": str(proj.id),
+                "name": proj.name,
+                "color": proj.color,
+                "is_inbox": proj.is_inbox,
+            }
+
+    # Subtask stats — count + count(is_completed). Один subquery.
+    sub_rows = await session.execute(
+        select(
+            func.count().label("total"),
+            func.count().filter(Task.is_completed.is_(True)).label("done"),
+        ).where(Task.parent_task_id == task.id, Task.deleted_at.is_(None))
+    )
+    sub_row = sub_rows.first()
+    subtask_total = int(sub_row[0]) if sub_row else 0
+    subtask_done = int(sub_row[1]) if sub_row else 0
+
+    age_days = max(0, (datetime.now(UTC) - task.created_at).days)
+
+    labels = [
+        {"id": str(lab.id), "name": lab.name, "color": lab.color, "slug": lab.slug}
+        for lab in (task.labels or [])
+    ]
+
+    return {
+        "id": str(task.id),
+        "title": task.title,
+        "description": task.description,
+        "priority": task.priority.value,
+        "due_at": task.due_at.isoformat() if task.due_at else None,
+        "due_date_only": task.due_date_only,
+        "is_completed": task.is_completed,
+        "project_id": str(task.project_id) if task.project_id else None,
+        "project": project_dict,
+        "labels": labels,
+        "recurrence": task.recurrence,
+        "pinned_at": task.pinned_at.isoformat() if task.pinned_at else None,
+        "parent_task_id": str(task.parent_task_id) if task.parent_task_id else None,
+        "subtask_stats": {"done": subtask_done, "total": subtask_total},
+        "age_days": age_days,
+    }
+
+
 @router.get("/api/tasks/{task_id}")
 async def api_get_task(
     task_id: str,
     user: CurrentUser,
     session: DbSession,
 ) -> JSONResponse:
-    """Получить задачу для bottom-sheet (MB4)."""
+    """Получить задачу для bottom-sheet (MB4 + V1 enriched payload)."""
     if user is None:
         return JSONResponse({"error": "auth_required"}, status_code=401)
     from uuid import UUID
@@ -551,18 +608,7 @@ async def api_get_task(
     ).scalar_one_or_none()
     if task is None:
         return JSONResponse({"error": "not_found"}, status_code=404)
-    return JSONResponse(
-        {
-            "id": str(task.id),
-            "title": task.title,
-            "priority": task.priority.value,
-            "due_at": task.due_at.isoformat() if task.due_at else None,
-            "due_date_only": task.due_date_only,
-            "is_completed": task.is_completed,
-            "project_id": str(task.project_id),
-            "recurrence": task.recurrence,
-        }
-    )
+    return JSONResponse(await _task_to_dict(session, task))
 
 
 class TaskPatchIn(BaseModel):
