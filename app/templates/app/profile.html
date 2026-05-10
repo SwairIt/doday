@@ -142,7 +142,7 @@
   <section class="card p-6">
     <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-4">Тема оформления</h2>
     <p class="text-sm text-[var(--text-muted)] mb-4">Светлая/тёмная — иконкой луны в правом верхнем углу. Цветовая палитра — здесь:</p>
-    {% set is_pro = current_user.tier in ('pro', 'family', 'team') %}
+    {# is_pro приходит из view (билеется через has_pro_features → учитывает trial) #}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3" x-data="{ current: localStorage.getItem('doday-accent') || 'default' }">
       {% set palettes = [
         ('default', 'Doday',   'from-violet-600 to-fuchsia-500',   false),
