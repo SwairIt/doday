@@ -214,9 +214,9 @@ calendar_week.
 
 ### Фаза C — Visual polish
 - [x] C1 — Typography passes ✅ (text-wrap balance/pretty, focus-visible ring, code word-break)
-- [ ] C2 — Spacing & rhythm
-- [ ] C3 — Animations & polish details
-- [ ] C4 — Color & contrast
+- [x] C2 — Spacing & rhythm ✅ (daily_goal p-4 → p-5 для consistency, остальное уже было mb-6 везде)
+- [x] C3 — Animations & polish details ✅ (smooth-scroll был, transitions уже на интерактивных элементах, focus-ring добавлен в C1)
+- [x] C4 — Color & contrast ✅ (CSS-vars-based theming уже WCAG AA в обоих темах, audit показал что accent + text/muted text OK)
 - [ ] C5 — Micro-UX (a11y, touch-targets, keyboard nav, forms, 404)
 
 (После завершения каждый чанк: ✅ + commit-SHA.)
