@@ -789,6 +789,23 @@ Loop остановлен.
 
 **State-now (2026-05-10 вечер):**
 - Локальный uvicorn на :8001 (фон-таск `bc48i6apg`), порт 8000 в zombie
-- Локальный TG-бот всё ещё в фоне (`bs3oyq123`), polling работает
-- На проде бот не запущен (api.telegram.org заблокирован хостером, ждёт unblock)
-- Юзер должен открыть тикет хостеру для unblock outbound 443 к 149.154.0.0/16
+- Локальный TG-бот всё ещё в фоне (`bs3oyq123`), polling работает (813 getUpdates, 0 errors, uptime ~4ч)
+- На проде бот не запущен (api.telegram.org заблокирован хостером — AS12695 Digital Network)
+- Юзер сказал «потом откроем тикет, а сейчас пусть работает локально»
+
+**Restart бота локально (когда упадёт после reboot/закрытия сессии):**
+
+```bash
+cd c:/www-Yaroslav/SchoolProject
+uv run python -m app.telegram.bot > .bot.log 2>&1 &
+```
+
+Если хочется автозапуска при логине Windows — Task Scheduler с триггером
+«At log on», программа `python.exe -m app.telegram.bot`, рабочая папка
+`C:\www-Yaroslav\SchoolProject`. Готовый PowerShell-скрипт можно
+сгенерить одной командой если попросит.
+
+**Когда придёт время решать прод-вопрос:**
+- Открыть тикет хостеру (текст в этой секции выше) → разблокируют →
+  запустить `.tmp_ssh_setup_telegram_bot.py <REDACTED_OLD_TOKEN> DodayTaskBot`
+- Альтернативно — переписать на Pyrogram + MTProto-прокси (4ч)
