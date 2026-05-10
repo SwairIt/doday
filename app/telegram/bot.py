@@ -310,6 +310,25 @@ async def cmd_unlink(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
         )
 
 
+async def cmd_app(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
+    """Открыть Mini App инлайн-кнопкой. Подсказка-fallback если у юзера
+    клиент не поддерживает inline-WebApp (старые версии Telegram)."""
+    from telegram import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
+
+    if update.message is None:
+        return
+    settings = get_settings()
+    base = settings.app_base_url or "https://getdoday.ru"
+    webapp_url = base.rstrip("/") + "/miniapp/"
+    keyboard = InlineKeyboardMarkup(
+        [[InlineKeyboardButton("Открыть Doday", web_app=WebAppInfo(url=webapp_url))]]
+    )
+    await update.message.reply_text(
+        "Тапни кнопку ниже — откроется Doday прямо в Telegram.",
+        reply_markup=keyboard,
+    )
+
+
 async def on_unknown_text(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
     """Любой текст без / — короткая подсказка."""
     if update.message is None or update.message.text is None:
@@ -317,6 +336,7 @@ async def on_unknown_text(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
     await _reply(
         update,
         "Я понимаю команды через /. Самое полезное:\n"
+        "/app — открыть Mini App\n"
         "/add <текст> — добавить задачу\n"
         "/today — что на сегодня\n"
         "/help — все команды",
@@ -332,12 +352,31 @@ def build_app() -> Application[Any, Any, Any, Any, Any, Any]:
     )
     application.add_handler(CommandHandler("start", cmd_start))
     application.add_handler(CommandHandler("help", cmd_help))
+    application.add_handler(CommandHandler("app", cmd_app))
     application.add_handler(CommandHandler("add", cmd_add))
     application.add_handler(CommandHandler("today", cmd_today))
     application.add_handler(CommandHandler("upcoming", cmd_upcoming))
     application.add_handler(CommandHandler("done", cmd_done))
     application.add_handler(CommandHandler("unlink", cmd_unlink))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_unknown_text))
+
+    # Set default chat menu button to WebApp на старте — это переживает
+    # рестарт бота (если кто-то ресетит кнопку через BotFather, рестарт
+    # вернёт её на место).
+    async def _post_init(app: Application[Any, Any, Any, Any, Any, Any]) -> None:
+        from telegram import MenuButtonWebApp, WebAppInfo
+
+        base = settings.app_base_url or "https://getdoday.ru"
+        webapp_url = base.rstrip("/") + "/miniapp/"
+        try:
+            await app.bot.set_chat_menu_button(
+                menu_button=MenuButtonWebApp(text="Doday", web_app=WebAppInfo(url=webapp_url))
+            )
+            logger.info("default chat menu button set to %s", webapp_url)
+        except Exception as e:
+            logger.warning("failed to set default menu button: %s", e)
+
+    application.post_init = _post_init
     return application
 
 

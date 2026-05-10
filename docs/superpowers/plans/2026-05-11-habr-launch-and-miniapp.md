@@ -658,11 +658,11 @@ themeChanged: уже подключён в MA2, проверить что раб
 - [x] MC4 — Search + «Я» вкладка ✅ `825a810`
 
 ### Фаза D — Native polish
-- [ ] MD1 — MainButton per-screen
-- [ ] MD2 — BackButton интеграция
-- [ ] MD3 — Haptic feedback
-- [ ] MD4 — Confetti + 100% celebration
-- [ ] MD5 — Pull-to-refresh + themeChanged
+- [x] MD1 — MainButton per-screen ✅ `bb00c23`
+- [x] MD2 — BackButton интеграция ✅ (уже было в MA2)
+- [x] MD3 — Haptic feedback ✅ `bb00c23`
+- [x] MD4 — Confetti + 100% celebration ✅ `bb00c23`
+- [x] MD5 — Pull-to-refresh ✅ `bb00c23` (themeChanged уже в MA2)
 
 ### Фаза E — Bot + deploy
 - [ ] ME1 — `/app` команда + setChatMenuButton
