@@ -30,6 +30,23 @@ from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
+# SQLAlchemy mapper-warmup: relationship строки вроде `order_by="Label.name"`
+# eval'ятся лениво и требуют чтобы все классы были загружены в registry до
+# первого query. uvicorn это делает через include_router → импорт routers →
+# импорт moduls. У бота нет роутеров, поэтому импортируем модели явно.
+import app.auth.models
+import app.comments.models
+import app.custom_filters.models
+import app.habits.models
+import app.labels.models
+import app.links.models
+import app.mood.models
+import app.projects.models
+import app.school.models
+import app.sections.models
+import app.tasks.models
+import app.telegram.models
+import app.user_templates.models  # noqa: F401
 from app.auth.models import User
 from app.config import get_settings
 from app.quickadd.parser import parse_quick_add
