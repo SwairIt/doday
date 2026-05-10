@@ -4,6 +4,7 @@ from collections.abc import Awaitable, Callable
 
 from fastapi import FastAPI, Request
 from fastapi.responses import PlainTextResponse, Response
+from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.achievements.router import router as achievements_router
@@ -108,6 +109,32 @@ app.include_router(achievements_router)
 app.include_router(links_router)
 app.include_router(links_graph_router)
 app.include_router(digest_router)
+
+
+_templates_404 = Jinja2Templates(directory="app/templates")
+
+
+@app.middleware("http")
+async def _pretty_404(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
+    """Convert default 404 JSON into pretty HTML for browser GETs.
+
+    HTMX swaps, /api/*, /htmx/* и не-HTML-Accept остаются JSON — они не для
+    отображения юзером, а для consumption кодом.
+    """
+    response = await call_next(request)
+    if response.status_code != 404:
+        return response
+    accept = request.headers.get("accept", "")
+    is_htmx = request.headers.get("hx-request") == "true"
+    path = request.url.path
+    api_like = path.startswith(("/api/", "/htmx/"))
+    if is_htmx or api_like or "text/html" not in accept:
+        return response
+    return _templates_404.TemplateResponse(
+        request, "404.html", {"current_user": None}, status_code=404
+    )
 
 
 @app.get("/health")

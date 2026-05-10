@@ -77,6 +77,7 @@ ignore = [
 "app/links/service.py" = ["RUF001"]             # intentional Cyrillic in user-facing error messages
 "app/digest/service.py" = ["RUF001", "RUF002"]  # intentional Cyrillic in email body and docstring
 "app/digest/__init__.py" = ["RUF002"]            # intentional Cyrillic in module docstring
+"app/main.py" = ["RUF002"]                       # intentional Cyrillic in middleware docstrings
 
 [tool.mypy]
 python_version = "3.12"

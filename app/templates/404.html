@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Страница не найдена — Doday{% endblock %}
+{% block layout %}
+<div class="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 py-12 text-center">
+  <div class="max-w-md w-full">
+    {# 404 hero — gradient «404» с большим эмодзи. #}
+    <div class="relative inline-block mb-6">
+      <div class="text-7xl sm:text-8xl font-extrabold grad-text leading-none tracking-tight">404</div>
+      <div class="absolute -top-2 -right-4 text-4xl sm:text-5xl rotate-12">🌌</div>
+    </div>
+
+    <h1 class="text-2xl sm:text-3xl font-bold mb-3">Страница улетела в космос</h1>
+    <p class="text-[var(--text-muted)] text-base sm:text-lg mb-8 leading-relaxed">
+      Мы не нашли то что ты искал. Возможно ссылка устарела или адрес ввёлся
+      с опечаткой.
+    </p>
+
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3">
+      <a href="/" class="btn-primary text-center px-6 py-3 text-base">
+        ← На главную
+      </a>
+      <a href="/app/today" class="btn-ghost text-center px-6 py-3 text-base">
+        К моим задачам
+      </a>
+    </div>
+
+    <p class="text-xs text-[var(--text-muted)] mt-10">
+      Что-то не так? <a href="/help" class="text-[var(--accent)] hover:underline">Открой помощь</a>
+      или <a href="https://github.com/SwairIt/SchoolProject/issues" class="text-[var(--accent)] hover:underline">сообщи на GitHub</a>.
+    </p>
+  </div>
+</div>
+{% endblock %}

@@ -217,6 +217,6 @@ calendar_week.
 - [x] C2 — Spacing & rhythm ✅ (daily_goal p-4 → p-5 для consistency, остальное уже было mb-6 везде)
 - [x] C3 — Animations & polish details ✅ (smooth-scroll был, transitions уже на интерактивных элементах, focus-ring добавлен в C1)
 - [x] C4 — Color & contrast ✅ (CSS-vars-based theming уже WCAG AA в обоих темах, audit показал что accent + text/muted text OK)
-- [ ] C5 — Micro-UX (a11y, touch-targets, keyboard nav, forms, 404)
+- [x] C5 — Micro-UX (a11y, touch-targets, keyboard nav, forms, 404) ✅ (404.html + middleware-rewrite, skip-to-content link с focus-only show)
 
 (После завершения каждый чанк: ✅ + commit-SHA.)
