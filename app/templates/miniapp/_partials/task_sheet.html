@@ -67,6 +67,23 @@
         </p>
       </div>
 
+      {# Project picker — горизонтальный скролл с цветными точками #}
+      <div x-show="projects.length > 0" x-cloak>
+        <label class="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-muted)] block mb-2">Проект</label>
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1" style="scrollbar-width:none;">
+          <template x-for="p in projects" :key="p.id">
+            <button @click="setProject(p.id)"
+                    :class="task.project_id === p.id
+                      ? 'ring-2 ring-[var(--accent)] bg-[var(--accent)]/15 font-bold'
+                      : 'bg-[var(--surface-2)]'"
+                    class="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs transition active:scale-95">
+              <span class="w-2 h-2 rounded-full shrink-0" :style="'background:' + (p.color || '#7c3aed')"></span>
+              <span x-text="p.is_inbox ? '📥 ' + p.name : p.name"></span>
+            </button>
+          </template>
+        </div>
+      </div>
+
       {# Recurrence (read-only chip — изменяется через quick-add) #}
       <div x-show="task.recurrence" x-cloak>
         <label class="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-muted)] block mb-1">Повтор</label>
@@ -101,7 +118,8 @@
       open: false,
       loading: false,
       err: '',
-      task: { id: null, title: '', priority: 'p4', due_at: null, recurrence: null },
+      task: { id: null, title: '', priority: 'p4', due_at: null, recurrence: null, project_id: null },
+      projects: [],
       async loadTask(taskId) {
         this.open = true;
         this.loading = true;
@@ -110,8 +128,22 @@
           const r = await fetch('/miniapp/api/tasks/' + taskId, { credentials: 'include' });
           if (!r.ok) { this.err = 'Не удалось загрузить'; this.loading = false; return; }
           this.task = await r.json();
+          // Загружаем проекты лениво (один раз — пока sheet открыт)
+          if (this.projects.length === 0) {
+            try {
+              const pr = await fetch('/miniapp/api/projects', { credentials: 'include' });
+              if (pr.ok) {
+                const data = await pr.json();
+                this.projects = data.projects || [];
+              }
+            } catch (e) {}
+          }
         } catch (e) { this.err = 'Нет сети'; }
         this.loading = false;
+      },
+      setProject(projectId) {
+        this.task.project_id = projectId;
+        this.patch({project_id: projectId});
       },
       close() { this.open = false; },
       async patch(partial) {

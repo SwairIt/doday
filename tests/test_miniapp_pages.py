@@ -171,6 +171,82 @@ async def test_api_get_patch_delete_task(
     assert r.json() == {"ok": True}
 
 
+async def test_api_list_projects(db_session: AsyncSession, logged_in_client: AsyncClient) -> None:
+    """MB5: GET /miniapp/api/projects возвращает список проектов юзера."""
+    from sqlalchemy import select
+
+    from app.auth.models import User
+    from app.projects.service import ensure_inbox
+
+    user = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    await ensure_inbox(db_session, user.id)
+    await db_session.commit()
+
+    r = await logged_in_client.get("/miniapp/api/projects")
+    assert r.status_code == 200
+    data = r.json()
+    assert "projects" in data
+    assert len(data["projects"]) >= 1
+    inbox_proj = next((p for p in data["projects"] if p["is_inbox"]), None)
+    assert inbox_proj is not None
+    assert "name" in inbox_proj
+    assert "color" in inbox_proj
+
+
+async def test_api_patch_move_to_another_project(
+    db_session: AsyncSession, logged_in_client: AsyncClient
+) -> None:
+    """MB5: PATCH project_id переносит задачу из Inbox в другой проект."""
+    from sqlalchemy import select
+
+    from app.auth.models import User
+    from app.projects.service import create_project, ensure_inbox
+
+    user = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    inbox = await ensure_inbox(db_session, user.id)
+    new_proj = await create_project(db_session, user.id, name="Work", color="violet")
+    await db_session.commit()
+    from app.tasks.service import create_task as svc_create_task
+
+    task = await svc_create_task(db_session, user.id, title="Move me", project_id=inbox.id)
+    await db_session.commit()
+
+    r = await logged_in_client.patch(
+        f"/miniapp/api/tasks/{task.id}", json={"project_id": str(new_proj.id)}
+    )
+    assert r.status_code == 200
+
+
+async def test_api_patch_invalid_project_id_rejected(
+    db_session: AsyncSession, logged_in_client: AsyncClient
+) -> None:
+    from sqlalchemy import select
+
+    from app.auth.models import User
+    from app.projects.service import ensure_inbox
+
+    user = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    inbox = await ensure_inbox(db_session, user.id)
+    from app.tasks.service import create_task as svc_create_task
+
+    task = await svc_create_task(db_session, user.id, title="X", project_id=inbox.id)
+    await db_session.commit()
+
+    # Несуществующий project_id — 404
+    import uuid
+
+    r = await logged_in_client.patch(
+        f"/miniapp/api/tasks/{task.id}", json={"project_id": str(uuid.uuid4())}
+    )
+    assert r.status_code == 404
+
+
 async def test_api_patch_bad_priority_rejected(
     db_session: AsyncSession, logged_in_client: AsyncClient
 ) -> None:

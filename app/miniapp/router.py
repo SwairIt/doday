@@ -14,7 +14,7 @@ from app.auth.deps import CurrentUser, DbSession
 from app.config import get_settings
 from app.miniapp.auth import get_telegram_user_id, validate_init_data
 from app.miniapp.static import MINIAPP_JS
-from app.projects.service import ensure_inbox
+from app.projects.service import ensure_inbox, list_projects
 from app.quickadd.parser import parse_quick_add
 from app.tasks.models import Task
 from app.tasks.service import create_task, list_completed_today, list_today
@@ -316,6 +316,7 @@ class TaskPatchIn(BaseModel):
     priority: str | None = None  # 'p1'..'p4' or None
     due_at: str | None = None  # ISO 8601 or "" to clear
     due_date_only: bool | None = None
+    project_id: str | None = None  # UUID — для move-to-project (MB5)
 
 
 @router.patch("/api/tasks/{task_id}")
@@ -361,6 +362,24 @@ async def api_patch_task(
                 return JSONResponse({"error": "bad_due_at"}, status_code=400)
     if payload.due_date_only is not None:
         task.due_date_only = payload.due_date_only
+    if payload.project_id is not None:
+        from uuid import UUID as _UUID
+
+        try:
+            new_project_id = _UUID(payload.project_id)
+        except ValueError:
+            return JSONResponse({"error": "bad_project_id"}, status_code=400)
+        # Verify project ownership
+        from app.projects.models import Project as _Project
+
+        proj = (
+            await session.execute(
+                select(_Project).where(_Project.id == new_project_id, _Project.user_id == user.id)
+            )
+        ).scalar_one_or_none()
+        if proj is None:
+            return JSONResponse({"error": "project_not_found"}, status_code=404)
+        task.project_id = new_project_id
     await session.commit()
     return JSONResponse(
         {
@@ -368,6 +387,27 @@ async def api_patch_task(
             "title": task.title,
             "priority": task.priority.value,
             "due_at": task.due_at.isoformat() if task.due_at else None,
+        }
+    )
+
+
+@router.get("/api/projects")
+async def api_list_projects(user: CurrentUser, session: DbSession) -> JSONResponse:
+    """Список проектов юзера для project-picker в task-sheet (MB5)."""
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    projects = await list_projects(session, user.id)
+    return JSONResponse(
+        {
+            "projects": [
+                {
+                    "id": str(p.id),
+                    "name": p.name,
+                    "color": p.color,
+                    "is_inbox": p.is_inbox,
+                }
+                for p in projects
+            ]
         }
     )
 

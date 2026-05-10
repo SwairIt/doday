@@ -648,7 +648,7 @@ themeChanged: уже подключён в MA2, проверить что раб
 - [x] MB1 — Today view + список ✅ `40de505`
 - [x] MB2 — Quick-add с live-preview ✅ `f464b82`
 - [x] MB3 — Swipe-actions complete/snooze ✅ `cb2253d`
-- [ ] MB4 — Task-detail bottom-sheet
+- [x] MB4 — Task-detail bottom-sheet ✅ `2c641ab`
 - [ ] MB5 — Inbox + move-to-project
 
 ### Фаза C — Навигация
