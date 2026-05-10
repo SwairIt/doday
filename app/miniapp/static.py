@@ -38,11 +38,15 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
   tg.onEvent('themeChanged', applyTheme);
 
   // 3. Auto-auth: шлём initData на /miniapp/auth, ставим cookie.
-  //    Если 401 need_link → редирект на /miniapp/link.
-  //    Если 200 → ничего не делаем (cookie уже стоит).
-  //    Этот шаг делается только когда нет session-cookie ИЛИ её нужно обновить.
+  //    На любой странице:
+  //      - если 401 need_link → редирект на /miniapp/link
+  //    Если мы на /miniapp/link и 200 → редирект на / (сессия установлена,
+  //    onboarding больше не нужен).
+  //    Если мы НЕ на /miniapp/link и 200 → ничего (cookie уже стоит,
+  //    страница и так корректная).
   async function attemptAuth() {
     if (!tg.initData) return;  // открыто не из Telegram (debug в браузере)
+    const onLinkPage = window.location.pathname.startsWith('/miniapp/link');
     try {
       const r = await fetch('/miniapp/auth', {
         method: 'POST',
@@ -50,9 +54,13 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
         body: JSON.stringify({ init_data: tg.initData }),
         credentials: 'include',
       });
-      if (r.ok) return;
+      if (r.ok) {
+        // На link-странице после успеха — уходим на Today.
+        if (onLinkPage) window.location.href = '/miniapp/';
+        return;
+      }
       const data = await r.json().catch(() => ({}));
-      if (data.need_link) {
+      if (data.need_link && !onLinkPage) {
         const u = new URL('/miniapp/link', window.location.origin);
         u.searchParams.set('telegram_user_id', String(data.telegram_user_id));
         window.location.href = u.toString();
@@ -62,10 +70,7 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
     }
   }
 
-  // Только если мы не на /miniapp/link уже (там auth не нужен)
-  if (!window.location.pathname.startsWith('/miniapp/link')) {
-    attemptAuth();
-  }
+  attemptAuth();
 
   // 4. Globals для inline-страниц (haptic shortcuts)
   window.dodayHaptic = {
