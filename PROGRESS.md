@@ -856,3 +856,80 @@ Pre-commit (lint_templates) — 0 errors. Auto-deploy на проде подхв
   прод-`.env` (одна строка). Локально работает as-is.
 - Овернайт-план `2026-05-10-overnight-mobile-polish.md` полностью ✅
   (финальный коммит был `57bf98d`, 8 чанков, ~50 минут).
+
+### 2026-05-11 — Habr-readiness + Telegram Mini App overnight loop
+
+По плану `docs/superpowers/plans/2026-05-11-habr-launch-and-miniapp.md`.
+Оба блока полностью ✅.
+
+**Блок 1 — Habr-readiness (7 чанков, ~3-4 часа реального времени):**
+- H1+H2 `9266d32` — beta-флаг free-for-all + landing-banner + FAQ rewrite
+- H3 `a35dce1` — Sentry-SDK через settings.sentry_dsn
+- H4 `7eebf58` — TG-канал в footer (gated на TELEGRAM_CHANNEL_URL)
+- H5 `c0dbd96` — /changelog + /roadmap страницы (8 версий + 3 секции)
+- H6 `885c607` — load-test 50×30s GREEN p95=1811ms
+- Финал `414f13c` — habr-readiness: завершено
+
+**Блок 2 — Telegram Mini App (5 фаз × 21 чанк, ~6 часов):**
+
+Фаза A — Foundation:
+- MA1 `a8b2a5f` — initData HMAC-валидация + POST /miniapp/auth
+- MA2 `6d76c0b` — base layout + auto-theming + miniapp.js bundle
+- MA3 `fa59420` — bottom-nav routing + 5 tab-страниц
+- MA4 `7bcb8bd` — onboarding-экран /miniapp/link
+- Hot-fix `413c8c5` — auth-redirect /link → / после initData успеха
+
+Фаза B — Core CRUD:
+- MB1 `40de505` — Today view + прогресс-кольцо
+- MB2 `f464b82` — quick-add live-preview + complete API
+- MB3 `cb2253d` — swipe-actions complete/snooze + tap-to-complete
+- MB4 `2c641ab` — task-detail bottom-sheet (title/priority/due/delete)
+- MB5 `830a47a` — Inbox + project picker (move-to-project)
+
+Фаза C — Navigation:
+- MC1 `4a86ede` — Calendar week-view с свайпом + day-chips
+- MC2 `1bb4c1d` — Calendar heatmap (12 недель × 7 дней, GitHub-style)
+- MC3 `21b8bac` — Projects list + project view + создание из bottom-sheet
+- MC4 `825a810` — Search bottom-sheet + Me page (streak + stats)
+
+Фаза D — Native polish:
+- MD1-MD5 `bb00c23` — MainButton per-screen + haptic + confetti +
+  pull-to-refresh (5 чанков объединены)
+
+Фаза E — Bot + deploy:
+- ME1+ME3 `8ea5219` — /app команда + setChatMenuButton (post_init)
+  + smoke 23/23 GREEN на проде
+- ME2 — выполнено через Bot API напрямую (setChatMenuButton default
+  + per-chat для linked user 2133993638)
+
+**Финал:** `<следующий коммит>` — miniapp: full launch завершено.
+
+**Тесты:** 40 для miniapp (test_miniapp_pages.py + test_miniapp_auth.py),
+все green. Smoke 23/23 GREEN на https://getdoday.ru.
+
+**Что Mini App умеет (full feature list):**
+- HMAC-validated auth через Telegram initData → session cookie
+- Auto-themed под тему Telegram-клиента (bg/text/accent CSS-vars)
+- 5 bottom-nav вкладок: Сегодня / Инбокс / Календарь / Проекты / Я
+- Quick-add с live-preview парсера (даты/приоритеты/лейблы)
+- Swipe-actions: влево = complete, вправо = snooze на завтра
+- Tap-on-task → bottom-sheet: edit title/priority/due/project, delete
+- Calendar week-view с свайп-навигацией + 12-недельный heatmap
+- Projects list с counts + создание + per-project view
+- Search bottom-sheet с live ILIKE поиском
+- Me page: 🔥 streak + 3 stat-cards (сегодня/7д/30д)
+- MainButton (Telegram native): per-screen smart-bind
+- BackButton (Telegram native): show когда history > 1
+- Haptic feedback на 8+ touchpoints (success/medium/light/select/warning)
+- Confetti на 100% closed на сегодня (один раз за день)
+- Pull-to-refresh с индикатором
+
+**Доступ:** через @DodayTaskBot menu-button «Doday» или /app команду.
+
+**Юзер-тач-поинты (на потом, не блокеры):**
+- Sentry DSN — добавить в прод-.env когда зарегаются на sentry.io
+- Telegram-канал URL — `TELEGRAM_CHANNEL_URL` в прод-.env когда создадут
+- Demo-GIF на landing — записать quick-add 5 секунд
+
+**Длительность Блок 1+2:** ~10 часов реального времени, 26 чанков,
+26 коммитов в master.

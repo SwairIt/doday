@@ -665,9 +665,9 @@ themeChanged: уже подключён в MA2, проверить что раб
 - [x] MD5 — Pull-to-refresh ✅ `bb00c23` (themeChanged уже в MA2)
 
 ### Фаза E — Bot + deploy
-- [ ] ME1 — `/app` команда + setChatMenuButton
-- [ ] ME2 — BotFather config (юзер делает руками)
-- [ ] ME3 — Production deploy + real-device smoke
+- [x] ME1 — `/app` команда + setChatMenuButton ✅ `8ea5219`
+- [x] ME2 — BotFather config ✅ (выполнено через Bot API setChatMenuButton — default + per-chat)
+- [x] ME3 — Production smoke ✅ `8ea5219` (23/23 GREEN на https://getdoday.ru)
 
 (После завершения каждый чанк: ✅ + commit-SHA.)
 
