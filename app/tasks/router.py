@@ -307,8 +307,11 @@ async def unpin_endpoint(task_id: UUID, user: RequiredUser, session: DbSession) 
 
 @router.get("/trash", response_model=list[TaskOut])
 async def trash_endpoint(user: RequiredUser, session: DbSession) -> list[TaskOut]:
-    """Soft-deleted tasks newer than 30 days. Older are purged on access."""
-    rows = await list_trash(session, user.id, max_age_days=30)
+    """Soft-deleted tasks newer than tier-specific window (Free: 14, Pro: 30).
+    Older are purged on access."""
+    from app.billing.service import limits_for
+
+    rows = await list_trash(session, user.id, max_age_days=limits_for(user)["trash_retention_days"])
     return [TaskOut.model_validate(t) for t in rows]
 
 

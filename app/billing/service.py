@@ -221,3 +221,23 @@ def can_use_premium_theme(user: User) -> bool:
 
 def can_paste_n_lines(user: User, n: int) -> bool:
     return n <= limits_for(user)["max_bulk_paste_lines"]
+
+
+def has_pro_features(user: User) -> bool:
+    """True if user can use Pro/Family-only features (incl. trial period)."""
+    return effective_tier(user) in ("pro", "team", "family")
+
+
+def require_pro(user: User, feature_name: str) -> None:
+    """Raise 402 Payment Required if the user is not on a Pro-tier plan.
+
+    402 (a real but rarely-used HTTP status) clearly distinguishes upgrade-needed
+    from generic 403; frontend treats it as «open upgrade modal».
+    """
+    from fastapi import HTTPException, status
+
+    if not has_pro_features(user):
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail=f"{feature_name} — фича Pro-тарифа. Обнови подписку чтобы использовать.",
+        )

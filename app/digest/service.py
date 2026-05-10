@@ -323,9 +323,23 @@ async def send_morning_digests_for_all_users(
     )
     users = list((await session.execute(stmt)).scalars().all())
 
-    counters = {"sent": 0, "skipped_already": 0, "skipped_empty": 0, "errored": 0}
+    counters = {
+        "sent": 0,
+        "skipped_already": 0,
+        "skipped_empty": 0,
+        "skipped_free": 0,
+        "errored": 0,
+    }
+
+    # Defence-in-depth: opt-in flag uses Pro-gate в profile/router, но если юзер
+    # был на trial и opt-in включил, потом trial закончился — флаг остался True.
+    # Здесь дополнительно проверяем effective_tier — если уже не Pro, не шлём.
+    from app.billing.service import has_pro_features
 
     for user in users:
+        if not has_pro_features(user):
+            counters["skipped_free"] += 1
+            continue
         try:
             sent = await send_morning_digest(session, user, now=now)
             if sent:

@@ -283,7 +283,7 @@
         <span x-show="status" x-cloak class="text-emerald-400" x-text="status"></span>
       </div>
 
-      {# 2. Email — backed by users.morning_digest_enabled #}
+      {# 2. Email — backed by users.morning_digest_enabled. Pro-only feature. #}
       <div class="flex items-center gap-3 p-3 rounded-xl border border-[var(--border)] bg-[var(--surface-2)]/40"
            x-data="{
              on: {{ 'true' if current_user.morning_digest_enabled else 'false' }},
@@ -295,7 +295,9 @@
                fd.set('enabled', this.on ? 'false' : 'true');
                try {
                  const r = await fetch('/api/profile/morning-digest', {method: 'POST', body: fd, credentials: 'include'});
-                 if (r.ok) { const j = await r.json(); this.on = j.enabled; }
+                 if (r.status === 402) {
+                   window.dispatchEvent(new CustomEvent('doday-upgrade', {detail: {feature: 'email_digest', tier: 'free'}}));
+                 } else if (r.ok) { const j = await r.json(); this.on = j.enabled; }
                  else { this.err = 'не получилось — попробуй ещё раз'; }
                } catch(e) { this.err = 'нет сети'; }
                this.busy = false;
@@ -306,7 +308,11 @@
         </div>
         <div class="flex-1 min-w-0">
           <div class="text-sm font-semibold flex items-center gap-2">Утренний email-дайджест
-            <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-medium">Работает</span>
+            {% if is_pro %}
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-medium">Работает</span>
+            {% else %}
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 font-medium">🔒 Pro</span>
+            {% endif %}
           </div>
           <div class="text-xs text-[var(--text-muted)]">Каждое утро в 7:00 МСК — список задач на день: просроченные, сегодня и завтра. Тихо, никакого спама вне этого письма.</div>
           <div x-show="err" x-cloak class="text-[10px] text-rose-400 mt-1" x-text="err"></div>
@@ -327,12 +333,14 @@
                this.busy = true; this.err = '';
                try {
                  const r = await fetch('/api/profile/telegram-link', {method: 'POST', credentials: 'include'});
-                 if (r.ok) {
+                 if (r.status === 402) {
+                   window.dispatchEvent(new CustomEvent('doday-upgrade', {detail: {feature: 'tg_bot', tier: 'free'}}));
+                 } else if (r.ok) {
                    const j = await r.json();
                    if (j.deeplink && j.deeplink.startsWith('https://t.me/')) {
                      window.open(j.deeplink, '_blank', 'noopener');
                    } else {
-                     this.err = 'Бот ещё не настроен на проде. Жми «Подключить» когда увидишь, что чат с @DodayTaskBot открывается';
+                     this.err = 'Бот ещё не подключён на проде. Жми «Подключить» когда настроим.';
                    }
                  } else { this.err = 'не получилось — попробуй ещё раз'; }
                } catch(e) { this.err = 'нет сети'; }
@@ -354,7 +362,11 @@
         </div>
         <div class="flex-1 min-w-0">
           <div class="text-sm font-semibold flex items-center gap-2">Telegram-бот
-            <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-medium">Работает</span>
+            {% if is_pro %}
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-medium">Работает</span>
+            {% else %}
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 font-medium">🔒 Pro</span>
+            {% endif %}
           </div>
           <div class="text-xs text-[var(--text-muted)]">Команды /add /today /upcoming /done из любого чата с ботом. Парсер понимает «купить молоко завтра !!! @дом»</div>
           <div x-show="err" x-cloak class="text-[10px] text-rose-400 mt-1" x-text="err"></div>

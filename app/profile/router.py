@@ -50,8 +50,13 @@ async def update_morning_digest(
     session: DbSession,
     enabled: Annotated[str, Form()],
 ) -> dict[str, bool]:
-    """Toggle the morning digest opt-in for the signed-in user."""
+    """Toggle the morning digest opt-in. Pro+ only (TIERS["pro"]["email_digest"])."""
+    from app.billing.service import require_pro
+
     new_value = enabled.lower() in ("1", "true", "on", "yes")
+    if new_value:
+        # Allow turning OFF without check (e.g., trial expired user wants to disable).
+        require_pro(user, "Утренний email-дайджест")
     user.morning_digest_enabled = new_value
     await session.commit()
     return {"enabled": new_value}
@@ -59,9 +64,11 @@ async def update_morning_digest(
 
 @router.post("/telegram-link")
 async def request_telegram_link(user: RequiredUser, session: DbSession) -> dict[str, str]:
-    """Сгенерировать одноразовый токен + deeplink на бот для привязки чата."""
+    """Сгенерировать одноразовый токен + deeplink на бот. Pro+ only."""
+    from app.billing.service import require_pro
     from app.telegram.service import request_link_token
 
+    require_pro(user, "Telegram-бот")
     token, deeplink = await request_link_token(session, user.id)
     return {"token": token, "deeplink": deeplink}
 

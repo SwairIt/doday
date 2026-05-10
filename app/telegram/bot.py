@@ -64,7 +64,12 @@ async def _reply(update: Update, text: str, *, markdown: bool = False) -> None:
 
 
 async def _get_user_or_prompt(update: Update, session: AsyncSession) -> User | None:
-    """Find linked user by chat_id. If not linked — prompt to /start <token>."""
+    """Find linked user by chat_id. If not linked — prompt to /start <token>.
+
+    Также проверяет что юзер на Pro-тарифе. Если trial кончился — добрая
+    подсказка вместо тихого молчания."""
+    from app.billing.service import has_pro_features
+
     chat = update.effective_chat
     if chat is None:
         return None
@@ -76,6 +81,15 @@ async def _get_user_or_prompt(update: Update, session: AsyncSession) -> User | N
             "Открой Doday → Профиль → Telegram → нажми «Подключить» — "
             "получишь ссылку которая привяжет нас.",
         )
+        return None
+    if not has_pro_features(user):
+        await _reply(
+            update,
+            "Telegram-бот доступен в Pro-подписке. Trial закончился, и сейчас "
+            "у тебя Free-тариф. Подключи Pro → бот снова заработает: "
+            "https://getdoday.ru/pricing",
+        )
+        return None
     return user
 
 

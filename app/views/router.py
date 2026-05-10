@@ -683,6 +683,7 @@ async def profile_view(request: Request, user: RequiredUser, session: DbSession)
     from sqlalchemy import func
     from sqlalchemy import select as sa_select
 
+    from app.billing.service import has_pro_features, trial_days_remaining
     from app.labels.models import Label
     from app.projects.models import Project as ProjectModel
 
@@ -722,17 +723,22 @@ async def profile_view(request: Request, user: RequiredUser, session: DbSession)
             "projects": projects,
             "project_color_map": project_color_map,
             "stats": stats,
+            "is_pro": has_pro_features(user),
+            "trial_days_left": trial_days_remaining(user),
         },
     )
 
 
 @router.get("/trash", response_class=HTMLResponse)
 async def trash_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
+    from app.billing.service import limits_for
     from app.tasks.service import list_trash
 
     projects = await list_projects(session, user.id)
     project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
-    trashed = await list_trash(session, user.id, max_age_days=30)
+    trashed = await list_trash(
+        session, user.id, max_age_days=limits_for(user)["trash_retention_days"]
+    )
     project_name: dict[UUID, str] = {p.id: p.name for p in projects}
     return templates.TemplateResponse(
         request,

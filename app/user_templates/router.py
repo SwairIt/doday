@@ -91,6 +91,11 @@ async def save_as_endpoint(
     user: RequiredUser,
     session: DbSession,
 ) -> UserTemplateOut:
+    """Сохранить проект как шаблон. Pro+ only — листинг и instantiate
+    остаются доступны Free-юзерам, чтобы их старые trial-шаблоны не пропадали."""
+    from app.billing.service import require_pro
+
+    require_pro(user, "Свои шаблоны проектов")
     try:
         obj = await save_project_as_template(session, user.id, project_id, name=payload.name)
     except ProjectNotFound as e:
