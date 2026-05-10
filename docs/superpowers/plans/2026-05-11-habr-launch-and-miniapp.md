@@ -628,13 +628,13 @@ themeChanged: уже подключён в MA2, проверить что раб
 # Прогресс
 
 ## Блок 1 — Habr-readiness
-- [ ] H1 — Free-for-all flag + landing-banner
-- [ ] H2 — TG-бот скрыт/«скоро»
-- [ ] H3 — Sentry интеграция (нужен DSN от юзера)
-- [ ] H4 — TG-канал в footer (нужна ссылка от юзера)
-- [ ] H5 — Changelog/roadmap страницы
-- [ ] H6 — Базовый load-test
-- [ ] H7 — Demo-GIF на landing (опционально, юзер записывает)
+- [x] H1 — Free-for-all flag + landing-banner ✅ `9266d32`
+- [x] H2 — TG-бот скрыт/«скоро» ✅ `9266d32` (объединён с H1)
+- [x] H3 — Sentry интеграция ✅ `a35dce1` (init no-op без DSN; включить на проде через SENTRY_DSN env)
+- [x] H4 — TG-канал в footer ✅ `7eebf58` (gated на TELEGRAM_CHANNEL_URL env; юзер впишет когда создаст)
+- [x] H5 — Changelog/roadmap страницы ✅ `c0dbd96`
+- [x] H6 — Базовый load-test ✅ `885c607` (50×30s GREEN: p95=1811ms, 0% errors, 36.6 RPS)
+- [~] H7 — Demo-GIF на landing — пропущен (юзер должен записать GIF, не блокер)
 
 ## Блок 2 — Telegram Mini App
 
