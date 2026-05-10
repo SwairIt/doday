@@ -288,6 +288,101 @@ async def test_swipe_handlers_in_js_bundle(client: AsyncClient) -> None:
     assert "data-swipeable" in body or "swipeable" in body
 
 
+async def test_api_list_labels(db_session: AsyncSession, logged_in_client: AsyncClient) -> None:
+    """V4: GET /miniapp/api/labels возвращает лейблы юзера."""
+    from sqlalchemy import select
+
+    from app.auth.models import User
+    from app.labels.models import Label
+
+    user = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    db_session.add(Label(user_id=user.id, name="home", slug="home", color="emerald"))
+    db_session.add(Label(user_id=user.id, name="work", slug="work", color="rose"))
+    await db_session.commit()
+    r = await logged_in_client.get("/miniapp/api/labels")
+    assert r.status_code == 200
+    data = r.json()
+    assert len(data["labels"]) == 2
+    names = {lab["name"] for lab in data["labels"]}
+    assert names == {"home", "work"}
+
+
+async def test_api_patch_label_ids_replaces_labels(
+    db_session: AsyncSession, logged_in_client: AsyncClient
+) -> None:
+    """V4: PATCH с label_ids заменяет labels на задаче."""
+    from sqlalchemy import select
+
+    from app.auth.models import User
+    from app.labels.models import Label
+    from app.projects.service import ensure_inbox
+
+    user = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    inbox = await ensure_inbox(db_session, user.id)
+    l1 = Label(user_id=user.id, name="home", slug="home", color="emerald")
+    db_session.add(l1)
+    await db_session.flush()
+    from app.tasks.service import create_task as svc_create_task
+
+    task = await svc_create_task(db_session, user.id, title="X", project_id=inbox.id)
+    await db_session.commit()
+
+    # Add label
+    r = await logged_in_client.patch(
+        f"/miniapp/api/tasks/{task.id}", json={"label_ids": [str(l1.id)]}
+    )
+    assert r.status_code == 200
+    data = r.json()
+    assert len(data["labels"]) == 1
+    assert data["labels"][0]["name"] == "home"
+
+    # Remove all
+    r = await logged_in_client.patch(f"/miniapp/api/tasks/{task.id}", json={"label_ids": []})
+    assert r.status_code == 200
+    assert r.json()["labels"] == []
+
+
+async def test_api_patch_recurrence_and_pin(
+    db_session: AsyncSession, logged_in_client: AsyncClient
+) -> None:
+    """V5: PATCH recurrence + toggle_pin меняют статусы."""
+    from sqlalchemy import select
+
+    from app.auth.models import User
+    from app.projects.service import ensure_inbox
+
+    user = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    inbox = await ensure_inbox(db_session, user.id)
+    from app.tasks.service import create_task as svc_create_task
+
+    task = await svc_create_task(db_session, user.id, title="X", project_id=inbox.id)
+    await db_session.commit()
+
+    r = await logged_in_client.patch(f"/miniapp/api/tasks/{task.id}", json={"recurrence": "daily"})
+    assert r.status_code == 200
+    assert r.json()["recurrence"] == "daily"
+
+    # Bad value
+    r = await logged_in_client.patch(f"/miniapp/api/tasks/{task.id}", json={"recurrence": "hourly"})
+    assert r.status_code == 400
+
+    # Toggle pin on
+    r = await logged_in_client.patch(f"/miniapp/api/tasks/{task.id}", json={"toggle_pin": True})
+    assert r.status_code == 200
+    assert r.json()["pinned_at"] is not None
+
+    # Toggle pin off
+    r = await logged_in_client.patch(f"/miniapp/api/tasks/{task.id}", json={"toggle_pin": True})
+    assert r.status_code == 200
+    assert r.json()["pinned_at"] is None
+
+
 async def test_api_subtask_stats_endpoint(
     db_session: AsyncSession, logged_in_client: AsyncClient
 ) -> None:

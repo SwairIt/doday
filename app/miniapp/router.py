@@ -665,6 +665,9 @@ class TaskPatchIn(BaseModel):
     due_at: str | None = None  # ISO 8601 or "" to clear
     due_date_only: bool | None = None
     project_id: str | None = None  # UUID — для move-to-project (MB5)
+    label_ids: list[str] | None = None  # replace labels (V4)
+    recurrence: str | None = None  # daily/weekly/monthly/yearly или "" to clear (V5)
+    toggle_pin: bool | None = None  # toggle pinned_at (V5)
 
 
 @router.patch("/api/tasks/{task_id}")
@@ -728,15 +731,35 @@ async def api_patch_task(
         if proj is None:
             return JSONResponse({"error": "project_not_found"}, status_code=404)
         task.project_id = new_project_id
+    if payload.label_ids is not None:
+        from uuid import UUID as _UUID
+
+        from app.labels.models import Label as _Label
+
+        try:
+            ids = [_UUID(lid) for lid in payload.label_ids]
+        except ValueError:
+            return JSONResponse({"error": "bad_label_id"}, status_code=400)
+        if ids:
+            rows = await session.execute(
+                select(_Label).where(_Label.id.in_(ids), _Label.user_id == user.id)
+            )
+            new_labels = list(rows.scalars().all())
+        else:
+            new_labels = []
+        task.labels = new_labels
+    if payload.recurrence is not None:
+        if payload.recurrence == "":
+            task.recurrence = None
+        elif payload.recurrence in ("daily", "weekly", "monthly", "yearly"):
+            task.recurrence = payload.recurrence
+        else:
+            return JSONResponse({"error": "bad_recurrence"}, status_code=400)
+    if payload.toggle_pin:
+        task.pinned_at = None if task.pinned_at else datetime.now(UTC)
     await session.commit()
-    return JSONResponse(
-        {
-            "id": str(task.id),
-            "title": task.title,
-            "priority": task.priority.value,
-            "due_at": task.due_at.isoformat() if task.due_at else None,
-        }
-    )
+    await session.refresh(task)
+    return JSONResponse(await _task_to_dict(session, task))
 
 
 @router.get("/api/search")
@@ -797,6 +820,27 @@ async def api_heatmap(user: CurrentUser, session: DbSession) -> JSONResponse:
     )
     counts = {str(r[0]): int(r[1]) for r in rows.all()}
     return JSONResponse({"start_date": start_date.isoformat(), "counts": counts})
+
+
+@router.get("/api/labels")
+async def api_list_labels(user: CurrentUser, session: DbSession) -> JSONResponse:
+    """Список лейблов юзера для labels-picker в task_sheet (V4)."""
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    from app.labels.models import Label as _Label
+
+    rows = await session.execute(
+        select(_Label).where(_Label.user_id == user.id).order_by(_Label.name)
+    )
+    labels = list(rows.scalars().all())
+    return JSONResponse(
+        {
+            "labels": [
+                {"id": str(lab.id), "name": lab.name, "color": lab.color, "slug": lab.slug}
+                for lab in labels
+            ]
+        }
+    )
 
 
 @router.get("/api/projects")
