@@ -809,3 +809,50 @@ uv run python -m app.telegram.bot > .bot.log 2>&1 &
 - Открыть тикет хостеру (текст в этой секции выше) → разблокируют →
   запустить `.tmp_ssh_setup_telegram_bot.py <REDACTED_OLD_TOKEN> DodayTaskBot`
 - Альтернативно — переписать на Pyrogram + MTProto-прокси (4ч)
+
+### 2026-05-10 (ночь продолжение) — TG deeplink fix через QR + копирование
+
+**Жалоба юзера:** «страница с тг открывается (где ссылка с start и токеном),
+но почему-то когда нажимаю в боте просто старт отправляется и все».
+
+**Причина:** Telegram при повторном клике на `t.me/<bot>?start=<TOKEN>`
+теряет аргумент и шлёт боту просто «/start» без токена. Бот не может
+сматчить юзера и показывает заглушку. Это поведение Telegram-клиента,
+не баг бота.
+
+**Фикс — три способа подключения** в `/app/profile` (Telegram-блок):
+
+1. **QR-код** — `qrcode-generator` 1.4.4 с jsdelivr CDN (~5KB, MIT).
+   Рисуется на клиенте при каждом нажатии «Подключить» → токен в QR
+   всегда новый (не кэшируется браузером, генерится после `POST
+   /api/profile/telegram-link`). Юзер сканирует с телефона, открывается
+   нужный deeplink в нативном Telegram, токен передаётся.
+2. **Кнопка-ссылка** «Открыть @DodayTaskBot» — старый flow для тех у
+   кого Telegram не теряет токен.
+3. **Копирование команды** `/start <token>` в clipboard — самый
+   надёжный путь: вставляется в чат руками, Telegram гарантированно
+   передаёт аргумент.
+
+**Файлы:**
+- `app/templates/app/profile.html` — Telegram-секция переписана:
+  collapsed/expanded состояние, grid `[180px_1fr]`, три способа в
+  expanded view, x-data методы `generate()/drawQR()/copyCommand()/
+  unlink()`, x-cloak transitions, error/copied indicators.
+- CDN script `qrcode.js` подключён один раз внизу секции.
+
+**Коммиты:**
+- `320ac7d` — fix(telegram): QR-код + копирование команды против
+  потери токена в deeplink
+
+Pre-commit (lint_templates) — 0 errors. Auto-deploy на проде подхватит
+через cron-poll (~60 сек).
+
+**State-now (2026-05-10 ночь):**
+- TG-бот всё ещё в локальном bg-процессе (поллинг работает)
+- Прод-`.env` НЕ содержит `TELEGRAM_BOT_USERNAME` — на проде блок
+  «Подключить Telegram» вернёт deeplink без `https://t.me/` префикса.
+  Перед прод-релизом QR-фикса нужен `.tmp_ssh_set_metrika.py`-style
+  скрипт для проставления `TELEGRAM_BOT_USERNAME=DodayTaskBot` в
+  прод-`.env` (одна строка). Локально работает as-is.
+- Овернайт-план `2026-05-10-overnight-mobile-polish.md` полностью ✅
+  (финальный коммит был `57bf98d`, 8 чанков, ~50 минут).
