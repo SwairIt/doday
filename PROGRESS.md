@@ -692,3 +692,52 @@ horizontal-overflow culprits на всех 140 ячейках.** JSON-отчёт
 - Все запушены в `origin/master`, прод обновлён.
 
 Loop остановлен.
+
+### 2026-05-10 (день) — TG-бот реализован, прод-блок исходящих к Telegram
+
+**Сделано (фаза разработки полностью):**
+
+| Что | Файлы | Commits |
+|---|---|---|
+| Миграция 0023 telegram_links (user_id FK CASCADE, chat_id BigInt unique, link_token String64 unique, created_at, linked_at) | `alembic/versions/0023_telegram_links.py` | `ce707df` |
+| `app/telegram/` модуль (model + service + bot.py + __init__) | `app/telegram/*` | `ce707df` |
+| Endpoints `POST/DELETE /api/profile/telegram-link` (token + deeplink) | `app/profile/router.py` | `ce707df` |
+| UI «Подключить Telegram» в /app/profile (Alpine, deeplink → t.me/<bot>?start=token) | `app/templates/app/profile.html` | `ce707df` |
+| Bot worker — polling через python-telegram-bot 21.x. Команды /start, /help, /add (через quickadd-парсер), /today, /upcoming, /done, /unlink | `app/telegram/bot.py` | `ce707df` |
+| TELEGRAM_BOT_TOKEN + TELEGRAM_BOT_USERNAME в settings | `app/config.py` | `ce707df` |
+| Тесты 11/11 (service + endpoints + table sanity) | `tests/test_telegram.py` | `ce707df` |
+| systemd-юнит для прода (заготовка) | `deploy/doday-bot.service` | `ce707df` |
+
+**Бот в Telegram:** `@DodayTaskBot`, token `<REDACTED_OLD_TOKEN>` (получен от @BotFather пользователем).
+
+**Блокер:** прод-хостинг режет исходящие к `api.telegram.org` (149.154.166.110:443 → `Connection timed out 10002ms`). DNS резолвится, github/google работают. Это типичная RU-хостинг настройка после блокировки Telegram 2018г. Без unblock с хостинга bot worker на проде не запустится — `httpx.ConnectTimeout` на startup.
+
+**Текущее состояние (10 мая):**
+
+- **Bot worker запущен ЛОКАЛЬНО** на машине пользователя через bash background-task `bs3oyq123` (`uv run python -m app.telegram.bot > .bot.log 2>&1`). Логи: `.bot.log`. Polling работает, `Application started`, `getUpdates` 200 OK.
+- **Локальный uvicorn на порту 8001** (`uv run uvicorn app.main:app --host 127.0.0.1 --port 8001 --reload > .uvicorn8001.log 2>&1` через bg `bc48i6apg`). Порт 8000 завис в zombie-PIDs, новый instance на 8001.
+- **Локальный `.env`** содержит `TELEGRAM_BOT_TOKEN=...` + `TELEGRAM_BOT_USERNAME=DodayTaskBot`. БД локальная postgres `localhost:5432/schooltodo`.
+- **На проде** код полностью задеплоен (auto-deploy подтянул миграцию 0023 + endpoints + UI). Но `/api/profile/telegram-link` возвращает deeplink с `?start=` без `https://t.me/` префикса т.к. `TELEGRAM_BOT_USERNAME` НЕ записан в прод-`.env` (юзер не запускал `.tmp_ssh_setup_telegram_bot.py` на проде, т.к. бот всё равно не работал).
+- **На проде crontab** удалена `# doday-bot-watchdog` (cron больше не пытается воскрешать бот, который всё равно падает).
+- **Прод-deploy-poll.sh** обновлён — после pull убивает bot.pid, чтобы watchdog рестартил бот. Сейчас неактуально т.к. watchdog disabled.
+- Существующие auto-deploy и другие cron'ы (`doday-deploy-poll`, `doday-morning-digest`) живые.
+
+**4 варианта чтобы запустить бот на проде** (выбор за юзером):
+1. **Тикет хостеру** на открытие исходящего 443 к Telegram-подсетям 149.154.0.0/16 + 91.108.0.0/16 (бесплатно, 1-3 дня ожидания).
+2. **Переписать на Pyrogram + MTProto-прокси** — у юзера на серваке уже есть MTProto-прокси на портах 8899/8900 (для Telegram-клиента, не для Bot API). ~3-4 часа работы. Требует api_id/api_hash с my.telegram.org.
+3. **Бот на компе юзера + SSH-туннель к прод-БД** — работает только когда комп онлайн.
+4. **Cloudflare Worker как webhook+sendMessage relay** — ~2-3 часа, бесплатно.
+
+**Что делать дальше при возврате:**
+- Если хостер ответил на тикет «открыли» → запустить `.tmp_ssh_setup_telegram_bot.py <REDACTED_OLD_TOKEN> DodayTaskBot` на проде, восстановить watchdog crontab. Бот на проде работает за минуту.
+- Если переходим на Pyrogram → переписать `app/telegram/bot.py`, `pyproject.toml` swap dep, заново тесты. Нужен api_id/api_hash.
+- Иначе бот живёт на машине юзера в текущем фон-процессе. Не выживет рестарт компа.
+
+**Юзеру 15 лет** — для ЮKassa самозанятости через родителя или ждать 16. Не блокер для текущей работы.
+
+**Не сделано из активного бэклога:**
+- ЮKassa подключение (отложено до самозанятости)
+- Userscript авто-синк школьной домашки (триггер «делай авто-синк школы»)
+- Темы Forest/Minimal Pro-only
+- Family seats / parent dashboard
+- Sentry / Coverage / refactor views/router.py
