@@ -94,6 +94,37 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
     hide() { tg.MainButton.hide(); tg.MainButton.offClick(); },
   };
 
+  // 5.1. Per-screen MainButton — биндим автоматически по URL.
+  function setupMainButton() {
+    const path = window.location.pathname;
+    if (path === '/miniapp/' || path === '/miniapp/inbox' || path.startsWith('/miniapp/projects/')) {
+      // Today / Inbox / project → «Добавить» → фокус на quickadd
+      window.dodayMainButton.show('Добавить задачу', () => {
+        const inp = document.querySelector('input[type="text"], textarea');
+        if (inp) inp.focus();
+      });
+    } else if (path === '/miniapp/calendar') {
+      // Calendar → «На сегодня» (если ушли)
+      const isToday = !window.location.search.includes('date=');
+      if (!isToday) {
+        window.dodayMainButton.show('На сегодня', () => {
+          window.location.href = '/miniapp/calendar';
+        });
+      } else {
+        window.dodayMainButton.hide();
+      }
+    } else if (path === '/miniapp/projects') {
+      window.dodayMainButton.show('Новый проект', () => {
+        // Триггерим click на «+» button — Alpine откроет sheet
+        const btn = document.querySelector('header button[aria-label="Создать проект"]');
+        if (btn) btn.click();
+      });
+    } else {
+      window.dodayMainButton.hide();
+    }
+  }
+  setupMainButton();
+
   // 6. BackButton — биндится автоматически если у элемента есть data-back-handler
   document.addEventListener('alpine:init', () => {});
   if (window.history.length > 1 && window.location.pathname !== '/miniapp/') {
@@ -248,9 +279,55 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
     const taskRow = e.target.closest('[data-task-id]');
     if (taskRow && !e.target.closest('button, a, input, textarea')) {
       const taskId = taskRow.getAttribute('data-task-id');
+      window.dodayHaptic && window.dodayHaptic.light();
       window.dispatchEvent(new CustomEvent('doday-open-task', {detail: {taskId}}));
     }
   });
+
+  // 10. Haptic на bottom-nav tab switch
+  document.addEventListener('click', (e) => {
+    const navLink = e.target.closest('.miniapp-nav a');
+    if (navLink) window.dodayHaptic && window.dodayHaptic.light();
+  });
+
+  // 11. Pull-to-refresh — простая реализация. При пуле >80px на scrollTop=0
+  //     показываем индикатор и reload'им страницу.
+  let pullState = null;
+  const PULL_THRESHOLD = 80;
+  const indicator = document.createElement('div');
+  indicator.style.cssText = 'position:fixed;top:0;left:50%;transform:translate(-50%,-100%);z-index:60;background:var(--accent);color:var(--tg-button-text);padding:8px 16px;border-radius:0 0 12px 12px;font-size:12px;font-weight:600;transition:transform .2s;pointer-events:none;';
+  indicator.textContent = '⤓ Тяни ниже…';
+  document.body.appendChild(indicator);
+
+  document.addEventListener('touchstart', (e) => {
+    if (window.scrollY > 0) return;
+    if (e.target.closest('.swipe-row, [data-week-swipeable], textarea, input')) return;
+    pullState = { y0: e.touches[0].clientY };
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!pullState) return;
+    const dy = e.touches[0].clientY - pullState.y0;
+    if (dy <= 0) return;
+    pullState.dy = dy;
+    const pct = Math.min(1, dy / PULL_THRESHOLD);
+    indicator.style.transform = 'translate(-50%, ' + (-100 + pct * 100) + '%)';
+    if (dy >= PULL_THRESHOLD) indicator.textContent = '↻ Отпусти чтобы обновить';
+    else indicator.textContent = '⤓ Тяни ниже…';
+  }, { passive: true });
+
+  document.addEventListener('touchend', () => {
+    if (!pullState) return;
+    const { dy } = pullState;
+    pullState = null;
+    if (dy && dy >= PULL_THRESHOLD) {
+      indicator.textContent = '↻ Обновляю…';
+      window.dodayHaptic && window.dodayHaptic.medium();
+      setTimeout(() => window.location.reload(), 200);
+    } else {
+      indicator.style.transform = 'translate(-50%, -100%)';
+    }
+  }, { passive: true });
 
   // Expose для отладки
   window.tg = tg;

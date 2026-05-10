@@ -168,6 +168,11 @@
   {# Search bottom-sheet — слушает window-event 'doday-open-search' #}
   {% include "miniapp/_partials/search_sheet.html" %}
 
+  {# Confetti library — load only on Today (одной странице где может
+     произойти 100% celebration). Lazy-load в footer чтобы не тормозить
+     first paint. #}
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js" defer></script>
+
   <script src="/miniapp/assets/miniapp.js" defer></script>
 </body>
 </html>

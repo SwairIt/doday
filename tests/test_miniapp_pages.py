@@ -278,6 +278,17 @@ async def test_swipe_handlers_in_js_bundle(client: AsyncClient) -> None:
     assert "data-swipeable" in body or "swipeable" in body
 
 
+async def test_polish_features_in_js_bundle(client: AsyncClient) -> None:
+    """MD1-MD5: MainButton, haptic, pull-to-refresh присутствуют."""
+    r = await client.get("/miniapp/assets/miniapp.js")
+    assert r.status_code == 200
+    body = r.text
+    assert "setupMainButton" in body or "MainButton" in body
+    assert "PULL_THRESHOLD" in body
+    assert "BackButton" in body
+    assert "dodayHaptic" in body
+
+
 async def test_api_complete_task_toggles(
     db_session: AsyncSession, logged_in_client: AsyncClient
 ) -> None:

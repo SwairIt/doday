@@ -66,7 +66,7 @@
   </section>
 {% endif %}
 
-{# Empty state #}
+{# Empty state + конфетти когда всё закрыто на сегодня #}
 {% if not overdue and not today %}
   <div class="text-center py-12">
     <div class="text-5xl mb-3">{% if done_today_count > 0 %}🎉{% else %}🌤️{% endif %}</div>
@@ -78,6 +78,29 @@
       {% endif %}
     </p>
   </div>
+  {% if done_today_count > 0 %}
+    <script>
+      // Триггерим конфетти один раз за день — флаг в localStorage по дате.
+      (function() {
+        const today = new Date().toISOString().slice(0, 10);
+        const key = 'doday-confetti-' + today;
+        if (localStorage.getItem(key)) return;
+        const fire = () => {
+          if (!window.confetti) return;
+          window.confetti({
+            particleCount: 80,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#7c3aed', '#d946ef', '#10b981', '#f59e0b'],
+          });
+          window.dodayHaptic && window.dodayHaptic.success();
+          localStorage.setItem(key, '1');
+        };
+        if (document.readyState === 'complete') setTimeout(fire, 300);
+        else window.addEventListener('load', () => setTimeout(fire, 300));
+      })();
+    </script>
+  {% endif %}
 {% endif %}
 
 {# Закрытые сегодня — свёрнутая секция #}

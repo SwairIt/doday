@@ -655,7 +655,7 @@ themeChanged: уже подключён в MA2, проверить что раб
 - [x] MC1 — Calendar week-view ✅ `4a86ede`
 - [x] MC2 — Calendar heatmap ✅ `1bb4c1d`
 - [x] MC3 — Projects list + view ✅ `21b8bac`
-- [ ] MC4 — Search + «Я» вкладка
+- [x] MC4 — Search + «Я» вкладка ✅ `825a810`
 
 ### Фаза D — Native polish
 - [ ] MD1 — MainButton per-screen
