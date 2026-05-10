@@ -639,8 +639,8 @@ themeChanged: уже подключён в MA2, проверить что раб
 ## Блок 2 — Telegram Mini App
 
 ### Фаза A — Фундамент
-- [ ] MA1 — initData валидация + auth
-- [ ] MA2 — Base layout + auto-theming
+- [x] MA1 — initData валидация + auth ✅ `a8b2a5f`
+- [x] MA2 — Base layout + auto-theming ✅ `6d76c0b`
 - [ ] MA3 — Bottom-nav routing + 5 заглушек
 - [ ] MA4 — «Привяжи аккаунт» onboarding
 
