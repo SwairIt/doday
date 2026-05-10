@@ -344,6 +344,93 @@ async def test_calendar_heatmap_renders(logged_in_client: AsyncClient) -> None:
     assert "12 недель" in body
 
 
+async def test_projects_list_renders_with_counts(
+    db_session: AsyncSession, logged_in_client: AsyncClient
+) -> None:
+    """MC3: /miniapp/projects показывает Inbox + counts."""
+    from sqlalchemy import select
+
+    from app.auth.models import User
+    from app.projects.service import create_project, ensure_inbox
+
+    user = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    inbox = await ensure_inbox(db_session, user.id)
+    work = await create_project(db_session, user.id, name="Work", color="violet")
+    from app.tasks.service import create_task as svc_create_task
+
+    await svc_create_task(db_session, user.id, title="A", project_id=inbox.id)
+    await svc_create_task(db_session, user.id, title="B", project_id=work.id)
+    await db_session.commit()
+
+    r = await logged_in_client.get("/miniapp/projects")
+    assert r.status_code == 200
+    body = r.text
+    assert "Work" in body
+
+
+async def test_project_view_renders_tasks(
+    db_session: AsyncSession, logged_in_client: AsyncClient
+) -> None:
+    """MC3: /miniapp/projects/<id> показывает задачи проекта."""
+    from sqlalchemy import select
+
+    from app.auth.models import User
+    from app.projects.service import create_project
+
+    user = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    proj = await create_project(db_session, user.id, name="Alpha", color="rose")
+    from app.tasks.service import create_task as svc_create_task
+
+    await svc_create_task(db_session, user.id, title="Alpha-1", project_id=proj.id)
+    await db_session.commit()
+
+    r = await logged_in_client.get(f"/miniapp/projects/{proj.id}", follow_redirects=False)
+    assert r.status_code == 200
+    body = r.text
+    assert "Alpha" in body
+    assert "Alpha-1" in body
+
+
+async def test_project_view_invalid_id_redirects(logged_in_client: AsyncClient) -> None:
+    r = await logged_in_client.get("/miniapp/projects/not-a-uuid", follow_redirects=False)
+    assert r.status_code == 303
+
+
+async def test_api_create_project(logged_in_client: AsyncClient) -> None:
+    """MC3: POST /miniapp/api/projects создаёт проект."""
+    r = await logged_in_client.post(
+        "/miniapp/api/projects", json={"name": "MyProject", "color": "emerald"}
+    )
+    assert r.status_code == 201
+    data = r.json()
+    assert data["name"] == "MyProject"
+    assert data["color"] == "emerald"
+
+
+async def test_api_create_task_to_specific_project(
+    db_session: AsyncSession, logged_in_client: AsyncClient
+) -> None:
+    """MC3: quick-add может создавать в указанный проект."""
+    from sqlalchemy import select
+
+    from app.auth.models import User
+    from app.projects.service import create_project
+
+    user = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    proj = await create_project(db_session, user.id, name="Studies", color="blue")
+    await db_session.commit()
+    r = await logged_in_client.post(
+        "/miniapp/api/tasks", json={"text": "Урок", "project_id": str(proj.id)}
+    )
+    assert r.status_code == 201
+
+
 async def test_api_heatmap_returns_counts(logged_in_client: AsyncClient) -> None:
     """MC2: GET /miniapp/api/heatmap возвращает {start_date, counts}."""
     r = await logged_in_client.get("/miniapp/api/heatmap")

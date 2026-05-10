@@ -14,7 +14,7 @@ from app.auth.deps import CurrentUser, DbSession
 from app.config import get_settings
 from app.miniapp.auth import get_telegram_user_id, validate_init_data
 from app.miniapp.static import MINIAPP_JS
-from app.projects.service import ensure_inbox, list_projects
+from app.projects.service import create_project, ensure_inbox, list_projects
 from app.quickadd.parser import parse_quick_add
 from app.tasks.models import Task
 from app.tasks.service import create_task, list_completed_today, list_today
@@ -302,15 +302,130 @@ async def calendar(
 
 
 @router.get("/projects", response_class=HTMLResponse)
-async def projects(request: Request, user: CurrentUser) -> Response:
+async def projects(request: Request, user: CurrentUser, session: DbSession) -> Response:
     redir = _require_user_or_redirect(user)
     if redir is not None:
         return redir
-    return templates.TemplateResponse(request, "miniapp/projects.html", _ctx(request, user))
+    if user is None:  # pragma: no cover
+        return RedirectResponse(url="/miniapp/link", status_code=status.HTTP_303_SEE_OTHER)
+
+    project_list = await list_projects(session, user.id)
+    # Counts: active + overdue tasks per project
+    today_date = datetime.now(UTC).date()
+    today_end = datetime.combine(today_date, datetime.max.time(), tzinfo=UTC)
+    counts_q = await session.execute(
+        select(
+            Task.project_id,
+            func.count(Task.id).filter(Task.is_completed.is_(False)).label("active"),
+            func.count(Task.id)
+            .filter(
+                Task.is_completed.is_(False),
+                Task.due_at.is_not(None),
+                Task.due_at < today_end,
+            )
+            .label("overdue"),
+        )
+        .where(Task.user_id == user.id, Task.deleted_at.is_(None))
+        .group_by(Task.project_id)
+    )
+    counts: dict[object, dict[str, int]] = {}
+    for row in counts_q.all():
+        counts[row[0]] = {"active": int(row[1]), "overdue": int(row[2])}
+
+    project_rows = [
+        {
+            "project": p,
+            "active": counts.get(p.id, {}).get("active", 0),
+            "overdue": counts.get(p.id, {}).get("overdue", 0),
+        }
+        for p in project_list
+    ]
+
+    ctx = _ctx(request, user)
+    ctx["project_rows"] = project_rows
+    return templates.TemplateResponse(request, "miniapp/projects.html", ctx)
+
+
+@router.get("/projects/{project_id}", response_class=HTMLResponse)
+async def project_view(
+    project_id: str,
+    request: Request,
+    user: CurrentUser,
+    session: DbSession,
+) -> Response:
+    """Single-project view — список задач этого проекта."""
+    redir = _require_user_or_redirect(user)
+    if redir is not None:
+        return redir
+    if user is None:  # pragma: no cover
+        return RedirectResponse(url="/miniapp/link", status_code=status.HTTP_303_SEE_OTHER)
+
+    from uuid import UUID as _UUID
+
+    from app.projects.models import Project as _Project
+
+    try:
+        pid = _UUID(project_id)
+    except ValueError:
+        return RedirectResponse(url="/miniapp/projects", status_code=status.HTTP_303_SEE_OTHER)
+    project = (
+        await session.execute(
+            select(_Project).where(_Project.id == pid, _Project.user_id == user.id)
+        )
+    ).scalar_one_or_none()
+    if project is None:
+        return RedirectResponse(url="/miniapp/projects", status_code=status.HTTP_303_SEE_OTHER)
+    rows = await session.execute(
+        select(Task)
+        .where(
+            Task.user_id == user.id,
+            Task.project_id == pid,
+            Task.is_completed.is_(False),
+            Task.deleted_at.is_(None),
+        )
+        .order_by(Task.position, Task.created_at)
+        .limit(100)
+    )
+    tasks = list(rows.scalars().all())
+
+    ctx = _ctx(request, user)
+    ctx["project"] = project
+    ctx["tasks"] = tasks
+    return templates.TemplateResponse(request, "miniapp/project.html", ctx)
+
+
+class ProjectCreateIn(BaseModel):
+    name: str
+    color: str = "violet"
+
+
+@router.post("/api/projects", status_code=status.HTTP_201_CREATED)
+async def api_create_project(
+    payload: ProjectCreateIn,
+    user: CurrentUser,
+    session: DbSession,
+) -> JSONResponse:
+    """Создать новый проект из bottom-sheet (MC3)."""
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    name = payload.name.strip()
+    if not name:
+        return JSONResponse({"error": "empty_name"}, status_code=400)
+    project = await create_project(session, user.id, name=name[:100], color=payload.color)
+    return JSONResponse(
+        {
+            "id": str(project.id),
+            "name": project.name,
+            "color": project.color,
+            "is_inbox": project.is_inbox,
+        },
+        status_code=status.HTTP_201_CREATED,
+    )
 
 
 class QuickAddIn(BaseModel):
     text: str
+    project_id: str | None = None  # для quick-add внутри проекта
 
 
 @router.post("/api/parse")
@@ -346,12 +461,30 @@ async def api_create_task(
     if not text:
         return JSONResponse({"error": "empty_text"}, status_code=400)
     parsed = parse_quick_add(text)
-    inbox = await ensure_inbox(session, user.id)
+    # Default to Inbox; if request specified project_id, validate ownership.
+    target_project_id = (await ensure_inbox(session, user.id)).id
+    if payload.project_id:
+        from uuid import UUID as _UUID
+
+        from app.projects.models import Project as _Project
+
+        try:
+            requested_pid = _UUID(payload.project_id)
+        except ValueError:
+            return JSONResponse({"error": "bad_project_id"}, status_code=400)
+        proj = (
+            await session.execute(
+                select(_Project).where(_Project.id == requested_pid, _Project.user_id == user.id)
+            )
+        ).scalar_one_or_none()
+        if proj is None:
+            return JSONResponse({"error": "project_not_found"}, status_code=404)
+        target_project_id = proj.id
     task = await create_task(
         session,
         user.id,
         title=parsed.title,
-        project_id=inbox.id,
+        project_id=target_project_id,
         due_at=parsed.due_at,
         due_date_only=parsed.date_only,
         priority=parsed.priority,

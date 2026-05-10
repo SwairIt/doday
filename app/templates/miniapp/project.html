@@ -1,0 +1,35 @@
+{% extends "miniapp/_base.html" %}
+{% block title %}{{ project.name }} — Doday{% endblock %}
+{% block content %}
+
+<script>window.dodayCurrentProject = "{{ project.id }}";</script>
+{% include "miniapp/_partials/quickadd.html" %}
+
+<header class="flex items-center gap-3 mb-4">
+  <a href="/miniapp/projects"
+     class="w-8 h-8 rounded-lg bg-[var(--surface-2)] flex items-center justify-center active:scale-95 transition"
+     aria-label="К списку проектов">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+    </svg>
+  </a>
+  <span class="w-3 h-3 rounded-full shrink-0" style="background: {{ project.color or 'violet' }}"></span>
+  <h1 class="text-xl font-bold flex-1 truncate">
+    {% if project.is_inbox %}📥 {% endif %}{{ project.name }}
+  </h1>
+</header>
+
+{% if tasks %}
+  <div class="space-y-1.5">
+    {% for task in tasks %}
+      {% include "miniapp/_partials/task_card.html" %}
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="text-center py-12 opacity-60">
+    <div class="text-4xl mb-2">✨</div>
+    <p class="text-sm">В этом проекте пока пусто. Используй поле сверху чтобы добавить задачу.</p>
+  </div>
+{% endif %}
+
+{% endblock %}

@@ -28,10 +28,12 @@
          if (!this.text.trim() || this.busy) return;
          this.busy = true; this.err = '';
          try {
+           const body = {text: this.text};
+           if (window.dodayCurrentProject) body.project_id = window.dodayCurrentProject;
            const r = await fetch('/miniapp/api/tasks', {
              method: 'POST',
              headers: {'Content-Type':'application/json'},
-             body: JSON.stringify({text: this.text}),
+             body: JSON.stringify(body),
              credentials: 'include',
            });
            if (r.ok) {

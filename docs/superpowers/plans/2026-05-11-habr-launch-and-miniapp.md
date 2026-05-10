@@ -653,7 +653,7 @@ themeChanged: уже подключён в MA2, проверить что раб
 
 ### Фаза C — Навигация
 - [x] MC1 — Calendar week-view ✅ `4a86ede`
-- [ ] MC2 — Calendar heatmap
+- [x] MC2 — Calendar heatmap ✅ `1bb4c1d`
 - [ ] MC3 — Projects list + view
 - [ ] MC4 — Search + «Я» вкладка
 
