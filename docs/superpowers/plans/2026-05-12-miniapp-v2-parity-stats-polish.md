@@ -354,7 +354,7 @@
 
 ## Группа V — Visual parity
 - [x] V1 — Enrich /api/tasks payload + eager-load ✅ `f65582f`
-- [ ] V2 — task_card.html parity с web
+- [x] V2 — task_card.html parity с web ✅ `e87ddbe`
 - [ ] V3 — project_color_map во все views
 - [ ] V4 — Labels picker в task_sheet
 - [ ] V5 — Recurrence picker + Pin toggle в task_sheet

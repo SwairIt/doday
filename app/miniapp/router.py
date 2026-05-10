@@ -29,6 +29,18 @@ def _ctx(request: Request, current_user: object = None) -> dict[str, object]:
     return {"current_path": request.url.path, "current_user": current_user}
 
 
+async def _project_color_map(session: DbSession, user_id: object) -> dict[object, str]:
+    """Дёрнуть {project.id: color} для всех проектов юзера. Нужен в каждом
+    view'е где рендерится task_card — карточка использует map'у для
+    project-dot, date-chip-colour, progress-bar-fill."""
+    from uuid import UUID as _UUID
+
+    if not isinstance(user_id, _UUID):
+        return {}
+    projects = await list_projects(session, user_id)
+    return {p.id: p.color for p in projects}
+
+
 class AuthIn(BaseModel):
     init_data: str
 
@@ -143,6 +155,7 @@ async def today(request: Request, user: CurrentUser, session: DbSession) -> Resp
         today_total=len(today_tasks) + len(overdue),
         done_today_count=done_today_count,
         completed_today=completed_today,
+        project_color_map=await _project_color_map(session, user.id),
     )
     return templates.TemplateResponse(request, "miniapp/today.html", ctx)
 
@@ -169,6 +182,7 @@ async def inbox(request: Request, user: CurrentUser, session: DbSession) -> Resp
     tasks = list(rows.scalars().all())
     ctx = _ctx(request, user)
     ctx["tasks"] = tasks
+    ctx["project_color_map"] = await _project_color_map(session, user.id)
     return templates.TemplateResponse(request, "miniapp/inbox.html", ctx)
 
 
@@ -297,6 +311,7 @@ async def calendar(
         next_week_iso=next_week_iso,
         today_iso=today_date.isoformat(),
         heatmap_weeks=heatmap_weeks,
+        project_color_map=await _project_color_map(session, user.id),
     )
     return templates.TemplateResponse(request, "miniapp/calendar.html", ctx)
 
@@ -391,6 +406,7 @@ async def project_view(
     ctx = _ctx(request, user)
     ctx["project"] = project
     ctx["tasks"] = tasks
+    ctx["project_color_map"] = await _project_color_map(session, user.id)
     return templates.TemplateResponse(request, "miniapp/project.html", ctx)
 
 
