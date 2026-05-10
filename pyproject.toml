@@ -87,6 +87,7 @@ ignore = [
 "app/telegram/models.py" = ["RUF002"]
 "app/pages/changelog_data.py" = ["RUF001", "RUF002"]  # intentional Cyrillic in changelog entries
 "app/pages/roadmap_data.py" = ["RUF001", "RUF002"]    # intentional Cyrillic in roadmap items
+"scripts/load_test.py" = ["RUF001", "RUF002"]         # Russian docstring + comments
 
 [tool.mypy]
 python_version = "3.12"
