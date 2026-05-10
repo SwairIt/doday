@@ -88,6 +88,9 @@ ignore = [
 "app/pages/changelog_data.py" = ["RUF001", "RUF002"]  # intentional Cyrillic in changelog entries
 "app/pages/roadmap_data.py" = ["RUF001", "RUF002"]    # intentional Cyrillic in roadmap items
 "scripts/load_test.py" = ["RUF001", "RUF002"]         # Russian docstring + comments
+"app/miniapp/__init__.py" = ["RUF002"]                # intentional Cyrillic in module docstring
+"app/miniapp/auth.py" = ["RUF001", "RUF002", "RUF003"]   # intentional Cyrillic in docstrings/comments
+"app/miniapp/router.py" = ["RUF001", "RUF002", "RUF003"] # intentional Cyrillic in docstrings/comments
 
 [tool.mypy]
 python_version = "3.12"

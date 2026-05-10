@@ -32,6 +32,7 @@ from app.labels.router import task_labels_router
 from app.links.router import graph_router as links_graph_router
 from app.links.router import router as links_router
 from app.logging_setup import configure_logging
+from app.miniapp.router import router as miniapp_router
 from app.mood.router import router as mood_router
 from app.pages.router import router as pages_router
 from app.profile.router import router as profile_router
@@ -152,6 +153,7 @@ app.include_router(digest_router)
 app.include_router(complaints_router)
 app.include_router(admin_router)
 app.include_router(admin_token_router)
+app.include_router(miniapp_router)
 
 
 _templates_404 = Jinja2Templates(directory="app/templates")
