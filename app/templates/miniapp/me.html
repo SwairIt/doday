@@ -3,65 +3,225 @@
 {% block content %}
 
 <header class="mb-5">
-  <h1 class="text-2xl font-bold">{{ current_user.email if current_user else 'Гость' }}</h1>
-  <p class="text-sm text-[var(--text-muted)]">
-    Тариф: <strong class="text-[var(--text)]">{{ current_user.tier if current_user else '—' }}</strong>
-  </p>
+  <h1 class="text-2xl font-bold truncate">{{ current_user.email if current_user else 'Гость' }}</h1>
+  <p class="text-sm text-[var(--text-muted)]">Личная статистика</p>
 </header>
 
-{# Streak — главный wow-элемент #}
+{# Streak hero — current + longest бейдж #}
 <section class="mb-5">
-  <div class="card p-5 rounded-2xl bg-[var(--surface-2)] flex items-center gap-4">
-    <div class="text-5xl">🔥</div>
-    <div class="flex-1">
-      <div class="text-3xl font-extrabold leading-none">{{ streak }}</div>
+  <div class="card relative overflow-hidden p-5 rounded-2xl bg-[var(--surface-2)] flex items-center gap-4">
+    <div class="absolute -top-8 -right-8 w-24 h-24 bg-[var(--accent)]/20 rounded-full blur-2xl"></div>
+    <div class="text-5xl relative">🔥</div>
+    <div class="flex-1 relative">
+      <div class="text-3xl font-extrabold leading-none">{{ current_streak }}</div>
       <div class="text-xs text-[var(--text-muted)] uppercase tracking-wider mt-1">
-        {% if streak == 0 %}нет streak{% elif streak == 1 %}день streak{% elif streak < 5 %}дня streak{% else %}дней streak{% endif %}
+        {% if current_streak == 0 %}нет streak
+        {% elif current_streak == 1 %}день streak
+        {% elif current_streak < 5 %}дня streak
+        {% else %}дней streak{% endif %}
+      </div>
+    </div>
+    {% if longest_streak > 0 %}
+      <div class="relative text-right">
+        <div class="text-xs text-[var(--text-muted)]">Рекорд</div>
+        <div class="text-lg font-bold">{{ longest_streak }}</div>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+{# Достижения — бейджи (S5) #}
+{% set achievements = [] %}
+{% if current_streak >= 7 %}{% set _ = achievements.append(('🔥', 'Неделя огня', 'amber')) %}{% endif %}
+{% if current_streak >= 30 %}{% set _ = achievements.append(('🏆', 'Месяц подряд', 'orange')) %}{% endif %}
+{% if done_total >= 100 %}{% set _ = achievements.append(('💯', 'Сотка', 'emerald')) %}{% endif %}
+{% if done_total >= 365 %}{% set _ = achievements.append(('🎯', 'Год задач', 'violet')) %}{% endif %}
+{% if achievements %}
+  <section class="mb-5">
+    <h2 class="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">Достижения</h2>
+    <div class="flex items-center gap-2 overflow-x-auto" style="scrollbar-width:none;">
+      {% for emoji, label, color in achievements %}
+        <div class="shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-{{ color }}-500/10 text-{{ color }}-400">
+          <span class="text-xl">{{ emoji }}</span>
+          <span class="text-xs font-bold">{{ label }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
+
+{# 4 stat-cards: today / week / month / total #}
+<section class="mb-5">
+  <h2 class="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">Закрыто</h2>
+  <div class="grid grid-cols-4 gap-2">
+    <div class="rounded-xl bg-[var(--surface-2)] p-2.5 text-center">
+      <div class="text-xl font-bold text-[var(--accent)]">{{ done_today }}</div>
+      <div class="text-[9px] text-[var(--text-muted)] uppercase tracking-wider mt-0.5">сегодня</div>
+    </div>
+    <div class="rounded-xl bg-[var(--surface-2)] p-2.5 text-center">
+      <div class="text-xl font-bold">{{ done_week }}</div>
+      <div class="text-[9px] text-[var(--text-muted)] uppercase tracking-wider mt-0.5">неделя</div>
+    </div>
+    <div class="rounded-xl bg-[var(--surface-2)] p-2.5 text-center">
+      <div class="text-xl font-bold">{{ done_month }}</div>
+      <div class="text-[9px] text-[var(--text-muted)] uppercase tracking-wider mt-0.5">месяц</div>
+    </div>
+    <div class="rounded-xl bg-[var(--surface-2)] p-2.5 text-center">
+      <div class="text-xl font-bold text-emerald-400">{{ done_total }}</div>
+      <div class="text-[9px] text-[var(--text-muted)] uppercase tracking-wider mt-0.5">всего</div>
+    </div>
+  </div>
+</section>
+
+{# 14-day bar-chart (S2) — inline SVG, гр. fill #}
+<section class="mb-5">
+  <div class="flex items-center justify-between mb-2">
+    <h2 class="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-muted)]">Последние 14 дней</h2>
+    <span class="text-[10px] text-[var(--text-muted)]">макс {{ chart_max }}</span>
+  </div>
+  <div class="rounded-xl bg-[var(--surface-2)] p-3">
+    <svg viewBox="0 0 280 80" preserveAspectRatio="none" class="w-full h-20">
+      <defs>
+        <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#7c3aed"/>
+          <stop offset="100%" stop-color="#d946ef"/>
+        </linearGradient>
+      </defs>
+      {% set bar_w = 18 %}
+      {% set gap = 2 %}
+      {% for cell in chart_14d %}
+        {% set h = (cell.count / chart_max * 70) if chart_max else 2 %}
+        {% set x = loop.index0 * (bar_w + gap) %}
+        {% set y = 80 - h %}
+        <rect x="{{ x }}" y="{{ y }}" width="{{ bar_w }}" height="{{ h }}" rx="3"
+              fill="{{ 'url(#barGrad)' if cell.count > 0 else 'var(--surface)' }}"
+              opacity="{{ '1' if cell.count > 0 else '0.4' }}">
+          <title>{{ cell.label }}: {{ cell.count }}</title>
+        </rect>
+      {% endfor %}
+    </svg>
+    <div class="flex justify-between mt-1.5 text-[8px] text-[var(--text-muted)] tabular-nums">
+      <span>{{ chart_14d[0].label }}</span>
+      <span>{{ chart_14d[7].label }}</span>
+      <span>{{ chart_14d[-1].label }}</span>
+    </div>
+  </div>
+</section>
+
+{# Donut «По приоритетам» (S3) — SVG circle stroke-dasharray техника #}
+{% if by_priority_total > 0 %}
+  <section class="mb-5">
+    <h2 class="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">По приоритетам · {{ by_priority_total }} активных</h2>
+    <div class="rounded-xl bg-[var(--surface-2)] p-4 flex items-center gap-4">
+      {# r=18, circumference=2πr≈113.1. Starting at top (rotate -90deg). #}
+      {% set circ = 113.1 %}
+      <svg viewBox="0 0 40 40" class="w-20 h-20 -rotate-90 shrink-0">
+        <circle cx="20" cy="20" r="18" fill="none" stroke="var(--surface)" stroke-width="4"/>
+        {% set offset = 0 %}
+        {% for prio, color in [('p1','#fb7185'),('p2','#fbbf24'),('p3','#38bdf8'),('p4','#94a3b8')] %}
+          {% set frac = by_priority[prio] / by_priority_total %}
+          {% if frac > 0 %}
+            {% set dash = frac * circ %}
+            <circle cx="20" cy="20" r="18" fill="none" stroke="{{ color }}" stroke-width="4"
+                    stroke-dasharray="{{ dash }} {{ circ - dash }}"
+                    stroke-dashoffset="{{ -offset }}"
+                    stroke-linecap="butt"/>
+            {% set offset = offset + dash %}
+          {% endif %}
+        {% endfor %}
+      </svg>
+      <div class="flex-1 space-y-1.5 text-xs">
+        {% for prio, color, name in [('p1','rose','P1'),('p2','amber','P2'),('p3','sky','P3'),('p4','slate','P4')] %}
+          {% if by_priority[prio] > 0 %}
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-{{ color }}-400 shrink-0"></span>
+              <span class="text-[var(--text-muted)] flex-1">{{ name }}</span>
+              <span class="font-bold tabular-nums">{{ by_priority[prio] }}</span>
+              <span class="text-[var(--text-muted)] text-[10px] w-8 text-right tabular-nums">
+                {{ ((by_priority[prio] / by_priority_total) * 100) | round | int }}%
+              </span>
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+{% endif %}
+
+{# Bar-chart «Топ-5 проектов» (S4) #}
+{% if by_project and by_project_max > 0 %}
+  <section class="mb-5">
+    <h2 class="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">Топ проектов · активных</h2>
+    <div class="rounded-xl bg-[var(--surface-2)] p-3 space-y-2">
+      {% for p in by_project %}
+        {% set pct = (p.count / by_project_max * 100) if by_project_max else 0 %}
+        <div class="flex items-center gap-2 text-xs">
+          <span class="w-2 h-2 rounded-full bg-{{ p.color }}-400 shrink-0"></span>
+          <span class="flex-1 min-w-0 truncate">
+            {% if p.is_inbox %}📥 {% endif %}{{ p.name }}
+          </span>
+          <div class="flex-1 max-w-[120px] h-2 bg-[var(--surface)] rounded-full overflow-hidden">
+            <div class="h-full bg-{{ p.color }}-400/70 rounded-full" style="width: {{ pct }}%"></div>
+          </div>
+          <span class="text-[var(--text-muted)] font-bold tabular-nums w-6 text-right">{{ p.count }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
+
+{# Доп метрики (4 grid-cells) #}
+<section class="mb-5">
+  <h2 class="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">Деталь</h2>
+  <div class="grid grid-cols-2 gap-2 text-xs">
+    <div class="rounded-xl bg-[var(--surface-2)] p-3">
+      <div class="text-[10px] text-[var(--text-muted)] uppercase tracking-wider mb-1">Лучший день</div>
+      <div class="font-bold">{{ best_weekday }}</div>
+    </div>
+    <div class="rounded-xl bg-[var(--surface-2)] p-3">
+      <div class="text-[10px] text-[var(--text-muted)] uppercase tracking-wider mb-1">В среднем за день</div>
+      <div class="font-bold">{{ avg_per_active_day }}</div>
+    </div>
+    <div class="rounded-xl bg-[var(--surface-2)] p-3">
+      <div class="text-[10px] text-[var(--text-muted)] uppercase tracking-wider mb-1">Активных дней</div>
+      <div class="font-bold">{{ active_days }}</div>
+    </div>
+    <div class="rounded-xl bg-[var(--surface-2)] p-3" title="Среднее время created→completed">
+      <div class="text-[10px] text-[var(--text-muted)] uppercase tracking-wider mb-1">Скорость</div>
+      <div class="font-bold">
+        {% set h = avg_completion_hours %}
+        {% if h == 0 %}—
+        {% elif h < 1 %}{{ (h * 60) | round | int }} мин
+        {% elif h < 24 %}{{ h }} ч
+        {% else %}{{ (h / 24) | round(1) }} дн{% endif %}
       </div>
     </div>
   </div>
 </section>
 
-{# Stats — закрыто за периоды #}
-<section class="mb-5">
-  <h2 class="text-xs uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">Закрыто</h2>
-  <div class="grid grid-cols-3 gap-2">
-    <div class="rounded-xl bg-[var(--surface-2)] p-3 text-center">
-      <div class="text-2xl font-bold text-[var(--accent)]">{{ done_today }}</div>
-      <div class="text-[10px] text-[var(--text-muted)] uppercase tracking-wider mt-0.5">сегодня</div>
-    </div>
-    <div class="rounded-xl bg-[var(--surface-2)] p-3 text-center">
-      <div class="text-2xl font-bold">{{ done_week }}</div>
-      <div class="text-[10px] text-[var(--text-muted)] uppercase tracking-wider mt-0.5">7 дней</div>
-    </div>
-    <div class="rounded-xl bg-[var(--surface-2)] p-3 text-center">
-      <div class="text-2xl font-bold">{{ done_month }}</div>
-      <div class="text-[10px] text-[var(--text-muted)] uppercase tracking-wider mt-0.5">30 дней</div>
-    </div>
-  </div>
-</section>
-
-{# Поиск — кнопка которая открывает search-sheet #}
-<section class="mb-5">
-  <button type="button"
-          @click="$dispatch('doday-open-search')"
+{# Поиск + браузер-link #}
+<section class="mb-5 space-y-2">
+  <button type="button" @click="$dispatch('doday-open-search')"
           class="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-[var(--surface-2)] active:scale-95 transition text-[var(--text-muted)]">
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
       <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"/>
     </svg>
     <span class="text-sm">Поиск по задачам…</span>
   </button>
-</section>
 
-<section class="mb-5">
   <a href="https://getdoday.ru/app/today" target="_blank"
      onclick="if (window.tg) { event.preventDefault(); tg.openLink('https://getdoday.ru/app/today'); }"
      class="block text-center px-4 py-3 rounded-xl bg-[var(--accent)] text-[var(--tg-button-text)] font-semibold text-sm active:scale-95 transition">
-    Открыть полную версию в браузере →
+    Открыть полную версию →
+  </a>
+  <a href="https://getdoday.ru/app/stats" target="_blank"
+     onclick="if (window.tg) { event.preventDefault(); tg.openLink('https://getdoday.ru/app/stats'); }"
+     class="block text-center px-4 py-3 rounded-xl bg-[var(--surface-2)] text-[var(--text)] text-sm active:scale-95 transition">
+    📊 Полная статистика на сайте
   </a>
 </section>
 
-<div class="text-center text-[10px] text-[var(--text-muted)] mt-8">
+<div class="text-center text-[10px] text-[var(--text-muted)] mt-6 mb-2">
   Doday Mini App · бета
 </div>
 

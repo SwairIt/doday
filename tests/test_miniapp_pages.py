@@ -668,6 +668,33 @@ async def test_api_create_task_to_specific_project(
     assert r.status_code == 201
 
 
+async def test_api_stats_full_payload(logged_in_client: AsyncClient) -> None:
+    """S1: /miniapp/api/stats содержит все поля."""
+    r = await logged_in_client.get("/miniapp/api/stats")
+    assert r.status_code == 200
+    data = r.json()
+    expected_keys = {
+        "current_streak",
+        "longest_streak",
+        "done_today",
+        "done_week",
+        "done_month",
+        "done_total",
+        "chart_14d",
+        "chart_max",
+        "best_weekday",
+        "avg_per_active_day",
+        "active_days",
+        "avg_completion_hours",
+        "by_priority",
+        "by_project",
+    }
+    assert expected_keys.issubset(data.keys())
+    assert len(data["chart_14d"]) == 14
+    assert set(data["by_priority"].keys()) == {"p1", "p2", "p3", "p4"}
+    assert isinstance(data["by_project"], list)
+
+
 async def test_api_heatmap_returns_counts(logged_in_client: AsyncClient) -> None:
     """MC2: GET /miniapp/api/heatmap возвращает {start_date, counts}."""
     r = await logged_in_client.get("/miniapp/api/heatmap")
@@ -761,12 +788,18 @@ async def test_api_search_finds_task(
 async def test_me_page_shows_streak_and_stats(
     db_session: AsyncSession, logged_in_client: AsyncClient
 ) -> None:
-    """MC4: Me page renders streak + 3 stat-cards."""
+    """MC4+S2-S5: Me page — streak + 4 stat-cards + 14d bar-chart + детали."""
     r = await logged_in_client.get("/miniapp/me")
     assert r.status_code == 200
     body = r.text
     assert "🔥" in body
     assert "сегодня" in body
-    assert "7 дней" in body
-    assert "30 дней" in body
+    assert "неделя" in body
+    assert "месяц" in body
+    assert "всего" in body
+    assert "Последние 14 дней" in body  # S2 bar-chart
+    assert "barGrad" in body  # SVG gradient id
+    assert "Лучший день" in body  # доп метрики
+    assert "Скорость" in body
     assert "Открыть полную версию" in body
+    assert "Полная статистика на сайте" in body  # S5 footer link

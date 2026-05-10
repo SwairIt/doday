@@ -878,6 +878,75 @@ async def api_search(q: str, user: CurrentUser, session: DbSession) -> JSONRespo
     )
 
 
+@router.get("/api/stats")
+async def api_stats(user: CurrentUser, session: DbSession) -> JSONResponse:
+    """Полный stats-payload для /miniapp/me — reuse compute_user_stats + добавки.
+
+    Возвращает все поля app.stats.service.compute_user_stats + by_priority
+    (распределение активных задач) + by_project (top-5 проектов).
+    """
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    from app.stats.service import compute_user_stats
+
+    core = await compute_user_stats(session, user.id)
+
+    # ChartCell.date — это date object; для JSON делаем iso-string label.
+    chart_serializable = [
+        {"date": c["date"].isoformat(), "label": c["label"], "count": c["count"]}
+        for c in core["chart"]
+    ]
+
+    # By-priority: count активных (не deleted, не completed) задач по приоритету
+    pri_rows = await session.execute(
+        select(Task.priority, func.count())
+        .where(
+            Task.user_id == user.id,
+            Task.is_completed.is_(False),
+            Task.deleted_at.is_(None),
+        )
+        .group_by(Task.priority)
+    )
+    by_priority = {"p1": 0, "p2": 0, "p3": 0, "p4": 0}
+    for prio, cnt in pri_rows.all():
+        by_priority[prio.value if hasattr(prio, "value") else str(prio)] = int(cnt)
+
+    # By-project: top-5 проектов с count активных задач
+    from app.projects.models import Project as _Project
+
+    proj_rows = await session.execute(
+        select(_Project.id, _Project.name, _Project.color, func.count(Task.id))
+        .join(Task, Task.project_id == _Project.id, isouter=True)
+        .where(_Project.user_id == user.id)
+        .group_by(_Project.id, _Project.name, _Project.color)
+        .order_by(func.count(Task.id).desc())
+        .limit(5)
+    )
+    by_project = [
+        {"id": str(pid), "name": pname, "color": pcolor, "count": int(cnt)}
+        for pid, pname, pcolor, cnt in proj_rows.all()
+    ]
+
+    return JSONResponse(
+        {
+            "current_streak": core["current_streak"],
+            "longest_streak": core["longest_streak"],
+            "done_today": core["done_today"],
+            "done_week": core["done_week"],
+            "done_month": core["done_month"],
+            "done_total": core["done_total"],
+            "chart_14d": chart_serializable,
+            "chart_max": core["chart_max"],
+            "best_weekday": core["best_weekday"],
+            "avg_per_active_day": core["avg_per_active_day"],
+            "active_days": core["active_days"],
+            "avg_completion_hours": core["avg_completion_hours"],
+            "by_priority": by_priority,
+            "by_project": by_project,
+        }
+    )
+
+
 @router.get("/api/heatmap")
 async def api_heatmap(user: CurrentUser, session: DbSession) -> JSONResponse:
     """Daily completion counts за последние 12 недель (84 дня) для heatmap'а
@@ -1010,80 +1079,65 @@ async def me(request: Request, user: CurrentUser, session: DbSession) -> Respons
     if user is None:  # pragma: no cover
         return RedirectResponse(url="/miniapp/link", status_code=status.HTTP_303_SEE_OTHER)
 
-    from datetime import timedelta
+    from app.stats.service import compute_user_stats
 
-    today_date = datetime.now(UTC).date()
-    week_start = today_date - timedelta(days=6)
-    month_start = today_date - timedelta(days=29)
+    core = await compute_user_stats(session, user.id)
 
-    # Stats: закрыто сегодня / за неделю / за месяц
-    done_today = (
-        await session.execute(
-            select(func.count())
-            .select_from(Task)
-            .where(
-                Task.user_id == user.id,
-                Task.is_completed.is_(True),
-                Task.completed_at.is_not(None),
-                func.date(Task.completed_at) == today_date,
-            )
-        )
-    ).scalar_one()
-    done_week = (
-        await session.execute(
-            select(func.count())
-            .select_from(Task)
-            .where(
-                Task.user_id == user.id,
-                Task.is_completed.is_(True),
-                Task.completed_at.is_not(None),
-                func.date(Task.completed_at) >= week_start,
-            )
-        )
-    ).scalar_one()
-    done_month = (
-        await session.execute(
-            select(func.count())
-            .select_from(Task)
-            .where(
-                Task.user_id == user.id,
-                Task.is_completed.is_(True),
-                Task.completed_at.is_not(None),
-                func.date(Task.completed_at) >= month_start,
-            )
-        )
-    ).scalar_one()
-
-    # Streak: считаем подряд идущие дни с >=1 закрытой задачей до сегодня
-    daily_q = await session.execute(
-        select(func.date(Task.completed_at), func.count())
+    # By-priority + by-project — те же запросы что в /api/stats (S1)
+    pri_rows = await session.execute(
+        select(Task.priority, func.count())
         .where(
             Task.user_id == user.id,
-            Task.is_completed.is_(True),
-            Task.completed_at.is_not(None),
-            func.date(Task.completed_at) >= month_start,
+            Task.is_completed.is_(False),
+            Task.deleted_at.is_(None),
         )
-        .group_by(func.date(Task.completed_at))
+        .group_by(Task.priority)
     )
-    daily_set = {row[0] for row in daily_q.all() if row[1] > 0}
-    streak = 0
-    cursor_date = today_date
-    while cursor_date in daily_set:
-        streak += 1
-        cursor_date = cursor_date - timedelta(days=1)
-    # Если сегодня ещё ничего — допускаем что streak считается со вчера
-    if streak == 0:
-        cursor_date = today_date - timedelta(days=1)
-        while cursor_date in daily_set:
-            streak += 1
-            cursor_date = cursor_date - timedelta(days=1)
+    by_priority = {"p1": 0, "p2": 0, "p3": 0, "p4": 0}
+    for prio, cnt in pri_rows.all():
+        by_priority[prio.value if hasattr(prio, "value") else str(prio)] = int(cnt)
+    pri_total = sum(by_priority.values())
+
+    from app.projects.models import Project as _Project
+
+    proj_rows = await session.execute(
+        select(_Project.id, _Project.name, _Project.color, _Project.is_inbox, func.count(Task.id))
+        .join(
+            Task,
+            (Task.project_id == _Project.id)
+            & (Task.is_completed.is_(False))
+            & (Task.deleted_at.is_(None)),
+            isouter=True,
+        )
+        .where(_Project.user_id == user.id)
+        .group_by(_Project.id, _Project.name, _Project.color, _Project.is_inbox)
+        .order_by(func.count(Task.id).desc())
+        .limit(5)
+    )
+    by_project = [
+        {"id": str(pid), "name": pname, "color": pcolor, "is_inbox": pinbox, "count": int(cnt)}
+        for pid, pname, pcolor, pinbox, cnt in proj_rows.all()
+    ]
+    proj_max = max((p["count"] for p in by_project), default=0)
 
     ctx = _ctx(request, user)
     ctx.update(
-        done_today=int(done_today),
-        done_week=int(done_week),
-        done_month=int(done_month),
-        streak=streak,
+        current_streak=core["current_streak"],
+        longest_streak=core["longest_streak"],
+        done_today=core["done_today"],
+        done_week=core["done_week"],
+        done_month=core["done_month"],
+        done_total=core["done_total"],
+        chart_14d=core["chart"],
+        chart_max=core["chart_max"],
+        best_weekday=core["best_weekday"],
+        avg_per_active_day=core["avg_per_active_day"],
+        active_days=core["active_days"],
+        avg_completion_hours=core["avg_completion_hours"],
+        by_priority=by_priority,
+        by_priority_total=pri_total,
+        by_project=by_project,
+        by_project_max=proj_max,
     )
     return templates.TemplateResponse(request, "miniapp/me.html", ctx)
 

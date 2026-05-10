@@ -361,11 +361,11 @@
 - [x] V6 — Subtasks accordion в task_sheet ✅ (см. next commit)
 
 ## Группа S — Stats c графиками
-- [ ] S1 — Backend /miniapp/api/stats
-- [ ] S2 — Me-page: hero-streak + 14-day bar-chart
-- [ ] S3 — Donut «По приоритетам»
-- [ ] S4 — Bar-chart «Топ-5 проектов»
-- [ ] S5 — Бейджи + footer
+- [x] S1 — Backend /miniapp/api/stats ✅ (см. след. коммит)
+- [x] S2 — Me-page: hero-streak + 14-day bar-chart ✅
+- [x] S3 — Donut «По приоритетам» ✅
+- [x] S4 — Bar-chart «Топ-5 проектов» ✅
+- [x] S5 — Бейджи + footer ✅
 
 ## Группа P — Polish & beauty
 - [ ] P1 — Skeleton loading states
