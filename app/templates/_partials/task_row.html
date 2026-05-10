@@ -4,6 +4,10 @@
 {% set prio_class = {'p1': 'rose', 'p2': 'amber', 'p3': 'sky', 'p4': 'slate'}[task.priority.value] %}
 {% set is_subtask = task.parent_task_id is not none %}
 {% set tid = task.id|string %}
+{# Action-strip wraps to its own row on mobile only when there are visible chips
+   (priority != p4, due_at, recurrence). Без них kebab инлайн с title — нет
+   одинокой второй полосы. #}
+{% set has_visible_chips = task.priority.value != 'p4' or task.due_at or task.recurrence %}
 
 <div id="task-wrap-{{ task.id }}"
      data-priority="{{ task.priority.value }}"
@@ -128,7 +132,7 @@
     {% endif %}
   </div>
 
-  <div class="flex items-center gap-2 shrink-0 w-full lg:w-auto justify-end lg:justify-start flex-wrap lg:flex-nowrap">
+  <div class="flex items-center gap-2 shrink-0 {% if has_visible_chips %}w-full{% endif %} lg:w-auto justify-end lg:justify-start flex-wrap lg:flex-nowrap">
     {# Priority chip — pulled out of title block so all chips share one right-aligned strip. #}
     <div x-data="{ open: false }" class="relative shrink-0">
       <button
@@ -168,7 +172,7 @@
         @click="open = !open"
         title="Изменить дату"
         class="text-xs px-2 py-1 rounded-md font-medium transition hover:scale-105
-               {% if task.due_at %}bg-{{ color }}-500/10 text-{{ color }}-400{% else %}opacity-0 group-hover:opacity-100 bg-[var(--surface-2)] text-[var(--text-muted)] inline-flex items-center gap-1{% endif %}"
+               {% if task.due_at %}bg-{{ color }}-500/10 text-{{ color }}-400{% else %}hidden lg:inline-flex lg:opacity-0 lg:group-hover:opacity-100 bg-[var(--surface-2)] text-[var(--text-muted)] items-center gap-1{% endif %}"
       >
         {% if task.due_at %}
           {% if task.due_date_only %}{{ task.due_at.strftime('%d.%m') }}{% else %}{{ task.due_at.strftime('%d.%m %H:%M') }}{% endif %}

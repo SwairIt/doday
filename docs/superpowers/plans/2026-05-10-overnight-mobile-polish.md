@@ -206,7 +206,7 @@ calendar_week.
 - [x] A1 — View-toggle Список/Доска под sticky topbar ✅
 - [x] A2 — FAB-кнопки не перекрывают kebab ✅
 - [x] A3 — Toolbar Сортировка/Группа на мобиле ✅
-- [ ] A4 — Lonely kebab без chips
+- [x] A4 — Lonely kebab без chips ✅
 
 ### Фаза B — Полный responsive-аудит
 - [ ] B1 — Async Playwright скан 320/375/414/768/1280 × 30 страниц + JSON-отчёт
