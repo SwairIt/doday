@@ -647,7 +647,7 @@ themeChanged: уже подключён в MA2, проверить что раб
 ### Фаза B — Core CRUD
 - [x] MB1 — Today view + список ✅ `40de505`
 - [x] MB2 — Quick-add с live-preview ✅ `f464b82`
-- [ ] MB3 — Swipe-actions complete/snooze
+- [x] MB3 — Swipe-actions complete/snooze ✅ `cb2253d`
 - [ ] MB4 — Task-detail bottom-sheet
 - [ ] MB5 — Inbox + move-to-project
 

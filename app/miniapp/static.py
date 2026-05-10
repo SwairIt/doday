@@ -190,16 +190,25 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
   document.addEventListener('touchcancel', onTouchEnd, { passive: true });
 
   // 8. Tap-on-checkbox — toggle complete (без свайпа, для desktop/удобства)
+  // 9. Tap-on-task-content — открыть task-sheet (МB4)
   document.addEventListener('click', async (e) => {
-    const btn = e.target.closest('[data-task-toggle]');
-    if (!btn) return;
-    e.preventDefault();
-    const taskId = btn.getAttribute('data-task-toggle');
-    const row = btn.closest('[data-task-id]');
-    if (row) row.classList.add('removed');
-    window.dodayHaptic && window.dodayHaptic.success();
-    await commitComplete(taskId);
-    setTimeout(() => row && row.remove(), 300);
+    const checkboxBtn = e.target.closest('[data-task-toggle]');
+    if (checkboxBtn) {
+      e.preventDefault();
+      const taskId = checkboxBtn.getAttribute('data-task-toggle');
+      const row = checkboxBtn.closest('[data-task-id]');
+      if (row) row.classList.add('removed');
+      window.dodayHaptic && window.dodayHaptic.success();
+      await commitComplete(taskId);
+      setTimeout(() => row && row.remove(), 300);
+      return;
+    }
+    // Если клик на самой карточке (не на чекбоксе) — открыть sheet
+    const taskRow = e.target.closest('[data-task-id]');
+    if (taskRow && !e.target.closest('button, a, input, textarea')) {
+      const taskId = taskRow.getAttribute('data-task-id');
+      window.dispatchEvent(new CustomEvent('doday-open-task', {detail: {taskId}}));
+    }
   });
 
   // Expose для отладки

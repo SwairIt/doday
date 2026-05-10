@@ -277,6 +277,126 @@ async def api_complete_task(
     return JSONResponse({"id": str(task.id), "is_completed": task.is_completed})
 
 
+@router.get("/api/tasks/{task_id}")
+async def api_get_task(
+    task_id: str,
+    user: CurrentUser,
+    session: DbSession,
+) -> JSONResponse:
+    """Получить задачу для bottom-sheet (MB4)."""
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    from uuid import UUID
+
+    try:
+        tid = UUID(task_id)
+    except ValueError:
+        return JSONResponse({"error": "bad_id"}, status_code=400)
+    task = (
+        await session.execute(select(Task).where(Task.id == tid, Task.user_id == user.id))
+    ).scalar_one_or_none()
+    if task is None:
+        return JSONResponse({"error": "not_found"}, status_code=404)
+    return JSONResponse(
+        {
+            "id": str(task.id),
+            "title": task.title,
+            "priority": task.priority.value,
+            "due_at": task.due_at.isoformat() if task.due_at else None,
+            "due_date_only": task.due_date_only,
+            "is_completed": task.is_completed,
+            "project_id": str(task.project_id),
+            "recurrence": task.recurrence,
+        }
+    )
+
+
+class TaskPatchIn(BaseModel):
+    title: str | None = None
+    priority: str | None = None  # 'p1'..'p4' or None
+    due_at: str | None = None  # ISO 8601 or "" to clear
+    due_date_only: bool | None = None
+
+
+@router.patch("/api/tasks/{task_id}")
+async def api_patch_task(
+    task_id: str,
+    payload: TaskPatchIn,
+    user: CurrentUser,
+    session: DbSession,
+) -> JSONResponse:
+    """Partial-update задачи из bottom-sheet (MB4)."""
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    from uuid import UUID
+
+    try:
+        tid = UUID(task_id)
+    except ValueError:
+        return JSONResponse({"error": "bad_id"}, status_code=400)
+    task = (
+        await session.execute(select(Task).where(Task.id == tid, Task.user_id == user.id))
+    ).scalar_one_or_none()
+    if task is None:
+        return JSONResponse({"error": "not_found"}, status_code=404)
+
+    if payload.title is not None:
+        title = payload.title.strip()
+        if title:
+            task.title = title[:500]
+    if payload.priority is not None:
+        from app.tasks.models import TaskPriority
+
+        try:
+            task.priority = TaskPriority(payload.priority)
+        except ValueError:
+            return JSONResponse({"error": "bad_priority"}, status_code=400)
+    if payload.due_at is not None:
+        if payload.due_at == "":
+            task.due_at = None
+        else:
+            try:
+                task.due_at = datetime.fromisoformat(payload.due_at.replace("Z", "+00:00"))
+            except ValueError:
+                return JSONResponse({"error": "bad_due_at"}, status_code=400)
+    if payload.due_date_only is not None:
+        task.due_date_only = payload.due_date_only
+    await session.commit()
+    return JSONResponse(
+        {
+            "id": str(task.id),
+            "title": task.title,
+            "priority": task.priority.value,
+            "due_at": task.due_at.isoformat() if task.due_at else None,
+        }
+    )
+
+
+@router.delete("/api/tasks/{task_id}")
+async def api_delete_task(
+    task_id: str,
+    user: CurrentUser,
+    session: DbSession,
+) -> JSONResponse:
+    """Soft-delete задачи через deleted_at (попадает в корзину)."""
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    from uuid import UUID
+
+    try:
+        tid = UUID(task_id)
+    except ValueError:
+        return JSONResponse({"error": "bad_id"}, status_code=400)
+    task = (
+        await session.execute(select(Task).where(Task.id == tid, Task.user_id == user.id))
+    ).scalar_one_or_none()
+    if task is None:
+        return JSONResponse({"error": "not_found"}, status_code=404)
+    task.deleted_at = datetime.now(UTC)
+    await session.commit()
+    return JSONResponse({"ok": True})
+
+
 @router.post("/api/tasks/{task_id}/snooze")
 async def api_snooze_task(
     task_id: str,

@@ -1,0 +1,169 @@
+{# Task-detail bottom-sheet. Открывается через window.dodayOpenTask(taskId).
+   Скрипт ниже создаёт глобальное Alpine-state на window.dodayTaskSheet.
+   Подключается один раз в _base.html. #}
+
+<div x-data="dodayTaskSheet()" x-cloak class="fixed inset-0 z-50" x-show="open"
+     @keyup.escape.window="close()" @doday-open-task.window="loadTask($event.detail.taskId)">
+  {# Backdrop #}
+  <div class="absolute inset-0 bg-black/40" @click="close()"
+       x-show="open" x-transition.opacity></div>
+
+  {# Sheet #}
+  <div class="absolute left-0 right-0 bottom-0 bg-[var(--bg)] rounded-t-2xl shadow-2xl max-h-[85vh] overflow-y-auto"
+       style="padding-bottom: env(safe-area-inset-bottom);"
+       x-show="open"
+       x-transition:enter="transition transform duration-300 ease-out"
+       x-transition:enter-start="translate-y-full"
+       x-transition:enter-end="translate-y-0"
+       x-transition:leave="transition transform duration-200 ease-in"
+       x-transition:leave-start="translate-y-0"
+       x-transition:leave-end="translate-y-full">
+
+    <div class="sticky top-0 bg-[var(--bg)] pt-2 pb-3 px-4 border-b border-[var(--border)] flex items-center gap-3">
+      <div class="w-10 h-1 rounded-full bg-[var(--text-muted)]/40 mx-auto absolute left-1/2 -translate-x-1/2 -translate-y-1 top-2"></div>
+      <h2 class="text-base font-semibold flex-1 mt-1">Задача</h2>
+      <button @click="close()" class="text-[var(--text-muted)] active:scale-90 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="px-4 pt-3 pb-6 space-y-5" x-show="!loading" x-cloak>
+      {# Title — autosave on blur #}
+      <div>
+        <label class="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-muted)] block mb-1">Текст</label>
+        <textarea x-model="task.title" @blur="patch({title: task.title})"
+                  class="w-full px-3 py-2 rounded-lg bg-[var(--surface-2)] border border-[var(--border)] text-sm focus:outline-none focus:border-[var(--accent)]"
+                  rows="2"></textarea>
+      </div>
+
+      {# Priority chips #}
+      <div>
+        <label class="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-muted)] block mb-2">Приоритет</label>
+        <div class="flex items-center gap-2">
+          <template x-for="p in [['p1','P1','rose'],['p2','P2','orange'],['p3','P3','blue'],['p4','—','slate']]" :key="p[0]">
+            <button @click="setPriority(p[0])"
+                    :class="task.priority === p[0]
+                      ? 'ring-2 ring-[var(--accent)] bg-[var(--accent)]/15 font-bold'
+                      : 'bg-[var(--surface-2)]'"
+                    class="flex-1 px-3 py-2 rounded-lg text-xs transition active:scale-95"
+                    x-text="p[1]"></button>
+          </template>
+        </div>
+      </div>
+
+      {# Due-date chips #}
+      <div>
+        <label class="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-muted)] block mb-2">Когда</label>
+        <div class="flex items-center flex-wrap gap-2">
+          <button @click="setDue('today')" class="px-3 py-2 rounded-lg bg-[var(--surface-2)] text-xs transition active:scale-95">Сегодня</button>
+          <button @click="setDue('tomorrow')" class="px-3 py-2 rounded-lg bg-[var(--surface-2)] text-xs transition active:scale-95">Завтра</button>
+          <button @click="setDue('week')" class="px-3 py-2 rounded-lg bg-[var(--surface-2)] text-xs transition active:scale-95">+неделя</button>
+          <button @click="setDue('clear')" class="px-3 py-2 rounded-lg bg-[var(--surface-2)] text-xs transition active:scale-95 text-rose-400">Без даты</button>
+        </div>
+        <p class="text-[10px] text-[var(--text-muted)] mt-1.5" x-show="task.due_at" x-cloak>
+          Сейчас: <span x-text="formatDue(task.due_at)"></span>
+        </p>
+      </div>
+
+      {# Recurrence (read-only chip — изменяется через quick-add) #}
+      <div x-show="task.recurrence" x-cloak>
+        <label class="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-muted)] block mb-1">Повтор</label>
+        <span class="inline-block px-2 py-1 rounded bg-emerald-500/15 text-emerald-400 text-xs font-semibold" x-text="task.recurrence"></span>
+      </div>
+
+      {# Actions #}
+      <div class="grid grid-cols-2 gap-2 pt-3 border-t border-[var(--border)]">
+        <button @click="confirmDelete()"
+                class="px-4 py-3 rounded-xl bg-rose-500/15 text-rose-400 font-semibold text-sm active:scale-95 transition">
+          🗑 В корзину
+        </button>
+        <button @click="close()"
+                class="px-4 py-3 rounded-xl bg-[var(--accent)] text-[var(--tg-button-text)] font-semibold text-sm active:scale-95 transition">
+          Готово
+        </button>
+      </div>
+    </div>
+
+    <div x-show="loading" x-cloak class="text-center py-12">
+      <div class="text-3xl">⏳</div>
+    </div>
+    <div x-show="err" x-cloak class="px-4 py-3 text-sm text-rose-400" x-text="err"></div>
+  </div>
+</div>
+
+<script>
+  // Глобальная фабрика Alpine-state. Открывается через
+  // window.dispatchEvent(new CustomEvent('doday-open-task', {detail: {taskId}}))
+  window.dodayTaskSheet = function() {
+    return {
+      open: false,
+      loading: false,
+      err: '',
+      task: { id: null, title: '', priority: 'p4', due_at: null, recurrence: null },
+      async loadTask(taskId) {
+        this.open = true;
+        this.loading = true;
+        this.err = '';
+        try {
+          const r = await fetch('/miniapp/api/tasks/' + taskId, { credentials: 'include' });
+          if (!r.ok) { this.err = 'Не удалось загрузить'; this.loading = false; return; }
+          this.task = await r.json();
+        } catch (e) { this.err = 'Нет сети'; }
+        this.loading = false;
+      },
+      close() { this.open = false; },
+      async patch(partial) {
+        if (!this.task.id) return;
+        try {
+          const r = await fetch('/miniapp/api/tasks/' + this.task.id, {
+            method: 'PATCH',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify(partial),
+            credentials: 'include',
+          });
+          if (r.ok) {
+            const updated = await r.json();
+            this.task = { ...this.task, ...updated };
+            window.dodayHaptic && window.dodayHaptic.select();
+          }
+        } catch (e) {}
+      },
+      setPriority(p) { this.task.priority = p; this.patch({priority: p}); },
+      setDue(when) {
+        const now = new Date();
+        let date = null;
+        if (when === 'today') {
+          date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59));
+        } else if (when === 'tomorrow') {
+          date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 23, 59));
+        } else if (when === 'week') {
+          date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 7, 23, 59));
+        }
+        const iso = date ? date.toISOString() : '';
+        this.task.due_at = iso || null;
+        this.patch({due_at: iso, due_date_only: true});
+      },
+      formatDue(iso) {
+        if (!iso) return '';
+        const d = new Date(iso);
+        return d.toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit', year:'numeric'});
+      },
+      async confirmDelete() {
+        if (!confirm('Удалить задачу?')) return;
+        try {
+          const r = await fetch('/miniapp/api/tasks/' + this.task.id, {
+            method: 'DELETE', credentials: 'include',
+          });
+          if (r.ok) {
+            window.dodayHaptic && window.dodayHaptic.warning();
+            this.close();
+            // Reload page чтобы обновить списки
+            window.location.reload();
+          }
+        } catch (e) {}
+      },
+    };
+  };
+</script>

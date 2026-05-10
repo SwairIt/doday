@@ -119,6 +119,78 @@ async def test_api_snooze_task_sets_due_to_tomorrow(
     assert data["due_at"].startswith(tomorrow.isoformat())
 
 
+async def test_api_get_patch_delete_task(
+    db_session: AsyncSession, logged_in_client: AsyncClient
+) -> None:
+    """MB4: GET / PATCH / DELETE /miniapp/api/tasks/<id>."""
+    from sqlalchemy import select
+
+    from app.auth.models import User
+    from app.projects.service import ensure_inbox
+
+    user = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    inbox = await ensure_inbox(db_session, user.id)
+    from app.tasks.service import create_task as svc_create_task
+
+    task = await svc_create_task(db_session, user.id, title="Original", project_id=inbox.id)
+    await db_session.commit()
+
+    # GET
+    r = await logged_in_client.get(f"/miniapp/api/tasks/{task.id}")
+    assert r.status_code == 200
+    assert r.json()["title"] == "Original"
+
+    # PATCH title + priority
+    r = await logged_in_client.patch(
+        f"/miniapp/api/tasks/{task.id}",
+        json={"title": "Updated", "priority": "p1"},
+    )
+    assert r.status_code == 200
+    data = r.json()
+    assert data["title"] == "Updated"
+    assert data["priority"] == "p1"
+
+    # PATCH due_at — set
+    from datetime import UTC, datetime, timedelta
+
+    iso = (datetime.now(UTC) + timedelta(days=2)).isoformat()
+    r = await logged_in_client.patch(f"/miniapp/api/tasks/{task.id}", json={"due_at": iso})
+    assert r.status_code == 200
+    assert r.json()["due_at"]
+
+    # PATCH due_at — clear
+    r = await logged_in_client.patch(f"/miniapp/api/tasks/{task.id}", json={"due_at": ""})
+    assert r.status_code == 200
+    assert r.json()["due_at"] is None
+
+    # DELETE — soft delete
+    r = await logged_in_client.delete(f"/miniapp/api/tasks/{task.id}")
+    assert r.status_code == 200
+    assert r.json() == {"ok": True}
+
+
+async def test_api_patch_bad_priority_rejected(
+    db_session: AsyncSession, logged_in_client: AsyncClient
+) -> None:
+    from sqlalchemy import select
+
+    from app.auth.models import User
+    from app.projects.service import ensure_inbox
+
+    user = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    inbox = await ensure_inbox(db_session, user.id)
+    from app.tasks.service import create_task as svc_create_task
+
+    task = await svc_create_task(db_session, user.id, title="X", project_id=inbox.id)
+    await db_session.commit()
+    r = await logged_in_client.patch(f"/miniapp/api/tasks/{task.id}", json={"priority": "p99"})
+    assert r.status_code == 400
+
+
 async def test_swipe_handlers_in_js_bundle(client: AsyncClient) -> None:
     """MB3: убеждаемся что swipe-handler присутствует в miniapp.js."""
     r = await client.get("/miniapp/assets/miniapp.js")
