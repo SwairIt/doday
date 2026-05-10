@@ -1,11 +1,74 @@
 {% extends "miniapp/_base.html" %}
 {% block title %}Календарь — Doday{% endblock %}
 {% block content %}
-<header class="mb-4">
-  <h1 class="text-2xl font-bold">Календарь</h1>
-  <p class="text-sm text-[var(--text-muted)]">Неделя, потом heatmap снизу.</p>
+
+{# Header — month/year + кнопки prev/next/today #}
+<header class="flex items-center gap-2 mb-4">
+  <a href="/miniapp/calendar?date={{ prev_week_iso }}"
+     class="w-8 h-8 rounded-lg bg-[var(--surface-2)] flex items-center justify-center active:scale-95 transition"
+     aria-label="Прошлая неделя">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+    </svg>
+  </a>
+  <div class="flex-1 text-center">
+    <h1 class="text-base font-bold">{{ selected_date.strftime('%B %Y') }}</h1>
+    {% if selected_date.isoformat() != today_iso %}
+      <a href="/miniapp/calendar?date={{ today_iso }}" class="text-[10px] text-[var(--accent)]">→ к сегодня</a>
+    {% endif %}
+  </div>
+  <a href="/miniapp/calendar?date={{ next_week_iso }}"
+     class="w-8 h-8 rounded-lg bg-[var(--surface-2)] flex items-center justify-center active:scale-95 transition"
+     aria-label="Следующая неделя">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+    </svg>
+  </a>
 </header>
-<div class="text-center py-12 opacity-60">
-  <p>скоро добавим week-view с свайпом</p>
+
+{# Week chips — 7 day selectors #}
+<div class="grid grid-cols-7 gap-1 mb-5"
+     data-week-swipeable="1"
+     data-prev-week="{{ prev_week_iso }}"
+     data-next-week="{{ next_week_iso }}">
+  {% for chip in week_chips %}
+    <a href="/miniapp/calendar?date={{ chip.iso }}"
+       class="relative flex flex-col items-center py-2 rounded-lg transition active:scale-95
+              {% if chip.is_selected %}bg-[var(--accent)] text-[var(--tg-button-text)]
+              {% elif chip.is_today %}bg-[var(--accent)]/15 text-[var(--accent)]
+              {% else %}bg-[var(--surface-2)] text-[var(--text)]{% endif %}">
+      <span class="text-[10px] uppercase font-semibold opacity-70">{{ chip.weekday_name }}</span>
+      <span class="text-base font-bold">{{ chip.date.day }}</span>
+      {% if chip.count > 0 %}
+        <span class="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold flex items-center justify-center
+                     {% if chip.is_selected %}bg-white text-[var(--accent)]
+                     {% else %}bg-[var(--accent)] text-[var(--tg-button-text)]{% endif %}">
+          {{ chip.count }}
+        </span>
+      {% endif %}
+    </a>
+  {% endfor %}
 </div>
+
+{# Selected day tasks #}
+<section class="mb-4">
+  <h2 class="text-xs uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">
+    {% set is_today = selected_date.isoformat() == today_iso %}
+    {% if is_today %}Сегодня · {{ day_tasks | length }}{% else %}{{ selected_date.strftime('%d.%m') }} · {{ day_tasks | length }}{% endif %}
+  </h2>
+
+  {% if day_tasks %}
+    <div class="space-y-1.5">
+      {% for task in day_tasks %}
+        {% include "miniapp/_partials/task_card.html" %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center py-10 opacity-60">
+      <div class="text-3xl mb-2">📅</div>
+      <p class="text-sm">На этот день ничего не запланировано.</p>
+    </div>
+  {% endif %}
+</section>
+
 {% endblock %}

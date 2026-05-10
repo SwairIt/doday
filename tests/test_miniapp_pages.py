@@ -306,6 +306,35 @@ async def test_api_complete_task_toggles(
     assert r.json()["is_completed"] is False
 
 
+async def test_calendar_week_view_renders_chips(logged_in_client: AsyncClient) -> None:
+    """MC1: /miniapp/calendar показывает 7 day-chips + selected day."""
+    r = await logged_in_client.get("/miniapp/calendar", follow_redirects=False)
+    assert r.status_code == 200
+    body = r.text
+    # Все 7 weekday-имён
+    for d in ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]:
+        assert d in body
+    # Header с месяцем (любой из месяцев должен быть в strftime %B)
+    assert "data-week-swipeable" in body
+    assert "data-prev-week" in body
+    assert "data-next-week" in body
+
+
+async def test_calendar_with_explicit_date(logged_in_client: AsyncClient) -> None:
+    r = await logged_in_client.get("/miniapp/calendar?date=2026-05-15", follow_redirects=False)
+    assert r.status_code == 200
+    body = r.text
+    # Дата должна попасть в хедер
+    assert "data-week-swipeable" in body
+
+
+async def test_calendar_invalid_date_falls_back_to_today(
+    logged_in_client: AsyncClient,
+) -> None:
+    r = await logged_in_client.get("/miniapp/calendar?date=not-a-date", follow_redirects=False)
+    assert r.status_code == 200
+
+
 async def test_today_page_renders_overdue_and_today_tasks(
     db_session: AsyncSession, logged_in_client: AsyncClient
 ) -> None:

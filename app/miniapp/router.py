@@ -173,11 +173,95 @@ async def inbox(request: Request, user: CurrentUser, session: DbSession) -> Resp
 
 
 @router.get("/calendar", response_class=HTMLResponse)
-async def calendar(request: Request, user: CurrentUser) -> Response:
+async def calendar(
+    request: Request,
+    user: CurrentUser,
+    session: DbSession,
+    date: str | None = None,
+) -> Response:
+    """Week-view calendar. Selected day defaults to today; navigation through
+    ?date=YYYY-MM-DD links + horizontal swipe в miniapp.js."""
     redir = _require_user_or_redirect(user)
     if redir is not None:
         return redir
-    return templates.TemplateResponse(request, "miniapp/calendar.html", _ctx(request, user))
+    if user is None:  # pragma: no cover
+        return RedirectResponse(url="/miniapp/link", status_code=status.HTTP_303_SEE_OTHER)
+
+    from datetime import date as date_cls
+    from datetime import timedelta
+
+    today_date = datetime.now(UTC).date()
+    if date:
+        try:
+            selected_date = date_cls.fromisoformat(date)
+        except ValueError:
+            selected_date = today_date
+    else:
+        selected_date = today_date
+
+    # Week starts on Monday — российская норма
+    week_start = selected_date - timedelta(days=selected_date.weekday())
+    week_dates = [week_start + timedelta(days=i) for i in range(7)]
+    week_names = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
+
+    # Tasks for selected day (and overdue if today is selected)
+    day_start = datetime.combine(selected_date, datetime.min.time(), tzinfo=UTC)
+    day_end = datetime.combine(selected_date, datetime.max.time(), tzinfo=UTC)
+    tasks_q = await session.execute(
+        select(Task)
+        .where(
+            Task.user_id == user.id,
+            Task.is_completed.is_(False),
+            Task.deleted_at.is_(None),
+            Task.due_at.is_not(None),
+            Task.due_at >= day_start,
+            Task.due_at <= day_end,
+        )
+        .order_by(Task.due_at, Task.position)
+        .limit(50)
+    )
+    day_tasks = list(tasks_q.scalars().all())
+
+    # Counts per week-day for badges in chip-row
+    week_counts_q = await session.execute(
+        select(func.date(Task.due_at), func.count())
+        .where(
+            Task.user_id == user.id,
+            Task.is_completed.is_(False),
+            Task.deleted_at.is_(None),
+            Task.due_at.is_not(None),
+            func.date(Task.due_at) >= week_start,
+            func.date(Task.due_at) <= week_dates[-1],
+        )
+        .group_by(func.date(Task.due_at))
+    )
+    counts_map = {row[0]: row[1] for row in week_counts_q.all()}
+
+    week_chips = [
+        {
+            "date": d,
+            "iso": d.isoformat(),
+            "weekday_name": week_names[i],
+            "is_today": d == today_date,
+            "is_selected": d == selected_date,
+            "count": counts_map.get(d, 0),
+        }
+        for i, d in enumerate(week_dates)
+    ]
+
+    prev_week_iso = (week_start - timedelta(days=7)).isoformat()
+    next_week_iso = (week_start + timedelta(days=7)).isoformat()
+
+    ctx = _ctx(request, user)
+    ctx.update(
+        selected_date=selected_date,
+        week_chips=week_chips,
+        day_tasks=day_tasks,
+        prev_week_iso=prev_week_iso,
+        next_week_iso=next_week_iso,
+        today_iso=today_date.isoformat(),
+    )
+    return templates.TemplateResponse(request, "miniapp/calendar.html", ctx)
 
 
 @router.get("/projects", response_class=HTMLResponse)

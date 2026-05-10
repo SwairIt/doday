@@ -649,7 +649,7 @@ themeChanged: уже подключён в MA2, проверить что раб
 - [x] MB2 — Quick-add с live-preview ✅ `f464b82`
 - [x] MB3 — Swipe-actions complete/snooze ✅ `cb2253d`
 - [x] MB4 — Task-detail bottom-sheet ✅ `2c641ab`
-- [ ] MB5 — Inbox + move-to-project
+- [x] MB5 — Inbox + move-to-project ✅ `830a47a`
 
 ### Фаза C — Навигация
 - [ ] MC1 — Calendar week-view

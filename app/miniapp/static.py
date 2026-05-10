@@ -189,6 +189,47 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
   document.addEventListener('touchend', onTouchEnd, { passive: true });
   document.addEventListener('touchcancel', onTouchEnd, { passive: true });
 
+  // 8.5. Week-swipe для /miniapp/calendar — горизонтальный свайп на
+  //      контейнере с data-week-swipeable переключает неделю.
+  let weekSwipe = null;
+  function onWeekStart(e) {
+    const container = e.target.closest('[data-week-swipeable]');
+    if (!container) return;
+    const t = e.touches[0];
+    weekSwipe = { container, startX: t.clientX, startY: t.clientY };
+  }
+  function onWeekMove(e) {
+    if (!weekSwipe) return;
+    const t = e.touches[0];
+    const dx = t.clientX - weekSwipe.startX;
+    const dy = t.clientY - weekSwipe.startY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+      weekSwipe.dx = dx;
+    }
+  }
+  function onWeekEnd() {
+    if (!weekSwipe || weekSwipe.dx === undefined) { weekSwipe = null; return; }
+    const { container, dx } = weekSwipe;
+    weekSwipe = null;
+    const TH = 60;
+    if (dx <= -TH) {
+      const nxt = container.getAttribute('data-next-week');
+      if (nxt) {
+        window.dodayHaptic && window.dodayHaptic.light();
+        window.location.href = '/miniapp/calendar?date=' + nxt;
+      }
+    } else if (dx >= TH) {
+      const prv = container.getAttribute('data-prev-week');
+      if (prv) {
+        window.dodayHaptic && window.dodayHaptic.light();
+        window.location.href = '/miniapp/calendar?date=' + prv;
+      }
+    }
+  }
+  document.addEventListener('touchstart', onWeekStart, { passive: true });
+  document.addEventListener('touchmove', onWeekMove, { passive: true });
+  document.addEventListener('touchend', onWeekEnd, { passive: true });
+
   // 8. Tap-on-checkbox — toggle complete (без свайпа, для desktop/удобства)
   // 9. Tap-on-task-content — открыть task-sheet (МB4)
   document.addEventListener('click', async (e) => {
