@@ -32,7 +32,11 @@
       {% endif %}
     </div>
   </div>
-  <div class="flex items-center gap-1 p-1 rounded-xl bg-[var(--surface-2)] text-sm self-start shrink-0">
+</div>
+
+{# View-toggle sticky под topbar (62px), всегда видно даже при скролле длинных колонок. #}
+<div class="sticky top-[62px] z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 mb-4 bg-[var(--bg)]/90 backdrop-blur-sm border-b border-[var(--border)]/50">
+  <div class="flex items-center gap-1 p-1 rounded-xl bg-[var(--surface-2)] text-sm w-fit">
     <a href="/app/projects/{{ project.slug }}" class="px-3 py-1.5 rounded-lg hover:bg-[var(--surface)] transition">Список</a>
     <span class="px-3 py-1.5 rounded-lg grad-bg text-white font-semibold">Доска</span>
   </div>

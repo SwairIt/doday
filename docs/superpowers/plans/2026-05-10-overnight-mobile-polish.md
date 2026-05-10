@@ -203,7 +203,7 @@ calendar_week.
 ## Прогресс
 
 ### Фаза A — Точечные баги со скрина юзера
-- [ ] A1 — View-toggle Список/Доска под sticky topbar
+- [x] A1 — View-toggle Список/Доска под sticky topbar ✅
 - [ ] A2 — FAB-кнопки не перекрывают kebab
 - [ ] A3 — Toolbar Сортировка/Группа на мобиле
 - [ ] A4 — Lonely kebab без chips
