@@ -645,7 +645,7 @@ themeChanged: уже подключён в MA2, проверить что раб
 - [x] MA4 — «Привяжи аккаунт» onboarding ✅ `7bcb8bd`
 
 ### Фаза B — Core CRUD
-- [ ] MB1 — Today view + список
+- [x] MB1 — Today view + список ✅ `40de505`
 - [ ] MB2 — Quick-add с live-preview
 - [ ] MB3 — Swipe-actions complete/snooze
 - [ ] MB4 — Task-detail bottom-sheet

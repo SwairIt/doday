@@ -1,0 +1,88 @@
+{# Sticky-top quick-add. Live preview через debounced fetch на /miniapp/api/parse.
+   Submit через POST /miniapp/api/tasks → reload страницы (простой MVP).
+   В будущем заменим на HTMX-swap списка задач. #}
+<div class="sticky -mx-4 -mt-4 px-4 pt-4 pb-3 mb-4 bg-[var(--bg)] z-10 backdrop-blur"
+     style="top: 0;"
+     x-data="{
+       text: '',
+       preview: null,
+       busy: false,
+       err: '',
+       debounceTimer: null,
+       async parse() {
+         clearTimeout(this.debounceTimer);
+         if (!this.text.trim()) { this.preview = null; return; }
+         this.debounceTimer = setTimeout(async () => {
+           try {
+             const r = await fetch('/miniapp/api/parse', {
+               method: 'POST',
+               headers: {'Content-Type':'application/json'},
+               body: JSON.stringify({text: this.text}),
+               credentials: 'include',
+             });
+             if (r.ok) this.preview = await r.json();
+           } catch (e) {}
+         }, 200);
+       },
+       async submit() {
+         if (!this.text.trim() || this.busy) return;
+         this.busy = true; this.err = '';
+         try {
+           const r = await fetch('/miniapp/api/tasks', {
+             method: 'POST',
+             headers: {'Content-Type':'application/json'},
+             body: JSON.stringify({text: this.text}),
+             credentials: 'include',
+           });
+           if (r.ok) {
+             if (window.dodayHaptic) window.dodayHaptic.success();
+             this.text = ''; this.preview = null;
+             window.location.reload();
+             return;
+           }
+           this.err = 'не получилось — попробуй ещё';
+         } catch (e) { this.err = 'нет сети'; }
+         this.busy = false;
+       }
+     }">
+  <form @submit.prevent="submit()" class="flex items-center gap-2">
+    <input type="text" x-model="text" @input="parse()"
+           :disabled="busy"
+           placeholder="купить молоко завтра !! @дом"
+           autocomplete="off"
+           class="flex-1 px-3 py-2.5 rounded-xl bg-[var(--surface-2)] text-[var(--text)] text-sm border border-[var(--border)] focus:outline-none focus:border-[var(--accent)] transition">
+    <button type="submit" :disabled="busy || !text.trim()"
+            class="shrink-0 w-10 h-10 rounded-xl bg-[var(--accent)] text-[var(--tg-button-text)] flex items-center justify-center disabled:opacity-50 active:scale-95 transition">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m-7-7h14"/>
+      </svg>
+    </button>
+  </form>
+
+  {# Live preview chips — рисуются когда parse вернул что-то осмысленное #}
+  <div x-show="preview && (preview.due_at || preview.priority !== 'p4' || (preview.label_names || []).length || preview.recurrence)"
+       x-cloak x-transition class="flex items-center flex-wrap gap-1.5 mt-2 text-[10px]">
+    <template x-if="preview && preview.priority === 'p1'">
+      <span class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 font-semibold">🔴 P1</span>
+    </template>
+    <template x-if="preview && preview.priority === 'p2'">
+      <span class="px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 font-semibold">🟠 P2</span>
+    </template>
+    <template x-if="preview && preview.priority === 'p3'">
+      <span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-semibold">🔵 P3</span>
+    </template>
+    <template x-if="preview && preview.due_at">
+      <span class="px-1.5 py-0.5 rounded bg-[var(--accent)]/20 text-[var(--accent)] font-semibold"
+            x-text="'📅 ' + (preview.due_at ? new Date(preview.due_at).toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit'}) : '')"></span>
+    </template>
+    <template x-if="preview && preview.recurrence">
+      <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-semibold"
+            x-text="'🔁 ' + preview.recurrence"></span>
+    </template>
+    <template x-for="lbl in (preview ? preview.label_names || [] : [])" :key="lbl">
+      <span class="px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-400" x-text="'@' + lbl"></span>
+    </template>
+  </div>
+
+  <p x-show="err" x-cloak class="text-[10px] text-rose-400 mt-1" x-text="err"></p>
+</div>

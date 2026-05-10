@@ -14,8 +14,10 @@ from app.auth.deps import CurrentUser, DbSession
 from app.config import get_settings
 from app.miniapp.auth import get_telegram_user_id, validate_init_data
 from app.miniapp.static import MINIAPP_JS
+from app.projects.service import ensure_inbox
+from app.quickadd.parser import parse_quick_add
 from app.tasks.models import Task
-from app.tasks.service import list_completed_today, list_today
+from app.tasks.service import create_task, list_completed_today, list_today
 from app.telegram.models import TelegramLink
 
 router = APIRouter(prefix="/miniapp", tags=["miniapp"])
@@ -146,11 +148,28 @@ async def today(request: Request, user: CurrentUser, session: DbSession) -> Resp
 
 
 @router.get("/inbox", response_class=HTMLResponse)
-async def inbox(request: Request, user: CurrentUser) -> Response:
+async def inbox(request: Request, user: CurrentUser, session: DbSession) -> Response:
     redir = _require_user_or_redirect(user)
     if redir is not None:
         return redir
-    return templates.TemplateResponse(request, "miniapp/inbox.html", _ctx(request, user))
+    if user is None:  # pragma: no cover
+        return RedirectResponse(url="/miniapp/link", status_code=status.HTTP_303_SEE_OTHER)
+    inbox_proj = await ensure_inbox(session, user.id)
+    rows = await session.execute(
+        select(Task)
+        .where(
+            Task.user_id == user.id,
+            Task.project_id == inbox_proj.id,
+            Task.is_completed.is_(False),
+            Task.deleted_at.is_(None),
+        )
+        .order_by(Task.position, Task.created_at)
+        .limit(50)
+    )
+    tasks = list(rows.scalars().all())
+    ctx = _ctx(request, user)
+    ctx["tasks"] = tasks
+    return templates.TemplateResponse(request, "miniapp/inbox.html", ctx)
 
 
 @router.get("/calendar", response_class=HTMLResponse)
@@ -167,6 +186,95 @@ async def projects(request: Request, user: CurrentUser) -> Response:
     if redir is not None:
         return redir
     return templates.TemplateResponse(request, "miniapp/projects.html", _ctx(request, user))
+
+
+class QuickAddIn(BaseModel):
+    text: str
+
+
+@router.post("/api/parse")
+async def api_parse(payload: QuickAddIn, user: CurrentUser) -> JSONResponse:
+    """Live-preview парсера для quick-add. Возвращает разбор (title, due_at,
+    priority, labels) для Alpine'овых чипсов под полем."""
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    parsed = parse_quick_add(payload.text or "")
+    return JSONResponse(
+        {
+            "title": parsed.title,
+            "due_at": parsed.due_at.isoformat() if parsed.due_at else None,
+            "due_date_only": parsed.date_only,
+            "priority": parsed.priority.value,
+            "label_names": parsed.label_names,
+            "project_name": parsed.project_name,
+            "recurrence": parsed.recurrence,
+        }
+    )
+
+
+@router.post("/api/tasks", status_code=status.HTTP_201_CREATED)
+async def api_create_task(
+    payload: QuickAddIn,
+    user: CurrentUser,
+    session: DbSession,
+) -> JSONResponse:
+    """Парсит и создаёт задачу. Без указания project — в Inbox."""
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    text = (payload.text or "").strip()
+    if not text:
+        return JSONResponse({"error": "empty_text"}, status_code=400)
+    parsed = parse_quick_add(text)
+    inbox = await ensure_inbox(session, user.id)
+    task = await create_task(
+        session,
+        user.id,
+        title=parsed.title,
+        project_id=inbox.id,
+        due_at=parsed.due_at,
+        due_date_only=parsed.date_only,
+        priority=parsed.priority,
+        recurrence=parsed.recurrence,
+    )
+    return JSONResponse(
+        {
+            "id": str(task.id),
+            "title": task.title,
+            "priority": task.priority.value,
+            "due_at": task.due_at.isoformat() if task.due_at else None,
+        },
+        status_code=status.HTTP_201_CREATED,
+    )
+
+
+@router.post("/api/tasks/{task_id}/complete")
+async def api_complete_task(
+    task_id: str,
+    user: CurrentUser,
+    session: DbSession,
+) -> JSONResponse:
+    """Toggle complete. Используется в MB3 swipe-actions."""
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    from uuid import UUID
+
+    try:
+        tid = UUID(task_id)
+    except ValueError:
+        return JSONResponse({"error": "bad_id"}, status_code=400)
+    task = (
+        await session.execute(select(Task).where(Task.id == tid, Task.user_id == user.id))
+    ).scalar_one_or_none()
+    if task is None:
+        return JSONResponse({"error": "not_found"}, status_code=404)
+    if task.is_completed:
+        task.is_completed = False
+        task.completed_at = None
+    else:
+        task.is_completed = True
+        task.completed_at = datetime.now(UTC)
+    await session.commit()
+    return JSONResponse({"id": str(task.id), "is_completed": task.is_completed})
 
 
 @router.get("/me", response_class=HTMLResponse)
