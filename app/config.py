@@ -33,6 +33,11 @@ class Settings(BaseSettings):
     # the endpoint (returns 503 with a hint to set the env var).
     cron_token: str = ""
 
+    # Secret token for /api/admin/complaints.json — Claude / operator can curl
+    # admin data without juggling session cookies. X-Admin-Token header must
+    # match. Empty in dev disables (503 with hint).
+    admin_token: str = ""
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

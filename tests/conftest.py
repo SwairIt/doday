@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from app.admin import models as _admin_models  # noqa: F401
 from app.auth import models as _auth_models  # noqa: F401  register tables with Base.metadata
 from app.config import get_settings
 from app.db import Base, get_session

@@ -44,6 +44,12 @@ class User(Base):
     morning_digest_last_sent_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    # True for the operator account (yarik@doday.app on prod). Gives access to
+    # /app/root admin panel, /api/admin/* endpoints, and complaint management.
+    # Set via SQL/migration, never via UI — no risk of self-promotion.
+    is_admin: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False
     )

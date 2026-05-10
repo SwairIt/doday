@@ -8,6 +8,13 @@ from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.achievements.router import router as achievements_router
+from app.admin.router import (
+    admin_router,
+    complaints_router,
+)
+from app.admin.router import (
+    token_router as admin_token_router,
+)
 from app.auth.router import router as auth_router
 from app.backup.router import router as backup_router
 from app.billing.router import router as billing_router
@@ -109,6 +116,9 @@ app.include_router(achievements_router)
 app.include_router(links_router)
 app.include_router(links_graph_router)
 app.include_router(digest_router)
+app.include_router(complaints_router)
+app.include_router(admin_router)
+app.include_router(admin_token_router)
 
 
 _templates_404 = Jinja2Templates(directory="app/templates")
