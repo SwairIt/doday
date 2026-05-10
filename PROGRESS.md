@@ -738,6 +738,57 @@ Loop остановлен.
 **Не сделано из активного бэклога:**
 - ЮKassa подключение (отложено до самозанятости)
 - Userscript авто-синк школьной домашки (триггер «делай авто-синк школы»)
-- Темы Forest/Minimal Pro-only
 - Family seats / parent dashboard
 - Sentry / Coverage / refactor views/router.py
+
+### 2026-05-10 (вечер) — tier-enforcement audit + темы + landing FAQ
+
+После запроса юзера «проверь все подписки еще, чтобы в бесп. работало только заявленное» — провели полный аудит TIERS-флагов и закрыли 4 бреши.
+
+**Найденные бреши enforcement:**
+
+| Фича | Должно | Было | Стало |
+|---|---|---|---|
+| `email_digest` | Pro+ | Free мог opt-in без проверки | 402 Payment Required в `update_morning_digest` + service-layer `skipped_free` counter |
+| `tg_bot` | Pro+ | Free мог подключить | 402 в `request_telegram_link` + bot worker отвечает «trial кончился, подключи Pro» |
+| `user_templates` save-as | Pro+ | Free мог сохранять | 402 в `save-as-template` (listing/instantiate остались Free для backward-compat) |
+| `trash_retention_days` | 14 free / 30 pro | hardcoded 30 для всех | `limits_for(user)["trash_retention_days"]` в `tasks/router` + `views/router` |
+| `premium_themes` | Pro+ | UI lock был, но без trial-учёта | UI теперь использует `is_pro` из view (через `has_pro_features` → учитывает trial) |
+
+**Новый helper `app/billing/service.py`:**
+- `has_pro_features(user) -> bool` — true если effective_tier in (pro/team/family); включает активный trial
+- `require_pro(user, feature_name)` — raises HTTPException 402 (не 403) с понятным сообщением. Frontend ловит 402 → dispatch'ит `doday-upgrade` event → открывается existing upgrade modal.
+
+**UI:**
+- `/app/profile`: Email + Telegram + Themes секции теперь визуально lock'нуты для Free (амбер-badge «🔒 Pro»). При клике на Pro-фичу backend возвращает 402 → JS dispatch'ит upgrade modal.
+- `views/router.py::profile_view` пробрасывает `is_pro` (по `has_pro_features`) и `trial_days_left` в template.
+- Тема Forest/Minimal раньше использовала `current_user.tier` — не учитывала trial. Теперь использует `is_pro` из view.
+
+**Landing FAQ обновлён:**
+- «Сколько стоит?» — детально расписано что в Pro (премиум-темы, email-дайджест, TG-бот, шаблоны)
+- «Что после 14 дней?» — точнее объяснил (данные не пропадают, новые сверх лимита нельзя)
+- «Как работает на телефоне?» — добавил про PWA-установку
+- «Какие уведомления?» — перебил на актуальное (Pro: email + TG; Free: браузерные)
+- Новый «Есть Telegram-бот?» — да, в Pro
+- Новый «Что если найду баг?» — про кнопку «🐞 Сообщить» в help-drawer
+
+**3 шага блок** не трогал — текст актуальный.
+
+**Тесты (16/16 green) `tests/test_tier_enforcement.py`:**
+- Helper-level: has_pro_features (3 случая) + require_pro (3 случая)
+- Endpoints: morning-digest 402/200, telegram-link 402/200, save-as-template 402/201, disable работает для Free
+- limits_for: trash retention 14/30 по tier
+- Service: send_morning_digests_for_all_users skipped_free counter
+
+**Commits:**
+- `f9d7b0c` — fix(tiers): закрыл 4 бреши enforcement + 402 + UI lock-state
+- `9cc19bf` — feat(themes,landing): Pro-темы используют has_pro_features + FAQ актуализирован
+- `6fecb7b` — test(tiers): 16 тестов tier-enforcement
+
+Все запушены, auto-deploy подхватил за минуту. Pre-commit + 16 новых тестов green.
+
+**State-now (2026-05-10 вечер):**
+- Локальный uvicorn на :8001 (фон-таск `bc48i6apg`), порт 8000 в zombie
+- Локальный TG-бот всё ещё в фоне (`bs3oyq123`), polling работает
+- На проде бот не запущен (api.telegram.org заблокирован хостером, ждёт unblock)
+- Юзер должен открыть тикет хостеру для unblock outbound 443 к 149.154.0.0/16
