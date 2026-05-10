@@ -119,6 +119,45 @@
         </div>
       </div>
 
+      {# Subtasks accordion — V6 #}
+      <div>
+        <button @click="toggleSubtasks()"
+                class="w-full flex items-center justify-between text-[10px] uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2 active:scale-[0.98] transition">
+          <span>
+            Подзадачи
+            <span x-show="subtasks.length > 0" x-cloak class="ml-1 text-[var(--accent)]"
+                  x-text="'· ' + subtasks.filter(s => s.is_completed).length + '/' + subtasks.length"></span>
+          </span>
+          <svg class="w-3 h-3 transition-transform" :class="subtasksOpen ? 'rotate-90' : ''"
+               fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+          </svg>
+        </button>
+        <div x-show="subtasksOpen" x-cloak class="space-y-1.5">
+          <template x-for="sub in subtasks" :key="sub.id">
+            <div class="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-[var(--surface-2)]">
+              <button @click="toggleSubtask(sub.id)"
+                      class="shrink-0 w-4 h-4 rounded-full border-2 transition active:scale-90"
+                      :class="sub.is_completed ? 'bg-[var(--accent)] border-[var(--accent)]' : 'border-[var(--text-muted)]'">
+                <svg x-show="sub.is_completed" x-cloak class="w-full h-full p-0.5 text-[var(--tg-button-text)]"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                </svg>
+              </button>
+              <span class="flex-1 text-sm" :class="{'line-through opacity-60': sub.is_completed}" x-text="sub.title"></span>
+            </div>
+          </template>
+          <div class="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-[var(--surface-2)]/40">
+            <input type="text" x-model="newSubtaskTitle" x-ref="subtaskInput"
+                   @keydown.enter.prevent="createSubtask()"
+                   placeholder="+ Подзадача"
+                   class="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-[var(--text-muted)]">
+            <button x-show="newSubtaskTitle.trim()" x-cloak @click="createSubtask()"
+                    class="text-[var(--accent)] text-xs font-semibold active:scale-90 transition">+</button>
+          </div>
+        </div>
+      </div>
+
       {# Actions — pin toggle + delete + done #}
       <div class="grid grid-cols-3 gap-2 pt-3 border-t border-[var(--border)]">
         <button @click="togglePin()"
@@ -155,6 +194,9 @@
       task: { id: null, title: '', priority: 'p4', due_at: null, recurrence: null, project_id: null, labels: [], pinned_at: null },
       projects: [],
       labels: [],
+      subtasks: [],
+      subtasksOpen: false,
+      newSubtaskTitle: '',
       async loadTask(taskId) {
         this.open = true;
         this.loading = true;
@@ -209,6 +251,53 @@
       togglePin() {
         this.task.pinned_at = this.task.pinned_at ? null : new Date().toISOString();
         this.patch({toggle_pin: true});
+      },
+      async toggleSubtasks() {
+        this.subtasksOpen = !this.subtasksOpen;
+        if (this.subtasksOpen && this.subtasks.length === 0 && this.task.id) {
+          await this.loadSubtasks();
+        }
+      },
+      async loadSubtasks() {
+        try {
+          const r = await fetch('/miniapp/api/tasks/' + this.task.id + '/subtasks', {credentials: 'include'});
+          if (r.ok) {
+            const data = await r.json();
+            this.subtasks = data.subtasks || [];
+          }
+        } catch (e) {}
+      },
+      async toggleSubtask(subId) {
+        try {
+          const r = await fetch('/miniapp/api/tasks/' + subId + '/complete', {
+            method: 'POST', credentials: 'include',
+          });
+          if (r.ok) {
+            const data = await r.json();
+            const sub = this.subtasks.find(s => s.id === subId);
+            if (sub) sub.is_completed = data.is_completed;
+            if (window.dodayHaptic) window.dodayHaptic.select();
+          }
+        } catch (e) {}
+      },
+      async createSubtask() {
+        const title = this.newSubtaskTitle.trim();
+        if (!title || !this.task.id) return;
+        try {
+          const r = await fetch('/miniapp/api/tasks/' + this.task.id + '/subtasks', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({title}),
+            credentials: 'include',
+          });
+          if (r.ok) {
+            const sub = await r.json();
+            this.subtasks.push(sub);
+            this.newSubtaskTitle = '';
+            if (window.dodayHaptic) window.dodayHaptic.success();
+            this.$refs.subtaskInput && this.$refs.subtaskInput.focus();
+          }
+        } catch (e) {}
       },
       close() { this.open = false; },
       async patch(partial) {

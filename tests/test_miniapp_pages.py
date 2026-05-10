@@ -383,6 +383,63 @@ async def test_api_patch_recurrence_and_pin(
     assert r.json()["pinned_at"] is None
 
 
+async def test_api_subtasks_list_and_create(
+    db_session: AsyncSession, logged_in_client: AsyncClient
+) -> None:
+    """V6: GET/POST /miniapp/api/tasks/<id>/subtasks."""
+    from sqlalchemy import select
+
+    from app.auth.models import User
+    from app.projects.service import ensure_inbox
+
+    user = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    inbox = await ensure_inbox(db_session, user.id)
+    from app.tasks.service import create_task as svc_create_task
+
+    parent = await svc_create_task(db_session, user.id, title="Parent", project_id=inbox.id)
+    await db_session.commit()
+
+    r = await logged_in_client.get(f"/miniapp/api/tasks/{parent.id}/subtasks")
+    assert r.status_code == 200
+    assert r.json() == {"subtasks": []}
+
+    r = await logged_in_client.post(
+        f"/miniapp/api/tasks/{parent.id}/subtasks",
+        json={"title": "Step 1"},
+    )
+    assert r.status_code == 201
+    sub_id = r.json()["id"]
+
+    r = await logged_in_client.get(f"/miniapp/api/tasks/{parent.id}/subtasks")
+    assert r.status_code == 200
+    assert len(r.json()["subtasks"]) == 1
+    assert r.json()["subtasks"][0]["id"] == sub_id
+
+
+async def test_api_create_subtask_empty_400(
+    db_session: AsyncSession, logged_in_client: AsyncClient
+) -> None:
+    from sqlalchemy import select
+
+    from app.auth.models import User
+    from app.projects.service import ensure_inbox
+
+    user = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    inbox = await ensure_inbox(db_session, user.id)
+    from app.tasks.service import create_task as svc_create_task
+
+    parent = await svc_create_task(db_session, user.id, title="P", project_id=inbox.id)
+    await db_session.commit()
+    r = await logged_in_client.post(
+        f"/miniapp/api/tasks/{parent.id}/subtasks", json={"title": "   "}
+    )
+    assert r.status_code == 400
+
+
 async def test_api_subtask_stats_endpoint(
     db_session: AsyncSession, logged_in_client: AsyncClient
 ) -> None:

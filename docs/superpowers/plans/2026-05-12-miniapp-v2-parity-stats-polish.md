@@ -356,9 +356,9 @@
 - [x] V1 — Enrich /api/tasks payload + eager-load ✅ `f65582f`
 - [x] V2 — task_card.html parity с web ✅ `e87ddbe`
 - [x] V3 — project_color_map во все views ✅ `0629704`
-- [ ] V4 — Labels picker в task_sheet
-- [ ] V5 — Recurrence picker + Pin toggle в task_sheet
-- [ ] V6 — Subtasks accordion в task_sheet
+- [x] V4 — Labels picker в task_sheet ✅ `ad4b8f6`
+- [x] V5 — Recurrence picker + Pin toggle в task_sheet ✅ `ad4b8f6`
+- [x] V6 — Subtasks accordion в task_sheet ✅ (см. next commit)
 
 ## Группа S — Stats c графиками
 - [ ] S1 — Backend /miniapp/api/stats

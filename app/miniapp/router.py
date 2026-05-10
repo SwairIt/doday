@@ -604,6 +604,87 @@ async def _task_to_dict(session: DbSession, task: Task) -> dict[str, object]:
     }
 
 
+@router.get("/api/tasks/{task_id}/subtasks")
+async def api_list_subtasks(
+    task_id: str,
+    user: CurrentUser,
+    session: DbSession,
+) -> JSONResponse:
+    """Список подзадач для accordion в task_sheet (V6)."""
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    from uuid import UUID
+
+    try:
+        tid = UUID(task_id)
+    except ValueError:
+        return JSONResponse({"error": "bad_id"}, status_code=400)
+    # ownership
+    parent_q = await session.execute(select(Task.id).where(Task.id == tid, Task.user_id == user.id))
+    if parent_q.scalar_one_or_none() is None:
+        return JSONResponse({"error": "not_found"}, status_code=404)
+    rows = await session.execute(
+        select(Task)
+        .where(Task.parent_task_id == tid, Task.deleted_at.is_(None))
+        .order_by(Task.position, Task.created_at)
+        .limit(100)
+    )
+    subtasks = list(rows.scalars().all())
+    return JSONResponse(
+        {
+            "subtasks": [
+                {
+                    "id": str(t.id),
+                    "title": t.title,
+                    "is_completed": t.is_completed,
+                }
+                for t in subtasks
+            ]
+        }
+    )
+
+
+class SubtaskCreateIn(BaseModel):
+    title: str
+
+
+@router.post("/api/tasks/{task_id}/subtasks", status_code=status.HTTP_201_CREATED)
+async def api_create_subtask(
+    task_id: str,
+    payload: SubtaskCreateIn,
+    user: CurrentUser,
+    session: DbSession,
+) -> JSONResponse:
+    """Создать подзадачу под parent (V6)."""
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    title = payload.title.strip()
+    if not title:
+        return JSONResponse({"error": "empty_title"}, status_code=400)
+    from uuid import UUID
+
+    try:
+        tid = UUID(task_id)
+    except ValueError:
+        return JSONResponse({"error": "bad_id"}, status_code=400)
+    parent = (
+        await session.execute(select(Task).where(Task.id == tid, Task.user_id == user.id))
+    ).scalar_one_or_none()
+    if parent is None:
+        return JSONResponse({"error": "not_found"}, status_code=404)
+    sub = await create_task(
+        session,
+        user.id,
+        title=title[:500],
+        project_id=parent.project_id,
+        parent_task_id=parent.id,
+    )
+    return JSONResponse(
+        {"id": str(sub.id), "title": sub.title, "is_completed": sub.is_completed},
+        status_code=status.HTTP_201_CREATED,
+    )
+
+
 @router.get("/api/tasks/{task_id}/subtask-stats")
 async def api_subtask_stats(
     task_id: str,
