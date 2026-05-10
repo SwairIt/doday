@@ -1,0 +1,54 @@
+{# Mini App task-card. Параметр: task (объект Task с .title, .priority,
+   .due_at, .due_date_only, .is_completed, .id, .recurrence). #}
+{% set is_done = task.is_completed %}
+<article class="task-card flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-[var(--surface-2)] {% if is_done %}opacity-50{% endif %}"
+         data-task-id="{{ task.id }}">
+  {# Чекбокс — placeholder для MB3 (swipe-actions); сейчас просто визуальный #}
+  <button type="button" aria-label="{% if is_done %}Открыть{% else %}Закрыть{% endif %} задачу"
+          class="shrink-0 w-5 h-5 rounded-full border-2 mt-0.5 transition active:scale-90
+                 {% if is_done %}bg-[var(--accent)] border-[var(--accent)] text-[var(--tg-button-text)]
+                 {% else %}border-[var(--text-muted)] hover:border-[var(--accent)]{% endif %}">
+    {% if is_done %}
+      <svg class="w-full h-full p-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+      </svg>
+    {% endif %}
+  </button>
+
+  <div class="flex-1 min-w-0">
+    <p class="text-sm leading-snug {% if is_done %}line-through{% endif %} break-words">{{ task.title }}</p>
+    {# Чипсы priority/date/recurrence — только если есть что показать #}
+    {% set has_meta = task.priority.value != 'p4' or task.due_at or task.recurrence %}
+    {% if has_meta %}
+      <div class="flex items-center flex-wrap gap-1.5 mt-1 text-[10px] text-[var(--text-muted)]">
+        {% if task.priority.value == 'p1' %}
+          <span class="px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-400 font-semibold">P1</span>
+        {% elif task.priority.value == 'p2' %}
+          <span class="px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-400 font-semibold">P2</span>
+        {% elif task.priority.value == 'p3' %}
+          <span class="px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-400 font-semibold">P3</span>
+        {% endif %}
+        {% if task.due_at %}
+          <span class="inline-flex items-center gap-1">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            {% if task.due_date_only %}
+              {{ task.due_at.strftime('%d.%m') }}
+            {% else %}
+              {{ task.due_at.strftime('%d.%m %H:%M') }}
+            {% endif %}
+          </span>
+        {% endif %}
+        {% if task.recurrence %}
+          <span class="inline-flex items-center gap-1">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            {{ task.recurrence }}
+          </span>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</article>

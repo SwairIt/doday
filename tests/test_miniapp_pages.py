@@ -1,7 +1,13 @@
 """Smoke-tests for /miniapp/* tab pages — auth-redirect + render."""
 
+from datetime import UTC, datetime, timedelta
+
 import pytest
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.tasks.models import TaskPriority
+from app.tasks.service import create_task
 
 PAGES = ["/miniapp/", "/miniapp/inbox", "/miniapp/calendar", "/miniapp/projects", "/miniapp/me"]
 
@@ -47,3 +53,50 @@ async def test_miniapp_link_authed_redirects_to_today(logged_in_client: AsyncCli
     r = await logged_in_client.get("/miniapp/link", follow_redirects=False)
     assert r.status_code == 303
     assert r.headers["location"] == "/miniapp/"
+
+
+async def test_today_page_renders_overdue_and_today_tasks(
+    db_session: AsyncSession, logged_in_client: AsyncClient
+) -> None:
+    """MB1: Today показывает просрочку, сегодняшние, прогресс-кольцо."""
+    from sqlalchemy import select
+
+    from app.auth.models import User
+
+    user = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    from app.projects.service import ensure_inbox
+
+    inbox = await ensure_inbox(db_session, user.id)
+
+    # Задача overdue (вчера)
+    yesterday = datetime.now(UTC) - timedelta(days=1)
+    await create_task(
+        db_session,
+        user.id,
+        title="Overdue task",
+        project_id=inbox.id,
+        due_at=yesterday,
+        due_date_only=True,
+        priority=TaskPriority.P1,
+    )
+    # Задача сегодня
+    today = datetime.now(UTC)
+    await create_task(
+        db_session,
+        user.id,
+        title="Today task",
+        project_id=inbox.id,
+        due_at=today,
+        due_date_only=True,
+    )
+    await db_session.commit()
+
+    r = await logged_in_client.get("/miniapp/", follow_redirects=False)
+    assert r.status_code == 200
+    body = r.text
+    assert "Overdue task" in body
+    assert "Today task" in body
+    assert "Просрочено" in body
+    assert "P1" in body  # priority chip

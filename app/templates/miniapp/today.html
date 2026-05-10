@@ -1,11 +1,98 @@
 {% extends "miniapp/_base.html" %}
 {% block title %}Сегодня — Doday{% endblock %}
 {% block content %}
-<header class="mb-4">
-  <h1 class="text-2xl font-bold">Сегодня</h1>
-  <p class="text-sm text-[var(--text-muted)]">Добро пожаловать в Mini App. Здесь будет лента задач на сегодня.</p>
+
+{# Header — streak + прогресс-кольцо «N/M закрыто» #}
+<header class="flex items-center gap-4 mb-5">
+  <div class="flex-1">
+    <h1 class="text-2xl font-bold">Сегодня</h1>
+    {% if today_total > 0 %}
+      <p class="text-sm text-[var(--text-muted)]">
+        {{ done_today_count }} из {{ done_today_count + today_total }} закрыто
+      </p>
+    {% else %}
+      <p class="text-sm text-[var(--text-muted)]">
+        {% if done_today_count > 0 %}
+          🎉 всё закрыто, отдыхай
+        {% else %}
+          задач не запланировано
+        {% endif %}
+      </p>
+    {% endif %}
+  </div>
+  {# Прогресс-кольцо SVG. r=18, c=2*pi*r=113.1. dash = c * (1 - frac). #}
+  {% set total_today = done_today_count + today_total %}
+  {% set frac = (done_today_count / total_today) if total_today else 0 %}
+  <div class="relative w-14 h-14 shrink-0">
+    <svg class="w-14 h-14 -rotate-90" viewBox="0 0 40 40">
+      <circle cx="20" cy="20" r="18" fill="none" stroke="var(--surface-2)" stroke-width="3"/>
+      <circle cx="20" cy="20" r="18" fill="none" stroke="var(--accent)" stroke-width="3"
+              stroke-dasharray="113.1" stroke-dashoffset="{{ 113.1 * (1 - frac) }}"
+              stroke-linecap="round" style="transition: stroke-dashoffset .4s ease"/>
+    </svg>
+    <div class="absolute inset-0 flex items-center justify-center text-xs font-bold">
+      {{ (frac * 100) | round | int }}%
+    </div>
+  </div>
 </header>
-<div class="text-center py-12 opacity-60">
-  <p>скоро добавим quick-add и список</p>
-</div>
+
+{# Просрочка #}
+{% if overdue %}
+  <section class="mb-5">
+    <h2 class="text-xs uppercase tracking-wider font-semibold text-rose-400 mb-2">
+      Просрочено · {{ overdue | length }}
+    </h2>
+    <div class="space-y-1.5">
+      {% for task in overdue %}
+        {% include "miniapp/_partials/task_card.html" %}
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
+
+{# Сегодня #}
+{% if today %}
+  <section class="mb-5">
+    <h2 class="text-xs uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">
+      Сегодня · {{ today | length }}
+    </h2>
+    <div class="space-y-1.5">
+      {% for task in today %}
+        {% include "miniapp/_partials/task_card.html" %}
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
+
+{# Empty state #}
+{% if not overdue and not today %}
+  <div class="text-center py-12">
+    <div class="text-5xl mb-3">{% if done_today_count > 0 %}🎉{% else %}🌤️{% endif %}</div>
+    <p class="text-[var(--text-muted)] text-sm">
+      {% if done_today_count > 0 %}
+        Всё закрыто на сегодня. Отдыхай!
+      {% else %}
+        Сегодня ничего не запланировано.<br>Используй <strong>Инбокс</strong> чтобы добавить задачи.
+      {% endif %}
+    </p>
+  </div>
+{% endif %}
+
+{# Закрытые сегодня — свёрнутая секция #}
+{% if completed_today %}
+  <details class="mt-6 group">
+    <summary class="cursor-pointer text-xs uppercase tracking-wider font-semibold text-[var(--text-muted)] flex items-center gap-2 mb-2 list-none">
+      <svg class="w-3 h-3 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+      Готово · {{ completed_today | length }}
+    </summary>
+    <div class="space-y-1.5 mt-2">
+      {% for task in completed_today %}
+        {% include "miniapp/_partials/task_card.html" %}
+      {% endfor %}
+    </div>
+  </details>
+{% endif %}
+
 {% endblock %}

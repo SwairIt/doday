@@ -2,16 +2,20 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, Request, status
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.auth.deps import CurrentUser, DbSession
 from app.config import get_settings
 from app.miniapp.auth import get_telegram_user_id, validate_init_data
 from app.miniapp.static import MINIAPP_JS
+from app.tasks.models import Task
+from app.tasks.service import list_completed_today, list_today
 from app.telegram.models import TelegramLink
 
 router = APIRouter(prefix="/miniapp", tags=["miniapp"])
@@ -103,11 +107,42 @@ def _require_user_or_redirect(user: object, telegram_user_id: int | None = None)
 
 
 @router.get("/", response_class=HTMLResponse)
-async def today(request: Request, user: CurrentUser) -> Response:
+async def today(request: Request, user: CurrentUser, session: DbSession) -> Response:
     redir = _require_user_or_redirect(user)
     if redir is not None:
         return redir
-    return templates.TemplateResponse(request, "miniapp/today.html", _ctx(request, user))
+    if user is None:  # pragma: no cover — narrow для mypy
+        return RedirectResponse(url="/miniapp/link", status_code=status.HTTP_303_SEE_OTHER)
+
+    today_date = datetime.now(UTC).date()
+    tasks = await list_today(session, user.id)
+    overdue = [t for t in tasks if t.due_at and t.due_at.date() < today_date]
+    today_tasks = [t for t in tasks if t.due_at and t.due_at.date() >= today_date]
+
+    done_today_count = (
+        await session.execute(
+            select(func.count())
+            .select_from(Task)
+            .where(
+                Task.user_id == user.id,
+                Task.is_completed.is_(True),
+                Task.completed_at.is_not(None),
+                func.date(Task.completed_at) == today_date,
+            )
+        )
+    ).scalar_one()
+
+    completed_today = await list_completed_today(session, user.id, limit=10)
+
+    ctx = _ctx(request, user)
+    ctx.update(
+        overdue=overdue,
+        today=today_tasks,
+        today_total=len(today_tasks) + len(overdue),
+        done_today_count=done_today_count,
+        completed_today=completed_today,
+    )
+    return templates.TemplateResponse(request, "miniapp/today.html", ctx)
 
 
 @router.get("/inbox", response_class=HTMLResponse)

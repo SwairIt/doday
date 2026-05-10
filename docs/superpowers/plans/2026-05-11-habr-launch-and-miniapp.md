@@ -641,8 +641,8 @@ themeChanged: уже подключён в MA2, проверить что раб
 ### Фаза A — Фундамент
 - [x] MA1 — initData валидация + auth ✅ `a8b2a5f`
 - [x] MA2 — Base layout + auto-theming ✅ `6d76c0b`
-- [x] MA3 — Bottom-nav routing + 5 заглушек ✅ (23 теста green)
-- [ ] MA4 — «Привяжи аккаунт» onboarding
+- [x] MA3 — Bottom-nav routing + 5 заглушек ✅ `fa59420`
+- [x] MA4 — «Привяжи аккаунт» onboarding ✅ `7bcb8bd`
 
 ### Фаза B — Core CRUD
 - [ ] MB1 — Today view + список
