@@ -839,6 +839,9 @@
           <li><a href="/help" class="hover:text-[var(--text)]">База знаний</a></li>
           <li><a href="mailto:hello@doday.app" class="hover:text-[var(--text)]">hello@doday.app</a></li>
           <li><a href="/privacy" class="hover:text-[var(--text)]">Политика</a></li>
+          {% if request.state.telegram_channel_url %}
+            <li>{% include "_partials/social_links.html" %}</li>
+          {% endif %}
         </ul>
       </div>
       <div>

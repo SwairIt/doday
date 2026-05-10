@@ -103,6 +103,8 @@ async def _security_headers(
     # Expose Yandex.Metrika counter ID to all templates via request.state.
     # Empty string in dev → base.html silently skips the <script> block.
     request.state.ya_metrika_id = _settings.ya_metrika_id
+    # Expose Telegram-канал URL — если пустой, footer не показывает иконку.
+    request.state.telegram_channel_url = _settings.telegram_channel_url
     response = await call_next(request)
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("X-Frame-Options", "DENY")

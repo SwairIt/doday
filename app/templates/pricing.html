@@ -286,5 +286,8 @@
   <a href="/" class="hover:text-[var(--accent)]">Главная</a> ·
   <a href="/help" class="hover:text-[var(--accent)]">Помощь</a> ·
   <a href="/privacy" class="hover:text-[var(--accent)]">Приватность</a>
+  {% if request.state.telegram_channel_url %}
+    · {% include "_partials/social_links.html" %}
+  {% endif %}
 </footer>
 {% endblock %}

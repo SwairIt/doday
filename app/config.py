@@ -59,6 +59,11 @@ class Settings(BaseSettings):
     sentry_traces_sample_rate: float = 0.1
     sentry_release: str = "0.1.0"
 
+    # Public Telegram-канал для community/анонсов. Если пустой — ссылка в
+    # футере не показывается. Формат: «https://t.me/dodayru» или просто
+    # «@dodayru» (template нормализует).
+    telegram_channel_url: str = ""
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
