@@ -209,8 +209,8 @@ calendar_week.
 - [x] A4 — Lonely kebab без chips ✅
 
 ### Фаза B — Полный responsive-аудит
-- [ ] B1 — Async Playwright скан 320/375/414/768/1280 × 30 страниц + JSON-отчёт
-- [ ] B2 — Закрытие всех найденных issues (итеративно)
+- [x] B1 — Async Playwright скан 320/375/414/768/1280 × 30 страниц + JSON-отчёт ✅ (0 real issues — фаза A фикс закрыли все следы)
+- [x] B2 — Закрытие всех найденных issues (итеративно) ✅ (нечего закрывать — 0 culprits)
 
 ### Фаза C — Visual polish
 - [ ] C1 — Typography passes

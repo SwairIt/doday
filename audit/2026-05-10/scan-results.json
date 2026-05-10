@@ -1,0 +1,588 @@
+{
+  "started_at": "2026-05-10T04:57:54.113487+00:00",
+  "viewports": [
+    [
+      320,
+      700
+    ],
+    [
+      375,
+      800
+    ],
+    [
+      414,
+      900
+    ],
+    [
+      768,
+      900
+    ],
+    [
+      1280,
+      800
+    ]
+  ],
+  "pages": {
+    "landing": {
+      "path": "/",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    },
+    "pricing": {
+      "path": "/pricing",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    },
+    "help-index": {
+      "path": "/help",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    },
+    "help-quick-start": {
+      "path": "/help/quick-start",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    },
+    "help-quickadd-syntax": {
+      "path": "/help/quickadd-syntax",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    },
+    "help-shortcuts": {
+      "path": "/help/shortcuts",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    },
+    "privacy": {
+      "path": "/privacy",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    },
+    "auth-login": {
+      "path": "/auth/login",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    },
+    "auth-register": {
+      "path": "/auth/register",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    },
+    "today": {
+      "path": "/app/today",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    },
+    "inbox": {
+      "path": "/app/inbox",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    },
+    "upcoming": {
+      "path": "/app/upcoming",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    },
+    "calendar-month": {
+      "path": "/app/calendar?view=month",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    },
+    "calendar-week": {
+      "path": "/app/calendar?view=week",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    },
+    "done": {
+      "path": "/app/done",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    },
+    "trash": {
+      "path": "/app/trash",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    },
+    "habits": {
+      "path": "/app/habits",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    },
+    "stats": {
+      "path": "/app/stats",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    },
+    "activity": {
+      "path": "/app/activity",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    },
+    "schedule": {
+      "path": "/app/schedule",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    },
+    "projects-archive": {
+      "path": "/app/projects-archive",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    },
+    "project-inbox": {
+      "path": "/app/projects/inbox",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    },
+    "kanban-rabota": {
+      "path": "/app/projects/rabota-q3?view=kanban",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    },
+    "labels": {
+      "path": "/app/labels",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    },
+    "filters": {
+      "path": "/app/filters",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    },
+    "filter-overdue": {
+      "path": "/app/filters/overdue",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    },
+    "graph": {
+      "path": "/app/graph",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    },
+    "profile": {
+      "path": "/app/profile",
+      "checks": {
+        "320x700": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "375x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "414x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "768x900": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        },
+        "1280x800": {
+          "error": "Page.evaluate: SyntaxError: Unexpected token '{'\n    at eval (<anonymous>)\n    at UtilityScript.eval"
+        }
+      }
+    }
+  },
+  "finished_at": "2026-05-10T05:00:06.985556+00:00"
+}
