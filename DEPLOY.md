@@ -197,6 +197,35 @@ sudo journalctl -u doday -f   # check startup log + migrations
 
 Doday полагается на системный cron для одной задачи: утренний email-дайджест.
 
+### E0. Auto-deploy via cron-poll (push в master → ~60 сек до прода)
+
+Прод-cron каждую минуту сравнивает `origin/master` с локальным HEAD.
+Если разные — pull → alembic upgrade → restart uvicorn → log в
+`/var/www/getdoday/data/logs/deploy-poll.log`. Это обходит SSH-фаервол
+который не пускает GitHub Actions runner'ы из вне РФ.
+
+**Setup** (одноразовый):
+
+```bash
+uv run python .tmp_ssh_setup_deploy_poll.py
+```
+
+Скрипт устанавливает `/var/www/getdoday/data/deploy-poll.sh` + crontab
+line `* * * * * .../deploy-poll.sh`. Idempotent — re-runs обновляют
+скрипт по marker'у в crontab.
+
+**Disable:** убрать crontab-line:
+```bash
+ssh getdoday@getdoday.ru
+crontab -e  # удалить строку с маркером # doday-deploy-poll
+```
+
+**Verify:**
+- `tail -f /var/www/getdoday/data/logs/deploy-poll.log` — видно каждый
+  pull (или silence если разве push'ей не было)
+- `git log -1 --oneline` на проде должен совпадать с `origin/master`
+  максимум через 60 секунд после push
+
 ### E1. Утренний дайджест (`/api/digest/cron-trigger`)
 
 Раз в день нужно дёрнуть endpoint, который собирает и шлёт письма всем
