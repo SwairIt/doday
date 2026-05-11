@@ -307,11 +307,11 @@ Telegram Mini App** среди todo-аппов. Пользователь дал 
 - [x] G5 — Streak fire-icon scaling ✅
 
 ## Фаза δ — Pomodoro
-- [ ] P1 — DB + service
-- [ ] P2 — Pomodoro button + endpoints
-- [ ] P3 — Mini floating widget
-- [ ] P4 — Full-screen mode
-- [ ] P5 — Break management + time-on-task
+- [x] P1 — DB + service ✅
+- [x] P2 — Pomodoro button + endpoints ✅
+- [x] P3 — Mini floating widget ✅
+- [x] P4 — Full-screen mode ✅
+- [x] P5 — Break management + time-on-task ✅
 
 ## Фаза ε — Notifications
 - [ ] N1 — Reminders DB + service

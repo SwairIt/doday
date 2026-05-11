@@ -349,6 +349,9 @@
   {# Quick-actions sheet (B1) — long-press на task → быстрые действия #}
   {% include "miniapp/_partials/quick_actions_sheet.html" %}
 
+  {# Pomodoro mini-widget + full-screen (P3+P4) — слушает 'doday-pomodoro-start' #}
+  {% include "miniapp/_partials/pomodoro_widget.html" %}
+
   {# Confetti library — load only on Today (одной странице где может
      произойти 100% celebration). Lazy-load в footer чтобы не тормозить
      first paint. #}

@@ -41,6 +41,7 @@ import app.habits.models
 import app.labels.models
 import app.links.models
 import app.mood.models
+import app.pomodoro.models
 import app.projects.models
 import app.school.models
 import app.sections.models

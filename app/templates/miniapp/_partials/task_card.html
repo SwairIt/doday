@@ -52,6 +52,17 @@
       {% endif %}
     </button>
 
+    {# Pomodoro button — P2. Только для активных не-subtask задач. #}
+    {% if not is_subtask and not is_done %}
+      <button type="button" data-pomodoro-start="{{ task.id }}"
+              title="Запустить Pomodoro 25 мин"
+              class="shrink-0 w-6 h-6 rounded-md mt-0.5 text-[var(--text-muted)]/60 hover:text-[var(--accent)] active:scale-90 transition">
+        <svg class="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <circle cx="12" cy="13" r="8"/>
+          <path stroke-linecap="round" d="M12 9v4l2 1M9 2h6M12 5V2"/>
+        </svg>
+      </button>
+    {% endif %}
     <div class="flex-1 min-w-0">
       {# Title-row: pin + project-color-dot + title #}
       <div class="flex items-center gap-1.5 flex-wrap">

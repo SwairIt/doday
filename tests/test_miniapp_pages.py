@@ -504,6 +504,65 @@ async def test_task_card_renders_pin_description_labels(
     assert "@home" in body
 
 
+async def test_pomodoro_start_active_stop_flow(
+    db_session: AsyncSession, logged_in_client: AsyncClient
+) -> None:
+    """δ P1-P5: start → /active → stop с suggest_break."""
+    from sqlalchemy import select
+
+    from app.auth.models import User
+    from app.projects.service import ensure_inbox
+    from app.tasks.service import create_task as svc_create_task
+
+    user = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    inbox = await ensure_inbox(db_session, user.id)
+    task = await svc_create_task(db_session, user.id, title="Focus me", project_id=inbox.id)
+    await db_session.commit()
+
+    # No active session initially
+    r = await logged_in_client.get("/miniapp/api/pomodoro/active")
+    assert r.status_code == 200
+    assert r.json()["active"] is None
+
+    # Start focus
+    r = await logged_in_client.post(
+        "/miniapp/api/pomodoro/start", json={"task_id": str(task.id), "kind": "focus"}
+    )
+    assert r.status_code == 201
+    pomo = r.json()
+    assert pomo["kind"] == "focus"
+    assert pomo["duration_min"] == 25
+    assert pomo["ended_at"] is None
+    sid = pomo["id"]
+
+    # Active now
+    r = await logged_in_client.get("/miniapp/api/pomodoro/active")
+    assert r.json()["active"]["id"] == sid
+
+    # Stop с completed=True → suggest break
+    r = await logged_in_client.post(f"/miniapp/api/pomodoro/stop/{sid}", json={"completed": True})
+    assert r.status_code == 200
+    data = r.json()
+    assert data["stopped"]["ended_at"] is not None
+    assert data["stopped"]["completed"] is True
+    assert data.get("suggest_break") in ("break-short", "break-long")
+
+    # Time-on-task — должно быть > 0 (хоть и 0 минут в тесте,
+    # endpoint работает)
+    r = await logged_in_client.get(f"/miniapp/api/pomodoro/task/{task.id}")
+    assert r.status_code == 200
+    body = r.json()
+    assert "total_minutes" in body
+    assert len(body["recent"]) >= 1
+
+
+async def test_pomodoro_bad_kind_400(logged_in_client: AsyncClient) -> None:
+    r = await logged_in_client.post("/miniapp/api/pomodoro/start", json={"kind": "bogus"})
+    assert r.status_code == 400
+
+
 async def test_gamification_xp_on_complete(
     db_session: AsyncSession, logged_in_client: AsyncClient
 ) -> None:

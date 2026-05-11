@@ -1,0 +1,213 @@
+{# Pomodoro mini-widget (P3) + full-screen mode (P4). Подключен в _base.html.
+   x-data слушает window-event 'doday-pomodoro-start' и /api/pomodoro/active
+   при mount. Tick локально каждую секунду (без round-trip на бэк). #}
+<div x-data="dodayPomodoro()" x-cloak x-init="hydrate()"
+     @doday-pomodoro-start.window="startFor($event.detail.taskId)">
+
+  {# Mini-widget — fixed выше bottom-nav #}
+  <div x-show="state && !fullScreen" x-cloak
+       @click="fullScreen = true; if (window.dodayHaptic) window.dodayHaptic.light()"
+       class="fixed left-2 right-2 z-40 cursor-pointer rounded-2xl bg-[var(--surface-2)] border border-[var(--border)] shadow-xl px-3 py-2.5 flex items-center gap-3 active:scale-[0.99] transition"
+       style="bottom: calc(72px + env(safe-area-inset-bottom));"
+       x-transition:enter="transition transform duration-300 ease-out"
+       x-transition:enter-start="translate-y-full opacity-0"
+       x-transition:enter-end="translate-y-0 opacity-100">
+    <div class="relative w-9 h-9 shrink-0">
+      <svg class="w-9 h-9 -rotate-90" viewBox="0 0 32 32">
+        <circle cx="16" cy="16" r="14" fill="none" stroke="var(--surface)" stroke-width="2.5"/>
+        <circle cx="16" cy="16" r="14" fill="none"
+                :stroke="state && state.kind === 'focus' ? 'var(--accent)' : '#34d399'"
+                stroke-width="2.5" stroke-linecap="round"
+                stroke-dasharray="87.96"
+                :stroke-dashoffset="87.96 * (1 - elapsedFraction())"/>
+      </svg>
+      <div class="absolute inset-0 flex items-center justify-center text-[10px] font-bold tabular-nums">
+        <span x-text="remainingMM()"></span>
+      </div>
+    </div>
+    <div class="flex-1 min-w-0">
+      <div class="text-[11px] uppercase tracking-wider text-[var(--text-muted)] font-semibold">
+        <span x-text="state ? (state.kind === 'focus' ? 'Pomodoro' : (state.kind === 'break-short' ? 'Короткий перерыв' : 'Длинный перерыв')) : ''"></span>
+      </div>
+      <div class="text-xs truncate" x-text="state && state.task_title ? state.task_title : 'Без задачи'"></div>
+    </div>
+    <button @click.stop="stopSession(false)"
+            class="shrink-0 w-8 h-8 rounded-md bg-rose-500/15 text-rose-400 active:scale-90 transition"
+            aria-label="Остановить">
+      <svg class="w-4 h-4 mx-auto" fill="currentColor" viewBox="0 0 24 24">
+        <rect x="6" y="6" width="12" height="12" rx="2"/>
+      </svg>
+    </button>
+  </div>
+
+  {# Full-screen Pomodoro (P4) — overlay при fullScreen=true #}
+  <div x-show="state && fullScreen" x-cloak
+       class="fixed inset-0 z-50 bg-[var(--bg)] flex flex-col items-center justify-center px-6"
+       style="padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);"
+       x-transition:enter="transition opacity duration-300"
+       x-transition:enter-start="opacity-0"
+       x-transition:enter-end="opacity-100">
+    <button @click="fullScreen = false"
+            class="absolute top-4 right-4 w-10 h-10 rounded-full bg-[var(--surface-2)] flex items-center justify-center text-[var(--text-muted)] active:scale-90 transition"
+            aria-label="Свернуть">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </button>
+
+    <div class="text-xs uppercase tracking-widest text-[var(--text-muted)] mb-2">
+      <span x-text="state ? (state.kind === 'focus' ? '🍅 Фокус' : (state.kind === 'break-short' ? '☕ Короткий перерыв' : '🌴 Длинный перерыв')) : ''"></span>
+    </div>
+    <h2 class="text-lg font-bold mb-6 text-center max-w-xs truncate" x-text="state && state.task_title ? state.task_title : 'Свободный фокус'"></h2>
+
+    <div class="relative w-64 h-64 mb-6">
+      <svg class="w-64 h-64 -rotate-90" viewBox="0 0 180 180">
+        <circle cx="90" cy="90" r="80" fill="none" stroke="var(--surface-2)" stroke-width="6"/>
+        <circle cx="90" cy="90" r="80" fill="none"
+                :stroke="state && state.kind === 'focus' ? 'var(--accent)' : '#34d399'"
+                stroke-width="6" stroke-linecap="round"
+                stroke-dasharray="502.65"
+                :stroke-dashoffset="502.65 * (1 - elapsedFraction())"
+                style="transition: stroke-dashoffset 0.5s ease-out"/>
+      </svg>
+      <div class="absolute inset-0 flex flex-col items-center justify-center">
+        <div class="text-5xl font-extrabold tabular-nums" x-text="remainingClock()"></div>
+        <div class="text-xs text-[var(--text-muted)] mt-1" x-text="'из ' + (state ? state.duration_min : 0) + ' мин'"></div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 w-full max-w-xs">
+      <button @click="stopSession(false)"
+              class="flex-1 px-4 py-3 rounded-xl bg-rose-500/15 text-rose-400 font-semibold text-sm active:scale-95 transition">
+        🛑 Остановить
+      </button>
+      <button @click="fullScreen = false"
+              class="flex-1 px-4 py-3 rounded-xl bg-[var(--surface-2)] text-[var(--text)] text-sm active:scale-95 transition">
+        Свернуть
+      </button>
+    </div>
+
+    <p class="text-[10px] text-[var(--text-muted)] mt-6 text-center max-w-xs leading-relaxed">
+      Сфокусируйся. Mini App может закрыться — таймер продолжит идти на сервере.
+    </p>
+  </div>
+</div>
+
+<script>
+  window.dodayPomodoro = function() {
+    return {
+      state: null,
+      fullScreen: false,
+      tickerId: null,
+      nowMs: Date.now(),
+      async hydrate() {
+        try {
+          const r = await fetch('/miniapp/api/pomodoro/active', {credentials:'include'});
+          if (r.ok) {
+            const data = await r.json();
+            if (data.active) {
+              this.state = data.active;
+              this._startTicker();
+            }
+          }
+        } catch (e) {}
+      },
+      _startTicker() {
+        clearInterval(this.tickerId);
+        this.tickerId = setInterval(() => {
+          this.nowMs = Date.now();
+          if (this.elapsedMs() >= this.totalMs() && this.state && !this.state.ended_at) {
+            this.stopSession(true);
+          }
+        }, 1000);
+      },
+      totalMs() { return (this.state ? this.state.duration_min : 0) * 60 * 1000; },
+      elapsedMs() {
+        if (!this.state || !this.state.started_at) return 0;
+        return this.nowMs - new Date(this.state.started_at).getTime();
+      },
+      elapsedFraction() {
+        const total = this.totalMs();
+        if (!total) return 0;
+        return Math.min(1, Math.max(0, this.elapsedMs() / total));
+      },
+      remainingSec() {
+        const remMs = Math.max(0, this.totalMs() - this.elapsedMs());
+        return Math.ceil(remMs / 1000);
+      },
+      remainingMM() { return Math.ceil(this.remainingSec() / 60) + 'м'; },
+      remainingClock() {
+        const s = this.remainingSec();
+        const mm = String(Math.floor(s / 60)).padStart(2, '0');
+        const ss = String(s % 60).padStart(2, '0');
+        return mm + ':' + ss;
+      },
+      async startFor(taskId) {
+        try {
+          const r = await fetch('/miniapp/api/pomodoro/start', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({task_id: taskId, kind: 'focus'}),
+            credentials: 'include',
+          });
+          if (r.ok) {
+            this.state = await r.json();
+            this.fullScreen = true;
+            this._startTicker();
+            window.dodayHaptic && window.dodayHaptic.success();
+          }
+        } catch (e) {}
+      },
+      async stopSession(naturally) {
+        if (!this.state || !this.state.id) return;
+        clearInterval(this.tickerId);
+        try {
+          const r = await fetch('/miniapp/api/pomodoro/stop/' + this.state.id, {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({completed: !!naturally}),
+            credentials: 'include',
+          });
+          if (r.ok) {
+            const data = await r.json();
+            window.dodayHaptic && window.dodayHaptic[naturally ? 'success' : 'medium']();
+            if (naturally && data.suggest_break) {
+              if (window.dodayRewardToast) {
+                window.dodayRewardToast('☕', 'Готово!', 'Время отдохнуть ' + (data.suggest_break === 'break-long' ? '15' : '5') + ' мин');
+              }
+              setTimeout(async () => {
+                try {
+                  const r2 = await fetch('/miniapp/api/pomodoro/start', {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({kind: data.suggest_break}),
+                    credentials: 'include',
+                  });
+                  if (r2.ok) {
+                    this.state = await r2.json();
+                    this._startTicker();
+                  }
+                } catch (e) {}
+              }, 1500);
+              this.state = null;
+              this.fullScreen = false;
+              return;
+            }
+          }
+        } catch (e) {}
+        this.state = null;
+        this.fullScreen = false;
+      },
+    };
+  };
+
+  // Global hook: tap на data-pomodoro-start → dispatch event
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-pomodoro-start]');
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const taskId = btn.getAttribute('data-pomodoro-start');
+    window.dispatchEvent(new CustomEvent('doday-pomodoro-start', {detail: {taskId}}));
+  });
+</script>

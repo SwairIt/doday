@@ -14,6 +14,7 @@ from app.auth.deps import CurrentUser, DbSession
 from app.config import get_settings
 from app.miniapp.auth import get_telegram_user_id, validate_init_data
 from app.miniapp.static import MINIAPP_JS
+from app.pomodoro.models import PomodoroSession
 from app.projects.service import create_project, ensure_inbox, list_projects
 from app.quickadd.parser import parse_quick_add
 from app.tasks.models import Task
@@ -1033,6 +1034,143 @@ async def api_patch_task(
     await session.commit()
     await session.refresh(task)
     return JSONResponse(await _task_to_dict(session, task))
+
+
+class PomodoroStartIn(BaseModel):
+    task_id: str | None = None
+    kind: str = "focus"  # 'focus' | 'break-short' | 'break-long'
+
+
+def _pomo_to_dict(p: PomodoroSession, task_title: str | None = None) -> dict[str, object]:
+    """PomodoroSession → JSON-готовый dict. Включает task_title если передали."""
+    return {
+        "id": str(p.id),
+        "task_id": str(p.task_id) if p.task_id else None,
+        "task_title": task_title,
+        "started_at": p.started_at.isoformat() if p.started_at else None,
+        "ended_at": p.ended_at.isoformat() if p.ended_at else None,
+        "duration_min": p.duration_min,
+        "kind": p.kind,
+        "completed": p.completed,
+    }
+
+
+@router.get("/api/pomodoro/active")
+async def api_pomodoro_active(user: CurrentUser, session: DbSession) -> JSONResponse:
+    """Текущая активная Pomodoro-сессия или null."""
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    from app.pomodoro.service import get_active
+
+    pomo = await get_active(session, user.id)
+    if pomo is None:
+        return JSONResponse({"active": None})
+    task_title = None
+    if pomo.task_id:
+        task_row = (
+            await session.execute(select(Task.title).where(Task.id == pomo.task_id))
+        ).scalar_one_or_none()
+        task_title = task_row
+    return JSONResponse({"active": _pomo_to_dict(pomo, task_title)})
+
+
+@router.post("/api/pomodoro/start", status_code=status.HTTP_201_CREATED)
+async def api_pomodoro_start(
+    payload: PomodoroStartIn,
+    user: CurrentUser,
+    session: DbSession,
+) -> JSONResponse:
+    """Стартовать focus или break-сессию. Если уже есть активная — её закроют."""
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    from uuid import UUID
+
+    from app.pomodoro.service import VALID_KINDS, start
+
+    if payload.kind not in VALID_KINDS:
+        return JSONResponse({"error": "bad_kind"}, status_code=400)
+    tid: UUID | None = None
+    if payload.task_id:
+        try:
+            tid = UUID(payload.task_id)
+        except ValueError:
+            return JSONResponse({"error": "bad_task_id"}, status_code=400)
+        # ownership check
+        own = (
+            await session.execute(select(Task.id).where(Task.id == tid, Task.user_id == user.id))
+        ).scalar_one_or_none()
+        if own is None:
+            return JSONResponse({"error": "task_not_found"}, status_code=404)
+    pomo = await start(session, user.id, tid, payload.kind)
+    task_title = None
+    if tid:
+        task_title = (
+            await session.execute(select(Task.title).where(Task.id == tid))
+        ).scalar_one_or_none()
+    return JSONResponse(_pomo_to_dict(pomo, task_title), status_code=status.HTTP_201_CREATED)
+
+
+class PomodoroStopIn(BaseModel):
+    completed: bool = False
+
+
+@router.post("/api/pomodoro/stop/{session_id}")
+async def api_pomodoro_stop(
+    session_id: str,
+    payload: PomodoroStopIn,
+    user: CurrentUser,
+    session: DbSession,
+) -> JSONResponse:
+    """Остановить сессию (completed=True если timer истёк, False если юзер
+    нажал стоп). После focus → suggest break (short по умолчанию, long
+    после 4 focus за день)."""
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    from uuid import UUID
+
+    from app.pomodoro.service import count_focus_today, stop
+
+    try:
+        sid = UUID(session_id)
+    except ValueError:
+        return JSONResponse({"error": "bad_id"}, status_code=400)
+    pomo = await stop(session, user.id, sid, payload.completed)
+    if pomo is None:
+        return JSONResponse({"error": "not_found"}, status_code=404)
+    response: dict[str, object] = {"stopped": _pomo_to_dict(pomo)}
+    # P5: suggest break после focus
+    if pomo.kind == "focus" and pomo.completed:
+        focus_count = await count_focus_today(session, user.id)
+        suggest_long = focus_count > 0 and focus_count % 4 == 0
+        response["suggest_break"] = "break-long" if suggest_long else "break-short"
+    return JSONResponse(response)
+
+
+@router.get("/api/pomodoro/task/{task_id}")
+async def api_pomodoro_task_time(
+    task_id: str,
+    user: CurrentUser,
+    session: DbSession,
+) -> JSONResponse:
+    """Накопленное focus-время + последние 5 сессий на задаче."""
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    from uuid import UUID
+
+    from app.pomodoro.service import list_recent_for_task, time_on_task
+
+    try:
+        tid = UUID(task_id)
+    except ValueError:
+        return JSONResponse({"error": "bad_id"}, status_code=400)
+    minutes = await time_on_task(session, user.id, tid)
+    recent = await list_recent_for_task(session, user.id, tid, limit=5)
+    return JSONResponse(
+        {
+            "total_minutes": minutes,
+            "recent": [_pomo_to_dict(p) for p in recent],
+        }
+    )
 
 
 @router.get("/api/search")
