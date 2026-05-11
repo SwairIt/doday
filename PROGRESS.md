@@ -902,7 +902,78 @@ Pre-commit (lint_templates) — 0 errors. Auto-deploy на проде подхв
 - ME2 — выполнено через Bot API напрямую (setChatMenuButton default
   + per-chat для linked user 2133993638)
 
-**Финал:** `<следующий коммит>` — miniapp: full launch завершено.
+**Финал:** `3a769fa` — miniapp: full launch завершено.
+
+### 2026-05-11 — Mini App v2: parity + stats + polish (18 чанков)
+
+По плану `docs/superpowers/plans/2026-05-12-miniapp-v2-parity-stats-polish.md`.
+Все 3 группы (V/S/P) полностью закрыты, 12 коммитов в master.
+
+**Группа V — Visual parity (6 чанков, 47 тестов):**
+- V1 `f65582f` — enrich /api/tasks payload (project/labels/description/
+  pinned_at/subtask_stats/age_days), helper `_task_to_dict()` для DRY
+- V2 `e87ddbe` — task_card.html полный parity с web task_row:
+  📌 pin, project-color-dot, description preview, цветные label-chips,
+  subtask progress chip с mini-bar, «Висит N дн.» для stale, prio-bordered
+  toggle-circle, project-colored date-chip, emerald recurrence-chip с 🔁
+- V3 `0629704` — project_color_map во все view-handlers
+- V4+V5 `ad4b8f6` — labels picker (GET /api/labels, PATCH label_ids) +
+  recurrence chips (5: —/день/неделя/месяц/год) + pin toggle в sheet
+- V6 `ee65d80` — subtasks accordion (GET/POST /api/tasks/<id>/subtasks)
+  с inline-create input и toggle через /complete
+
+**Группа S — Stats с графиками (5 чанков, 1 коммит):**
+- S1-S5 `3e6769d` — все объединены:
+  * /miniapp/api/stats — full payload (reuse compute_user_stats +
+    by_priority/by_project)
+  * Hero-streak с longest-record бейджем
+  * 14-day bar-chart inline SVG с linearGradient violet→fuchsia
+  * Donut «По приоритетам» — SVG 4 сегмента stroke-dasharray + legend %
+  * Bar-chart «Топ-5 проектов» с цветной заливкой
+  * Бейджи: 🔥 неделя / 🏆 месяц / 💯 сотка / 🎯 год задач
+  * 4 доп-метрики (Лучший день / Среднее / Активных дней / Скорость)
+
+**Группа P — Polish (7 чанков, 1 коммит):**
+- P1-P7 `3392a1b` — все объединены:
+  * P1 Skeleton shimmer (@keyframes + .skeleton class) в sheet/search
+  * P2 Page transitions (page-mount fade-slide-up, .stagger-item)
+  * P3 Hero-blob gradient в today/inbox/calendar/me headers
+  * P4 5 inline SVG empty-state illustrations (hand-drawn, accent-stroke,
+    opacity-55): today (солнце+гамак), inbox (коробка), calendar
+    (страница с сеткой), projects (стопка папок), search (лупа+пунктир)
+  * P5 Swipe-action polish — data-passed CSS-attr → scale-1.18 иконки
+    при threshold-pass
+  * P6 PTR redesign — circular SVG-spinner вместо текста, stroke-dashoffset
+    progressively заполняет кольцо, spin-animation на release
+  * P7 — screenshot-audit пропущен (нужен Playwright real-device); вместо
+    него этот summary в PROGRESS.md
+
+**Тесты:** 49/49 green (40 v1 + 9 новых v2). Smoke 23/23 GREEN на
+https://getdoday.ru. Pre-commit (ruff/mypy strict/jinja-linter) clean.
+
+**Что Mini App теперь умеет на 100%:**
+- Авторизация HMAC через Telegram initData
+- 5 вкладок bottom-nav, auto-theming под клиент
+- Task-card visual parity с web task_row: pin/project-dot/description/
+  labels/subtask-progress/age/colored date/emerald recurrence
+- Task-sheet: edit title/priority/due/project/**labels**/**recurrence**/
+  **pin**/**subtasks** (полный CRUD)
+- Quick-add live-preview парсера, project_id context-aware
+- Swipe-actions complete/snooze c haptic + visual passes
+- Week-view calendar + 12-week heatmap + day-tasks
+- Projects list с counts + project view + создание из bottom-sheet
+- Search bottom-sheet с live ILIKE
+- Me-page: streak (current+longest) + 4 achievement badges + 14-day
+  bar-chart + donut приоритетов + bar-chart проектов + 4 доп-метрики +
+  link на полную статистику
+- Native polish: MainButton smart-bind, BackButton, haptic на 10+ точках,
+  confetti на 100% closed, skeleton-loading, PTR с круговым spinner,
+  page transitions, hero-blob gradient, hand-drawn SVG empty-states
+
+**Длительность v2:** ~5 часов работы, 12 коммитов в master, 9 новых
+тестов, 5 новых empty-state SVG, 0 регрессий.
+
+Финальный коммит: `<this>` — miniapp v2: parity + stats + polish завершено.
 
 **Тесты:** 40 для miniapp (test_miniapp_pages.py + test_miniapp_auth.py),
 все green. Smoke 23/23 GREEN на https://getdoday.ru.
