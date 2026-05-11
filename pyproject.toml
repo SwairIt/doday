@@ -94,6 +94,13 @@ ignore = [
 "app/miniapp/auth.py" = ["RUF001", "RUF002", "RUF003"]   # intentional Cyrillic in docstrings/comments
 "app/miniapp/router.py" = ["RUF001", "RUF002", "RUF003"] # intentional Cyrillic in docstrings/comments
 "app/miniapp/static.py" = ["RUF001", "RUF002", "RUF003"] # JS-bundle с русскими комментами
+"app/gamification/achievements.py" = ["RUF001", "RUF002", "RUF003"]  # Russian docs+comments
+"app/gamification/service.py" = ["RUF001", "RUF002", "RUF003"]
+"app/gamification/daily.py" = ["RUF001", "RUF002", "RUF003"]
+"app/gamification/__init__.py" = ["RUF002"]
+"app/gamification/models.py" = ["RUF002"]
+"alembic/versions/0024_user_progress.py" = ["RUF001", "RUF002", "RUF003"]
+"alembic/versions/0025_user_achievements.py" = ["RUF001", "RUF002", "RUF003"]
 
 [tool.mypy]
 python_version = "3.12"

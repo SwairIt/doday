@@ -300,11 +300,11 @@ Telegram Mini App** среди todo-аппов. Пользователь дал 
 - [x] B4 — Customizable swipe-actions ✅
 
 ## Фаза γ — Gamification
-- [ ] G1 — XP migration + service
-- [ ] G2 — Level display + level-up celebration
-- [ ] G3 — Achievements (15+)
-- [ ] G4 — Daily challenge
-- [ ] G5 — Streak fire-icon scaling
+- [x] G1 — XP migration + service ✅
+- [x] G2 — Level display + level-up celebration ✅
+- [x] G3 — Achievements (15+) ✅
+- [x] G4 — Daily challenge ✅
+- [x] G5 — Streak fire-icon scaling ✅
 
 ## Фаза δ — Pomodoro
 - [ ] P1 — DB + service

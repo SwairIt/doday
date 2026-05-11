@@ -8,11 +8,25 @@
   <p class="text-sm text-[var(--text-muted)] relative">Личная статистика</p>
 </header>
 
-{# Streak hero — current + longest бейдж #}
+{# Streak hero — current + longest + fire scales by streak length (γ G5) #}
+{% set fire_size = 'text-3xl' %}
+{% set fire_glow = '' %}
+{% if current_streak >= 100 %}
+  {% set fire_size = 'text-7xl' %}
+  {% set fire_glow = 'streak-glow-100' %}
+{% elif current_streak >= 30 %}
+  {% set fire_size = 'text-6xl' %}
+  {% set fire_glow = 'streak-glow-30' %}
+{% elif current_streak >= 7 %}
+  {% set fire_size = 'text-5xl' %}
+  {% set fire_glow = 'streak-glow-7' %}
+{% elif current_streak >= 1 %}
+  {% set fire_size = 'text-4xl' %}
+{% endif %}
 <section class="mb-5">
   <div class="card relative overflow-hidden p-5 rounded-2xl bg-[var(--surface-2)] flex items-center gap-4">
     <div class="absolute -top-8 -right-8 w-24 h-24 bg-[var(--accent)]/20 rounded-full blur-2xl"></div>
-    <div class="text-5xl relative">🔥</div>
+    <div class="{{ fire_size }} relative {{ fire_glow }}" style="filter: drop-shadow(0 0 6px rgba(251, 146, 60, 0.4));">🔥</div>
     <div class="flex-1 relative">
       <div class="text-3xl font-extrabold leading-none">{{ current_streak }}</div>
       <div class="text-xs text-[var(--text-muted)] uppercase tracking-wider mt-1">
@@ -31,25 +45,45 @@
   </div>
 </section>
 
-{# Достижения — бейджи (S5) #}
-{% set achievements = [] %}
-{% if current_streak >= 7 %}{% set _ = achievements.append(('🔥', 'Неделя огня', 'amber')) %}{% endif %}
-{% if current_streak >= 30 %}{% set _ = achievements.append(('🏆', 'Месяц подряд', 'orange')) %}{% endif %}
-{% if done_total >= 100 %}{% set _ = achievements.append(('💯', 'Сотка', 'emerald')) %}{% endif %}
-{% if done_total >= 365 %}{% set _ = achievements.append(('🎯', 'Год задач', 'violet')) %}{% endif %}
-{% if achievements %}
-  <section class="mb-5">
-    <h2 class="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">Достижения</h2>
-    <div class="flex items-center gap-2 overflow-x-auto" style="scrollbar-width:none;">
-      {% for emoji, label, color in achievements %}
-        <div class="shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-{{ color }}-500/10 text-{{ color }}-400">
-          <span class="text-xl">{{ emoji }}</span>
-          <span class="text-xs font-bold">{{ label }}</span>
-        </div>
-      {% endfor %}
+{# Level + XP block (γ G2) — ring с current progress to next level #}
+<section class="mb-5">
+  {% set xp_pct = (xp_in_level / 100 * 100) if xp_in_level else 0 %}
+  <div class="rounded-2xl bg-[var(--surface-2)] p-4 flex items-center gap-4">
+    <div class="relative w-14 h-14 shrink-0">
+      <svg class="w-14 h-14 -rotate-90" viewBox="0 0 40 40">
+        <circle cx="20" cy="20" r="18" fill="none" stroke="var(--surface)" stroke-width="3"/>
+        <circle cx="20" cy="20" r="18" fill="none" stroke="var(--accent)" stroke-width="3"
+                stroke-dasharray="113.1" stroke-dashoffset="{{ 113.1 * (1 - xp_pct / 100) }}"
+                stroke-linecap="round"/>
+      </svg>
+      <div class="absolute inset-0 flex items-center justify-center text-base font-extrabold">
+        {{ user_level }}
+      </div>
     </div>
-  </section>
-{% endif %}
+    <div class="flex-1">
+      <div class="text-xs uppercase tracking-wider font-bold text-[var(--accent)]">Уровень</div>
+      <div class="text-sm font-bold">{{ user_xp }} XP всего</div>
+      <div class="text-[10px] text-[var(--text-muted)] mt-0.5">До следующего: {{ xp_to_next }}</div>
+    </div>
+  </div>
+</section>
+
+{# Достижения — full catalog с unlocked/locked state (γ G3) #}
+<section class="mb-5">
+  <h2 class="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2 flex items-center justify-between">
+    <span>Достижения</span>
+    <span class="text-[var(--accent)]">{{ achievements_unlocked_count }}/{{ achievements_list | length }}</span>
+  </h2>
+  <div class="grid grid-cols-4 gap-2">
+    {% for ach in achievements_list %}
+      <div class="rounded-xl bg-[var(--surface-2)] p-3 text-center {% if not ach.unlocked %}opacity-40{% endif %}"
+           title="{{ ach.title }}: {{ ach.description }}">
+        <div class="text-2xl mb-1">{% if ach.unlocked %}{{ ach.emoji }}{% else %}🔒{% endif %}</div>
+        <div class="text-[9px] font-semibold leading-tight">{{ ach.title }}</div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
 
 {# 4 stat-cards: today / week / month / total #}
 <section class="mb-5">

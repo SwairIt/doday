@@ -504,6 +504,72 @@ async def test_task_card_renders_pin_description_labels(
     assert "@home" in body
 
 
+async def test_gamification_xp_on_complete(
+    db_session: AsyncSession, logged_in_client: AsyncClient
+) -> None:
+    """γ G1+G2: complete-endpoint выдаёт XP + level info."""
+    from sqlalchemy import select
+
+    from app.auth.models import User
+    from app.projects.service import ensure_inbox
+    from app.tasks.models import TaskPriority
+
+    user = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    inbox = await ensure_inbox(db_session, user.id)
+    from app.tasks.service import create_task as svc_create_task
+
+    task = await svc_create_task(
+        db_session, user.id, title="XP test", project_id=inbox.id, priority=TaskPriority.P1
+    )
+    await db_session.commit()
+
+    r = await logged_in_client.post(f"/miniapp/api/tasks/{task.id}/complete")
+    assert r.status_code == 200
+    data = r.json()
+    assert data["is_completed"] is True
+    assert data["xp_gained"] == 10  # P1 = 10
+    assert data["xp_total"] == 10
+    assert data["level"] == 1
+    # G3: «Семечко» (seed) и «P1-снайпер»-related ачивки могут быть
+    assert "achievements_unlocked" in data
+    seed_unlocked = any(a["key"] == "seed" for a in data.get("achievements_unlocked", []))
+    assert seed_unlocked
+
+
+async def test_me_page_shows_level_and_achievements(
+    logged_in_client: AsyncClient,
+) -> None:
+    """γ G2+G3: Me-page содержит level-ring + achievements-grid."""
+    r = await logged_in_client.get("/miniapp/me")
+    assert r.status_code == 200
+    body = r.text
+    assert "Уровень" in body
+    assert "Достижения" in body
+    # Должно быть 16 ачивок в grid
+    assert "🔒" in body or "🌱" in body  # locked или хотя бы первая seed
+
+
+async def test_today_page_shows_daily_challenge(
+    logged_in_client: AsyncClient,
+) -> None:
+    """γ G4: Today показывает daily-challenge widget."""
+    r = await logged_in_client.get("/miniapp/")
+    assert r.status_code == 200
+    body = r.text
+    # один из challenge-titles должен быть в HTML
+    chs = [
+        "Закрой 5 задач сегодня",
+        "Закрой 1 P1-задачу",
+        "Не оставь просрочки",
+        "3 задачи до полудня",
+        "10 задач сегодня",
+        "Закрой повторяющуюся",
+    ]
+    assert any(c in body for c in chs)
+
+
 async def test_polish_features_in_js_bundle(client: AsyncClient) -> None:
     """MD1-MD5 + P5-P6: MainButton, haptic, PTR (с spinner SVG), swipe data-passed."""
     r = await client.get("/miniapp/assets/miniapp.js")

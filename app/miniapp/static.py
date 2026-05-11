@@ -227,11 +227,56 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
     } catch (e) {}
   }
 
+  // γ: показ toast при level-up или unlock achievement
+  function showRewardToast(emoji, title, subtitle) {
+    const el = document.createElement('div');
+    el.style.cssText =
+      'position:fixed;left:50%;top:80px;transform:translate(-50%,-200%);z-index:70;' +
+      'background:var(--surface-2);color:var(--text);padding:14px 18px;border-radius:16px;' +
+      'box-shadow:0 12px 32px rgba(0,0,0,0.4);display:flex;align-items:center;gap:10px;' +
+      'transition:transform .35s cubic-bezier(0.34, 1.56, 0.64, 1);' +
+      'border:2px solid var(--accent);min-width:220px;max-width:90vw;';
+    el.innerHTML =
+      '<span style="font-size:32px">' + emoji + '</span>' +
+      '<div><div style="font-weight:bold;font-size:14px">' + title + '</div>' +
+      '<div style="font-size:11px;opacity:.7">' + (subtitle || '') + '</div></div>';
+    document.body.appendChild(el);
+    requestAnimationFrame(() => { el.style.transform = 'translate(-50%, 0)'; });
+    setTimeout(() => { el.style.transform = 'translate(-50%, -200%)'; }, 3500);
+    setTimeout(() => { el.remove(); }, 4000);
+    window.dodayHaptic && window.dodayHaptic.success();
+  }
+  window.dodayRewardToast = showRewardToast;
+
   async function commitComplete(taskId) {
     try {
-      await fetch('/miniapp/api/tasks/' + taskId + '/complete', {
+      const r = await fetch('/miniapp/api/tasks/' + taskId + '/complete', {
         method: 'POST', credentials: 'include',
       });
+      if (r.ok) {
+        const data = await r.json().catch(() => ({}));
+        // γ: новые achievements
+        if (data.achievements_unlocked && data.achievements_unlocked.length) {
+          data.achievements_unlocked.forEach((a, i) => {
+            setTimeout(() => showRewardToast(a.emoji, a.title, a.description), i * 800);
+          });
+        }
+        // γ: level-up
+        if (data.level_up) {
+          setTimeout(() => {
+            showRewardToast('⭐', 'Уровень ' + data.new_level + '!', 'Так держать');
+            // Дополнительные конфетти на level-up
+            if (window.confetti) {
+              window.confetti({
+                particleCount: 80,
+                spread: 100,
+                origin: { y: 0.4 },
+                colors: ['#7c3aed', '#d946ef', '#fbbf24', '#34d399'],
+              });
+            }
+          }, 400);
+        }
+      }
     } catch (e) {}
   }
   async function commitSnooze(taskId) {

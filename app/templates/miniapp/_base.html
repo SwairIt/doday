@@ -249,6 +249,15 @@
     .empty-illustration { animation: empty-pulse 3.5s ease-in-out infinite; }
     .empty-illustration--rotate { animation: empty-rotate 3s ease-in-out infinite alternate; }
 
+    /* γ G5 — Streak fire glow scaling */
+    @keyframes streak-flicker {
+      0%, 100% { filter: drop-shadow(0 0 6px rgba(251, 146, 60, 0.5)); }
+      50%      { filter: drop-shadow(0 0 16px rgba(251, 146, 60, 0.9)); }
+    }
+    .streak-glow-7   { animation: streak-flicker 2.5s ease-in-out infinite; }
+    .streak-glow-30  { animation: streak-flicker 2s ease-in-out infinite; filter: drop-shadow(0 0 12px rgba(251, 146, 60, 0.7)) !important; }
+    .streak-glow-100 { animation: streak-flicker 1.5s ease-in-out infinite; filter: drop-shadow(0 0 20px rgba(251, 146, 60, 0.9)) !important; }
+
     @keyframes spin {
       from { transform: translate(-50%, 20%) rotate(0deg); }
       to   { transform: translate(-50%, 20%) rotate(360deg); }

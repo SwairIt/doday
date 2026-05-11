@@ -26,6 +26,34 @@
   </div>
 </section>
 
+{# Daily challenge (γ G4) — небольшая карточка с прогрессом #}
+{% if daily_challenge %}
+  {% set pct = (daily_challenge.progress / daily_challenge.target * 100) if daily_challenge.target else 0 %}
+  <section class="mb-4">
+    <div class="rounded-xl px-3 py-2.5 bg-[var(--surface-2)] flex items-center gap-3
+                {% if daily_challenge.done %}ring-2 ring-emerald-400{% endif %}">
+      <span class="text-2xl">{{ daily_challenge.emoji }}</span>
+      <div class="flex-1 min-w-0">
+        <div class="text-xs font-semibold flex items-center gap-1.5">
+          <span>{{ daily_challenge.title }}</span>
+          {% if daily_challenge.done %}
+            <span class="text-[9px] px-1 rounded bg-emerald-500/20 text-emerald-400 font-bold">+20 XP</span>
+          {% endif %}
+        </div>
+        <div class="mt-1 flex items-center gap-1.5">
+          <span class="text-[10px] text-[var(--text-muted)] tabular-nums shrink-0">
+            {{ daily_challenge.progress }}/{{ daily_challenge.target }}
+          </span>
+          <span class="flex-1 h-1 bg-[var(--surface)] rounded-full overflow-hidden">
+            <span class="block h-full {% if daily_challenge.done %}bg-emerald-400{% else %}bg-[var(--accent)]{% endif %} rounded-full"
+                  style="width: {{ pct if pct < 100 else 100 }}%"></span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endif %}
+
 {# Header — streak + прогресс-кольцо «N/M закрыто» #}
 <header class="hero-wrap flex items-center gap-3 mb-5">
   <button type="button" onclick="window.dodayBulk.toggleMode()"
