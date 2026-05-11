@@ -491,24 +491,9 @@ def build_app() -> Application[Any, Any, Any, Any, Any, Any]:
     settings = get_settings()
     if not settings.telegram_bot_token:
         raise RuntimeError("TELEGRAM_BOT_TOKEN не задан в .env — bot worker не стартует")
-    application: Application[Any, Any, Any, Any, Any, Any] = (
-        Application.builder().token(settings.telegram_bot_token).build()
-    )
-    application.add_handler(CommandHandler("start", cmd_start))
-    application.add_handler(CommandHandler("help", cmd_help))
-    application.add_handler(CommandHandler("app", cmd_app))
-    application.add_handler(CommandHandler("add", cmd_add))
-    application.add_handler(CommandHandler("today", cmd_today))
-    application.add_handler(CommandHandler("upcoming", cmd_upcoming))
-    application.add_handler(CommandHandler("done", cmd_done))
-    application.add_handler(CommandHandler("unlink", cmd_unlink))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_unknown_text))
 
-    # Post-init: при старте бота
-    #   1. ставим default chat menu button → WebApp Mini App;
-    #   2. регистрируем команды через setMyCommands → юзер видит подсказки при "/";
-    # Обе операции идемпотентны, переживают перезапуск.
     async def _post_init(app: Application[Any, Any, Any, Any, Any, Any]) -> None:
+        """Post-init: chat menu button + setMyCommands. Идемпотентно."""
         from telegram import BotCommand, MenuButtonWebApp, WebAppInfo
 
         base = settings.app_base_url or "https://getdoday.ru"
@@ -536,7 +521,18 @@ def build_app() -> Application[Any, Any, Any, Any, Any, Any]:
         except Exception as e:
             logger.warning("failed to set commands: %s", e)
 
-    application.post_init = _post_init
+    application: Application[Any, Any, Any, Any, Any, Any] = (
+        Application.builder().token(settings.telegram_bot_token).post_init(_post_init).build()
+    )
+    application.add_handler(CommandHandler("start", cmd_start))
+    application.add_handler(CommandHandler("help", cmd_help))
+    application.add_handler(CommandHandler("app", cmd_app))
+    application.add_handler(CommandHandler("add", cmd_add))
+    application.add_handler(CommandHandler("today", cmd_today))
+    application.add_handler(CommandHandler("upcoming", cmd_upcoming))
+    application.add_handler(CommandHandler("done", cmd_done))
+    application.add_handler(CommandHandler("unlink", cmd_unlink))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_unknown_text))
 
     # ε N3+N4: JobQueue cron-tasks для reminders + morning digest.
     # JobQueue запускается автоматически с run_polling если установлен extra.
