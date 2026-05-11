@@ -517,6 +517,89 @@ class QuickAddIn(BaseModel):
     project_id: str | None = None  # для quick-add внутри проекта
 
 
+class BulkActionIn(BaseModel):
+    ids: list[str]
+    action: str  # 'complete' | 'delete' | 'snooze'
+
+
+class ReorderIn(BaseModel):
+    project_id: str
+    ordered_ids: list[str]
+
+
+@router.post("/api/tasks/reorder")
+async def api_reorder_tasks(
+    payload: ReorderIn,
+    user: CurrentUser,
+    session: DbSession,
+) -> JSONResponse:
+    """Установить новые positions для задач в проекте (B3 drag-reorder)."""
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    from uuid import UUID
+
+    from app.tasks.service import reorder_tasks
+
+    try:
+        pid = UUID(payload.project_id)
+        ids = [UUID(s) for s in payload.ordered_ids]
+    except ValueError:
+        return JSONResponse({"error": "bad_id"}, status_code=400)
+    try:
+        await reorder_tasks(session, user.id, pid, ids)
+    except Exception:
+        return JSONResponse({"error": "reorder_failed"}, status_code=400)
+    return JSONResponse({"ok": True, "count": len(ids)})
+
+
+@router.post("/api/tasks/bulk")
+async def api_bulk_action(
+    payload: BulkActionIn,
+    user: CurrentUser,
+    session: DbSession,
+) -> JSONResponse:
+    """Batch-операции на список задач (B2 bulk-select mode)."""
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    if payload.action not in ("complete", "delete", "snooze"):
+        return JSONResponse({"error": "bad_action"}, status_code=400)
+    from uuid import UUID
+
+    try:
+        uids = [UUID(s) for s in payload.ids]
+    except ValueError:
+        return JSONResponse({"error": "bad_id"}, status_code=400)
+    if not uids:
+        return JSONResponse({"affected": 0})
+    rows = await session.execute(select(Task).where(Task.id.in_(uids), Task.user_id == user.id))
+    tasks = list(rows.scalars().all())
+    now = datetime.now(UTC)
+    if payload.action == "complete":
+        for t in tasks:
+            if not t.is_completed:
+                t.is_completed = True
+                t.completed_at = now
+    elif payload.action == "delete":
+        for t in tasks:
+            t.deleted_at = now
+    elif payload.action == "snooze":
+        from datetime import timedelta
+
+        tomorrow_eod = datetime(
+            (now + timedelta(days=1)).year,
+            (now + timedelta(days=1)).month,
+            (now + timedelta(days=1)).day,
+            23,
+            59,
+            tzinfo=UTC,
+        )
+        for t in tasks:
+            t.due_at = tomorrow_eod
+            t.due_date_only = True
+    await session.commit()
+    return JSONResponse({"affected": len(tasks), "action": payload.action})
+
+
 @router.post("/api/parse")
 async def api_parse(payload: QuickAddIn, user: CurrentUser) -> JSONResponse:
     """Live-preview парсера для quick-add. Возвращает разбор (title, due_at,
@@ -1084,6 +1167,49 @@ async def api_list_projects(user: CurrentUser, session: DbSession) -> JSONRespon
                 for p in projects
             ]
         }
+    )
+
+
+@router.post("/api/tasks/{task_id}/duplicate", status_code=status.HTTP_201_CREATED)
+async def api_duplicate_task(
+    task_id: str,
+    user: CurrentUser,
+    session: DbSession,
+) -> JSONResponse:
+    """Дублировать задачу — copy без is_completed, без completed_at. Без
+    подзадач (только parent), сохраняем priority/due/project/labels (B1)."""
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    from uuid import UUID
+
+    try:
+        tid = UUID(task_id)
+    except ValueError:
+        return JSONResponse({"error": "bad_id"}, status_code=400)
+    src = (
+        await session.execute(select(Task).where(Task.id == tid, Task.user_id == user.id))
+    ).scalar_one_or_none()
+    if src is None:
+        return JSONResponse({"error": "not_found"}, status_code=404)
+    new = await create_task(
+        session,
+        user.id,
+        title=src.title + " (копия)",
+        project_id=src.project_id,
+        due_at=src.due_at,
+        due_date_only=src.due_date_only,
+        priority=src.priority,
+        recurrence=src.recurrence,
+        description=src.description,
+    )
+    # Copy labels (many-to-many association)
+    if src.labels:
+        new.labels = list(src.labels)
+        await session.commit()
+        await session.refresh(new)
+    return JSONResponse(
+        {"id": str(new.id), "title": new.title},
+        status_code=status.HTTP_201_CREATED,
     )
 
 

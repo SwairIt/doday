@@ -139,6 +139,11 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
   const SWIPE_THRESHOLD = 80;
   let swipeState = null;
 
+  // B1 — Long-press tracker для quick-actions sheet.
+  let longPressTimer = null;
+  let longPressFired = false;
+  const LONG_PRESS_MS = 500;
+
   function onTouchStart(e) {
     const row = e.target.closest('[data-swipeable]');
     if (!row) return;
@@ -152,6 +157,24 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
       locked: null,
     };
     row.classList.add('swiping');
+    // B1: arm long-press
+    longPressFired = false;
+    const taskRow = row.closest('[data-task-id]') || row;
+    const taskId = taskRow.getAttribute('data-task-id');
+    if (taskId) {
+      clearTimeout(longPressTimer);
+      longPressTimer = setTimeout(() => {
+        if (swipeState && swipeState.locked === 'x') return; // user уже свайпит
+        longPressFired = true;
+        // Cancel swipe-state, reset transform
+        if (swipeState) {
+          swipeState.content.style.transform = '';
+          swipeState.row.classList.remove('swiping');
+        }
+        window.dodayHaptic && window.dodayHaptic.medium();
+        window.dispatchEvent(new CustomEvent('doday-open-quickactions', {detail: {taskId}}));
+      }, LONG_PRESS_MS);
+    }
   }
 
   function onTouchMove(e) {
@@ -165,6 +188,8 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
       }
     }
     if (swipeState.locked === 'x') {
+      // B1: пользователь начал свайпать — отменяем long-press timer
+      clearTimeout(longPressTimer);
       e.preventDefault();
       swipeState.dx = dx;
       swipeState.content.style.transform = 'translateX(' + dx + 'px)';
@@ -172,6 +197,9 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
       if (dx <= -SWIPE_THRESHOLD) swipeState.row.setAttribute('data-passed', 'right');
       else if (dx >= SWIPE_THRESHOLD) swipeState.row.setAttribute('data-passed', 'left');
       else swipeState.row.removeAttribute('data-passed');
+    } else if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
+      // Movement detected before lock — кенселим long-press
+      clearTimeout(longPressTimer);
     }
   }
 
@@ -215,7 +243,15 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
   }
 
   function onTouchEnd() {
+    // B1: всегда чистим timer
+    clearTimeout(longPressTimer);
     if (!swipeState) return;
+    // Если long-press уже fired — не делаем swipe-action
+    if (longPressFired) {
+      swipeState.row.classList.remove('swiping');
+      swipeState = null;
+      return;
+    }
     const { row, content, dx, locked } = swipeState;
     row.classList.remove('swiping');
     row.removeAttribute('data-passed');
@@ -330,6 +366,80 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
       window.dispatchEvent(new CustomEvent('doday-open-task', {detail: {taskId}}));
     }
   });
+
+  // B2 — Bulk-select mode. Активируется через двойной long-press
+  //      или через кнопку (см. Today/Inbox header). Состояние в
+  //      window.dodayBulk = {active, ids: Set}.
+  window.dodayBulk = {
+    active: false,
+    ids: new Set(),
+    listeners: [],
+    onChange(fn) { this.listeners.push(fn); },
+    _notify() { this.listeners.forEach(fn => { try { fn(this); } catch (e) {} }); },
+    toggleMode() {
+      this.active = !this.active;
+      if (!this.active) this.ids.clear();
+      this._notify();
+      this._updateBar();
+    },
+    toggleTask(id) {
+      if (this.ids.has(id)) this.ids.delete(id);
+      else this.ids.add(id);
+      this._notify();
+      this._updateBar();
+    },
+    _updateBar() {
+      const bar = document.getElementById('bulk-bar');
+      if (!bar) return;
+      if (this.active && this.ids.size > 0) {
+        bar.style.transform = 'translateY(0)';
+        const count = bar.querySelector('[data-bulk-count]');
+        if (count) count.textContent = String(this.ids.size);
+      } else {
+        bar.style.transform = 'translateY(120%)';
+      }
+    },
+    async perform(action) {
+      if (this.ids.size === 0) return;
+      try {
+        const r = await fetch('/miniapp/api/tasks/bulk', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ids: Array.from(this.ids), action}),
+          credentials: 'include',
+        });
+        if (r.ok) {
+          window.dodayHaptic && window.dodayHaptic.success();
+          this.ids.clear();
+          this.active = false;
+          this._notify();
+          window.location.reload();
+        }
+      } catch (e) {}
+    },
+  };
+
+  // Update task-card visuals в bulk-mode
+  window.dodayBulk.onChange(state => {
+    document.querySelectorAll('[data-task-id]').forEach(row => {
+      const tid = row.getAttribute('data-task-id');
+      row.classList.toggle('bulk-mode', state.active);
+      row.classList.toggle('bulk-selected', state.ids.has(tid));
+    });
+  });
+
+  // В bulk-mode tap на task-card — toggle selection (не open sheet)
+  // Перехватываем перед normal click-handler через capture phase.
+  document.addEventListener('click', (e) => {
+    if (!window.dodayBulk.active) return;
+    const row = e.target.closest('[data-task-id]');
+    if (!row) return;
+    // Skip clicks on buttons (toggle/etc)
+    if (e.target.closest('button, a, input, textarea')) return;
+    e.preventDefault();
+    e.stopPropagation();
+    window.dodayBulk.toggleTask(row.getAttribute('data-task-id'));
+  }, true);
 
   // 10. Haptic на bottom-nav tab switch
   document.addEventListener('click', (e) => {

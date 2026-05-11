@@ -1,0 +1,143 @@
+{# Long-press quick-actions sheet (B1). Слушает window-event
+   'doday-open-quickactions' с detail: {taskId, x, y}.
+   Действия — быстрый snooze, изменение приоритета, дублирование, удаление. #}
+
+<div x-data="dodayQuickActionsSheet()" x-cloak class="fixed inset-0 z-50" x-show="open"
+     @keyup.escape.window="close()" @doday-open-quickactions.window="open(($event.detail || {}).taskId)">
+  <div class="absolute inset-0 bg-black/50" @click="close()" x-show="open" x-transition.opacity></div>
+
+  <div class="absolute left-0 right-0 bottom-0 bg-[var(--bg)] rounded-t-2xl p-4 pb-6 max-h-[80vh] overflow-y-auto"
+       style="padding-bottom: env(safe-area-inset-bottom);"
+       x-show="open"
+       x-transition:enter="transition transform duration-300 ease-out"
+       x-transition:enter-start="translate-y-full" x-transition:enter-end="translate-y-0"
+       x-transition:leave="transition transform duration-200 ease-in"
+       x-transition:leave-start="translate-y-0" x-transition:leave-end="translate-y-full">
+    <div class="w-10 h-1 rounded-full bg-[var(--text-muted)]/40 mx-auto mb-4"></div>
+    <h2 class="text-xs uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-3">Быстрые действия</h2>
+
+    {# Когда / due-date #}
+    <div class="mb-4">
+      <label class="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-muted)] block mb-2">Когда</label>
+      <div class="grid grid-cols-3 gap-2">
+        <button @click="setDue('today')" class="px-3 py-2.5 rounded-xl bg-[var(--surface-2)] text-xs active:scale-95 transition">📅 Сегодня</button>
+        <button @click="setDue('tomorrow')" class="px-3 py-2.5 rounded-xl bg-[var(--surface-2)] text-xs active:scale-95 transition">🌅 Завтра</button>
+        <button @click="setDue('week')" class="px-3 py-2.5 rounded-xl bg-[var(--surface-2)] text-xs active:scale-95 transition">📆 +неделя</button>
+        <button @click="setDue('month')" class="px-3 py-2.5 rounded-xl bg-[var(--surface-2)] text-xs active:scale-95 transition">🗓️ +месяц</button>
+        <button @click="setDue('clear')" class="col-span-2 px-3 py-2.5 rounded-xl bg-[var(--surface-2)] text-xs text-rose-400 active:scale-95 transition">🚫 Без даты</button>
+      </div>
+    </div>
+
+    {# Приоритет #}
+    <div class="mb-4">
+      <label class="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-muted)] block mb-2">Приоритет</label>
+      <div class="grid grid-cols-4 gap-2">
+        <button @click="setPriority('p1')" class="px-3 py-2.5 rounded-xl bg-rose-500/15 text-rose-400 text-xs font-bold active:scale-95 transition">🔥 P1</button>
+        <button @click="setPriority('p2')" class="px-3 py-2.5 rounded-xl bg-amber-500/15 text-amber-400 text-xs font-bold active:scale-95 transition">⚡ P2</button>
+        <button @click="setPriority('p3')" class="px-3 py-2.5 rounded-xl bg-sky-500/15 text-sky-400 text-xs font-bold active:scale-95 transition">💧 P3</button>
+        <button @click="setPriority('p4')" class="px-3 py-2.5 rounded-xl bg-[var(--surface-2)] text-[var(--text-muted)] text-xs active:scale-95 transition">— P4</button>
+      </div>
+    </div>
+
+    {# Прочее #}
+    <div class="grid grid-cols-2 gap-2">
+      <button @click="duplicateTask()" class="px-3 py-3 rounded-xl bg-[var(--surface-2)] text-xs active:scale-95 transition">
+        📋 Дублировать
+      </button>
+      <button @click="openDetails()" class="px-3 py-3 rounded-xl bg-[var(--surface-2)] text-xs active:scale-95 transition">
+        ✏️ Подробнее
+      </button>
+      <button @click="completeTask()" class="px-3 py-3 rounded-xl bg-emerald-500/15 text-emerald-400 text-xs font-semibold active:scale-95 transition">
+        ✓ Завершить
+      </button>
+      <button @click="confirmDelete()" class="px-3 py-3 rounded-xl bg-rose-500/15 text-rose-400 text-xs font-semibold active:scale-95 transition">
+        🗑 Удалить
+      </button>
+    </div>
+
+    <button @click="close()" class="block w-full mt-3 px-4 py-3 rounded-xl bg-[var(--accent)] text-[var(--tg-button-text)] font-semibold text-sm active:scale-95 transition">
+      Закрыть
+    </button>
+  </div>
+</div>
+
+<script>
+  window.dodayQuickActionsSheet = function() {
+    return {
+      open: false,
+      taskId: null,
+      open(taskId) { this.taskId = taskId; this.open = true; },
+      close() { this.open = false; this.taskId = null; },
+      async patch(body) {
+        if (!this.taskId) return;
+        try {
+          const r = await fetch('/miniapp/api/tasks/' + this.taskId, {
+            method: 'PATCH',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify(body),
+            credentials: 'include',
+          });
+          if (r.ok) {
+            window.dodayHaptic && window.dodayHaptic.success();
+            this.close();
+            window.location.reload();
+          }
+        } catch (e) {}
+      },
+      setDue(when) {
+        const now = new Date();
+        let date = null;
+        const d0 = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59));
+        if (when === 'today') date = d0;
+        else if (when === 'tomorrow') date = new Date(d0.getTime() + 86400000);
+        else if (when === 'week') date = new Date(d0.getTime() + 7 * 86400000);
+        else if (when === 'month') date = new Date(d0.getTime() + 30 * 86400000);
+        this.patch({due_at: date ? date.toISOString() : '', due_date_only: true});
+      },
+      setPriority(p) { this.patch({priority: p}); },
+      async duplicateTask() {
+        if (!this.taskId) return;
+        try {
+          const r = await fetch('/miniapp/api/tasks/' + this.taskId + '/duplicate', {
+            method: 'POST', credentials: 'include',
+          });
+          if (r.ok) {
+            window.dodayHaptic && window.dodayHaptic.success();
+            this.close();
+            window.location.reload();
+          }
+        } catch (e) {}
+      },
+      openDetails() {
+        const tid = this.taskId;
+        this.close();
+        // Open task-sheet после закрытия quick-actions (Alpine ne допускает 2 sheet'a одновременно)
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('doday-open-task', {detail: {taskId: tid}}));
+        }, 250);
+      },
+      async completeTask() {
+        if (!this.taskId) return;
+        try {
+          await fetch('/miniapp/api/tasks/' + this.taskId + '/complete', {
+            method: 'POST', credentials: 'include',
+          });
+          window.dodayHaptic && window.dodayHaptic.success();
+          this.close();
+          window.location.reload();
+        } catch (e) {}
+      },
+      async confirmDelete() {
+        if (!confirm('Удалить задачу?')) return;
+        try {
+          await fetch('/miniapp/api/tasks/' + this.taskId, {
+            method: 'DELETE', credentials: 'include',
+          });
+          window.dodayHaptic && window.dodayHaptic.warning();
+          this.close();
+          window.location.reload();
+        } catch (e) {}
+      },
+    };
+  };
+</script>

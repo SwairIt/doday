@@ -125,6 +125,31 @@
     }
     [data-task-toggle].pulsing { animation: checkbox-pulse 350ms var(--spring); }
 
+    /* B2 — Bulk-mode стилизация task-card */
+    .bulk-mode .swipe-content { cursor: pointer; }
+    .bulk-mode [data-task-toggle] { pointer-events: none; opacity: 0.4; }
+    .bulk-mode [data-swipeable] { pointer-events: auto; }
+    .bulk-selected .swipe-content {
+      box-shadow: 0 0 0 2px var(--accent) inset;
+      background: color-mix(in srgb, var(--accent) 12%, var(--surface-2));
+    }
+
+    /* Bulk-action bar — закреплён над bottom-nav, slide-up при active */
+    #bulk-bar {
+      position: fixed;
+      left: 0; right: 0;
+      bottom: calc(64px + env(safe-area-inset-bottom));
+      z-index: 45;
+      background: var(--surface-2);
+      border-top: 1px solid var(--border);
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      transform: translateY(120%);
+      transition: transform 280ms var(--spring-soft);
+    }
+
     .swipe-action {
       position: absolute;
       top: 0; bottom: 0;
@@ -243,6 +268,29 @@
     {% block content %}{% endblock %}
   </main>
 
+  {# Bulk-action bar (B2) — slide-up когда window.dodayBulk.active+ids #}
+  <div id="bulk-bar" role="toolbar" aria-label="Действия с выбранными">
+    <span class="text-xs text-[var(--text-muted)] mr-1">
+      <strong class="text-[var(--text)]" data-bulk-count>0</strong> выбрано
+    </span>
+    <button onclick="window.dodayBulk.perform('complete')"
+            class="flex-1 px-3 py-2 rounded-lg bg-emerald-500/15 text-emerald-400 text-xs font-bold active:scale-95 transition">
+      ✓ Завершить
+    </button>
+    <button onclick="window.dodayBulk.perform('snooze')"
+            class="flex-1 px-3 py-2 rounded-lg bg-amber-500/15 text-amber-400 text-xs font-bold active:scale-95 transition">
+      🌅 Завтра
+    </button>
+    <button onclick="window.dodayBulk.perform('delete')"
+            class="flex-1 px-3 py-2 rounded-lg bg-rose-500/15 text-rose-400 text-xs font-bold active:scale-95 transition">
+      🗑
+    </button>
+    <button onclick="window.dodayBulk.toggleMode()"
+            class="px-3 py-2 rounded-lg bg-[var(--bg)] text-[var(--text-muted)] text-xs active:scale-95 transition" aria-label="Отмена">
+      ✕
+    </button>
+  </div>
+
   {# Bottom-nav — 5 вкладок. Active state через current_path передаётся endpoint'ом. #}
   <nav class="miniapp-nav" role="navigation" aria-label="Mini App">
     <a href="/miniapp/" class="{% if current_path == '/miniapp/' %}active{% endif %}" aria-label="Сегодня">
@@ -275,6 +323,9 @@
 
   {# Search bottom-sheet — слушает window-event 'doday-open-search' #}
   {% include "miniapp/_partials/search_sheet.html" %}
+
+  {# Quick-actions sheet (B1) — long-press на task → быстрые действия #}
+  {% include "miniapp/_partials/quick_actions_sheet.html" %}
 
   {# Confetti library — load only on Today (одной странице где может
      произойти 100% celebration). Lazy-load в footer чтобы не тормозить
