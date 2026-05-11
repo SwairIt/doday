@@ -105,6 +105,10 @@ ignore = [
 "app/pomodoro/models.py" = ["RUF002"]
 "app/pomodoro/service.py" = ["RUF001", "RUF002", "RUF003"]
 "alembic/versions/0026_pomodoro_sessions.py" = ["RUF001", "RUF002", "RUF003"]
+"alembic/versions/0027_reminders.py" = ["RUF001", "RUF002", "RUF003"]
+"app/reminders/__init__.py" = ["RUF002"]
+"app/reminders/models.py" = ["RUF002"]
+"app/reminders/service.py" = ["RUF001", "RUF002", "RUF003"]
 
 [tool.mypy]
 python_version = "3.12"

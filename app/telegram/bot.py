@@ -43,6 +43,7 @@ import app.links.models
 import app.mood.models
 import app.pomodoro.models
 import app.projects.models
+import app.reminders.models
 import app.school.models
 import app.sections.models
 import app.tasks.models
@@ -344,6 +345,90 @@ async def on_unknown_text(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
     )
 
 
+async def _job_check_reminders(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """ε N3 cron-tick: проверить approaching reminders → отправить ТГ-сообщения."""
+    sm = _get_sessionmaker()
+    async with sm() as session:
+        from app.reminders.service import list_due, mark_sent
+        from app.telegram.service import get_link_for_user
+
+        due = await list_due(session)
+        for rem in due:
+            link = await get_link_for_user(session, rem.user_id)
+            if link is None or link.chat_id is None:
+                # юзер ещё не привязал TG — пропускаем, но всё равно mark sent
+                # чтобы не спамить попытками
+                await mark_sent(session, rem.id)
+                continue
+            # Подтянем title задачи
+            task = (
+                await session.execute(
+                    select(Task.title, Task.is_completed).where(Task.id == rem.task_id)
+                )
+            ).first()
+            if task is None or task[1]:
+                # Задача удалена/закрыта — silence
+                await mark_sent(session, rem.id)
+                continue
+            text = f"🔔 Напоминание:\n*{task[0]}*"
+            try:
+                await context.bot.send_message(
+                    chat_id=link.chat_id, text=text, parse_mode=ParseMode.MARKDOWN
+                )
+                await mark_sent(session, rem.id)
+            except Exception as e:
+                logger.warning("Failed to send reminder %s: %s", rem.id, e)
+
+
+async def _job_morning_digest(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """ε N4: каждое утро 09:00 МСК (06:00 UTC) — short digest активных задач."""
+    from datetime import UTC, datetime
+    from datetime import time as dtime
+
+    from app.auth.models import User
+    from app.telegram.models import TelegramLink
+
+    sm = _get_sessionmaker()
+    async with sm() as session:
+        rows = await session.execute(
+            select(User, TelegramLink)
+            .join(TelegramLink, TelegramLink.user_id == User.id)
+            .where(TelegramLink.chat_id.is_not(None))
+        )
+        today_date = datetime.now(UTC).date()
+        today_end = datetime.combine(today_date, dtime.max, tzinfo=UTC)
+        for user, link in rows.all():
+            tasks_q = await session.execute(
+                select(Task)
+                .where(
+                    Task.user_id == user.id,
+                    Task.is_completed.is_(False),
+                    Task.deleted_at.is_(None),
+                    Task.due_at.is_not(None),
+                    Task.due_at <= today_end,
+                )
+                .order_by(Task.priority, Task.due_at)
+                .limit(10)
+            )
+            tasks = list(tasks_q.scalars().all())
+            if not tasks:
+                continue
+            lines = [f"🌅 *Доброе утро!* На сегодня {len(tasks)} задач:\n"]
+            for t in tasks[:5]:
+                prio_emoji = {"p1": "🔥", "p2": "⚡", "p3": "💧", "p4": "•"}.get(
+                    t.priority.value, "•"
+                )
+                lines.append(f"{prio_emoji} {t.title}")
+            if len(tasks) > 5:
+                lines.append(f"\n…и ещё {len(tasks) - 5}")
+            try:
+                await context.bot.send_message(
+                    chat_id=link.chat_id, text="\n".join(lines), parse_mode=ParseMode.MARKDOWN
+                )
+            except Exception as e:
+                logger.warning("Failed to send morning digest to %s: %s", link.chat_id, e)
+
+
 def build_app() -> Application[Any, Any, Any, Any, Any, Any]:
     settings = get_settings()
     if not settings.telegram_bot_token:
@@ -378,6 +463,26 @@ def build_app() -> Application[Any, Any, Any, Any, Any, Any]:
             logger.warning("failed to set default menu button: %s", e)
 
     application.post_init = _post_init
+
+    # ε N3+N4: JobQueue cron-tasks для reminders + morning digest.
+    # JobQueue запускается автоматически с run_polling если установлен extra.
+    if application.job_queue is not None:
+        # Каждую минуту проверять reminders
+        application.job_queue.run_repeating(
+            _job_check_reminders, interval=60, first=10, name="check_reminders"
+        )
+        # Каждый день 06:00 UTC (≈09:00 МСК) — morning digest.
+        from datetime import time as dtime
+
+        application.job_queue.run_daily(
+            _job_morning_digest,
+            time=dtime(hour=6, minute=0, tzinfo=UTC),
+            name="morning_digest",
+        )
+        logger.info("JobQueue tasks scheduled: check_reminders (1 min), morning_digest (06:00 UTC)")
+    else:
+        logger.warning("JobQueue not available — reminders/digest cron disabled")
+
     return application
 
 

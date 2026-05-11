@@ -119,6 +119,33 @@
         </div>
       </div>
 
+      {# Reminders (ε N2) — chips для quick-add + список с delete #}
+      <div>
+        <label class="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-muted)] block mb-2">
+          🔔 Напомнить
+        </label>
+        <div class="flex items-center flex-wrap gap-2 mb-2">
+          <button @click="addReminder(15)" class="px-3 py-1.5 rounded-lg bg-[var(--surface-2)] text-[10px] active:scale-95 transition">+15 мин</button>
+          <button @click="addReminder(30)" class="px-3 py-1.5 rounded-lg bg-[var(--surface-2)] text-[10px] active:scale-95 transition">+30 мин</button>
+          <button @click="addReminder(60)" class="px-3 py-1.5 rounded-lg bg-[var(--surface-2)] text-[10px] active:scale-95 transition">+1 ч</button>
+          <button @click="addReminder(180)" class="px-3 py-1.5 rounded-lg bg-[var(--surface-2)] text-[10px] active:scale-95 transition">+3 ч</button>
+          <input type="datetime-local" @change="addReminderAt($event.target.value)"
+                 class="px-2 py-1 rounded-lg bg-[var(--surface-2)] text-[10px] border border-[var(--border)] focus:outline-none focus:border-[var(--accent)]"
+                 :min="nowLocalIso()">
+        </div>
+        <div class="space-y-1" x-show="reminders.length > 0" x-cloak>
+          <template x-for="r in reminders" :key="r.id">
+            <div class="flex items-center justify-between px-2 py-1.5 rounded-lg bg-[var(--surface-2)] text-[11px]">
+              <span class="flex items-center gap-1.5">
+                <span x-text="r.sent_at ? '✓' : '⏰'"></span>
+                <span x-text="formatRemindDate(r.remind_at)"></span>
+              </span>
+              <button @click="removeReminder(r.id)" class="text-rose-400 active:scale-90 transition px-1">✕</button>
+            </div>
+          </template>
+        </div>
+      </div>
+
       {# Pomodoro time-on-task accordion (P5) — accumulated focus time + recent #}
       <div>
         <button @click="togglePomo()"
@@ -249,6 +276,7 @@
       newSubtaskTitle: '',
       pomo: { total_minutes: 0, recent: [] },
       pomoOpen: false,
+      reminders: [],
       async loadTask(taskId) {
         this.open = true;
         this.loading = true;
@@ -267,6 +295,14 @@
               }
             } catch (e) {}
           }
+          // Load reminders for this task
+          try {
+            const rr = await fetch('/miniapp/api/tasks/' + this.task.id + '/reminders', { credentials: 'include' });
+            if (rr.ok) {
+              const data = await rr.json();
+              this.reminders = data.reminders || [];
+            }
+          } catch (e) {}
           if (this.projects.length === 0) {
             try {
               const pr = await fetch('/miniapp/api/projects', { credentials: 'include' });
@@ -343,6 +379,57 @@
         const sec = Math.round((new Date(endedAt) - new Date(startedAt)) / 1000);
         const m = Math.floor(sec / 60);
         return m + 'м';
+      },
+      nowLocalIso() {
+        const d = new Date();
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+        return d.toISOString().slice(0, 16);
+      },
+      formatRemindDate(iso) {
+        if (!iso) return '';
+        const d = new Date(iso);
+        return d.toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+      },
+      async addReminder(minutesAhead) {
+        if (!this.task.id) return;
+        const at = new Date(Date.now() + minutesAhead * 60000).toISOString();
+        try {
+          const r = await fetch('/miniapp/api/tasks/' + this.task.id + '/reminders', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({remind_at: at}),
+            credentials: 'include',
+          });
+          if (r.ok) {
+            const created = await r.json();
+            this.reminders.push({...created, sent_at: null});
+            window.dodayHaptic && window.dodayHaptic.success();
+          }
+        } catch (e) {}
+      },
+      async addReminderAt(datetimeLocalStr) {
+        if (!datetimeLocalStr || !this.task.id) return;
+        const at = new Date(datetimeLocalStr).toISOString();
+        try {
+          const r = await fetch('/miniapp/api/tasks/' + this.task.id + '/reminders', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({remind_at: at}),
+            credentials: 'include',
+          });
+          if (r.ok) {
+            const created = await r.json();
+            this.reminders.push({...created, sent_at: null});
+            window.dodayHaptic && window.dodayHaptic.success();
+          }
+        } catch (e) {}
+      },
+      async removeReminder(rid) {
+        try {
+          await fetch('/miniapp/api/reminders/' + rid, { method: 'DELETE', credentials: 'include' });
+          this.reminders = this.reminders.filter(r => r.id !== rid);
+          window.dodayHaptic && window.dodayHaptic.warning();
+        } catch (e) {}
       },
       async loadSubtasks() {
         try {

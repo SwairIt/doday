@@ -314,10 +314,10 @@ Telegram Mini App** среди todo-аппов. Пользователь дал 
 - [x] P5 — Break management + time-on-task ✅
 
 ## Фаза ε — Notifications
-- [ ] N1 — Reminders DB + service
-- [ ] N2 — Reminder picker в sheet
-- [ ] N3 — Cron-worker для approaching
-- [ ] N4 — Morning digest + overdue alerts
+- [x] N1 — Reminders DB + service ✅
+- [x] N2 — Reminder picker в sheet ✅
+- [x] N3 — Cron-worker для approaching ✅
+- [x] N4 — Morning digest ✅ (overdue alerts отложены, можно добавить позже одним коммитом)
 
 ## Фаза ζ — Sections + Kanban
 - [ ] K1 — Section endpoints + bottom-sheet

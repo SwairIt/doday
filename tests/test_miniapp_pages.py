@@ -504,6 +504,56 @@ async def test_task_card_renders_pin_description_labels(
     assert "@home" in body
 
 
+async def test_reminder_crud(db_session: AsyncSession, logged_in_client: AsyncClient) -> None:
+    """ε N1+N2: GET/POST/DELETE /miniapp/api/tasks/<id>/reminders + /api/reminders/<id>."""
+    from datetime import UTC, datetime, timedelta
+
+    from sqlalchemy import select
+
+    from app.auth.models import User
+    from app.projects.service import ensure_inbox
+
+    user = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    inbox = await ensure_inbox(db_session, user.id)
+    from app.tasks.service import create_task as svc_create_task
+
+    task = await svc_create_task(db_session, user.id, title="Remind me", project_id=inbox.id)
+    await db_session.commit()
+
+    # Initially empty
+    r = await logged_in_client.get(f"/miniapp/api/tasks/{task.id}/reminders")
+    assert r.status_code == 200
+    assert r.json() == {"reminders": []}
+
+    # Create
+    in_30min = (datetime.now(UTC) + timedelta(minutes=30)).isoformat()
+    r = await logged_in_client.post(
+        f"/miniapp/api/tasks/{task.id}/reminders",
+        json={"remind_at": in_30min},
+    )
+    assert r.status_code == 201
+    rid = r.json()["id"]
+
+    # List
+    r = await logged_in_client.get(f"/miniapp/api/tasks/{task.id}/reminders")
+    assert r.status_code == 200
+    rems = r.json()["reminders"]
+    assert len(rems) == 1
+    assert rems[0]["sent_at"] is None
+    assert rems[0]["kind"] == "custom"
+
+    # Delete
+    r = await logged_in_client.delete(f"/miniapp/api/reminders/{rid}")
+    assert r.status_code == 200
+    assert r.json() == {"ok": True}
+
+    # Now empty
+    r = await logged_in_client.get(f"/miniapp/api/tasks/{task.id}/reminders")
+    assert r.json()["reminders"] == []
+
+
 async def test_pomodoro_start_active_stop_flow(
     db_session: AsyncSession, logged_in_client: AsyncClient
 ) -> None:

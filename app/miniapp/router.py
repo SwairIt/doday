@@ -1173,6 +1173,110 @@ async def api_pomodoro_task_time(
     )
 
 
+class ReminderCreateIn(BaseModel):
+    remind_at: str  # ISO 8601
+
+
+@router.get("/api/tasks/{task_id}/reminders")
+async def api_list_reminders(
+    task_id: str,
+    user: CurrentUser,
+    session: DbSession,
+) -> JSONResponse:
+    """Список напоминаний для задачи (ε N2)."""
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    from uuid import UUID
+
+    from app.reminders.service import list_for_task
+
+    try:
+        tid = UUID(task_id)
+    except ValueError:
+        return JSONResponse({"error": "bad_id"}, status_code=400)
+    # ownership
+    own = (
+        await session.execute(select(Task.id).where(Task.id == tid, Task.user_id == user.id))
+    ).scalar_one_or_none()
+    if own is None:
+        return JSONResponse({"error": "not_found"}, status_code=404)
+    rems = await list_for_task(session, tid)
+    return JSONResponse(
+        {
+            "reminders": [
+                {
+                    "id": str(r.id),
+                    "remind_at": r.remind_at.isoformat(),
+                    "sent_at": r.sent_at.isoformat() if r.sent_at else None,
+                    "kind": r.kind,
+                }
+                for r in rems
+            ]
+        }
+    )
+
+
+@router.post("/api/tasks/{task_id}/reminders", status_code=status.HTTP_201_CREATED)
+async def api_create_reminder(
+    task_id: str,
+    payload: ReminderCreateIn,
+    user: CurrentUser,
+    session: DbSession,
+) -> JSONResponse:
+    """Создать напоминание на задаче (ε N2)."""
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    from uuid import UUID
+
+    from app.reminders.service import create
+
+    try:
+        tid = UUID(task_id)
+    except ValueError:
+        return JSONResponse({"error": "bad_id"}, status_code=400)
+    own = (
+        await session.execute(select(Task.id).where(Task.id == tid, Task.user_id == user.id))
+    ).scalar_one_or_none()
+    if own is None:
+        return JSONResponse({"error": "not_found"}, status_code=404)
+    try:
+        remind_at = datetime.fromisoformat(payload.remind_at.replace("Z", "+00:00"))
+    except ValueError:
+        return JSONResponse({"error": "bad_remind_at"}, status_code=400)
+    r = await create(session, user.id, tid, remind_at, kind="custom")
+    return JSONResponse(
+        {
+            "id": str(r.id),
+            "remind_at": r.remind_at.isoformat(),
+            "kind": r.kind,
+        },
+        status_code=status.HTTP_201_CREATED,
+    )
+
+
+@router.delete("/api/reminders/{reminder_id}")
+async def api_delete_reminder(
+    reminder_id: str,
+    user: CurrentUser,
+    session: DbSession,
+) -> JSONResponse:
+    """Удалить напоминание (ε N2)."""
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    from uuid import UUID
+
+    from app.reminders.service import delete_by_id
+
+    try:
+        rid = UUID(reminder_id)
+    except ValueError:
+        return JSONResponse({"error": "bad_id"}, status_code=400)
+    ok = await delete_by_id(session, user.id, rid)
+    if not ok:
+        return JSONResponse({"error": "not_found"}, status_code=404)
+    return JSONResponse({"ok": True})
+
+
 @router.get("/api/search")
 async def api_search(q: str, user: CurrentUser, session: DbSession) -> JSONResponse:
     """Простой ILIKE-search по title задач юзера. Min 2 chars, max 20 results."""
