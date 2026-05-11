@@ -22,25 +22,46 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
   try { tg.expand(); } catch (e) {}
   try { tg.disableVerticalSwipes(); } catch (e) {}
 
-  // 2. Lock dark theme. Telegram themeParams игнорируем — наш UI спроектирован
-  //    под тёмный фиолет (rgba-overlays, *-500/15 chips). Светлая TG-тема юзера
-  //    ломала бы всю палитру. Вместо этого «толкаем» наш bg/header в TG, чтобы
-  //    chrome-бар miniapp'a над контентом тоже стал тёмным.
-  const DARK = {
-    bg: '#0f0f1a',
-    secondaryBg: '#1c1c2e',
-    headerBg: '#0f0f1a',
+  // 2. Theme: dark | light | system. Выбор юзер делает на /miniapp/me и он
+  //    хранится в localStorage. Inline-script в <head> уже поставил data-theme
+  //    до первого paint — здесь только синхронизируем chrome-бар TG.
+  //    'system' резолвится на текущий tg.colorScheme.
+  const PALETTE = {
+    dark:  { bg: '#0f0f1a', secondaryBg: '#1c1c2e' },
+    light: { bg: '#ffffff', secondaryBg: '#f1f5f9' },
   };
-  function lockDarkTheme() {
-    try { tg.setHeaderColor(DARK.headerBg); } catch (e) {
-      try { tg.setHeaderColor('secondary_bg_color'); } catch (_) {}
+  function resolveTheme(name) {
+    if (name === 'system') {
+      return (tg.colorScheme === 'light') ? 'light' : 'dark';
     }
-    try { tg.setBackgroundColor(DARK.bg); } catch (e) {}
-    try { tg.setBottomBarColor && tg.setBottomBarColor(DARK.secondaryBg); } catch (e) {}
+    return (name === 'light') ? 'light' : 'dark';
   }
-  lockDarkTheme();
-  // Если юзер переключает тему TG — снова перекрашиваем header под dark.
-  tg.onEvent('themeChanged', lockDarkTheme);
+  function applyTheme(saved) {
+    const eff = resolveTheme(saved);
+    document.documentElement.setAttribute('data-theme', eff);
+    const p = PALETTE[eff];
+    try { tg.setHeaderColor(p.bg); } catch (e) {
+      try { tg.setHeaderColor(eff === 'light' ? 'bg_color' : 'secondary_bg_color'); } catch (_) {}
+    }
+    try { tg.setBackgroundColor(p.bg); } catch (e) {}
+    try { tg.setBottomBarColor && tg.setBottomBarColor(p.secondaryBg); } catch (e) {}
+  }
+  function currentSaved() {
+    try { return localStorage.getItem('dodayTheme') || 'dark'; } catch (e) { return 'dark'; }
+  }
+  applyTheme(currentSaved());
+  // Глобальная функция для UI-переключателя на /miniapp/me.
+  window.dodaySetTheme = function (name) {
+    if (name !== 'dark' && name !== 'light' && name !== 'system') return;
+    try { localStorage.setItem('dodayTheme', name); } catch (e) {}
+    applyTheme(name);
+    window.dispatchEvent(new CustomEvent('doday-theme-changed', { detail: { theme: name } }));
+  };
+  window.dodayGetTheme = currentSaved;
+  // Если юзер выбрал 'system' — следуем за переключением темы Telegram.
+  tg.onEvent('themeChanged', function () {
+    if (currentSaved() === 'system') applyTheme('system');
+  });
 
   // 3. Auto-auth: шлём initData на /miniapp/auth, ставим cookie.
   //    На любой странице:

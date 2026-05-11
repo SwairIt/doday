@@ -267,6 +267,39 @@
   </div>
 </section>
 
+{# Тема Mini App — dark/light/system. localStorage хранит выбор, JS применяет. #}
+<section class="mb-5"
+         x-data="{
+           theme: (typeof window.dodayGetTheme === 'function' ? window.dodayGetTheme() : 'dark'),
+           pick(name) {
+             this.theme = name;
+             if (typeof window.dodaySetTheme === 'function') window.dodaySetTheme(name);
+             if (window.dodayHaptic) window.dodayHaptic.select();
+           }
+         }">
+  <h3 class="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide mb-2">Тема</h3>
+  <div class="grid grid-cols-3 gap-2">
+    <button type="button" @click="pick('dark')"
+            :class="theme === 'dark' ? 'bg-[var(--accent)] text-[var(--tg-button-text)]' : 'bg-[var(--surface-2)] text-[var(--text)]'"
+            class="flex flex-col items-center gap-1 py-2.5 rounded-xl active:scale-95 transition text-xs font-medium">
+      <span class="text-base leading-none">🌙</span>
+      <span>Тёмная</span>
+    </button>
+    <button type="button" @click="pick('light')"
+            :class="theme === 'light' ? 'bg-[var(--accent)] text-[var(--tg-button-text)]' : 'bg-[var(--surface-2)] text-[var(--text)]'"
+            class="flex flex-col items-center gap-1 py-2.5 rounded-xl active:scale-95 transition text-xs font-medium">
+      <span class="text-base leading-none">☀️</span>
+      <span>Светлая</span>
+    </button>
+    <button type="button" @click="pick('system')"
+            :class="theme === 'system' ? 'bg-[var(--accent)] text-[var(--tg-button-text)]' : 'bg-[var(--surface-2)] text-[var(--text)]'"
+            class="flex flex-col items-center gap-1 py-2.5 rounded-xl active:scale-95 transition text-xs font-medium">
+      <span class="text-base leading-none">🖥</span>
+      <span>Системная</span>
+    </button>
+  </div>
+</section>
+
 {# Поиск + браузер-link #}
 <section class="mb-5 space-y-2">
   <button type="button" @click="$dispatch('doday-open-search')"
