@@ -262,20 +262,39 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
     }
     const taskId = row.getAttribute('data-task-id');
     if (dx <= -SWIPE_THRESHOLD) {
-      // Complete (свайп влево)
-      window.dodayHaptic && window.dodayHaptic.success();
+      // Свайп влево → action из user-config (default=complete)
+      const action = window.dodaySwipeConfig.left;
+      window.dodayHaptic && window.dodayHaptic[action === 'complete' ? 'success' : 'medium']();
       const rect = row.getBoundingClientRect();
       const prio = row.getAttribute('data-priority') || 'p4';
-      burstConfettiAt(rect.left + rect.width * 0.5, rect.top + rect.height * 0.5, prio);
+      if (action === 'complete') {
+        burstConfettiAt(rect.left + rect.width * 0.5, rect.top + rect.height * 0.5, prio);
+      }
       row.classList.add('removed');
-      commitComplete(taskId);
-      setTimeout(() => row.remove(), 300);
+      commitSwipeAction(taskId, action);
+      if (action === 'edit') {
+        row.classList.remove('removed');
+        content.style.transform = '';
+      } else {
+        setTimeout(() => row.remove(), 300);
+      }
     } else if (dx >= SWIPE_THRESHOLD) {
-      // Snooze (свайп вправо)
-      window.dodayHaptic && window.dodayHaptic.medium();
-      row.classList.add('snoozed');
-      commitSnooze(taskId);
-      setTimeout(() => row.remove(), 300);
+      // Свайп вправо → action из user-config (default=snooze)
+      const action = window.dodaySwipeConfig.right;
+      window.dodayHaptic && window.dodayHaptic[action === 'complete' ? 'success' : 'medium']();
+      const rect = row.getBoundingClientRect();
+      const prio = row.getAttribute('data-priority') || 'p4';
+      if (action === 'complete') {
+        burstConfettiAt(rect.left + rect.width * 0.5, rect.top + rect.height * 0.5, prio);
+      }
+      row.classList.add(action === 'complete' ? 'removed' : 'snoozed');
+      commitSwipeAction(taskId, action);
+      if (action === 'edit') {
+        row.classList.remove('removed', 'snoozed');
+        content.style.transform = '';
+      } else {
+        setTimeout(() => row.remove(), 300);
+      }
     } else {
       // Cancel — spring back
       content.style.transform = '';
@@ -366,6 +385,124 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
       window.dispatchEvent(new CustomEvent('doday-open-task', {detail: {taskId}}));
     }
   });
+
+  // B3 — Drag-to-reorder. Long-press на task-card в Inbox/Project view
+  //      (где задачи в одном проекте) → захват для drag. На Today/Calendar
+  //      reorder не работает (разные проекты).
+  //
+  //      Используем существующий long-press handler — он dispatchит
+  //      'doday-open-quickactions'. Заменим логику: на view'ах с reorder
+  //      возможностью long-press запускает drag, а через quick-actions
+  //      sheet вынесем «Reorder» как опцию для NOT-reorderable views.
+  //
+  //      Простейшая активация: в Inbox/Project — есть на task-card иконка
+  //      drag-handle (3 точки слева внутри swipe-content), touchstart на
+  //      ней начинает drag-mode непосредственно. Не конфликтует с
+  //      long-press или swipe.
+  // B4 — Кастомизация swipe-actions. localStorage-only (per-device).
+  //      Default: left=complete, right=snooze (как было).
+  window.dodaySwipeConfig = {
+    get left() { return localStorage.getItem('doday-swipe-left') || 'complete'; },
+    get right() { return localStorage.getItem('doday-swipe-right') || 'snooze'; },
+    set(side, action) { localStorage.setItem('doday-swipe-' + side, action); },
+  };
+
+  async function commitSwipeAction(taskId, action) {
+    if (action === 'complete') return commitComplete(taskId);
+    if (action === 'snooze') return commitSnooze(taskId);
+    if (action === 'delete') {
+      try { await fetch('/miniapp/api/tasks/' + taskId, { method: 'DELETE', credentials: 'include' }); } catch (e) {}
+      return;
+    }
+    if (action === 'edit') {
+      window.dispatchEvent(new CustomEvent('doday-open-task', {detail: {taskId}}));
+      return;
+    }
+  }
+
+  let dragState = null;
+  function findDraggableContext(target) {
+    // Поиск контейнера с задачами одного проекта (current url начинается
+    // с /miniapp/inbox или /miniapp/projects/<id>).
+    const path = window.location.pathname;
+    if (path === '/miniapp/inbox' || path.startsWith('/miniapp/projects/')) {
+      const row = target.closest('[data-task-id][data-project-id]');
+      if (row) return row;
+    }
+    return null;
+  }
+  document.addEventListener('touchstart', (e) => {
+    const handle = e.target.closest('[data-drag-handle]');
+    if (!handle) return;
+    const row = findDraggableContext(handle);
+    if (!row) return;
+    e.preventDefault();
+    e.stopPropagation();
+    // Cancel any swipe/long-press
+    clearTimeout(longPressTimer);
+    longPressFired = true;  // prevent swipe-end action
+    if (swipeState) { swipeState.content.style.transform = ''; swipeState = null; }
+    const t = e.touches[0];
+    const rect = row.getBoundingClientRect();
+    dragState = {
+      row,
+      startY: t.clientY,
+      offsetY: t.clientY - rect.top,
+      projectId: row.getAttribute('data-project-id'),
+    };
+    row.classList.add('dragging');
+    document.body.classList.add('miniapp-dragging');
+    window.dodayHaptic && window.dodayHaptic.medium();
+  }, { passive: false });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!dragState) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    const dy = t.clientY - dragState.startY;
+    dragState.row.style.transform = 'translateY(' + dy + 'px) scale(1.03) rotate(-1deg)';
+    // Hit-test
+    dragState.row.style.pointerEvents = 'none';
+    const under = document.elementFromPoint(t.clientX, t.clientY);
+    dragState.row.style.pointerEvents = '';
+    const target = under && under.closest('[data-task-id]:not(.dragging)');
+    if (target && target.getAttribute('data-project-id') === dragState.projectId) {
+      const tRect = target.getBoundingClientRect();
+      const mid = tRect.top + tRect.height / 2;
+      if (t.clientY < mid) {
+        target.parentNode.insertBefore(dragState.row, target);
+      } else {
+        target.parentNode.insertBefore(dragState.row, target.nextSibling);
+      }
+      // Reset baseline после move в DOM, чтобы transform не «прыгал»
+      const newRect = dragState.row.getBoundingClientRect();
+      dragState.startY = t.clientY;
+      dragState.offsetY = t.clientY - newRect.top;
+      dragState.row.style.transform = 'translateY(0) scale(1.03) rotate(-1deg)';
+    }
+  }, { passive: false });
+
+  document.addEventListener('touchend', async () => {
+    if (!dragState) return;
+    const { row, projectId } = dragState;
+    row.style.transform = '';
+    row.classList.remove('dragging');
+    document.body.classList.remove('miniapp-dragging');
+    dragState = null;
+    // Collect ordered ids в этом проекте
+    const siblings = Array.from(
+      document.querySelectorAll('[data-task-id][data-project-id="' + projectId + '"]')
+    ).map(el => el.getAttribute('data-task-id'));
+    try {
+      await fetch('/miniapp/api/tasks/reorder', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({project_id: projectId, ordered_ids: siblings}),
+        credentials: 'include',
+      });
+      window.dodayHaptic && window.dodayHaptic.success();
+    } catch (e) {}
+  }, { passive: true });
 
   // B2 — Bulk-select mode. Активируется через двойной long-press
   //      или через кнопку (см. Today/Inbox header). Состояние в

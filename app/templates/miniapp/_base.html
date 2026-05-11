@@ -125,6 +125,19 @@
     }
     [data-task-toggle].pulsing { animation: checkbox-pulse 350ms var(--spring); }
 
+    /* B3 — Drag-to-reorder. Handle на левом краю, visible-on-hover.
+       Когда .dragging — z-index up + opacity 0.85 + slight rotate. */
+    .swipe-row.dragging .swipe-content {
+      opacity: 0.9;
+      transform: scale(1.03) rotate(-1deg);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+      transition: none;
+      pointer-events: none;
+    }
+    body.miniapp-dragging .swipe-row:not(.dragging) {
+      opacity: 0.6;
+    }
+
     /* B2 — Bulk-mode стилизация task-card */
     .bulk-mode .swipe-content { cursor: pointer; }
     .bulk-mode [data-task-toggle] { pointer-events: none; opacity: 0.4; }

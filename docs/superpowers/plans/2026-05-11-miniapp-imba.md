@@ -294,10 +294,10 @@ Telegram Mini App** среди todo-аппов. Пользователь дал 
 - [x] A5 — Animated empty-states + blob-drift ✅
 
 ## Фаза β — Gestures
-- [ ] B1 — Long-press action-sheet
-- [ ] B2 — Bulk select mode
-- [ ] B3 — Drag-to-reorder
-- [ ] B4 — Customizable swipe-actions
+- [x] B1 — Long-press action-sheet ✅ `fa09fa3`
+- [x] B2 — Bulk select mode ✅ `fa09fa3`
+- [x] B3 — Drag-to-reorder ✅
+- [x] B4 — Customizable swipe-actions ✅
 
 ## Фаза γ — Gamification
 - [ ] G1 — XP migration + service

@@ -200,6 +200,39 @@
   </div>
 </section>
 
+{# Settings — B4 customizable swipe-actions #}
+<section class="mb-5"
+         x-data="{
+           left: localStorage.getItem('doday-swipe-left') || 'complete',
+           right: localStorage.getItem('doday-swipe-right') || 'snooze',
+           setLeft(v) { this.left = v; localStorage.setItem('doday-swipe-left', v); if (window.dodayHaptic) window.dodayHaptic.select(); },
+           setRight(v) { this.right = v; localStorage.setItem('doday-swipe-right', v); if (window.dodayHaptic) window.dodayHaptic.select(); },
+         }">
+  <h2 class="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">Свайп-действия</h2>
+  <div class="rounded-xl bg-[var(--surface-2)] p-3 space-y-3">
+    <div>
+      <div class="text-[10px] text-[var(--text-muted)] mb-1.5">◀ Свайп влево</div>
+      <div class="grid grid-cols-4 gap-1.5">
+        <template x-for="a in [['complete','✓ done'],['snooze','🌅 завтра'],['delete','🗑 удалить'],['edit','✏️ ред.']]" :key="a[0]">
+          <button @click="setLeft(a[0])"
+                  :class="left === a[0] ? 'ring-2 ring-[var(--accent)] bg-[var(--accent)]/15 font-bold' : 'bg-[var(--surface)]'"
+                  class="px-2 py-1.5 rounded-lg text-[10px] transition active:scale-95" x-text="a[1]"></button>
+        </template>
+      </div>
+    </div>
+    <div>
+      <div class="text-[10px] text-[var(--text-muted)] mb-1.5">▶ Свайп вправо</div>
+      <div class="grid grid-cols-4 gap-1.5">
+        <template x-for="a in [['complete','✓ done'],['snooze','🌅 завтра'],['delete','🗑 удалить'],['edit','✏️ ред.']]" :key="a[0]">
+          <button @click="setRight(a[0])"
+                  :class="right === a[0] ? 'ring-2 ring-[var(--accent)] bg-[var(--accent)]/15 font-bold' : 'bg-[var(--surface)]'"
+                  class="px-2 py-1.5 rounded-lg text-[10px] transition active:scale-95" x-text="a[1]"></button>
+        </template>
+      </div>
+    </div>
+  </div>
+</section>
+
 {# Поиск + браузер-link #}
 <section class="mb-5 space-y-2">
   <button type="button" @click="$dispatch('doday-open-search')"

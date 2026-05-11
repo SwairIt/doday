@@ -10,7 +10,7 @@
 {% set proj_color = (project_color_map[task.project_id] if project_color_map and task.project_id in project_color_map else 'violet') %}
 {% set prio_class = {'p1': 'rose', 'p2': 'amber', 'p3': 'sky', 'p4': 'slate'}[task.priority.value] %}
 {% set has_chips = task.priority.value != 'p4' or task.due_at or task.recurrence %}
-<div class="swipe-row" data-task-id="{{ task.id }}" data-priority="{{ task.priority.value }}" {% if not is_done %}data-swipeable="1"{% endif %}>
+<div class="swipe-row" data-task-id="{{ task.id }}" data-priority="{{ task.priority.value }}" data-project-id="{{ task.project_id }}" {% if not is_done %}data-swipeable="1"{% endif %}>
   <div class="swipe-action swipe-action-left">
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
       <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -24,7 +24,21 @@
     <span>Готово</span>
   </div>
 
-  <article class="swipe-content task-card flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-[var(--surface-2)] {% if is_done %}opacity-50{% endif %}">
+  <article class="swipe-content task-card flex items-start gap-1.5 px-3 py-2.5 rounded-xl bg-[var(--surface-2)] {% if is_done %}opacity-50{% endif %}">
+    {# Drag-handle для reorder в Inbox/Project view (B3). #}
+    {% if not is_subtask and not is_done %}
+      <button type="button" data-drag-handle aria-label="Перетащить"
+              class="shrink-0 w-3 mt-0.5 text-[var(--text-muted)]/40 active:text-[var(--accent)] touch-none">
+        <svg viewBox="0 0 6 16" fill="currentColor" class="w-3 h-4">
+          <circle cx="1.5" cy="3" r="1"/>
+          <circle cx="4.5" cy="3" r="1"/>
+          <circle cx="1.5" cy="8" r="1"/>
+          <circle cx="4.5" cy="8" r="1"/>
+          <circle cx="1.5" cy="13" r="1"/>
+          <circle cx="4.5" cy="13" r="1"/>
+        </svg>
+      </button>
+    {% endif %}
     {# Toggle-circle: цвет рамки берётся из priority — как на сайте #}
     <button type="button" aria-label="{% if is_done %}Открыть{% else %}Закрыть{% endif %} задачу"
             data-task-toggle="{{ task.id }}"
