@@ -65,14 +65,25 @@ def _force_ipv4_resolve() -> None:
 
     На проде systemd-resolved отдаёт только AAAA для api.telegram.org, и httpx
     висит 30s на недоступной IPv6-сети. Force-IPv4 убирает баг без sudo-правки
-    /etc/hosts. Idempotent — повторный вызов overwrite'нет нашим же patched.
+    /etc/hosts.
+
+    Caveat: getaddrinfo поддерживает family и позиционно (3-й аргумент после
+    host, port), и через kwargs. Httpx передаёт family позиционно — поэтому
+    переписывание kwargs['family'] вызывает TypeError "multiple values for
+    family". Обрабатываем оба варианта и трогаем family только если оригинал
+    был AF_UNSPEC (0).
     """
     orig = socket.getaddrinfo
 
     def _ipv4_only(host: Any, *args: Any, **kwargs: Any) -> Any:
-        if "family" not in kwargs or kwargs["family"] == 0:
+        args_list = list(args)
+        # args = (port, family, type, proto, flags) — family это args_list[1]
+        if len(args_list) >= 2:
+            if args_list[1] == 0:
+                args_list[1] = socket.AF_INET
+        elif kwargs.get("family", 0) == 0:
             kwargs["family"] = socket.AF_INET
-        return orig(host, *args, **kwargs)
+        return orig(host, *args_list, **kwargs)
 
     socket.getaddrinfo = _ipv4_only
 

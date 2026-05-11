@@ -152,7 +152,10 @@ async def test_telegram_links_table_exists(db_session: AsyncSession) -> None:
 
 
 def test_force_ipv4_resolve_patches_socket() -> None:
-    """Sanity: patch заменяет socket.getaddrinfo и закрывает family=AF_INET."""
+    """Sanity: patch заменяет socket.getaddrinfo и закрывает family=AF_INET.
+
+    Покрываем оба варианта вызова — family позиционно (как делает httpx) и
+    family через kwargs (стиль стандартной библиотеки)."""
     import socket
 
     from app.telegram.bot import _force_ipv4_resolve
@@ -160,11 +163,15 @@ def test_force_ipv4_resolve_patches_socket() -> None:
     orig = socket.getaddrinfo
     try:
         _force_ipv4_resolve()
-        # после патча — функция другая (closure), и при вызове передаст
-        # family=AF_INET даже если caller не указал.
         assert socket.getaddrinfo is not orig
-        # реальный resolve локалхоста, чтобы убедиться что AF_INET-ответ
+        # kwargs-вариант
         result = socket.getaddrinfo("127.0.0.1", 80)
+        assert all(r[0] == socket.AF_INET for r in result)
+        # позиционный family (как httpx) — не должно падать TypeError
+        result = socket.getaddrinfo("127.0.0.1", 80, 0)
+        assert all(r[0] == socket.AF_INET for r in result)
+        # явный AF_INET позиционно — оставляем как было, без ошибки
+        result = socket.getaddrinfo("127.0.0.1", 80, socket.AF_INET)
         assert all(r[0] == socket.AF_INET for r in result)
     finally:
         socket.getaddrinfo = orig
