@@ -60,32 +60,40 @@ from app.telegram.service import complete_link, get_user_by_chat, unlink
 logger = logging.getLogger("doday.telegram")
 
 
+# Hardcoded IPv4 Telegram API endpoints. systemd-resolved на проде отдаёт
+# только AAAA для api.telegram.org, а IPv6-сеть оттуда не маршрутизируется.
+# Telegram держит несколько A-записей с одинаковой версией API — берём первый,
+# остальные fallback'ом по списку. IP'ы стабильны годами (DC2/DC4).
+_TELEGRAM_API_IPS = (
+    "149.154.167.220",
+    "149.154.166.110",
+    "149.154.164.220",
+)
+_FORCED_HOSTS = {"api.telegram.org"}
+
+
 def _force_ipv4_resolve() -> None:
-    """Monkey-patch socket.getaddrinfo → AF_INET only.
+    """Monkey-patch socket.getaddrinfo — отдаём hardcoded IPv4 для Telegram API.
 
-    На проде systemd-resolved отдаёт только AAAA для api.telegram.org, и httpx
-    висит 30s на недоступной IPv6-сети. Force-IPv4 убирает баг без sudo-правки
-    /etc/hosts.
+    Почему так: stub-resolver systemd-resolved отдаёт только AAAA для
+    api.telegram.org из-за политики провайдера, и httpx висит 30s на
+    недоступной IPv6-сети. Force-IPv4 одного только family даёт пустой
+    результат resolve → connection timeout. Hardcoded IP — единственный путь
+    без sudo-правки /etc/hosts.
 
-    Caveat: getaddrinfo поддерживает family и позиционно (3-й аргумент после
-    host, port), и через kwargs. Httpx передаёт family позиционно — поэтому
-    переписывание kwargs['family'] вызывает TypeError "multiple values for
-    family". Обрабатываем оба варианта и трогаем family только если оригинал
-    был AF_UNSPEC (0).
+    Все остальные хосты резолвятся как было — мы не ломаем прочий outbound.
     """
     orig = socket.getaddrinfo
 
-    def _ipv4_only(host: Any, *args: Any, **kwargs: Any) -> Any:
-        args_list = list(args)
-        # args = (port, family, type, proto, flags) — family это args_list[1]
-        if len(args_list) >= 2:
-            if args_list[1] == 0:
-                args_list[1] = socket.AF_INET
-        elif kwargs.get("family", 0) == 0:
-            kwargs["family"] = socket.AF_INET
-        return orig(host, *args_list, **kwargs)
+    def _v4(host: Any, *args: Any, **kwargs: Any) -> Any:
+        if host in _FORCED_HOSTS:
+            port = args[0] if args else kwargs.get("port", 0)
+            return [
+                (socket.AF_INET, socket.SOCK_STREAM, 6, "", (ip, port)) for ip in _TELEGRAM_API_IPS
+            ]
+        return orig(host, *args, **kwargs)
 
-    socket.getaddrinfo = _ipv4_only
+    socket.getaddrinfo = _v4
 
 
 # Single async engine + sessionmaker reused across handlers — bot долгоживущий.

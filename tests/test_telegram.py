@@ -152,26 +152,26 @@ async def test_telegram_links_table_exists(db_session: AsyncSession) -> None:
 
 
 def test_force_ipv4_resolve_patches_socket() -> None:
-    """Sanity: patch заменяет socket.getaddrinfo и закрывает family=AF_INET.
-
-    Покрываем оба варианта вызова — family позиционно (как делает httpx) и
-    family через kwargs (стиль стандартной библиотеки)."""
+    """Sanity: patch отдаёт hardcoded IPv4 для api.telegram.org, прочие хосты
+    остаются без изменений."""
     import socket
 
-    from app.telegram.bot import _force_ipv4_resolve
+    from app.telegram.bot import _TELEGRAM_API_IPS, _force_ipv4_resolve
 
     orig = socket.getaddrinfo
     try:
         _force_ipv4_resolve()
         assert socket.getaddrinfo is not orig
-        # kwargs-вариант
+        # 1. api.telegram.org → жёстко наш список IPv4
+        result = socket.getaddrinfo("api.telegram.org", 443)
+        ips = {r[4][0] for r in result}
+        assert ips == set(_TELEGRAM_API_IPS), f"got {ips}"
+        assert all(r[0] == socket.AF_INET for r in result)
+        # 2. Другой хост — оригинальный resolve работает
         result = socket.getaddrinfo("127.0.0.1", 80)
-        assert all(r[0] == socket.AF_INET for r in result)
-        # позиционный family (как httpx) — не должно падать TypeError
-        result = socket.getaddrinfo("127.0.0.1", 80, 0)
-        assert all(r[0] == socket.AF_INET for r in result)
-        # явный AF_INET позиционно — оставляем как было, без ошибки
-        result = socket.getaddrinfo("127.0.0.1", 80, socket.AF_INET)
+        assert all(r[4][0] == "127.0.0.1" for r in result)
+        # 3. Не падаем на позиционном family (как httpx)
+        result = socket.getaddrinfo("api.telegram.org", 443, 0)
         assert all(r[0] == socket.AF_INET for r in result)
     finally:
         socket.getaddrinfo = orig
