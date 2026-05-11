@@ -5,7 +5,8 @@
 {% include "miniapp/_partials/quickadd.html" %}
 
 {# Header — streak + прогресс-кольцо «N/M закрыто» #}
-<header class="flex items-center gap-4 mb-5">
+<header class="hero-wrap flex items-center gap-4 mb-5">
+  <div class="hero-blob"></div>
   <div class="flex-1">
     <h1 class="text-2xl font-bold">Сегодня</h1>
     {% if today_total > 0 %}
@@ -69,7 +70,11 @@
 {# Empty state + конфетти когда всё закрыто на сегодня #}
 {% if not overdue and not today %}
   <div class="text-center py-12">
-    <div class="text-5xl mb-3">{% if done_today_count > 0 %}🎉{% else %}🌤️{% endif %}</div>
+    {% if done_today_count > 0 %}
+      <div class="text-5xl mb-3">🎉</div>
+    {% else %}
+      {% include "miniapp/_partials/empty_today.html" %}
+    {% endif %}
     <p class="text-[var(--text-muted)] text-sm">
       {% if done_today_count > 0 %}
         Всё закрыто на сегодня. Отдыхай!

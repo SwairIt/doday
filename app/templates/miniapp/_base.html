@@ -128,13 +128,69 @@
       color: white;
       width: 90px;
       z-index: 1;
+      transition: opacity 120ms ease;
+    }
+    .swipe-action svg {
+      transition: transform 120ms ease;
+    }
+    .swipe-row[data-passed="left"] .swipe-action-left svg,
+    .swipe-row[data-passed="right"] .swipe-action-right svg {
+      transform: scale(1.18);
     }
     .swipe-action-left { left: 0; background: linear-gradient(to right, #f59e0b, #f59e0b 80%, transparent); padding-right: 12px; }
     .swipe-action-right { right: 0; background: linear-gradient(to left, #10b981, #10b981 80%, transparent); padding-left: 12px; }
+
+    /* Skeleton-shimmer для loading-states (P1). Использовать .skeleton
+       на placeholder-блоке: серый bg + сдвигающийся блик. */
+    .skeleton {
+      background: linear-gradient(90deg,
+        var(--surface-2) 0%,
+        rgba(255,255,255,0.06) 50%,
+        var(--surface-2) 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s ease-in-out infinite;
+      border-radius: 0.75rem;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Page-transitions (P2). Container fade-up on mount. Staggered children
+       через .stagger-item с inline animation-delay. */
+    .page-mount { animation: page-mount 280ms ease-out both; }
+    @keyframes page-mount {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .stagger-item { animation: stagger-fade 380ms ease-out both; opacity: 0; }
+    @keyframes stagger-fade {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Header gradient accent blob (P3). Под h1 — фиолетовый blur. */
+    .hero-blob {
+      position: absolute;
+      top: -20px;
+      left: -20px;
+      width: 200px;
+      height: 120px;
+      background: radial-gradient(ellipse at top left, rgba(124, 58, 237, 0.3) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+      filter: blur(8px);
+    }
+    .hero-wrap { position: relative; }
+
+    @keyframes spin {
+      from { transform: translate(-50%, 20%) rotate(0deg); }
+      to   { transform: translate(-50%, 20%) rotate(360deg); }
+    }
   </style>
 </head>
 <body>
-  <main class="px-4 pt-4">
+  <main class="px-4 pt-4 page-mount">
     {% block content %}{% endblock %}
   </main>
 

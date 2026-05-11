@@ -30,13 +30,23 @@
 
     <div class="px-3 pb-4 space-y-1.5">
       <template x-if="q.trim().length < 2 && results.length === 0">
-        <p class="text-center text-[var(--text-muted)] text-sm py-8">Введи минимум 2 символа</p>
+        <div class="text-center py-8">
+          {% include "miniapp/_partials/empty_search.html" %}
+          <p class="text-[var(--text-muted)] text-sm">Введи минимум 2 символа</p>
+        </div>
       </template>
       <template x-if="loading">
-        <p class="text-center text-[var(--text-muted)] text-sm py-4">⏳</p>
+        <div class="space-y-1.5 py-2">
+          <div class="skeleton h-12"></div>
+          <div class="skeleton h-12"></div>
+          <div class="skeleton h-12"></div>
+        </div>
       </template>
       <template x-if="!loading && q.trim().length >= 2 && results.length === 0">
-        <p class="text-center text-[var(--text-muted)] text-sm py-8">Ничего не нашлось</p>
+        <div class="text-center py-8">
+          {% include "miniapp/_partials/empty_search.html" %}
+          <p class="text-[var(--text-muted)] text-sm">Ничего не нашлось</p>
+        </div>
       </template>
       <template x-for="task in results" :key="task.id">
         <button type="button" @click="openTask(task.id)"

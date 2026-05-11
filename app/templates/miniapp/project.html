@@ -26,9 +26,9 @@
     {% endfor %}
   </div>
 {% else %}
-  <div class="text-center py-12 opacity-60">
-    <div class="text-4xl mb-2">✨</div>
-    <p class="text-sm">В этом проекте пока пусто. Используй поле сверху чтобы добавить задачу.</p>
+  <div class="text-center py-12">
+    {% include "miniapp/_partials/empty_inbox.html" %}
+    <p class="text-sm text-[var(--text-muted)]">В этом проекте пока пусто. Используй поле сверху чтобы добавить задачу.</p>
   </div>
 {% endif %}
 

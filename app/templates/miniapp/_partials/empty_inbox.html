@@ -1,0 +1,14 @@
+{# Пустая коробка-Inbox с приоткрытыми крышками. #}
+<svg viewBox="0 0 120 120" class="w-24 h-24 mx-auto mb-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent); opacity: 0.55;">
+  {# Основа коробки #}
+  <path d="M22 58 L22 96 Q22 100 26 100 L94 100 Q98 100 98 96 L98 58"/>
+  {# Дно/перегородка #}
+  <line x1="22" y1="58" x2="98" y2="58"/>
+  {# Крышка слегка приоткрыта #}
+  <path d="M18 58 L24 38 L96 38 L102 58 Z" opacity="0.7"/>
+  {# Прорезь сверху #}
+  <line x1="45" y1="58" x2="75" y2="58" stroke-width="3"/>
+  {# Пунктир — намёк что пусто #}
+  <line x1="38" y1="76" x2="82" y2="76" stroke-dasharray="3 4" opacity="0.4"/>
+  <line x1="44" y1="86" x2="76" y2="86" stroke-dasharray="3 4" opacity="0.4"/>
+</svg>

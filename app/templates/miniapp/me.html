@@ -2,9 +2,10 @@
 {% block title %}Я — Doday{% endblock %}
 {% block content %}
 
-<header class="mb-5">
-  <h1 class="text-2xl font-bold truncate">{{ current_user.email if current_user else 'Гость' }}</h1>
-  <p class="text-sm text-[var(--text-muted)]">Личная статистика</p>
+<header class="hero-wrap mb-5">
+  <div class="hero-blob"></div>
+  <h1 class="text-2xl font-bold truncate relative">{{ current_user.email if current_user else 'Гость' }}</h1>
+  <p class="text-sm text-[var(--text-muted)] relative">Личная статистика</p>
 </header>
 
 {# Streak hero — current + longest бейдж #}

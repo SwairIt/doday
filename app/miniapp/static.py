@@ -168,6 +168,10 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
       e.preventDefault();
       swipeState.dx = dx;
       swipeState.content.style.transform = 'translateX(' + dx + 'px)';
+      // P5 polish: data-passed для CSS scale-up иконки при threshold
+      if (dx <= -SWIPE_THRESHOLD) swipeState.row.setAttribute('data-passed', 'right');
+      else if (dx >= SWIPE_THRESHOLD) swipeState.row.setAttribute('data-passed', 'left');
+      else swipeState.row.removeAttribute('data-passed');
     }
   }
 
@@ -190,6 +194,7 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
     if (!swipeState) return;
     const { row, content, dx, locked } = swipeState;
     row.classList.remove('swiping');
+    row.removeAttribute('data-passed');
     if (locked !== 'x') {
       content.style.transform = '';
       swipeState = null;
@@ -290,14 +295,25 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
     if (navLink) window.dodayHaptic && window.dodayHaptic.light();
   });
 
-  // 11. Pull-to-refresh — простая реализация. При пуле >80px на scrollTop=0
-  //     показываем индикатор и reload'им страницу.
+  // 11. Pull-to-refresh — кастомный круговой spinner. P6 redesign.
+  //     На pull <threshold кольцо опционально появляется на верху.
+  //     При release >threshold — spinner крутится → reload.
   let pullState = null;
   const PULL_THRESHOLD = 80;
-  const indicator = document.createElement('div');
-  indicator.style.cssText = 'position:fixed;top:0;left:50%;transform:translate(-50%,-100%);z-index:60;background:var(--accent);color:var(--tg-button-text);padding:8px 16px;border-radius:0 0 12px 12px;font-size:12px;font-weight:600;transition:transform .2s;pointer-events:none;';
-  indicator.textContent = '⤓ Тяни ниже…';
-  document.body.appendChild(indicator);
+  const ptr = document.createElement('div');
+  ptr.innerHTML =
+    '<svg viewBox="0 0 36 36" width="28" height="28">' +
+    '<circle cx="18" cy="18" r="14" fill="none" stroke="var(--surface-2)" stroke-width="3"/>' +
+    '<circle id="ptr-arc" cx="18" cy="18" r="14" fill="none" stroke="var(--accent)" stroke-width="3" ' +
+    'stroke-dasharray="88" stroke-dashoffset="88" stroke-linecap="round" transform="rotate(-90 18 18)"/>' +
+    '</svg>';
+  ptr.style.cssText =
+    'position:fixed;top:8px;left:50%;transform:translate(-50%,-120%);z-index:60;' +
+    'width:44px;height:44px;border-radius:50%;background:var(--bg);' +
+    'box-shadow:0 4px 12px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;' +
+    'transition:transform .18s ease, opacity .18s ease;pointer-events:none;opacity:0;';
+  document.body.appendChild(ptr);
+  const ptrArc = () => ptr.querySelector('#ptr-arc');
 
   document.addEventListener('touchstart', (e) => {
     if (window.scrollY > 0) return;
@@ -311,9 +327,12 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
     if (dy <= 0) return;
     pullState.dy = dy;
     const pct = Math.min(1, dy / PULL_THRESHOLD);
-    indicator.style.transform = 'translate(-50%, ' + (-100 + pct * 100) + '%)';
-    if (dy >= PULL_THRESHOLD) indicator.textContent = '↻ Отпусти чтобы обновить';
-    else indicator.textContent = '⤓ Тяни ниже…';
+    const ty = -120 + pct * 140;  // -120% → +20%
+    ptr.style.transform = 'translate(-50%, ' + ty + '%)';
+    ptr.style.opacity = String(pct);
+    // Arc dashoffset 88 → 0 by pct
+    const arc = ptrArc();
+    if (arc) arc.setAttribute('stroke-dashoffset', String(88 * (1 - pct)));
   }, { passive: true });
 
   document.addEventListener('touchend', () => {
@@ -321,11 +340,17 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
     const { dy } = pullState;
     pullState = null;
     if (dy && dy >= PULL_THRESHOLD) {
-      indicator.textContent = '↻ Обновляю…';
       window.dodayHaptic && window.dodayHaptic.medium();
+      // Spin animation
+      const arc = ptrArc();
+      if (arc) {
+        arc.style.transition = 'none';
+        ptr.style.animation = 'spin 0.6s linear infinite';
+      }
       setTimeout(() => window.location.reload(), 200);
     } else {
-      indicator.style.transform = 'translate(-50%, -100%)';
+      ptr.style.transform = 'translate(-50%, -120%)';
+      ptr.style.opacity = '0';
     }
   }, { passive: true });
 

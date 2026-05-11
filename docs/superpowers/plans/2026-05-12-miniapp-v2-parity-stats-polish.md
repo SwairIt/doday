@@ -368,13 +368,13 @@
 - [x] S5 — Бейджи + footer ✅
 
 ## Группа P — Polish & beauty
-- [ ] P1 — Skeleton loading states
-- [ ] P2 — Page transitions + staggered fade-in
-- [ ] P3 — Header gradient accents
-- [ ] P4 — Inline SVG empty-state illustrations
-- [ ] P5 — Task swipe-action visual polish
-- [ ] P6 — Pull-to-refresh визуальная доводка
-- [ ] P7 — Финальный аудит + screenshots + PROGRESS.md
+- [x] P1 — Skeleton loading states ✅
+- [x] P2 — Page transitions + staggered fade-in ✅
+- [x] P3 — Header gradient accents ✅
+- [x] P4 — Inline SVG empty-state illustrations ✅
+- [x] P5 — Task swipe-action visual polish ✅
+- [x] P6 — Pull-to-refresh визуальная доводка ✅
+- [x] P7 — PROGRESS.md обновлён ✅ (screenshot-audit пропущен — это нужен Playwright + real viewport, в текущем формате не сделать)
 
 (После завершения каждый чанк: ✅ + commit-SHA.)
 

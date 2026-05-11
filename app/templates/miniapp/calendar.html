@@ -3,7 +3,8 @@
 {% block content %}
 
 {# Header — month/year + кнопки prev/next/today #}
-<header class="flex items-center gap-2 mb-4">
+<header class="hero-wrap flex items-center gap-2 mb-4">
+  <div class="hero-blob"></div>
   <a href="/miniapp/calendar?date={{ prev_week_iso }}"
      class="w-8 h-8 rounded-lg bg-[var(--surface-2)] flex items-center justify-center active:scale-95 transition"
      aria-label="Прошлая неделя">
@@ -64,9 +65,9 @@
       {% endfor %}
     </div>
   {% else %}
-    <div class="text-center py-10 opacity-60">
-      <div class="text-3xl mb-2">📅</div>
-      <p class="text-sm">На этот день ничего не запланировано.</p>
+    <div class="text-center py-10">
+      {% include "miniapp/_partials/empty_calendar.html" %}
+      <p class="text-sm text-[var(--text-muted)]">На этот день ничего не запланировано.</p>
     </div>
   {% endif %}
 </section>

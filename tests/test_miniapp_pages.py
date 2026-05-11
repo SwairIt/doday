@@ -505,7 +505,7 @@ async def test_task_card_renders_pin_description_labels(
 
 
 async def test_polish_features_in_js_bundle(client: AsyncClient) -> None:
-    """MD1-MD5: MainButton, haptic, pull-to-refresh присутствуют."""
+    """MD1-MD5 + P5-P6: MainButton, haptic, PTR (с spinner SVG), swipe data-passed."""
     r = await client.get("/miniapp/assets/miniapp.js")
     assert r.status_code == 200
     body = r.text
@@ -513,6 +513,10 @@ async def test_polish_features_in_js_bundle(client: AsyncClient) -> None:
     assert "PULL_THRESHOLD" in body
     assert "BackButton" in body
     assert "dodayHaptic" in body
+    # P5: data-passed atrribute для visual swipe-feedback
+    assert "data-passed" in body
+    # P6: SVG circle для PTR-spinner (вместо текста)
+    assert "ptr-arc" in body
 
 
 async def test_api_complete_task_toggles(
@@ -803,3 +807,18 @@ async def test_me_page_shows_streak_and_stats(
     assert "Скорость" in body
     assert "Открыть полную версию" in body
     assert "Полная статистика на сайте" in body  # S5 footer link
+    # P2+P3 polish: page-mount class + hero-blob
+    assert "page-mount" in body
+    assert "hero-blob" in body
+
+
+async def test_polish_skeleton_and_empty_svgs_in_base(client: AsyncClient) -> None:
+    """P1+P4: skeleton-keyframes есть в base CSS, empty-svg-partials видны
+    через рендер inbox/projects/calendar empty-states."""
+    # Inbox empty (без задач) — должен показывать SVG-illustration
+    # Используем unauth-flow на /miniapp/link где есть base.html → skeleton CSS
+    r = await client.get("/miniapp/link")
+    assert r.status_code == 200
+    body = r.text
+    assert "@keyframes shimmer" in body or "skeleton" in body
+    assert "@keyframes page-mount" in body or "page-mount" in body

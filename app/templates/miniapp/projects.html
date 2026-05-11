@@ -97,9 +97,9 @@
     {% endfor %}
   </div>
 {% else %}
-  <div class="text-center py-12 opacity-60">
-    <div class="text-4xl mb-2">📁</div>
-    <p class="text-sm">Пока нет проектов. Жми «+» чтобы создать.</p>
+  <div class="text-center py-12">
+    {% include "miniapp/_partials/empty_projects.html" %}
+    <p class="text-sm text-[var(--text-muted)]">Пока нет проектов. Жми «+» чтобы создать.</p>
   </div>
 {% endif %}
 
