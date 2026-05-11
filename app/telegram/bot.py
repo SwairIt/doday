@@ -73,27 +73,45 @@ _FORCED_HOSTS = {"api.telegram.org"}
 
 
 def _force_ipv4_resolve() -> None:
-    """Monkey-patch socket.getaddrinfo — отдаём hardcoded IPv4 для Telegram API.
+    """Подменяем resolve для api.telegram.org на hardcoded IPv4.
+
+    Патчим на двух уровнях:
+      1. socket.getaddrinfo — sync-резолв (curl-like usage, sync libs).
+      2. asyncio.BaseEventLoop.getaddrinfo — async-резолв (httpx → httpcore
+         → anyio идут через event-loop.getaddrinfo, а НЕ socket.getaddrinfo).
+         Без этого пункта монке-патч на socket бесполезен внутри ptb.
 
     Почему так: stub-resolver systemd-resolved отдаёт только AAAA для
-    api.telegram.org из-за политики провайдера, и httpx висит 30s на
-    недоступной IPv6-сети. Force-IPv4 одного только family даёт пустой
-    результат resolve → connection timeout. Hardcoded IP — единственный путь
-    без sudo-правки /etc/hosts.
+    api.telegram.org (политика провайдера), а IPv6-сеть оттуда не
+    маршрутизируется — httpx виснет на 30s connect-timeout, бот молча
+    падает. Hardcoded IP — единственный путь без sudo /etc/hosts.
 
     Все остальные хосты резолвятся как было — мы не ломаем прочий outbound.
     """
-    orig = socket.getaddrinfo
+    import asyncio.base_events
 
-    def _v4(host: Any, *args: Any, **kwargs: Any) -> Any:
+    sync_orig = socket.getaddrinfo
+
+    def _v4_sync(host: Any, *args: Any, **kwargs: Any) -> Any:
         if host in _FORCED_HOSTS:
             port = args[0] if args else kwargs.get("port", 0)
             return [
                 (socket.AF_INET, socket.SOCK_STREAM, 6, "", (ip, port)) for ip in _TELEGRAM_API_IPS
             ]
-        return orig(host, *args, **kwargs)
+        return sync_orig(host, *args, **kwargs)
 
-    socket.getaddrinfo = _v4
+    socket.getaddrinfo = _v4_sync
+
+    async_orig = asyncio.base_events.BaseEventLoop.getaddrinfo
+
+    async def _v4_async(self: Any, host: Any, port: Any = 0, *args: Any, **kwargs: Any) -> Any:
+        if host in _FORCED_HOSTS:
+            return [
+                (socket.AF_INET, socket.SOCK_STREAM, 6, "", (ip, port)) for ip in _TELEGRAM_API_IPS
+            ]
+        return await async_orig(self, host, port, *args, **kwargs)
+
+    asyncio.base_events.BaseEventLoop.getaddrinfo = _v4_async  # type: ignore[method-assign]
 
 
 # Single async engine + sessionmaker reused across handlers — bot долгоживущий.
