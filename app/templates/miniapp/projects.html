@@ -57,7 +57,7 @@
             <button type="button" @click="color = c"
                     :class="color === c ? 'ring-2 ring-[var(--accent)]' : ''"
                     class="w-7 h-7 rounded-full transition active:scale-90"
-                    :style="'background:' + c"></button>
+                    :style="'background:' + window.dodayColorHex(c)"></button>
           </template>
         </div>
         <div class="grid grid-cols-2 gap-2">
@@ -80,7 +80,7 @@
       {% set p = row.project %}
       <a href="/miniapp/projects/{{ p.id }}"
          class="flex items-center gap-3 px-3 py-3 rounded-xl bg-[var(--surface-2)] active:scale-95 transition">
-        <span class="w-3 h-3 rounded-full shrink-0" style="background: {{ p.color or 'violet' }}"></span>
+        <span class="w-3 h-3 rounded-full shrink-0" style="background: {{ color_hex.get(p.color, '#a78bfa') }}"></span>
         <span class="flex-1 text-sm font-medium truncate">
           {% if p.is_inbox %}📥 {% endif %}{{ p.name }}
         </span>

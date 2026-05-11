@@ -23,6 +23,25 @@ from app.telegram.models import TelegramLink
 router = APIRouter(prefix="/miniapp", tags=["miniapp"])
 templates = Jinja2Templates(directory="app/templates")
 
+# Color-name → hex для inline styles. CSS-named-colors типа `emerald` не
+# существуют (только violet случайно есть), поэтому `style="background:
+# emerald"` рендерится как прозрачное. Решение — этот map везде.
+_DODAY_COLORS = {
+    "violet": "#a78bfa",
+    "rose": "#fb7185",
+    "amber": "#fbbf24",
+    "sky": "#38bdf8",
+    "emerald": "#34d399",
+    "fuchsia": "#e879f9",
+    "blue": "#60a5fa",
+    "slate": "#94a3b8",
+    "orange": "#fb923c",
+    "red": "#f87171",
+    "green": "#4ade80",
+    "cyan": "#22d3ee",
+}
+templates.env.globals["color_hex"] = _DODAY_COLORS
+
 
 def _ctx(request: Request, current_user: object = None) -> dict[str, object]:
     """Common Jinja-context for miniapp pages (current_path для active-таба)."""
@@ -266,6 +285,24 @@ async def calendar(
     prev_week_iso = (week_start - timedelta(days=7)).isoformat()
     next_week_iso = (week_start + timedelta(days=7)).isoformat()
 
+    # Russian month name — strftime('%B') зависит от OS locale, не работает
+    # одинаково везде. Захардкоженный список — гарантия что у всех «Май 2026».
+    months_ru = [
+        "Январь",
+        "Февраль",
+        "Март",
+        "Апрель",
+        "Май",
+        "Июнь",
+        "Июль",
+        "Август",
+        "Сентябрь",
+        "Октябрь",
+        "Ноябрь",
+        "Декабрь",
+    ]
+    selected_month_label = f"{months_ru[selected_date.month - 1]} {selected_date.year}"
+
     # Heatmap: 12 недель назад до сегодня, 84 cells.
     heatmap_start = today_date - timedelta(days=12 * 7 - 1)
     # Adjust to Monday-start of that week.
@@ -312,6 +349,7 @@ async def calendar(
         today_iso=today_date.isoformat(),
         heatmap_weeks=heatmap_weeks,
         project_color_map=await _project_color_map(session, user.id),
+        selected_month_label=selected_month_label,
     )
     return templates.TemplateResponse(request, "miniapp/calendar.html", ctx)
 

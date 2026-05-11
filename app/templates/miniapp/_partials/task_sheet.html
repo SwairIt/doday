@@ -77,7 +77,7 @@
                       ? 'ring-2 ring-[var(--accent)] bg-[var(--accent)]/15 font-bold'
                       : 'bg-[var(--surface-2)]'"
                     class="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs transition active:scale-95">
-              <span class="w-2 h-2 rounded-full shrink-0" :style="'background:' + (p.color || '#7c3aed')"></span>
+              <span class="w-2 h-2 rounded-full shrink-0" :style="'background:' + window.dodayColorHex(p.color)"></span>
               <span x-text="p.is_inbox ? '📥 ' + p.name : p.name"></span>
             </button>
           </template>
@@ -97,7 +97,7 @@
                       ? 'ring-2 ring-[var(--accent)] bg-[var(--accent)]/15 font-bold'
                       : 'bg-[var(--surface-2)]'"
                     class="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs transition active:scale-95">
-              <span class="w-2 h-2 rounded-full shrink-0" :style="'background:' + (lab.color || '#7c3aed')"></span>
+              <span class="w-2 h-2 rounded-full shrink-0" :style="'background:' + window.dodayColorHex(lab.color)"></span>
               <span x-text="'@' + lab.name"></span>
             </button>
           </template>

@@ -13,7 +13,7 @@
     </svg>
   </a>
   <div class="flex-1 text-center">
-    <h1 class="text-base font-bold">{{ selected_date.strftime('%B %Y') }}</h1>
+    <h1 class="text-base font-bold">{{ selected_month_label }}</h1>
     {% if selected_date.isoformat() != today_iso %}
       <a href="/miniapp/calendar?date={{ today_iso }}" class="text-[10px] text-[var(--accent)]">→ к сегодня</a>
     {% endif %}
