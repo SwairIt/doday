@@ -149,3 +149,22 @@ async def test_telegram_links_table_exists(db_session: AsyncSession) -> None:
     result = await db_session.execute(select(TelegramLink))
     rows = result.scalars().all()
     assert isinstance(rows, list)
+
+
+def test_force_ipv4_resolve_patches_socket() -> None:
+    """Sanity: patch заменяет socket.getaddrinfo и закрывает family=AF_INET."""
+    import socket
+
+    from app.telegram.bot import _force_ipv4_resolve
+
+    orig = socket.getaddrinfo
+    try:
+        _force_ipv4_resolve()
+        # после патча — функция другая (closure), и при вызове передаст
+        # family=AF_INET даже если caller не указал.
+        assert socket.getaddrinfo is not orig
+        # реальный resolve локалхоста, чтобы убедиться что AF_INET-ответ
+        result = socket.getaddrinfo("127.0.0.1", 80)
+        assert all(r[0] == socket.AF_INET for r in result)
+    finally:
+        socket.getaddrinfo = orig

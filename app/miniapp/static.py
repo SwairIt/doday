@@ -22,20 +22,25 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
   try { tg.expand(); } catch (e) {}
   try { tg.disableVerticalSwipes(); } catch (e) {}
 
-  // 2. Sync CSS-vars с Telegram theme
-  function applyTheme() {
-    const p = tg.themeParams || {};
-    const root = document.documentElement.style;
-    if (p.bg_color) root.setProperty('--tg-bg', p.bg_color);
-    if (p.text_color) root.setProperty('--tg-text', p.text_color);
-    if (p.hint_color) root.setProperty('--tg-hint', p.hint_color);
-    if (p.link_color) root.setProperty('--tg-link', p.link_color);
-    if (p.button_color) root.setProperty('--tg-button', p.button_color);
-    if (p.button_text_color) root.setProperty('--tg-button-text', p.button_text_color);
-    if (p.secondary_bg_color) root.setProperty('--tg-secondary-bg', p.secondary_bg_color);
+  // 2. Lock dark theme. Telegram themeParams игнорируем — наш UI спроектирован
+  //    под тёмный фиолет (rgba-overlays, *-500/15 chips). Светлая TG-тема юзера
+  //    ломала бы всю палитру. Вместо этого «толкаем» наш bg/header в TG, чтобы
+  //    chrome-бар miniapp'a над контентом тоже стал тёмным.
+  const DARK = {
+    bg: '#0f0f1a',
+    secondaryBg: '#1c1c2e',
+    headerBg: '#0f0f1a',
+  };
+  function lockDarkTheme() {
+    try { tg.setHeaderColor(DARK.headerBg); } catch (e) {
+      try { tg.setHeaderColor('secondary_bg_color'); } catch (_) {}
+    }
+    try { tg.setBackgroundColor(DARK.bg); } catch (e) {}
+    try { tg.setBottomBarColor && tg.setBottomBarColor(DARK.secondaryBg); } catch (e) {}
   }
-  applyTheme();
-  tg.onEvent('themeChanged', applyTheme);
+  lockDarkTheme();
+  // Если юзер переключает тему TG — снова перекрашиваем header под dark.
+  tg.onEvent('themeChanged', lockDarkTheme);
 
   // 3. Auto-auth: шлём initData на /miniapp/auth, ставим cookie.
   //    На любой странице:

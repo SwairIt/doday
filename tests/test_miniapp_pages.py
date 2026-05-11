@@ -33,7 +33,8 @@ async def test_miniapp_assets_js_served(client: AsyncClient) -> None:
     assert r.status_code == 200
     assert "javascript" in r.headers["content-type"]
     assert "Telegram.WebApp" in r.text
-    assert "applyTheme" in r.text
+    assert "lockDarkTheme" in r.text  # dark theme is forced — no light fallback
+    assert "setHeaderColor" in r.text
     assert "attemptAuth" in r.text
     # Auth-success on link-page should redirect to /miniapp/
     assert "if (onLinkPage)" in r.text or "onLinkPage" in r.text

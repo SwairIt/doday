@@ -20,6 +20,7 @@ restart-on-failure. BOT_TOKEN из app/.env (settings.telegram_bot_token).
 from __future__ import annotations
 
 import logging
+import socket
 from datetime import UTC, datetime, timedelta
 from datetime import time as dtime
 from typing import Any
@@ -57,6 +58,24 @@ from app.tasks.service import create_task
 from app.telegram.service import complete_link, get_user_by_chat, unlink
 
 logger = logging.getLogger("doday.telegram")
+
+
+def _force_ipv4_resolve() -> None:
+    """Monkey-patch socket.getaddrinfo → AF_INET only.
+
+    На проде systemd-resolved отдаёт только AAAA для api.telegram.org, и httpx
+    висит 30s на недоступной IPv6-сети. Force-IPv4 убирает баг без sudo-правки
+    /etc/hosts. Idempotent — повторный вызов overwrite'нет нашим же patched.
+    """
+    orig = socket.getaddrinfo
+
+    def _ipv4_only(host: Any, *args: Any, **kwargs: Any) -> Any:
+        if "family" not in kwargs or kwargs["family"] == 0:
+            kwargs["family"] = socket.AF_INET
+        return orig(host, *args, **kwargs)
+
+    socket.getaddrinfo = _ipv4_only
+
 
 # Single async engine + sessionmaker reused across handlers — bot долгоживущий.
 _engine = None
@@ -430,6 +449,8 @@ async def _job_morning_digest(context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 def build_app() -> Application[Any, Any, Any, Any, Any, Any]:
+    # IPv4-only DNS — должен сработать ДО первого httpx.AsyncClient.
+    _force_ipv4_resolve()
     settings = get_settings()
     if not settings.telegram_bot_token:
         raise RuntimeError("TELEGRAM_BOT_TOKEN не задан в .env — bot worker не стартует")
@@ -446,11 +467,12 @@ def build_app() -> Application[Any, Any, Any, Any, Any, Any]:
     application.add_handler(CommandHandler("unlink", cmd_unlink))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_unknown_text))
 
-    # Set default chat menu button to WebApp на старте — это переживает
-    # рестарт бота (если кто-то ресетит кнопку через BotFather, рестарт
-    # вернёт её на место).
+    # Post-init: при старте бота
+    #   1. ставим default chat menu button → WebApp Mini App;
+    #   2. регистрируем команды через setMyCommands → юзер видит подсказки при "/";
+    # Обе операции идемпотентны, переживают перезапуск.
     async def _post_init(app: Application[Any, Any, Any, Any, Any, Any]) -> None:
-        from telegram import MenuButtonWebApp, WebAppInfo
+        from telegram import BotCommand, MenuButtonWebApp, WebAppInfo
 
         base = settings.app_base_url or "https://getdoday.ru"
         webapp_url = base.rstrip("/") + "/miniapp/"
@@ -461,6 +483,21 @@ def build_app() -> Application[Any, Any, Any, Any, Any, Any]:
             logger.info("default chat menu button set to %s", webapp_url)
         except Exception as e:
             logger.warning("failed to set default menu button: %s", e)
+
+        commands = [
+            BotCommand("app", "Открыть Mini App"),
+            BotCommand("add", "Добавить задачу: /add купить молоко завтра !!! @дом"),
+            BotCommand("today", "Задачи на сегодня + просрочка"),
+            BotCommand("upcoming", "Задачи на 7 дней"),
+            BotCommand("done", "Что закрыто сегодня"),
+            BotCommand("help", "Справка по командам"),
+            BotCommand("unlink", "Отвязать этот чат"),
+        ]
+        try:
+            await app.bot.set_my_commands(commands)
+            logger.info("registered %d bot commands", len(commands))
+        except Exception as e:
+            logger.warning("failed to set commands: %s", e)
 
     application.post_init = _post_init
 
