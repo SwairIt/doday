@@ -5,9 +5,38 @@
 <script>window.dodayCurrentProject = "{{ project.id }}";</script>
 {% include "miniapp/_partials/quickadd.html" %}
 
-<header class="flex items-center gap-3 mb-4">
+<header class="flex items-center gap-3 mb-4"
+        x-data="{
+          view: localStorage.getItem('doday-project-view-' + '{{ project.id }}') || 'list',
+          setView(v) {
+            this.view = v;
+            localStorage.setItem('doday-project-view-' + '{{ project.id }}', v);
+            if (window.dodayHaptic) window.dodayHaptic.light();
+            window.location.href = '/miniapp/projects/{{ project.id }}?view=' + v;
+          },
+          newSecOpen: false, newSecName: '', secBusy: false, secErr: '',
+          async createSection() {
+            if (!this.newSecName.trim() || this.secBusy) return;
+            this.secBusy = true; this.secErr = '';
+            try {
+              const r = await fetch('/miniapp/api/projects/{{ project.id }}/sections', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({name: this.newSecName}),
+                credentials: 'include',
+              });
+              if (r.ok) {
+                window.dodayHaptic && window.dodayHaptic.success();
+                window.location.reload();
+                return;
+              }
+              this.secErr = 'не получилось';
+            } catch(e) { this.secErr = 'нет сети'; }
+            this.secBusy = false;
+          }
+        }">
   <a href="/miniapp/projects"
-     class="w-8 h-8 rounded-lg bg-[var(--surface-2)] flex items-center justify-center active:scale-95 transition"
+     class="w-8 h-8 rounded-lg bg-[var(--surface-2)] flex items-center justify-center active:scale-95 transition shrink-0"
      aria-label="К списку проектов">
     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
       <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
@@ -17,19 +46,92 @@
   <h1 class="text-xl font-bold flex-1 truncate">
     {% if project.is_inbox %}📥 {% endif %}{{ project.name }}
   </h1>
+  {# View-toggle (K2) — list ↔ kanban #}
+  <div class="flex items-center bg-[var(--surface-2)] rounded-lg p-0.5">
+    <button @click="setView('list')"
+            :class="view === 'list' ? 'bg-[var(--accent)] text-[var(--tg-button-text)]' : 'text-[var(--text-muted)]'"
+            class="px-2 py-1 rounded-md text-[10px] font-bold transition" title="Список">📋</button>
+    <button @click="setView('kanban')"
+            :class="view === 'kanban' ? 'bg-[var(--accent)] text-[var(--tg-button-text)]' : 'text-[var(--text-muted)]'"
+            class="px-2 py-1 rounded-md text-[10px] font-bold transition" title="Доска">📊</button>
+  </div>
+
+  {# Inline new-section sheet (K1) #}
+  <div x-show="newSecOpen" x-cloak class="fixed inset-0 z-50">
+    <div class="absolute inset-0 bg-black/40" @click="newSecOpen = false"></div>
+    <div class="absolute left-0 right-0 bottom-0 bg-[var(--bg)] rounded-t-2xl p-4 pb-6"
+         style="padding-bottom: env(safe-area-inset-bottom);">
+      <div class="w-10 h-1 rounded-full bg-[var(--text-muted)]/40 mx-auto mb-3"></div>
+      <h2 class="text-base font-semibold mb-3">Новая секция</h2>
+      <form @submit.prevent="createSection()">
+        <input type="text" x-model="newSecName" placeholder="Название" maxlength="100"
+               class="w-full px-3 py-2.5 rounded-xl bg-[var(--surface-2)] border border-[var(--border)] text-sm focus:outline-none focus:border-[var(--accent)] mb-3">
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" @click="newSecOpen = false"
+                  class="px-4 py-3 rounded-xl bg-[var(--surface-2)] text-[var(--text)] text-sm">Отмена</button>
+          <button type="submit" :disabled="secBusy || !newSecName.trim()"
+                  class="px-4 py-3 rounded-xl bg-[var(--accent)] text-[var(--tg-button-text)] font-semibold text-sm disabled:opacity-50 active:scale-95 transition">
+            Создать
+          </button>
+        </div>
+        <p x-show="secErr" x-cloak class="text-[10px] text-rose-400 mt-2" x-text="secErr"></p>
+      </form>
+    </div>
+  </div>
 </header>
 
-{% if tasks %}
-  <div class="space-y-1.5">
-    {% for task in tasks %}
-      {% include "miniapp/_partials/task_card.html" %}
-    {% endfor %}
+{% set view = request.query_params.get('view') or 'list' %}
+
+{% if view == 'kanban' %}
+  {# ===== Kanban view (K3) — columns + horizontal scroll ===== #}
+  <div class="overflow-x-auto -mx-4 px-4 pb-2" style="scrollbar-width: thin;">
+    <div class="flex gap-3" style="min-width: max-content;">
+      {# «Без секции» колонка если есть задачи без section_id #}
+      {% if tasks_no_section %}
+        <div class="kanban-col" data-section-id="">
+          <div class="text-[11px] uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2 px-1">
+            Без секции · {{ tasks_no_section | length }}
+          </div>
+          <div class="kanban-col-body space-y-1.5" data-section-drop="">
+            {% for task in tasks_no_section %}
+              {% include "miniapp/_partials/task_card.html" %}
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+      {% for section in sections %}
+        <div class="kanban-col" data-section-id="{{ section.id }}">
+          <div class="text-[11px] uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2 px-1 flex items-center justify-between">
+            <span>{{ section.name }} · {{ tasks_by_section[section.id] | length }}</span>
+          </div>
+          <div class="kanban-col-body space-y-1.5 min-h-[100px]" data-section-drop="{{ section.id }}">
+            {% for task in tasks_by_section[section.id] %}
+              {% include "miniapp/_partials/task_card.html" %}
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+      {# «+ Колонка» в конце #}
+      <button @click="newSecOpen = true; $nextTick(() => document.querySelector('[x-model=newSecName]').focus())"
+              class="kanban-col-add shrink-0 w-32 rounded-xl border-2 border-dashed border-[var(--border)] text-[var(--text-muted)] text-xs active:scale-95 transition flex items-center justify-center">
+        + Колонка
+      </button>
+    </div>
   </div>
 {% else %}
-  <div class="text-center py-12">
-    {% include "miniapp/_partials/empty_inbox.html" %}
-    <p class="text-sm text-[var(--text-muted)]">В этом проекте пока пусто. Используй поле сверху чтобы добавить задачу.</p>
-  </div>
+  {# ===== List view (default) ===== #}
+  {% if tasks %}
+    <div class="space-y-1.5">
+      {% for task in tasks %}
+        {% include "miniapp/_partials/task_card.html" %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center py-12">
+      {% include "miniapp/_partials/empty_inbox.html" %}
+      <p class="text-sm text-[var(--text-muted)]">В этом проекте пока пусто. Используй поле сверху чтобы добавить задачу.</p>
+    </div>
+  {% endif %}
 {% endif %}
 
 {% endblock %}

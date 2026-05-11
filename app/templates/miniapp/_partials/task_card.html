@@ -10,7 +10,7 @@
 {% set proj_color = (project_color_map[task.project_id] if project_color_map and task.project_id in project_color_map else 'violet') %}
 {% set prio_class = {'p1': 'rose', 'p2': 'amber', 'p3': 'sky', 'p4': 'slate'}[task.priority.value] %}
 {% set has_chips = task.priority.value != 'p4' or task.due_at or task.recurrence %}
-<div class="swipe-row" data-task-id="{{ task.id }}" data-priority="{{ task.priority.value }}" data-project-id="{{ task.project_id }}" {% if not is_done %}data-swipeable="1"{% endif %}>
+<div class="swipe-row" data-task-id="{{ task.id }}" data-priority="{{ task.priority.value }}" data-project-id="{{ task.project_id }}" data-orig-section="{{ task.section_id or '' }}" {% if not is_done %}data-swipeable="1"{% endif %}>
   <div class="swipe-action swipe-action-left">
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
       <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>

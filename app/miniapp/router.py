@@ -483,9 +483,28 @@ async def project_view(
     )
     tasks = list(rows.scalars().all())
 
+    # ζ K2+K3: для kanban-view загрузим sections + сгруппируем задачи
+    from app.sections.models import Section as _Section
+
+    sec_rows = await session.execute(
+        select(_Section)
+        .where(_Section.user_id == user.id, _Section.project_id == pid)
+        .order_by(_Section.position)
+    )
+    sections = list(sec_rows.scalars().all())
+    # Распределяем tasks по sections (включая «Без секции»)
+    tasks_no_section = [t for t in tasks if t.section_id is None]
+    tasks_by_section: dict[object, list[Task]] = {s.id: [] for s in sections}
+    for t in tasks:
+        if t.section_id and t.section_id in tasks_by_section:
+            tasks_by_section[t.section_id].append(t)
+
     ctx = _ctx(request, user)
     ctx["project"] = project
     ctx["tasks"] = tasks
+    ctx["sections"] = sections
+    ctx["tasks_by_section"] = tasks_by_section
+    ctx["tasks_no_section"] = tasks_no_section
     ctx["project_color_map"] = await _project_color_map(session, user.id)
     return templates.TemplateResponse(request, "miniapp/project.html", ctx)
 
@@ -792,6 +811,7 @@ async def _task_to_dict(session: DbSession, task: Task) -> dict[str, object]:
         "recurrence": task.recurrence,
         "pinned_at": task.pinned_at.isoformat() if task.pinned_at else None,
         "parent_task_id": str(task.parent_task_id) if task.parent_task_id else None,
+        "section_id": str(task.section_id) if task.section_id else None,
         "subtask_stats": {"done": subtask_done, "total": subtask_total},
         "age_days": age_days,
     }
@@ -942,6 +962,7 @@ class TaskPatchIn(BaseModel):
     label_ids: list[str] | None = None  # replace labels (V4)
     recurrence: str | None = None  # daily/weekly/monthly/yearly или "" to clear (V5)
     toggle_pin: bool | None = None  # toggle pinned_at (V5)
+    section_id: str | None = None  # UUID — для kanban drag (ζ K4), "" чтоб убрать
 
 
 @router.patch("/api/tasks/{task_id}")
@@ -1031,6 +1052,28 @@ async def api_patch_task(
             return JSONResponse({"error": "bad_recurrence"}, status_code=400)
     if payload.toggle_pin:
         task.pinned_at = None if task.pinned_at else datetime.now(UTC)
+    if payload.section_id is not None:
+        if payload.section_id == "":
+            task.section_id = None
+        else:
+            from uuid import UUID as _UUID
+
+            from app.sections.models import Section as _Section
+
+            try:
+                new_section_id = _UUID(payload.section_id)
+            except ValueError:
+                return JSONResponse({"error": "bad_section_id"}, status_code=400)
+            sec = (
+                await session.execute(
+                    select(_Section).where(
+                        _Section.id == new_section_id, _Section.user_id == user.id
+                    )
+                )
+            ).scalar_one_or_none()
+            if sec is None:
+                return JSONResponse({"error": "section_not_found"}, status_code=404)
+            task.section_id = new_section_id
     await session.commit()
     await session.refresh(task)
     return JSONResponse(await _task_to_dict(session, task))
@@ -1404,6 +1447,113 @@ async def api_heatmap(user: CurrentUser, session: DbSession) -> JSONResponse:
     )
     counts = {str(r[0]): int(r[1]) for r in rows.all()}
     return JSONResponse({"start_date": start_date.isoformat(), "counts": counts})
+
+
+class SectionIn(BaseModel):
+    name: str
+
+
+@router.get("/api/projects/{project_id}/sections")
+async def api_list_sections(
+    project_id: str,
+    user: CurrentUser,
+    session: DbSession,
+) -> JSONResponse:
+    """Список секций проекта (ζ K1)."""
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    from uuid import UUID
+
+    from app.sections.models import Section as _Section
+
+    try:
+        pid = UUID(project_id)
+    except ValueError:
+        return JSONResponse({"error": "bad_id"}, status_code=400)
+    rows = await session.execute(
+        select(_Section)
+        .where(_Section.user_id == user.id, _Section.project_id == pid)
+        .order_by(_Section.position)
+    )
+    sections = list(rows.scalars().all())
+    return JSONResponse(
+        {"sections": [{"id": str(s.id), "name": s.name, "position": s.position} for s in sections]}
+    )
+
+
+@router.post("/api/projects/{project_id}/sections", status_code=status.HTTP_201_CREATED)
+async def api_create_section(
+    project_id: str,
+    payload: SectionIn,
+    user: CurrentUser,
+    session: DbSession,
+) -> JSONResponse:
+    """Создать новую секцию в проекте."""
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    from uuid import UUID
+
+    from app.sections.service import create_section
+
+    try:
+        pid = UUID(project_id)
+    except ValueError:
+        return JSONResponse({"error": "bad_id"}, status_code=400)
+    name = payload.name.strip()
+    if not name:
+        return JSONResponse({"error": "empty_name"}, status_code=400)
+    s = await create_section(session, user.id, project_id=pid, name=name[:100])
+    return JSONResponse(
+        {"id": str(s.id), "name": s.name, "position": s.position},
+        status_code=status.HTTP_201_CREATED,
+    )
+
+
+@router.patch("/api/sections/{section_id}")
+async def api_update_section(
+    section_id: str,
+    payload: SectionIn,
+    user: CurrentUser,
+    session: DbSession,
+) -> JSONResponse:
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    from uuid import UUID
+
+    from app.sections.service import SectionNotFound, update_section
+
+    try:
+        sid = UUID(section_id)
+    except ValueError:
+        return JSONResponse({"error": "bad_id"}, status_code=400)
+    try:
+        s = await update_section(session, user.id, sid, name=payload.name.strip()[:100])
+    except SectionNotFound:
+        return JSONResponse({"error": "not_found"}, status_code=404)
+    return JSONResponse({"id": str(s.id), "name": s.name, "position": s.position})
+
+
+@router.delete("/api/sections/{section_id}")
+async def api_delete_section(
+    section_id: str,
+    user: CurrentUser,
+    session: DbSession,
+) -> JSONResponse:
+    if user is None:
+        return JSONResponse({"error": "auth_required"}, status_code=401)
+    from uuid import UUID
+
+    from app.sections.service import SectionNotFound, delete_section
+
+    try:
+        sid = UUID(section_id)
+    except ValueError:
+        return JSONResponse({"error": "bad_id"}, status_code=400)
+    try:
+        await delete_section(session, user.id, sid)
+    except SectionNotFound:
+        return JSONResponse({"error": "not_found"}, status_code=404)
+    return JSONResponse({"ok": True})
 
 
 @router.get("/api/labels")

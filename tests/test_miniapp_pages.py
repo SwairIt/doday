@@ -504,6 +504,62 @@ async def test_task_card_renders_pin_description_labels(
     assert "@home" in body
 
 
+async def test_sections_crud_and_kanban(
+    db_session: AsyncSession, logged_in_client: AsyncClient
+) -> None:
+    """ζ K1+K2+K3+K4: sections CRUD + kanban view + move task between sections."""
+    from sqlalchemy import select
+
+    from app.auth.models import User
+    from app.projects.service import create_project
+
+    user = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    proj = await create_project(db_session, user.id, name="Kanban project", color="violet")
+    await db_session.commit()
+
+    # No sections initially
+    r = await logged_in_client.get(f"/miniapp/api/projects/{proj.id}/sections")
+    assert r.status_code == 200
+    assert r.json() == {"sections": []}
+
+    # Create section
+    r = await logged_in_client.post(
+        f"/miniapp/api/projects/{proj.id}/sections", json={"name": "Todo"}
+    )
+    assert r.status_code == 201
+    sec_id = r.json()["id"]
+
+    # Rename
+    r = await logged_in_client.patch(f"/miniapp/api/sections/{sec_id}", json={"name": "В работе"})
+    assert r.status_code == 200
+    assert r.json()["name"] == "В работе"
+
+    # Create task в проекте + перенести в section через PATCH
+    from app.tasks.service import create_task as svc_create_task
+
+    task = await svc_create_task(db_session, user.id, title="K4", project_id=proj.id)
+    await db_session.commit()
+
+    r = await logged_in_client.patch(f"/miniapp/api/tasks/{task.id}", json={"section_id": sec_id})
+    assert r.status_code == 200
+    assert r.json()["section_id"] == sec_id
+
+    # Kanban-view рендерит секции и задачи
+    r = await logged_in_client.get(f"/miniapp/projects/{proj.id}?view=kanban")
+    assert r.status_code == 200
+    body = r.text
+    assert "В работе" in body
+    assert "kanban-col" in body
+    assert "data-section-drop" in body
+    assert "K4" in body  # task title rendered
+
+    # Delete section
+    r = await logged_in_client.delete(f"/miniapp/api/sections/{sec_id}")
+    assert r.status_code == 200
+
+
 async def test_reminder_crud(db_session: AsyncSession, logged_in_client: AsyncClient) -> None:
     """ε N1+N2: GET/POST/DELETE /miniapp/api/tasks/<id>/reminders + /api/reminders/<id>."""
     from datetime import UTC, datetime, timedelta

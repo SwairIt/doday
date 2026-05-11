@@ -320,10 +320,10 @@ Telegram Mini App** среди todo-аппов. Пользователь дал 
 - [x] N4 — Morning digest ✅ (overdue alerts отложены, можно добавить позже одним коммитом)
 
 ## Фаза ζ — Sections + Kanban
-- [ ] K1 — Section endpoints + bottom-sheet
-- [ ] K2 — Project view toggle
-- [ ] K3 — Kanban rendering
-- [ ] K4 — Drag-and-drop между sections
+- [x] K1 — Section endpoints + bottom-sheet ✅
+- [x] K2 — Project view toggle ✅
+- [x] K3 — Kanban rendering ✅
+- [x] K4 — Drag-and-drop между sections ✅
 
 ## Фаза η — Comments + Notes
 - [ ] C1 — Markdown notes

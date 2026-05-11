@@ -519,12 +519,25 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
       } else {
         target.parentNode.insertBefore(dragState.row, target.nextSibling);
       }
-      // Reset baseline после move в DOM, чтобы transform не «прыгал»
       const newRect = dragState.row.getBoundingClientRect();
       dragState.startY = t.clientY;
       dragState.offsetY = t.clientY - newRect.top;
       dragState.row.style.transform = 'translateY(0) scale(1.03) rotate(-1deg)';
+    } else {
+      // ζ K4: target пустая kanban-колонка (нет других карточек)
+      const emptyCol = under && under.closest('[data-section-drop]');
+      if (emptyCol && !emptyCol.contains(dragState.row)) {
+        emptyCol.appendChild(dragState.row);
+        const newRect = dragState.row.getBoundingClientRect();
+        dragState.startY = t.clientY;
+        dragState.offsetY = t.clientY - newRect.top;
+        dragState.row.style.transform = 'translateY(0) scale(1.03) rotate(-1deg)';
+      }
     }
+    // Подсветить активную kanban-колонку
+    document.querySelectorAll('.kanban-col.drag-target').forEach(c => c.classList.remove('drag-target'));
+    const overCol = under && under.closest('.kanban-col');
+    if (overCol) overCol.classList.add('drag-target');
   }, { passive: false });
 
   document.addEventListener('touchend', async () => {
@@ -533,8 +546,27 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
     row.style.transform = '';
     row.classList.remove('dragging');
     document.body.classList.remove('miniapp-dragging');
+    document.querySelectorAll('.kanban-col.drag-target').forEach(c => c.classList.remove('drag-target'));
     dragState = null;
-    // Collect ordered ids в этом проекте
+    // ζ K4: если карточка осталась в другой kanban-col → PATCH section_id
+    const currentCol = row.closest('[data-section-drop]');
+    const taskId = row.getAttribute('data-task-id');
+    if (currentCol) {
+      const newSection = currentCol.getAttribute('data-section-drop') || '';
+      const origSection = row.getAttribute('data-orig-section') || '';
+      if (newSection !== origSection) {
+        try {
+          await fetch('/miniapp/api/tasks/' + taskId, {
+            method: 'PATCH',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({section_id: newSection}),
+            credentials: 'include',
+          });
+          row.setAttribute('data-orig-section', newSection);
+        } catch (e) {}
+      }
+    }
+    // Collect ordered ids в этом проекте — reorder в пределах одной section
     const siblings = Array.from(
       document.querySelectorAll('[data-task-id][data-project-id="' + projectId + '"]')
     ).map(el => el.getAttribute('data-task-id'));
