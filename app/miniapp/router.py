@@ -139,6 +139,36 @@ def _require_user_or_redirect(user: object, telegram_user_id: int | None = None)
     return RedirectResponse(url=url, status_code=status.HTTP_303_SEE_OTHER)
 
 
+def _greeting_for(user_obj: object, hour: int) -> dict[str, str]:
+    """Time-aware greeting. Возвращает {emoji, text, subtext_kind}.
+
+    Hours: 5-10 утро / 11-16 день / 17-22 вечер / 23-4 ночь.
+    `name` берётся из user.first_name если есть, иначе из email-local-part.
+    """
+    if user_obj is None or not hasattr(user_obj, "email"):
+        name = ""
+    else:
+        fn = getattr(user_obj, "first_name", None) or ""
+        name = fn.strip() if isinstance(fn, str) else ""
+        if not name:
+            email = getattr(user_obj, "email", "") or ""
+            name = email.split("@", 1)[0] if email else ""
+        # capitalize если lower-case (email-local часто всё в нижнем регистре)
+        if name and name == name.lower():
+            name = name[0].upper() + name[1:]
+
+    if 5 <= hour < 11:
+        emoji, text = "🌅", "Доброе утро"
+    elif 11 <= hour < 17:
+        emoji, text = "☀️", "Добрый день"
+    elif 17 <= hour < 23:
+        emoji, text = "🌆", "Добрый вечер"
+    else:
+        emoji, text = "🌙", "Спокойной ночи"
+    full = f"{text}, {name}" if name else text
+    return {"emoji": emoji, "text": full}
+
+
 @router.get("/", response_class=HTMLResponse)
 async def today(request: Request, user: CurrentUser, session: DbSession) -> Response:
     redir = _require_user_or_redirect(user)
@@ -147,7 +177,11 @@ async def today(request: Request, user: CurrentUser, session: DbSession) -> Resp
     if user is None:  # pragma: no cover — narrow для mypy
         return RedirectResponse(url="/miniapp/link", status_code=status.HTTP_303_SEE_OTHER)
 
-    today_date = datetime.now(UTC).date()
+    now = datetime.now(UTC)
+    today_date = now.date()
+    # Локальное время юзера приближённо: TG WebView не передаёт TZ, берём UTC
+    # как baseline; +3 за Moscow если хотим, но универсальнее — оставить UTC
+    greeting = _greeting_for(user, now.hour)
     tasks = await list_today(session, user.id)
     overdue = [t for t in tasks if t.due_at and t.due_at.date() < today_date]
     today_tasks = [t for t in tasks if t.due_at and t.due_at.date() >= today_date]
@@ -175,6 +209,7 @@ async def today(request: Request, user: CurrentUser, session: DbSession) -> Resp
         done_today_count=done_today_count,
         completed_today=completed_today,
         project_color_map=await _project_color_map(session, user.id),
+        greeting=greeting,
     )
     return templates.TemplateResponse(request, "miniapp/today.html", ctx)
 

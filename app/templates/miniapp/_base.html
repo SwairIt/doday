@@ -114,6 +114,16 @@
     .swipe-row.swiping .swipe-content { transition: none; }
     .swipe-row.removed .swipe-content { transform: translateX(-110%) !important; opacity: 0; transition: transform .3s ease, opacity .3s ease; }
     .swipe-row.snoozed .swipe-content { transform: translateX(110%) !important; opacity: 0; transition: transform .3s ease, opacity .3s ease; }
+    .swipe-row.completing { max-height: 200px; overflow: hidden; transition: max-height .35s var(--spring-soft), opacity .25s ease; }
+    .swipe-row.completing.removed { max-height: 0; margin: 0; padding: 0; opacity: 0; }
+
+    /* A4: checkbox-complete pulse animation. */
+    @keyframes checkbox-pulse {
+      0%   { transform: scale(1); box-shadow: 0 0 0 0 var(--accent); }
+      50%  { transform: scale(1.35); box-shadow: 0 0 0 8px rgba(124,58,237,0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(124,58,237,0); }
+    }
+    [data-task-toggle].pulsing { animation: checkbox-pulse 350ms var(--spring); }
 
     .swipe-action {
       position: absolute;
@@ -182,11 +192,50 @@
       filter: blur(8px);
     }
     .hero-wrap { position: relative; }
+    /* A5: hero-blob slow-float */
+    .hero-blob { animation: blob-drift 8s ease-in-out infinite alternate; }
+    @keyframes blob-drift {
+      0%   { transform: translate(0, 0) scale(1); opacity: 0.7; }
+      100% { transform: translate(12px, 6px) scale(1.1); opacity: 1; }
+    }
+
+    /* A5: empty-state иллюстрации subtle anim. */
+    @keyframes empty-pulse {
+      0%, 100% { transform: scale(1); }
+      50%      { transform: scale(1.05); }
+    }
+    @keyframes empty-rotate {
+      0% { transform: rotate(-2deg); }
+      100% { transform: rotate(2deg); }
+    }
+    .empty-illustration { animation: empty-pulse 3.5s ease-in-out infinite; }
+    .empty-illustration--rotate { animation: empty-rotate 3s ease-in-out infinite alternate; }
 
     @keyframes spin {
       from { transform: translate(-50%, 20%) rotate(0deg); }
       to   { transform: translate(-50%, 20%) rotate(360deg); }
     }
+
+    /* Spring-easing baseline (A2). Все interactive elements получают
+       overshoot-spring при transition. */
+    :root {
+      --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+      --spring-soft: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    button, a, .swipe-content, .task-card, .miniapp-nav a,
+    [data-task-toggle], details summary {
+      transition-timing-function: var(--spring);
+    }
+    button:active, a:active {
+      transform: scale(0.95);
+    }
+    /* Tap-feedback на task-card */
+    .swipe-content:active:not(.swiping) {
+      transform: scale(0.985);
+      transition: transform 100ms var(--spring-soft);
+    }
+    /* Sheet open animation использует spring */
+    [x-transition\:enter] { transition-timing-function: var(--spring-soft) !important; }
   </style>
 </head>
 <body>

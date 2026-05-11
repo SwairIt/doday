@@ -175,6 +175,30 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
     }
   }
 
+  // A3: micro-confetti-burst из точки источника при complete.
+  //     8 частиц физикой по приоритету-цвету.
+  function burstConfettiAt(x, y, priorityColor) {
+    if (!window.confetti) return;
+    const colorMap = {
+      p1: ['#fb7185', '#f87171'],
+      p2: ['#fbbf24', '#fb923c'],
+      p3: ['#38bdf8', '#60a5fa'],
+      p4: ['#a78bfa', '#c4b5fd'],
+    };
+    const colors = colorMap[priorityColor || 'p4'] || colorMap.p4;
+    try {
+      window.confetti({
+        particleCount: 8,
+        spread: 50,
+        startVelocity: 18,
+        gravity: 1.2,
+        scalar: 0.7,
+        origin: { x: x / window.innerWidth, y: y / window.innerHeight },
+        colors,
+      });
+    } catch (e) {}
+  }
+
   async function commitComplete(taskId) {
     try {
       await fetch('/miniapp/api/tasks/' + taskId + '/complete', {
@@ -204,6 +228,9 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
     if (dx <= -SWIPE_THRESHOLD) {
       // Complete (свайп влево)
       window.dodayHaptic && window.dodayHaptic.success();
+      const rect = row.getBoundingClientRect();
+      const prio = row.getAttribute('data-priority') || 'p4';
+      burstConfettiAt(rect.left + rect.width * 0.5, rect.top + rect.height * 0.5, prio);
       row.classList.add('removed');
       commitComplete(taskId);
       setTimeout(() => row.remove(), 300);
@@ -274,10 +301,25 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
       e.preventDefault();
       const taskId = checkboxBtn.getAttribute('data-task-toggle');
       const row = checkboxBtn.closest('[data-task-id]');
-      if (row) row.classList.add('removed');
+      const rect = checkboxBtn.getBoundingClientRect();
+      const prio = row && row.getAttribute('data-priority') || 'p4';
+      // A4: pulse чекбокс перед removal.
+      checkboxBtn.classList.add('pulsing');
+      setTimeout(() => checkboxBtn.classList.remove('pulsing'), 350);
+      burstConfettiAt(rect.left + rect.width / 2, rect.top + rect.height / 2, prio);
       window.dodayHaptic && window.dodayHaptic.success();
+      // Delay row-removal чтобы pulse-animation отыграл
+      setTimeout(() => {
+        if (row) {
+          row.classList.add('completing');
+          // Force layout, then add removed
+          // eslint-disable-next-line no-unused-expressions
+          row.offsetHeight;
+          row.classList.add('removed');
+        }
+      }, 200);
       await commitComplete(taskId);
-      setTimeout(() => row && row.remove(), 300);
+      setTimeout(() => row && row.remove(), 600);
       return;
     }
     // Если клик на самой карточке (не на чекбоксе) — открыть sheet

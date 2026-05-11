@@ -4,21 +4,39 @@
 
 {% include "miniapp/_partials/quickadd.html" %}
 
+{# Greeting hero — time-aware приветствие. A1. #}
+<section class="hero-wrap mb-4">
+  <div class="hero-blob"></div>
+  <div class="relative">
+    <p class="text-2xl font-bold leading-tight">
+      <span class="text-3xl mr-1">{{ greeting.emoji }}</span>
+      <span>{{ greeting.text }}</span>
+    </p>
+    <p class="text-sm text-[var(--text-muted)] mt-0.5">
+      {% if overdue %}
+        {{ overdue | length }} просроченных и {{ today | length }} на сегодня
+      {% elif today %}
+        {{ today | length }} {% if today | length == 1 %}задача{% elif today | length < 5 %}задачи{% else %}задач{% endif %} на сегодня
+      {% elif done_today_count > 0 %}
+        Всё закрыто, отдыхай 🎉
+      {% else %}
+        План пуст — добавь первую задачу
+      {% endif %}
+    </p>
+  </div>
+</section>
+
 {# Header — streak + прогресс-кольцо «N/M закрыто» #}
 <header class="hero-wrap flex items-center gap-4 mb-5">
-  <div class="hero-blob"></div>
   <div class="flex-1">
-    <h1 class="text-2xl font-bold">Сегодня</h1>
     {% if today_total > 0 %}
       <p class="text-sm text-[var(--text-muted)]">
-        {{ done_today_count }} из {{ done_today_count + today_total }} закрыто
+        Закрыто <strong class="text-[var(--text)]">{{ done_today_count }}</strong> из {{ done_today_count + today_total }}
       </p>
     {% else %}
       <p class="text-sm text-[var(--text-muted)]">
         {% if done_today_count > 0 %}
-          🎉 всё закрыто, отдыхай
-        {% else %}
-          задач не запланировано
+          🎉 закрыто {{ done_today_count }}
         {% endif %}
       </p>
     {% endif %}

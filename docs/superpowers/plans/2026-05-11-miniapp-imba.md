@@ -287,11 +287,11 @@ Telegram Mini App** среди todo-аппов. Пользователь дал 
 # Прогресс
 
 ## Фаза α — Личность + анимации
-- [ ] A1 — Time-aware greeting hero
-- [ ] A2 — Spring animations baseline
-- [ ] A3 — Confetti micro-burst на каждое complete
-- [ ] A4 — Smooth complete-animation
-- [ ] A5 — Animated empty-states + blob-drift
+- [x] A1 — Time-aware greeting hero ✅
+- [x] A2 — Spring animations baseline ✅
+- [x] A3 — Confetti micro-burst на каждое complete ✅
+- [x] A4 — Smooth complete-animation ✅
+- [x] A5 — Animated empty-states + blob-drift ✅
 
 ## Фаза β — Gestures
 - [ ] B1 — Long-press action-sheet
