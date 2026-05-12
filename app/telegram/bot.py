@@ -526,44 +526,8 @@ def build_app() -> Application[Any, Any, Any, Any, Any, Any]:
         except Exception as e:
             logger.warning("failed to set commands: %s", e)
 
-    # Connect к api.telegram.org через hardcoded IP — асинхронный resolver
-    # httpx/anyio обходит наш socket.getaddrinfo monkey-patch (точная причина
-    # неясна — anyio видимо хранит resolved address кэшированно где-то ниже
-    # event_loop.getaddrinfo). Поэтому проще всего поменять base_url на IP +
-    # отключить hostname-verify (TLS-cert серверу всё равно валиден; в момент
-    # коннекта Host-header выставляется ptb из URL'a).
-    import ssl
-
-    from telegram.request import HTTPXRequest
-
-    _ssl_ctx = ssl.create_default_context()
-    _ssl_ctx.check_hostname = False
-    _ssl_ctx.verify_mode = ssl.CERT_NONE
-    _request = HTTPXRequest(
-        connection_pool_size=8,
-        connect_timeout=15.0,
-        read_timeout=30.0,
-        write_timeout=15.0,
-        pool_timeout=10.0,
-        httpx_kwargs={"verify": _ssl_ctx},
-    )
-    _get_updates_request = HTTPXRequest(
-        connection_pool_size=1,
-        connect_timeout=15.0,
-        read_timeout=60.0,
-        write_timeout=15.0,
-        pool_timeout=10.0,
-        httpx_kwargs={"verify": _ssl_ctx},
-    )
     application: Application[Any, Any, Any, Any, Any, Any] = (
-        Application.builder()
-        .token(settings.telegram_bot_token)
-        .base_url(f"https://{_TELEGRAM_API_IPS[0]}/bot")
-        .base_file_url(f"https://{_TELEGRAM_API_IPS[0]}/file/bot")
-        .request(_request)
-        .get_updates_request(_get_updates_request)
-        .post_init(_post_init)
-        .build()
+        Application.builder().token(settings.telegram_bot_token).post_init(_post_init).build()
     )
     application.add_handler(CommandHandler("start", cmd_start))
     application.add_handler(CommandHandler("help", cmd_help))
