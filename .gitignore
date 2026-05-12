@@ -42,3 +42,6 @@ Thumbs.db
 
 # Node (если будем добавлять Tailwind build)
 node_modules/
+
+# Temp diagnostic scripts (SSH/debug)
+.tmp_*
