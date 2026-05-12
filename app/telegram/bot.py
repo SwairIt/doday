@@ -168,19 +168,40 @@ async def _get_user_or_prompt(update: Update, session: AsyncSession) -> User | N
     return user
 
 
+def _miniapp_keyboard() -> Any:
+    """Inline-клавиатура с одной кнопкой → Mini App. Юзер открывает Doday
+    прямо внутри Telegram."""
+    from telegram import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
+
+    base = get_settings().app_base_url or "https://getdoday.ru"
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    "🚀 Открыть Doday", web_app=WebAppInfo(url=base.rstrip("/") + "/miniapp/")
+                )
+            ]
+        ]
+    )
+
+
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Юзер пишет /start или /start <token> через deeplink."""
     args = context.args or []
     chat = update.effective_chat
-    if chat is None:
+    if chat is None or update.message is None:
         return
     if not args:
-        await _reply(
-            update,
-            "Привет, я бот *Doday* — добавляю задачи в твой список из чата.\n\n"
-            "Чтобы привязать аккаунт, открой Doday → Профиль → Telegram → "
-            "нажми «Подключить». Получишь ссылку с токеном.",
-            markdown=True,
+        await update.message.reply_text(
+            "👋 *Привет! Я Doday — твой to-do прямо в Telegram.*\n\n"
+            "📱 Тапни кнопку ниже — откроется Mini App: задачи, проекты, Pomodoro, "
+            "статистика, всё прямо в чате.\n\n"
+            "Или используй команды:\n"
+            "/add — быстро добавить задачу\n"
+            "/today — что на сегодня\n"
+            "/help — полная справка",
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=_miniapp_keyboard(),
         )
         return
     token = args[0]
@@ -194,24 +215,22 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             "Сгенерируй новый в Doday → Профиль → Telegram.",
         )
         return
-    await _reply(
-        update,
-        f"✓ Готово, ты привязан как *{user.email}*.\n\n"
-        "Команды:\n"
-        "/add `купить молоко завтра !!! @дом` — задача\n"
-        "/today — задачи на сегодня\n"
-        "/upcoming — на 7 дней\n"
-        "/done — закрытые сегодня\n"
-        "/help — полная справка",
-        markdown=True,
+    await update.message.reply_text(
+        f"✅ *Готово, ты привязан как `{user.email}`*\n\n"
+        "Теперь бот может добавлять задачи, присылать напоминания и утренний дайджест.\n"
+        "Открой Mini App кнопкой ниже — там удобнее, чем в чате.",
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=_miniapp_keyboard(),
     )
 
 
 async def cmd_help(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
-    await _reply(
-        update,
-        "Команды:\n\n"
-        "*/add <текст>*  — добавить задачу. Парсер понимает:\n"
+    if update.message is None:
+        return
+    await update.message.reply_text(
+        "*Doday — команды:*\n\n"
+        "*/app* — открыть Mini App (всё там)\n"
+        "*/add* `<текст>` — добавить задачу. Парсер понимает:\n"
         "  • Даты: «сегодня», «завтра», «пн», «через 3 дня», «15 декабря»\n"
         "  • Приоритет: «!» = P4 ... «!!!!» = P1\n"
         "  • Лейблы: «@дом», «@работа»\n"
@@ -220,8 +239,9 @@ async def cmd_help(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
         "*/today* — просроченные + сегодняшние\n"
         "*/upcoming* — следующие 7 дней\n"
         "*/done* — последние 5 закрытых сегодня\n"
-        "*/unlink* — отвязать этот чат от Doday-аккаунта",
-        markdown=True,
+        "*/unlink* — отвязать этот чат от аккаунта",
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=_miniapp_keyboard(),
     )
 
 
@@ -369,21 +389,12 @@ async def cmd_unlink(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def cmd_app(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
-    """Открыть Mini App инлайн-кнопкой. Подсказка-fallback если у юзера
-    клиент не поддерживает inline-WebApp (старые версии Telegram)."""
-    from telegram import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
-
+    """Открыть Mini App инлайн-кнопкой."""
     if update.message is None:
         return
-    settings = get_settings()
-    base = settings.app_base_url or "https://getdoday.ru"
-    webapp_url = base.rstrip("/") + "/miniapp/"
-    keyboard = InlineKeyboardMarkup(
-        [[InlineKeyboardButton("Открыть Doday", web_app=WebAppInfo(url=webapp_url))]]
-    )
     await update.message.reply_text(
-        "Тапни кнопку ниже — откроется Doday прямо в Telegram.",
-        reply_markup=keyboard,
+        "📱 Тапни кнопку ниже — Doday откроется прямо в Telegram.",
+        reply_markup=_miniapp_keyboard(),
     )
 
 
@@ -391,13 +402,9 @@ async def on_unknown_text(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
     """Любой текст без / — короткая подсказка."""
     if update.message is None or update.message.text is None:
         return
-    await _reply(
-        update,
-        "Я понимаю команды через /. Самое полезное:\n"
-        "/app — открыть Mini App\n"
-        "/add <текст> — добавить задачу\n"
-        "/today — что на сегодня\n"
-        "/help — все команды",
+    await update.message.reply_text(
+        "Я понимаю команды через /. Самое удобное — открыть Mini App.",
+        reply_markup=_miniapp_keyboard(),
     )
 
 
