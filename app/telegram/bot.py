@@ -60,15 +60,13 @@ from app.telegram.service import complete_link, get_user_by_chat, unlink
 logger = logging.getLogger("doday.telegram")
 
 
-# Hardcoded IPv4 Telegram API endpoints. systemd-resolved на проде отдаёт
-# только AAAA для api.telegram.org, а IPv6-сеть оттуда не маршрутизируется.
-# Telegram держит несколько A-записей с одинаковой версией API — берём первый,
-# остальные fallback'ом по списку. IP'ы стабильны годами (DC2/DC4).
-_TELEGRAM_API_IPS = (
-    "149.154.167.220",
-    "149.154.166.110",
-    "149.154.164.220",
-)
+# Hardcoded IPv4 Telegram API. systemd-resolved отдаёт только AAAA, а
+# IPv6-сеть из прода не маршрутизируется. У Telegram несколько A-записей,
+# но **с нашего сервера маршрут есть только к 149.154.167.220** —
+# остальные DC отвечают SYN-SENT (asymmetric routing / firewall провайдера).
+# Поэтому жёстко один IP: иначе httpx выбирает random, попадает на
+# заблокированный, и polling висит на connect timeout.
+_TELEGRAM_API_IPS = ("149.154.167.220",)
 _FORCED_HOSTS = {"api.telegram.org"}
 
 
