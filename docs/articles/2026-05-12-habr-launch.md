@@ -2,7 +2,7 @@
 
 **TL;DR:** Привет, Хабр. Меня зовут Ярослав, мне 15. С 2 по 12 мая я в режиме нон-стоп писал [Doday](https://getdoday.ru) — кросс-платформенный todo: web, Telegram Mini App, чат-бот. Получилось 317 коммитов, ~40 000 строк кода, 633 теста, 38 модулей в `app/`. Стек — FastAPI + HTMX + Alpine.js + Tailwind, без единой строчки React. Писал в паре с Claude Code, и не скрываю этого — расскажу как именно и какая часть кода реально моя голова, а какая — клавиатура. Грабли, цифры, ссылки внутри.
 
-> 🚀 Сайт: [getdoday.ru](https://getdoday.ru) · бот: [@DodayTaskBot](https://t.me/DodayTaskBot) · код: [github.com/SwairIt/SchoolProject](https://github.com/SwairIt/SchoolProject) (репа со старым именем — переименование в TODO).
+> 🚀 Сайт: [getdoday.ru](https://getdoday.ru) · бот: [@DodayTaskBot](https://t.me/DodayTaskBot) · код: [github.com/SwairIt/doday](https://github.com/SwairIt/doday)
 >
 > Сейчас бета: все Pro-фичи бесплатно. Ранним юзерам Pro останется навсегда, когда вернутся подписки.
 
@@ -26,7 +26,7 @@
 
 - Задачи: приоритеты P1-P4, дедлайны, повторения (день/неделя/месяц/год), описания, лейблы, проекты, секции внутри проектов, пин, привычки, ссылки на внешние ресурсы.
 - Inbox + Today + Upcoming + Calendar (месяц/неделя) + Projects (list + kanban) + Stats + Profile.
-- [Quick-add парсер](https://github.com/SwairIt/SchoolProject/blob/master/app/quickadd/parser.py): пишешь `Купить молоко завтра !!! @дом #хозяйство` — задача, дата `завтра`, priority `!! = P2`, лейбл `@дом`, проект `#хозяйство`. Грамматика на стейт-машине, парсит русские даты «через 3 дня», «в пятницу», «15 декабря».
+- [Quick-add парсер](https://github.com/SwairIt/doday/blob/master/app/quickadd/parser.py): пишешь `Купить молоко завтра !!! @дом #хозяйство` — задача, дата `завтра`, priority `!! = P2`, лейбл `@дом`, проект `#хозяйство`. Грамматика на стейт-машине, парсит русские даты «через 3 дня», «в пятницу», «15 декабря».
 - Поиск, фильтры, шаблоны задач (повторяющиеся типа «учебная неделя»).
 - Pomodoro с серверной БД-сессией (25/5, конфигурируемо).
 - Геймификация: XP за выполнение, уровни, 16 ачивок («первая задача», «неделя без пропуска», «100 задач»), ежедневные челленджи.
@@ -50,17 +50,14 @@
 - 5 SVG-иллюстраций нарисовал руками для empty-states (никаких stock-имиджей).
 - Переключатель темы: тёмная / светлая / системная, хранится в localStorage, синхронизирует `setHeaderColor` Telegram'у чтобы chrome-бар поверх Mini App тоже перекрашивался.
 
-### Telegram-бот
+### Telegram-точка входа
 
-`@DodayTaskBot` — отдельная вселенная, не дублирующая Mini App, а дополняющая:
+`@DodayTaskBot` — это не «бот с командами», а **точка запуска Mini App**:
 
-- `/add Сходить в зал завтра !!! @спорт` — добавит задачу, парсер тот же что и в вебе.
-- `/today` — что сегодня + просрочка.
-- `/upcoming` — следующие 7 дней.
-- `/done` — что закрыл сегодня.
-- Каждое утро в 9:00 МСК — **morning digest** топ-5 задач на день (через apscheduler внутри python-telegram-bot JobQueue).
-- Reminders — если у задачи стоит reminder, бот пришлёт за указанное время.
-- Inline-кнопка `🚀 Открыть Doday` (web_app) после каждой команды — пользователь ни разу не ищет где меню.
+- В чате с ботом снизу — кнопка «Doday», тап → открывается Mini App.
+- Описание бота на странице — короткий pitch + кнопка «Запустить».
+
+Чат-команды (`/add`, `/today`, утренний дайджест, напоминания) **в работе** — на текущем хостинге провайдер блокирует исходящие соединения к 2 из 3 DC Telegram'a, polling не выживает. Делаю webhook-вариант отдельно после статьи — там Telegram сам POSTит к нам, обход и DNS и blocked DC. Пока всё через Mini App.
 
 ---
 
@@ -206,7 +203,7 @@ application = Application.builder().token(...).post_init(_post_init).build()
 - **Сайт:** [getdoday.ru](https://getdoday.ru). Заходи, регистрируйся, добавляй задачи. Бета — все Pro-фичи бесплатно.
 - **Telegram-бот:** [@DodayTaskBot](https://t.me/DodayTaskBot). `/start` → откроется приветствие с кнопкой Mini App.
 - **Mini App:** открывается прямо из бота по кнопке `Doday` или `/app`.
-- **GitHub:** [github.com/SwairIt/SchoolProject](https://github.com/SwairIt/SchoolProject). Репа со старым именем — переименование в `doday` в TODO. Лицензия MIT. Issues / PR'ы welcome.
+- **GitHub:** [github.com/SwairIt/doday](https://github.com/SwairIt/doday). Лицензия MIT. Issues / PR'ы welcome.
 
 Подписок сейчас **нет**. Когда введу — ранние юзеры grandfather'ятся: Pro останется навсегда без оплаты. Реклама не появится — productivity-апа реклама ломает focus, это анти-продукт.
 
