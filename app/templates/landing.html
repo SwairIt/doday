@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% block title %}Doday — бесплатный туду-лист для школы, работы и жизни{% endblock %}
-{% block seo_description %}Doday — бесплатный туду-лист и менеджер задач на русском. Проекты, секции, лейблы, фильтры, календарь, граф связей, помодоро, привычки, статистика, импорт-экспорт. Без рекламы, без слежки, работает на компьютере и телефоне.{% endblock %}
-{% block seo_keywords %}бесплатный туду лист, todo list русский, планировщик задач онлайн, ежедневник, менеджер задач бесплатно, помодоро таймер, привычки, расписание уроков, doday, getdoday, аналог todoist, аналог things, kanban доска, заметки и задачи{% endblock %}
+{% block seo_description %}Doday — бесплатный туду-лист и менеджер задач на русском. Проекты, секции, лейблы, фильтры, календарь, помодоро, статистика, импорт-экспорт. Без рекламы, без слежки, работает на компьютере и телефоне.{% endblock %}
+{% block seo_keywords %}бесплатный туду лист, todo list русский, планировщик задач онлайн, ежедневник, менеджер задач бесплатно, помодоро таймер, расписание уроков, doday, getdoday, аналог todoist, аналог things, kanban доска, заметки и задачи{% endblock %}
 {% block og_title %}Doday — бесплатный туду-лист, который не мешает{% endblock %}
 {% block tw_title %}Doday — бесплатный туду-лист, который не мешает{% endblock %}
 {% block ld_json %}
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Doday","url":"https://getdoday.ru/","description":"Бесплатный туду-лист на русском: проекты, секции, лейблы, фильтры, календарь, граф связей задач, помодоро, привычки, статистика. Работает в браузере и как PWA, без рекламы.","applicationCategory":"BusinessApplication","operatingSystem":"Any","browserRequirements":"Requires JavaScript","inLanguage":"ru","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"RUB"},"creator":{"@type":"Organization","name":"Doday","url":"https://getdoday.ru/"},"featureList":["Проекты и секции","Лейблы и собственные фильтры","Календарь, недельный и месячный вид","Граф связей задач","Помодоро-таймер","Привычки и стрики","Расписание для школы","Импорт и экспорт JSON, CSV, Markdown, ICS","PWA (можно поставить на телефон)","Без рекламы, без слежки"]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Doday","url":"https://getdoday.ru/","description":"Бесплатный туду-лист на русском: проекты, секции, лейблы, фильтры, календарь, помодоро, статистика. Работает в браузере и как PWA, без рекламы.","applicationCategory":"BusinessApplication","operatingSystem":"Any","browserRequirements":"Requires JavaScript","inLanguage":"ru","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"RUB"},"creator":{"@type":"Organization","name":"Doday","url":"https://getdoday.ru/"},"featureList":["Проекты и секции","Лейблы и собственные фильтры","Календарь, недельный и месячный вид","Помодоро-таймер","Статистика и стрики","Импорт и экспорт JSON, CSV, Markdown","PWA (можно поставить на телефон)","Без рекламы, без слежки"]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Doday","url":"https://getdoday.ru/","logo":"https://getdoday.ru/favicon.ico","sameAs":[]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Doday","url":"https://getdoday.ru/","inLanguage":"ru","potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://getdoday.ru/help?q={search_term_string}"},"query-input":"required name=search_term_string"}}</script>
 {% endblock %}
@@ -197,7 +197,7 @@
           ("Активность и статистика", "Лента событий за 30 дней + графики продуктивности с штрихами streak'ов. Видишь рост.", "M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"),
           ("Bulk-действия", "Выдели N задач — изменяй приоритет, дату, проект, лейблы; завершай и удаляй пачкой. Esc снимает выделение.", "M5 13l4 4L19 7"),
           ("Шаблоны проектов", "8 готовых сценариев (учёба, работа, переезд, путешествие). Сохраняй свои собственные шаблоны и переиспользуй.", "M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2v16z"),
-          ("Импорт-экспорт без замка", "JSON-бэкап всего аккаунта. Markdown проекта. iCalendar — подпишись из Google Calendar. Твои данные — твои.", "M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"),
+          ("Импорт-экспорт без замка", "JSON-бэкап всего аккаунта. Markdown проекта. CSV для Excel. Твои данные — твои.", "M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"),
         ] %}
         {% for title, body, icon in features %}
           <div class="reveal card p-7 transition-transform hover:-translate-y-1 hover:shadow-card">
@@ -217,7 +217,7 @@
     <section id="workflow" class="max-w-6xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
       <div class="text-center mb-14">
         <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Как это работает</p>
-        <h2 class="text-3xl md:text-4xl font-bold">Три привычки, которые меняют день</h2>
+        <h2 class="text-3xl md:text-4xl font-bold">Три шага, которые меняют день</h2>
       </div>
 
       <div class="space-y-20">
@@ -360,8 +360,8 @@
           </div>
           <ul class="space-y-2.5 text-sm flex-1 mb-6">
             <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>10 проектов, 500 активных задач</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>Канбан, граф связей, помодоро</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>Календарь, привычки, статистика</li>
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>Канбан, помодоро, статистика</li>
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>Календарь, лента активности</li>
             <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>3 кастомных фильтра, лента активности</li>
             <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>Markdown, iCal-экспорт, корзина 14 дней</li>
           </ul>
@@ -540,39 +540,31 @@
 
         <div class="reveal reveal-delay-300 card p-5">
           <div class="flex items-center gap-2 mb-3">
-            <span class="text-xs px-2 py-0.5 rounded-md bg-violet-500/15 text-violet-400 font-medium">/app/graph</span>
-            <span class="text-sm font-medium ml-1">Граф связей задач</span>
+            <span class="text-xs px-2 py-0.5 rounded-md bg-violet-500/15 text-violet-400 font-medium">/app/stats</span>
+            <span class="text-sm font-medium ml-1">Статистика и стрики</span>
           </div>
-          <svg viewBox="0 0 480 280" class="w-full h-auto rounded-lg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Скриншот графа задач">
+          <svg viewBox="0 0 480 280" class="w-full h-auto rounded-lg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Скриншот статистики">
             <defs>
               <linearGradient id="ss4" x1="0" y1="0" x2="1" y2="1">
                 <stop offset="0" stop-color="#1f1638"/><stop offset="1" stop-color="#0d0820"/>
               </linearGradient>
-              <radialGradient id="ssGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0" stop-color="#a78bfa" stop-opacity="0.3"/>
-                <stop offset="1" stop-color="#a78bfa" stop-opacity="0"/>
-              </radialGradient>
+              <linearGradient id="barG" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#d946ef"/>
+              </linearGradient>
             </defs>
             <rect width="480" height="280" rx="12" fill="url(#ss4)"/>
-            <circle cx="240" cy="140" r="120" fill="url(#ssGlow)"/>
-            <g stroke="#7c3aed" stroke-width="1.5" opacity="0.55" fill="none">
-              <line x1="240" y1="140" x2="120" y2="80"/>
-              <line x1="240" y1="140" x2="380" y2="90"/>
-              <line x1="240" y1="140" x2="100" y2="200"/>
-              <line x1="240" y1="140" x2="380" y2="210"/>
-              <line x1="240" y1="140" x2="240" y2="50"/>
-              <line x1="120" y1="80" x2="100" y2="200"/>
-              <line x1="380" y1="90" x2="380" y2="210"/>
-            </g>
-            <g>
-              <circle cx="240" cy="140" r="18" fill="url(#ssg1)"/>
-              <text x="240" y="145" font-family="Inter,Arial" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">★</text>
-              <circle cx="120" cy="80" r="11" fill="#fb7185"/>
-              <circle cx="380" cy="90" r="11" fill="#fbbf24"/>
-              <circle cx="100" cy="200" r="11" fill="#34d399"/>
-              <circle cx="380" cy="210" r="11" fill="#a78bfa"/>
-              <circle cx="240" cy="50" r="11" fill="#38bdf8"/>
-            </g>
+            <text x="24" y="40" font-family="Inter,Arial" font-size="13" font-weight="700" fill="#ddd6fe">🔥 Streak: 14 дней</text>
+            <text x="24" y="60" font-family="Inter,Arial" font-size="10" fill="#6b6587">Рекорд: 31 день</text>
+            {% set bars = [2,5,3,8,6,4,7,9,5,3,6,8,10,7] %}
+            {% for h in bars %}
+              {% set bh = h * 14 %}
+              {% set bx = 24 + loop.index0 * 32 %}
+              {% set by = 230 - bh %}
+              <rect x="{{ bx }}" y="{{ by }}" width="24" height="{{ bh }}" rx="4"
+                    fill="{{ 'url(#barG)' if h > 0 else '#2a2048' }}" opacity="{{ '1' if h > 0 else '0.4' }}"/>
+            {% endfor %}
+            <text x="24" y="250" font-family="Inter,Arial" font-size="8" fill="#6b6587">14 дней назад</text>
+            <text x="390" y="250" font-family="Inter,Arial" font-size="8" fill="#6b6587">Сегодня</text>
           </svg>
         </div>
 
@@ -778,7 +770,7 @@
           ('Какие уведомления есть?', 'Браузерные уведомления через Notification API когда вкладка открыта. Утренний email-дайджест в работе (нужен SMTP). Telegram Mini App в активной разработке — будет полноценный апп прямо внутри Telegram-клиента. Следи в TG-канале (ссылка в футере).'),
           ('Будет ли Telegram-интеграция?', 'Да, в активной разработке Mini App — полноценное приложение Doday прямо внутри Telegram, с Today, Inbox, календарём, swipe-actions, привязкой к твоему аккаунту через initData. Бот-команды как сейчас (/add /today /done) — тоже останутся, но Mini App это совсем другой уровень. Анонс в TG-канале.'),
           ('Что если найду баг или что-то не работает?', 'В app-навигации тапни «?» в правом-нижнем углу — откроется drawer с кнопкой «🐞 Сообщить о проблеме». Жалоба сразу попадает в админку и я фиксю в течение дня.'),
-          ('А реально все 60+ фич нужны?', 'Нет — у каждого свой набор. Кому-то достаточно Inbox + Сегодня. Кому-то нужны канбан, повторы, фильтры, граф связей, привычки и помодоро. Сделано так, чтобы лишнее не мешало.'),
+          ('А реально все 60+ фич нужны?', 'Нет — у каждого свой набор. Кому-то достаточно Inbox + Сегодня. Кому-то нужны канбан, повторы, фильтры, помодоро и статистика. Сделано так, чтобы лишнее не мешало.'),
         ] %}
         {% for q, a in faqs %}
           <details class="reveal card p-5 group">

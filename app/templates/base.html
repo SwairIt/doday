@@ -10,14 +10,14 @@
     <title>{% block title %}Doday — твой свободный туду-лист{% endblock %}</title>
 
     {# ---- SEO: defaults; overridable per page ---- #}
-    {% set _seo_desc = self.seo_description() if self.seo_description else 'Бесплатный туду-лист и менеджер задач для школьников, личных дел и команд: проекты, секции, лейблы, фильтры, календарь, граф связей задач, помодоро, привычки, статистика. Работает в браузере, на смартфоне и без рекламы.' %}
+    {% set _seo_desc = self.seo_description() if self.seo_description else 'Бесплатный туду-лист и менеджер задач для школьников, личных дел и команд: проекты, секции, лейблы, фильтры, календарь, помодоро, статистика. Работает в браузере, на смартфоне и без рекламы.' %}
     {% set _seo_title = self.seo_title() if self.seo_title else self.title()|default('Doday — бесплатный туду-лист') %}
     {% set _seo_url = self.seo_url() if self.seo_url else 'https://getdoday.ru/' %}
     {% set _seo_image = self.seo_image() if self.seo_image else 'https://getdoday.ru/og.svg' %}
     {% set _seo_robots = self.seo_robots() if self.seo_robots else 'index,follow' %}
 
     <meta name="description" content="{% block seo_description %}{{ _seo_desc }}{% endblock %}">
-    <meta name="keywords" content="{% block seo_keywords %}туду лист, бесплатный туду лист, менеджер задач, todo list на русском, планировщик дел, список дел онлайн, ежедневник для школьников, помодоро, привычки, расписание, doday, getdoday{% endblock %}">
+    <meta name="keywords" content="{% block seo_keywords %}туду лист, бесплатный туду лист, менеджер задач, todo list на русском, планировщик дел, список дел онлайн, ежедневник для школьников, помодоро, расписание, doday, getdoday{% endblock %}">
     <meta name="robots" content="{% block seo_robots %}{{ _seo_robots }}{% endblock %}">
     <meta name="author" content="Doday">
     <link rel="canonical" href="{% block seo_canonical %}{{ _seo_url }}{% endblock %}">
