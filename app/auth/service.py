@@ -144,7 +144,7 @@ def _starter_samples_for(
         TaskPriority.P4,
     )
     personal_flavour = (
-        "🧘 Привычки: загляни в /app/habits — отметь привычку, которую хочешь",
+        "📊 Статистика: посмотри на /app/stats — давай увидим прогресс после нескольких задач",
         in_three_days,
         TaskPriority.P4,
     )
