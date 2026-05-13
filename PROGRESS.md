@@ -4,6 +4,31 @@
 
 ---
 
+## 2026-05-13 — Phase α: aggressive cleanup завершён
+
+Удалены 9 lazy-модулей (gamification, achievements, mood, habits,
+time_tracking, company, user_templates, custom_filters, calendar_feed,
+links). Audience-mode полностью убран из кода. School-модуль сохранён
+в `app/school/` как dormant — активируется когда юзер купит прокси +
+токен дневника, UI-surface вернётся отдельной фазой.
+
+**Migration:** `0028_drop_lazy_modules.py` — drop 10 tables + drop
+`users.audience` column. Downgrade не реализован, rollback через
+`pre-alpha-cleanup` git tag (локально + на GitHub) или pg_dump
+backup `/tmp/doday-pre-alpha-cleanup.sql` на проде.
+
+**Тесты:** ~150 тестов удалены, ~480 остаются. Pre-commit + ruff format
++ ruff check + mypy --strict + jinja-linter — green на всех commit'ах.
+
+**State после α:** uvicorn-сервис на проде ожидает deploy текущего
+master, бот polling всё ещё broken (отдельная тема, починим webhook'ом
+после β/γ/δ). Web + Mini App не сломались.
+
+**Next:** Phase β — UI redesign (light theme default, sidebar 4 пункта,
+task row в одну строку, settings один экран).
+
+---
+
 ## Current state — 2026-05-03
 
 **Project pivoted** from "schoolers-only todo" to **"free todo for everyone (kids + adults + companies)"**. Working brand: **Doday**. Diary parsing (МО / МЭШ) demoted to optional integration for later.
