@@ -175,7 +175,6 @@
     {% for u in recent_users %}
       <div class="px-4 py-3 flex items-center gap-3 text-sm">
         <span class="font-mono text-[var(--text)] flex-1 min-w-0 truncate">{{ u.email }}</span>
-        <span class="text-xs px-2 py-0.5 rounded-full bg-[var(--surface-2)] text-[var(--text-muted)]">{{ u.audience or 'no aud' }}</span>
         <span class="text-xs px-2 py-0.5 rounded-full {% if u.tier == 'pro' %}bg-amber-500/15 text-amber-400{% elif u.tier == 'family' %}bg-fuchsia-500/15 text-fuchsia-400{% else %}bg-[var(--surface-2)] text-[var(--text-muted)]{% endif %}">{{ u.tier }}</span>
         {% if u.email_verified_at %}
           <span class="text-emerald-400 text-xs" title="Email подтверждён">✓</span>

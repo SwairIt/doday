@@ -36,7 +36,6 @@ async def register_user(session: AsyncSession, payload: RegisterIn) -> User:
     user = User(
         email=payload.email,
         password_hash=hash_password(payload.password),
-        audience=payload.audience,
     )
     session.add(user)
     await session.commit()
@@ -80,10 +79,9 @@ _WELCOME_COMMENT = (
 
 
 async def provision_new_user(session: AsyncSession, user: User) -> None:
-    """One-time onboarding: ensure Inbox + audience-specific starter tasks.
+    """One-time onboarding: ensure Inbox + universal starter tasks.
 
-    Sample set is picked by `user.audience` so a schoolchild, an office worker
-    and a "for me" user each see relevant first impressions. Idempotent.
+    Creates 5 educational tasks that teach the user how Doday works. Idempotent.
     Первой задаче ещё прикладывается приветственный комментарий.
     """
     from app.comments.service import create_comment
@@ -95,7 +93,7 @@ async def provision_new_user(session: AsyncSession, user: User) -> None:
     if existing:
         return
 
-    samples = _starter_samples_for(user.audience)
+    samples = _starter_samples()
     first_task_id = None
     for idx, (title, due, prio) in enumerate(samples):
         task = await create_task(
@@ -118,9 +116,7 @@ async def provision_new_user(session: AsyncSession, user: User) -> None:
         )
 
 
-def _starter_samples_for(
-    audience: str | None,
-) -> list[tuple[str, datetime | None, TaskPriority]]:
+def _starter_samples() -> list[tuple[str, datetime | None, TaskPriority]]:
     """5 educational starter tasks — teach the user how Doday works.
 
     Tasks go from simplest (tick the checkbox) to advanced (filters, projects).
@@ -132,28 +128,6 @@ def _starter_samples_for(
     today = datetime.now(UTC).replace(hour=23, minute=59, second=0, microsecond=0)
     tomorrow = today + timedelta(days=1)
     in_three_days = today + timedelta(days=3)
-
-    school_flavour = (
-        "📚 Школьный режим: открой ⌘K → набери «расписание» — там урок-таблица",
-        in_three_days,
-        TaskPriority.P4,
-    )
-    company_flavour = (
-        "💼 Команда: проверь «Сегодняшний стендап» в виджете на /app/today",
-        in_three_days,
-        TaskPriority.P4,
-    )
-    personal_flavour = (
-        "📊 Статистика: посмотри на /app/stats — давай увидим прогресс после нескольких задач",
-        in_three_days,
-        TaskPriority.P4,
-    )
-
-    flavour: tuple[str, datetime | None, TaskPriority] = {
-        "school": school_flavour,
-        "company": company_flavour,
-        "personal": personal_flavour,
-    }.get(audience or "", personal_flavour)
 
     return [
         # 1. Самое простое действие — обучает, как закрыть задачу.
@@ -181,8 +155,12 @@ def _starter_samples_for(
             tomorrow,
             TaskPriority.P3,
         ),
-        # 5. Audience-specific — указывает на самую полезную фичу для роли.
-        flavour,
+        # 5. Статистика — полезная фича для всех.
+        (
+            "📊 Статистика: посмотри на /app/stats — давай увидим прогресс после нескольких задач",
+            in_three_days,
+            TaskPriority.P4,
+        ),
     ]
 
 

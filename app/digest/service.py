@@ -20,17 +20,7 @@ from app.auth.models import User
 from app.config import get_settings
 from app.tasks.models import Task
 
-# Audience-specific motivational copy. Plain text → goes into both HTML and plain.
-_AUDIENCE_COPY: dict[str, str] = {
-    "school": (
-        "Утром легче переварить домашку. Закрой 1-2 задачи до завтрака — и день уже выигран."
-    ),
-    "company": (
-        "Сначала самое важное. Просрочки в топе — там и начни, чтобы хвост не накапливался."
-    ),
-    "personal": ("Тихий старт. Первая галочка дня — она же самая приятная."),
-}
-_AUDIENCE_DEFAULT = "Полезно начать с того что просрочено — потом дальше будет легче."
+_DIGEST_MOTIVATIONAL = "Полезно начать с того что просрочено — потом дальше будет легче."
 
 
 async def gather_tasks_for(
@@ -100,10 +90,6 @@ def compose_subject(today: date, total: int) -> str:
     return f"План на {_format_date_ru(today)}: {total} {suffix}"
 
 
-def _audience_line(audience: str | None) -> str:
-    return _AUDIENCE_COPY.get(audience or "", _AUDIENCE_DEFAULT)
-
-
 def _task_line_text(task: Task) -> str:
     prio_marker = {
         "p1": "🔴",
@@ -140,7 +126,7 @@ def compose_text(
     *,
     base_url: str,
 ) -> str:
-    parts = [f"План на {_format_date_ru(today)}", "", _audience_line(user.audience), ""]
+    parts = [f"План на {_format_date_ru(today)}", "", _DIGEST_MOTIVATIONAL, ""]
 
     if overdue:
         parts.append(f"⚠ Просрочено · {len(overdue)}")
@@ -170,7 +156,7 @@ def compose_html(
     *,
     base_url: str,
 ) -> str:
-    audience_line = escape(_audience_line(user.audience))
+    motivational_line = escape(_DIGEST_MOTIVATIONAL)
     today_str = _format_date_ru(today)
 
     def section(title: str, tasks: list[Task]) -> str:
@@ -218,7 +204,7 @@ color:#1a1230;">
     <tr>
       <td style="padding:24px 32px 8px 32px;">
         <p style="margin:0;font-size:14px;line-height:1.55;color:#4a4170;">
-          {audience_line}
+          {motivational_line}
         </p>
         {overdue_block}
         {today_block}

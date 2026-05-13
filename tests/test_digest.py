@@ -103,7 +103,7 @@ def test_compose_subject_pluralisation() -> None:
 
 
 def test_compose_text_includes_all_sections() -> None:
-    user = User(email="x@example.com", password_hash="x", audience="personal")
+    user = User(email="x@example.com", password_hash="x")
     now = datetime.now(UTC)
     overdue = [_make_task("Overdue1", TaskPriority.P1, now - timedelta(days=1))]
     today_tasks = [_make_task("Today1", TaskPriority.P2, now)]
@@ -118,11 +118,11 @@ def test_compose_text_includes_all_sections() -> None:
     assert "Сегодня" in text
     assert "Завтра" in text
     assert "https://example.com/app/today" in text
-    assert "Тихий старт" in text  # personal-audience copy
+    assert "просрочено" in text  # universal motivational copy
 
 
 def test_compose_html_escapes_task_titles() -> None:
-    user = User(email="x@example.com", password_hash="x", audience=None)
+    user = User(email="x@example.com", password_hash="x")
     now = datetime.now(UTC)
     nasty = [_make_task("<script>alert(1)</script>", TaskPriority.P1, now)]
     html = compose_html(user, now.date(), nasty, [], [], base_url="https://example.com")

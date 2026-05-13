@@ -4,7 +4,6 @@
   x-data="{
     show: false,
     name: '{{ current_user.email.split('@')[0]|capitalize }}',
-    audience: '{{ current_user.audience or '' }}',
     counts: { total: 0, p1: 0 },
     tip: '',
     init() {
@@ -15,25 +14,14 @@
       const wraps = document.querySelectorAll('[id^=&quot;task-wrap-&quot;]');
       this.counts.total = wraps.length;
       this.counts.p1 = document.querySelectorAll('[data-task-priority=&quot;p1&quot;]').length;
-      const tipsByAudience = {
-        school: [
-          'Закрой сначала самое нелюбимое — потом легче.',
-          'Если задача больше 25 минут — разбей её. ⌘K → «Подзадачи».',
-          'Принцип «лягушки»: тяжёлая первой.',
-        ],
-        personal: [
-          'Маленькая победа утром = настроение на весь день.',
-          'Можно перенести задачу клавишей S — снузом.',
-          'Закрытое — это закрытое. Не возвращайся к нему мысленно.',
-        ],
-        '': [
-          'Выбери одну задачу как «главную сегодня». Пусть всё остальное — бонус.',
-          'Жми ⌘K (или Ctrl+K) — поиск и быстрые команды.',
-          'Если день перегружен — перенеси неважное на завтра кнопкой «снуз».',
-        ],
-      };
-      const arr = tipsByAudience[this.audience] || tipsByAudience[''];
-      this.tip = arr[Math.floor(Math.random() * arr.length)];
+      const tips = [
+        'Выбери одну задачу как «главную сегодня». Пусть всё остальное — бонус.',
+        'Жми ⌘K (или Ctrl+K) — поиск и быстрые команды.',
+        'Если день перегружен — перенеси неважное на завтра кнопкой «снуз».',
+        'Маленькая победа утром = настроение на весь день.',
+        'Закрой сначала самое нелюбимое — потом легче.',
+      ];
+      this.tip = tips[Math.floor(Math.random() * tips.length)];
     },
     greeting() {
       const h = new Date().getHours();
