@@ -20,7 +20,6 @@ from app.billing.router import router as billing_router
 from app.calendar_feed.router import router as calendar_feed_router
 from app.calendar_feed.router import token_router as calendar_token_router
 from app.comments.router import comments_router, task_comments_router
-from app.company.router import router as company_router
 from app.config import get_settings
 from app.custom_filters.router import router as custom_filters_router
 from app.digest.router import router as digest_router
@@ -135,7 +134,6 @@ app.include_router(save_as_template_router)
 app.include_router(billing_router)
 app.include_router(help_router)
 app.include_router(school_router)
-app.include_router(company_router)
 app.include_router(stats_router)
 app.include_router(calendar_feed_router)
 app.include_router(calendar_token_router)

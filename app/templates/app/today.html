@@ -30,10 +30,6 @@
 {% include "_partials/countdown_pins.html" %}
 {% include "_partials/onboarding_card.html" %}
 {% include "_partials/daily_goal.html" %}
-{% if current_user and current_user.audience == 'company' %}
-  {% include "_partials/retro_widget.html" %}
-  {% include "_partials/standup_widget.html" %}
-{% endif %}
 {% if current_user and current_user.audience == 'school' %}
   {% include "_partials/school_holiday.html" %}
   {% include "_partials/today_schedule.html" %}
@@ -43,7 +39,6 @@
 {% if not overdue and not today %}
   {% set empty_copy = {
     'school':   ('🎓', 'На сегодня уроков и домашки нет', 'Закинь предметы в <a href="/app/schedule" class="text-[var(--accent)] hover:underline">расписание</a>, и они будут видны автоматически.'),
-    'company':  ('💼', 'Ясный календарь — редкий день', 'Используй его для глубокой работы или загляни в <a href="/app/upcoming" class="text-[var(--accent)] hover:underline">ближайшие</a>.'),
     'personal': ('🌱', 'Сегодня свободно', 'Идеальный момент для того, чтобы <em>не</em> делать дела. Или добавь маленькую радость через «+».'),
   } %}
   {% set aud = current_user.audience or '' %}

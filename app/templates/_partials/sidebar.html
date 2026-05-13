@@ -14,8 +14,8 @@
       <span class="grad-text">Doday</span>
     </a>
     {% if current_user and current_user.audience %}
-      {% set aud_emoji = {'school': '🎓', 'company': '💼', 'personal': '🌱'} %}
-      {% set aud_label = {'school': 'Учёба', 'company': 'Работа', 'personal': 'Жизнь'} %}
+      {% set aud_emoji = {'school': '🎓', 'personal': '🌱'} %}
+      {% set aud_label = {'school': 'Учёба', 'personal': 'Жизнь'} %}
       <a href="/app/profile" title="Сменить режим в настройках"
          class="mt-2 text-[10px] uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--accent)] transition inline-flex items-center gap-1.5 group">
         <span class="opacity-70 group-hover:opacity-100">{{ aud_emoji[current_user.audience] }}</span>
