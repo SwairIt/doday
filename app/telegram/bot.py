@@ -38,7 +38,6 @@ from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandl
 import app.auth.models
 import app.comments.models
 import app.custom_filters.models
-import app.habits.models
 import app.labels.models
 import app.links.models
 import app.pomodoro.models
