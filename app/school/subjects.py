@@ -1,7 +1,6 @@
 """Built-in list of Russian school subjects with friendly emoji + colour.
 
-Used by the schedule grid (subject dropdown) and by the quick-add chips that
-appear when the user's audience is 'school'.
+Used by the schedule grid (subject dropdown) and in school-portal-integration mode.
 """
 
 from typing import TypedDict

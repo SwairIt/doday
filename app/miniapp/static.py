@@ -280,28 +280,7 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
         method: 'POST', credentials: 'include',
       });
       if (r.ok) {
-        const data = await r.json().catch(() => ({}));
-        // γ: новые achievements
-        if (data.achievements_unlocked && data.achievements_unlocked.length) {
-          data.achievements_unlocked.forEach((a, i) => {
-            setTimeout(() => showRewardToast(a.emoji, a.title, a.description), i * 800);
-          });
-        }
-        // γ: level-up
-        if (data.level_up) {
-          setTimeout(() => {
-            showRewardToast('⭐', 'Уровень ' + data.new_level + '!', 'Так держать');
-            // Дополнительные конфетти на level-up
-            if (window.confetti) {
-              window.confetti({
-                particleCount: 80,
-                spread: 100,
-                origin: { y: 0.4 },
-                colors: ['#7c3aed', '#d946ef', '#fbbf24', '#34d399'],
-              });
-            }
-          }, 400);
-        }
+        await r.json().catch(() => ({}));
       }
     } catch (e) {}
   }
