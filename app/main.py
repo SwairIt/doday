@@ -7,7 +7,6 @@ from fastapi.responses import PlainTextResponse, Response
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
-from app.achievements.router import router as achievements_router
 from app.admin.router import (
     admin_router,
     complaints_router,
@@ -146,7 +145,6 @@ app.include_router(calendar_token_router)
 app.include_router(habits_router)
 app.include_router(time_tracking_router)
 app.include_router(mood_router)
-app.include_router(achievements_router)
 app.include_router(links_router)
 app.include_router(links_graph_router)
 app.include_router(digest_router)

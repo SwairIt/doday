@@ -202,11 +202,6 @@ async def today(request: Request, user: CurrentUser, session: DbSession) -> Resp
 
     completed_today = await list_completed_today(session, user.id, limit=10)
 
-    # γ: Daily challenge
-    from app.gamification.daily import progress_for_today
-
-    daily = await progress_for_today(session, user.id)
-
     ctx = _ctx(request, user)
     ctx.update(
         overdue=overdue,
@@ -216,7 +211,6 @@ async def today(request: Request, user: CurrentUser, session: DbSession) -> Resp
         completed_today=completed_today,
         project_color_map=await _project_color_map(session, user.id),
         greeting=greeting,
-        daily_challenge=daily,
     )
     return templates.TemplateResponse(request, "miniapp/today.html", ctx)
 
@@ -735,26 +729,6 @@ async def api_complete_task(
     task.completed_at = datetime.now(UTC)
     await session.commit()
     response["is_completed"] = True
-
-    # γ: XP + level + achievements
-    from app.gamification.achievements import check_and_unlock
-    from app.gamification.service import award_xp, xp_for_task
-
-    xp = xp_for_task(task)
-    progress, leveled_up = await award_xp(session, user.id, xp)
-    response["xp_gained"] = xp
-    response["xp_total"] = progress.xp_total
-    response["level"] = progress.level
-    if leveled_up:
-        response["level_up"] = True
-        response["new_level"] = progress.level
-
-    newly_unlocked = await check_and_unlock(session, user.id)
-    if newly_unlocked:
-        response["achievements_unlocked"] = [
-            {"key": a.key, "emoji": a.emoji, "title": a.title, "description": a.description}
-            for a in newly_unlocked
-        ]
 
     return JSONResponse(response)
 
@@ -1747,23 +1721,6 @@ async def me(request: Request, user: CurrentUser, session: DbSession) -> Respons
     ]
     proj_max = max((p["count"] for p in by_project), default=0)
 
-    # γ: gamification — XP/level + unlocked achievements
-    from app.gamification.achievements import ACHIEVEMENTS, list_unlocked_keys
-    from app.gamification.service import get_progress, xp_in_current_level, xp_to_next_level
-
-    progress = await get_progress(session, user.id)
-    unlocked_keys = await list_unlocked_keys(session, user.id)
-    achievements_list = [
-        {
-            "key": a.key,
-            "emoji": a.emoji,
-            "title": a.title,
-            "description": a.description,
-            "unlocked": a.key in unlocked_keys,
-        }
-        for a in ACHIEVEMENTS
-    ]
-
     ctx = _ctx(request, user)
     ctx.update(
         current_streak=core["current_streak"],
@@ -1782,13 +1739,6 @@ async def me(request: Request, user: CurrentUser, session: DbSession) -> Respons
         by_priority_total=pri_total,
         by_project=by_project,
         by_project_max=proj_max,
-        # γ
-        user_level=progress.level,
-        user_xp=progress.xp_total,
-        xp_in_level=xp_in_current_level(progress.xp_total),
-        xp_to_next=xp_to_next_level(progress.xp_total),
-        achievements_list=achievements_list,
-        achievements_unlocked_count=len(unlocked_keys),
     )
     return templates.TemplateResponse(request, "miniapp/me.html", ctx)
 
