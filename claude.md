@@ -9,20 +9,6 @@ The product changed scope. It is no longer "todo for Russian schoolchildren" —
 - See `docs/superpowers/specs/2026-05-03-pivot-design-spec.md` for the current spec
 - The 2026-05-02 spec is historical only
 
-## AUDIENCE MODEL 2026-05-04
-
-Users pick an `audience` at sign-up: `school` / `company` / `personal` (or skip).
-The choice is stored on `users.audience` and drives:
-
-- **Welcome flow** — different starter tasks (`app/auth/service.py::_starter_samples_for`)
-- **Sidebar** — extra nav items (e.g. `Расписание` for school) and a режим-badge near the brand
-- **Today widgets** — `standup_widget` for company, `today_schedule` for school, audience-aware empty state
-- **Quick-add chips** — subject buttons above the input for school
-
-`audience` is changeable any time at `/api/profile/audience` (UI on `/app/profile`).
-New audience-aware modules live in `app/school/` (integrations + schedule),
-`app/company/` (standup), `app/calendar_feed/` (account-wide .ics).
-
 ## Read first in every session
 
 1. **`PROGRESS.md`** — current state, what's done, what's next, exact next chunk to execute.
