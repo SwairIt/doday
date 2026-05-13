@@ -1,0 +1,213 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - navigation [ref=e4]:
+      - link "D Doday" [ref=e5] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e6]: D
+        - generic [ref=e7]: Doday
+      - generic [ref=e8]:
+        - link "Войти" [ref=e9] [cursor=pointer]:
+          - /url: /auth/login
+        - link "Начать бесплатно" [ref=e10] [cursor=pointer]:
+          - /url: /auth/register
+  - main [ref=e11]:
+    - generic [ref=e12]:
+      - paragraph [ref=e13]: База знаний
+      - heading "Как пользоваться Doday" [level=1] [ref=e14]
+      - paragraph [ref=e15]:
+        - text: 22 статей про каждую функцию — короткие, с примерами, без воды. Если чего-то не хватает — напиши на
+        - link "hello@doday.app" [ref=e16] [cursor=pointer]:
+          - /url: mailto:hello@doday.app
+        - text: .
+    - generic [ref=e18]:
+      - link "С чего начать Inbox, первая задача, первое завершение. Читать" [ref=e19] [cursor=pointer]:
+        - /url: /help/quick-start
+        - img [ref=e21]
+        - heading "С чего начать" [level=3] [ref=e23]
+        - paragraph [ref=e24]: Inbox, первая задача, первое завершение.
+        - generic [ref=e25]:
+          - text: Читать
+          - img [ref=e26]
+      - 'link "Quick-add: синтаксис Даты, приоритеты, лейблы и проекты — всё в одной строке. Читать" [ref=e28] [cursor=pointer]':
+        - /url: /help/quickadd-syntax
+        - img [ref=e30]
+        - 'heading "Quick-add: синтаксис" [level=3] [ref=e32]'
+        - paragraph [ref=e33]: Даты, приоритеты, лейблы и проекты — всё в одной строке.
+        - generic [ref=e34]:
+          - text: Читать
+          - img [ref=e35]
+      - link "Проекты, секции, шаблоны Группируй большие задачи. Сохраняй структуру повторно. Читать" [ref=e37] [cursor=pointer]:
+        - /url: /help/projects
+        - img [ref=e39]
+        - heading "Проекты, секции, шаблоны" [level=3] [ref=e41]
+        - paragraph [ref=e42]: Группируй большие задачи. Сохраняй структуру повторно.
+        - generic [ref=e43]:
+          - text: Читать
+          - img [ref=e44]
+      - link "Канбан и список Когда какой вид использовать. Читать" [ref=e46] [cursor=pointer]:
+        - /url: /help/kanban
+        - img [ref=e48]
+        - heading "Канбан и список" [level=3] [ref=e50]
+        - paragraph [ref=e51]: Когда какой вид использовать.
+        - generic [ref=e52]:
+          - text: Читать
+          - img [ref=e53]
+      - link "Календарь и Upcoming Месячная сетка и недельный список с drag-to-reschedule. Читать" [ref=e55] [cursor=pointer]:
+        - /url: /help/calendar-upcoming
+        - img [ref=e57]
+        - heading "Календарь и Upcoming" [level=3] [ref=e59]
+        - paragraph [ref=e60]: Месячная сетка и недельный список с drag-to-reschedule.
+        - generic [ref=e61]:
+          - text: Читать
+          - img [ref=e62]
+      - link "Подзадачи, комментарии, повтор Глубокая декомпозиция и повторяющиеся дела. Читать" [ref=e64] [cursor=pointer]:
+        - /url: /help/subtasks-comments-recurrence
+        - img [ref=e66]
+        - heading "Подзадачи, комментарии, повтор" [level=3] [ref=e68]
+        - paragraph [ref=e69]: Глубокая декомпозиция и повторяющиеся дела.
+        - generic [ref=e70]:
+          - text: Читать
+          - img [ref=e71]
+      - link "Лейблы и фильтры Сквозные метки и сохранённые поисковые запросы. Читать" [ref=e73] [cursor=pointer]:
+        - /url: /help/labels-filters
+        - img [ref=e75]
+        - heading "Лейблы и фильтры" [level=3] [ref=e77]
+        - paragraph [ref=e78]: Сквозные метки и сохранённые поисковые запросы.
+        - generic [ref=e79]:
+          - text: Читать
+          - img [ref=e80]
+      - link "Pomodoro и дневная цель Фокус-сессии и метрика дня без давления. Читать" [ref=e82] [cursor=pointer]:
+        - /url: /help/pomodoro-goal
+        - img [ref=e84]
+        - heading "Pomodoro и дневная цель" [level=3] [ref=e86]
+        - paragraph [ref=e87]: Фокус-сессии и метрика дня без давления.
+        - generic [ref=e88]:
+          - text: Читать
+          - img [ref=e89]
+      - link "Импорт и экспорт JSON-бэкап аккаунта, Markdown проекта, iCalendar. Читать" [ref=e91] [cursor=pointer]:
+        - /url: /help/import-export
+        - img [ref=e93]
+        - heading "Импорт и экспорт" [level=3] [ref=e95]
+        - paragraph [ref=e96]: JSON-бэкап аккаунта, Markdown проекта, iCalendar.
+        - generic [ref=e97]:
+          - text: Читать
+          - img [ref=e98]
+      - link "Горячие клавиши Полный список с заметками по контекстам. Читать" [ref=e100] [cursor=pointer]:
+        - /url: /help/shortcuts
+        - img [ref=e102]
+        - heading "Горячие клавиши" [level=3] [ref=e104]
+        - paragraph [ref=e105]: Полный список с заметками по контекстам.
+        - generic [ref=e106]:
+          - text: Читать
+          - img [ref=e107]
+      - link "Подписка календаря на задачи Apple/Google Calendar показывает задачи Doday как события. Читать" [ref=e109] [cursor=pointer]:
+        - /url: /help/calendar-subscription
+        - img [ref=e111]
+        - heading "Подписка календаря на задачи" [level=3] [ref=e113]
+        - paragraph [ref=e114]: Apple/Google Calendar показывает задачи Doday как события.
+        - generic [ref=e115]:
+          - text: Читать
+          - img [ref=e116]
+      - 'link "Школьный дневник: подключение Как подключить Школьный портал МО или МЭШ. Читать" [ref=e118] [cursor=pointer]':
+        - /url: /help/school-integrations
+        - img [ref=e120]
+        - 'heading "Школьный дневник: подключение" [level=3] [ref=e122]'
+        - paragraph [ref=e123]: Как подключить Школьный портал МО или МЭШ.
+        - generic [ref=e124]:
+          - text: Читать
+          - img [ref=e125]
+      - link "Граф задач и связи между ними Космический вид всех задач + двунаправленные ссылки как в Obsidian. Читать" [ref=e127] [cursor=pointer]:
+        - /url: /help/graph-and-links
+        - img [ref=e129]
+        - heading "Граф задач и связи между ними" [level=3] [ref=e131]
+        - paragraph [ref=e132]: Космический вид всех задач + двунаправленные ссылки как в Obsidian.
+        - generic [ref=e133]:
+          - text: Читать
+          - img [ref=e134]
+      - 'link "Привычки и стрики Чек-лист повторяющихся дел: спорт, чтение, изучение языка. Читать" [ref=e136] [cursor=pointer]':
+        - /url: /help/habits
+        - img [ref=e138]
+        - heading "Привычки и стрики" [level=3] [ref=e140]
+        - paragraph [ref=e141]: "Чек-лист повторяющихся дел: спорт, чтение, изучение языка."
+        - generic [ref=e142]:
+          - text: Читать
+          - img [ref=e143]
+      - link "Корзина и восстановление Удалённые задачи живут 30 дней; вернуть можно одним кликом. Читать" [ref=e145] [cursor=pointer]:
+        - /url: /help/trash-restore
+        - img [ref=e147]
+        - heading "Корзина и восстановление" [level=3] [ref=e149]
+        - paragraph [ref=e150]: Удалённые задачи живут 30 дней; вернуть можно одним кликом.
+        - generic [ref=e151]:
+          - text: Читать
+          - img [ref=e152]
+      - 'link "Right-click меню задачи Быстрые действия: приоритет, дата, snooze, перенос, закрепить. Читать" [ref=e154] [cursor=pointer]':
+        - /url: /help/context-menu
+        - img [ref=e156]
+        - heading "Right-click меню задачи" [level=3] [ref=e158]
+        - paragraph [ref=e159]: "Быстрые действия: приоритет, дата, snooze, перенос, закрепить."
+        - generic [ref=e160]:
+          - text: Читать
+          - img [ref=e161]
+      - link "Клавиатурная навигация j/k, c, 1-4, t/T/w, p, Del — управляй задачами без мыши. Читать" [ref=e163] [cursor=pointer]:
+        - /url: /help/keyboard
+        - img [ref=e165]
+        - heading "Клавиатурная навигация" [level=3] [ref=e167]
+        - paragraph [ref=e168]: j/k, c, 1-4, t/T/w, p, Del — управляй задачами без мыши.
+        - generic [ref=e169]:
+          - text: Читать
+          - img [ref=e170]
+      - link "Мобильное использование и PWA Bottom-навигация, FAB-поиск, установка как приложение на телефон. Читать" [ref=e172] [cursor=pointer]:
+        - /url: /help/mobile-pwa
+        - img [ref=e174]
+        - heading "Мобильное использование и PWA" [level=3] [ref=e176]
+        - paragraph [ref=e177]: Bottom-навигация, FAB-поиск, установка как приложение на телефон.
+        - generic [ref=e178]:
+          - text: Читать
+          - img [ref=e179]
+      - link "Создать много задач разом Вставь список через буфер — каждая строка станет отдельной задачей. Читать" [ref=e181] [cursor=pointer]:
+        - /url: /help/bulk-add
+        - img [ref=e183]
+        - heading "Создать много задач разом" [level=3] [ref=e185]
+        - paragraph [ref=e186]: Вставь список через буфер — каждая строка станет отдельной задачей.
+        - generic [ref=e187]:
+          - text: Читать
+          - img [ref=e188]
+      - link "Поиск и фильтрация Ctrl+K — глобальный поиск, / — фильтр на странице, group-by в проекте. Читать" [ref=e190] [cursor=pointer]:
+        - /url: /help/search-and-filter
+        - img [ref=e192]
+        - heading "Поиск и фильтрация" [level=3] [ref=e194]
+        - paragraph [ref=e195]: Ctrl+K — глобальный поиск, / — фильтр на странице, group-by в проекте.
+        - generic [ref=e196]:
+          - text: Читать
+          - img [ref=e197]
+      - 'link "Markdown в описаниях и печать **Жирный**, *курсив*, `код`, [ссылки], списки + аккуратная печать. Читать" [ref=e199] [cursor=pointer]':
+        - /url: /help/markdown-print
+        - img [ref=e201]
+        - heading "Markdown в описаниях и печать" [level=3] [ref=e203]
+        - paragraph [ref=e204]: "**Жирный**, *курсив*, `код`, [ссылки], списки + аккуратная печать."
+        - generic [ref=e205]:
+          - text: Читать
+          - img [ref=e206]
+      - link "Mood-tracker и достижения Цветная шкала настроения 30 дней + 18 бейджей за регулярность. Читать" [ref=e208] [cursor=pointer]:
+        - /url: /help/mood-achievements
+        - img [ref=e210]
+        - heading "Mood-tracker и достижения" [level=3] [ref=e212]
+        - paragraph [ref=e213]: Цветная шкала настроения 30 дней + 18 бейджей за регулярность.
+        - generic [ref=e214]:
+          - text: Читать
+          - img [ref=e215]
+    - generic [ref=e218]:
+      - heading "Не нашёл ответ?" [level=2] [ref=e220]
+      - paragraph [ref=e221]: Напиши нам — обычно отвечаем в тот же день. И если вопрос частый, статья появится здесь.
+      - link "hello@doday.app" [ref=e222] [cursor=pointer]:
+        - /url: mailto:hello@doday.app
+  - contentinfo [ref=e223]:
+    - generic [ref=e224]:
+      - generic [ref=e225]: © 2026 Doday
+      - generic [ref=e226]:
+        - link "Главная" [ref=e227] [cursor=pointer]:
+          - /url: /
+        - link "Помощь" [ref=e228] [cursor=pointer]:
+          - /url: /help
+        - link "Политика" [ref=e229] [cursor=pointer]:
+          - /url: /privacy

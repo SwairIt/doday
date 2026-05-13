@@ -40,9 +40,6 @@
   {% include "_partials/school_streak.html" %}
   {% include "_partials/today_schedule.html" %}
 {% endif %}
-{% if current_user and current_user.audience == 'personal' %}
-  {% include "_partials/mood_widget.html" %}
-{% endif %}
 {% include "_partials/quick_add.html" %}
 
 {% if not overdue and not today %}

@@ -1,0 +1,372 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - link "D Doday" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e6]: D
+          - generic [ref=e7]: Doday
+        - 'link "🌱 режим: Жизнь" [ref=e8] [cursor=pointer]':
+          - /url: /app/profile
+          - generic [ref=e9]: 🌱
+          - generic [ref=e10]: "режим: Жизнь"
+      - navigation [ref=e11]:
+        - generic [ref=e12]: Главное
+        - generic [ref=e13]:
+          - link "Inbox" [ref=e14] [cursor=pointer]:
+            - /url: /app/inbox
+            - img [ref=e15]
+            - generic [ref=e17]: Inbox
+          - link "Сегодня" [ref=e18] [cursor=pointer]:
+            - /url: /app/today
+            - img [ref=e19]
+            - generic [ref=e21]: Сегодня
+          - link "Ближайшие" [ref=e22] [cursor=pointer]:
+            - /url: /app/upcoming
+            - img [ref=e23]
+            - generic [ref=e25]: Ближайшие
+          - link "Календарь" [ref=e26] [cursor=pointer]:
+            - /url: /app/calendar
+            - img [ref=e27]
+            - generic [ref=e29]: Календарь
+          - link "Статистика" [ref=e30] [cursor=pointer]:
+            - /url: /app/stats
+            - img [ref=e31]
+            - generic [ref=e33]: Статистика
+          - link "Завершённые" [ref=e34] [cursor=pointer]:
+            - /url: /app/done
+            - img [ref=e35]
+            - generic [ref=e37]: Завершённые
+          - link "Лейблы" [ref=e38] [cursor=pointer]:
+            - /url: /app/labels
+            - img [ref=e39]
+            - generic [ref=e41]: Лейблы
+          - link "Активность" [ref=e42] [cursor=pointer]:
+            - /url: /app/activity
+            - img [ref=e43]
+            - generic [ref=e45]: Активность
+          - link "Граф" [ref=e46] [cursor=pointer]:
+            - /url: /app/graph
+            - img [ref=e47]
+            - generic [ref=e49]: Граф
+          - link "Привычки" [ref=e50] [cursor=pointer]:
+            - /url: /app/habits
+            - img [ref=e51]
+            - generic [ref=e53]: Привычки
+          - link "Корзина" [ref=e54] [cursor=pointer]:
+            - /url: /app/trash
+            - img [ref=e55]
+            - generic [ref=e57]: Корзина
+        - generic [ref=e58]: Фильтры
+        - generic [ref=e59]:
+          - generic [ref=e60]: Фильтры
+          - link "Управлять фильтрами" [ref=e61] [cursor=pointer]:
+            - /url: /app/filters
+            - img [ref=e62]
+        - link "Просрочено" [ref=e64] [cursor=pointer]:
+          - /url: /app/filters/overdue
+          - img [ref=e65]
+          - generic [ref=e67]: Просрочено
+        - link "Без даты" [ref=e68] [cursor=pointer]:
+          - /url: /app/filters/no-date
+          - img [ref=e69]
+          - generic [ref=e71]: Без даты
+        - link "Высокий приоритет" [ref=e72] [cursor=pointer]:
+          - /url: /app/filters/high-priority
+          - img [ref=e73]
+          - generic [ref=e75]: Высокий приоритет
+        - link "На этой неделе" [ref=e76] [cursor=pointer]:
+          - /url: /app/filters/this-week
+          - img [ref=e77]
+          - generic [ref=e79]: На этой неделе
+        - generic [ref=e80]:
+          - generic [ref=e81]: Проекты
+          - generic [ref=e82]:
+            - link "Архив" [ref=e83] [cursor=pointer]:
+              - /url: /app/projects-archive
+              - img [ref=e84]
+            - button "Новый проект" [ref=e86] [cursor=pointer]:
+              - img [ref=e87]
+        - generic [ref=e90]:
+          - img [ref=e92]
+          - link "Inbox" [ref=e99] [cursor=pointer]:
+            - /url: /app/projects/inbox
+            - generic [ref=e101]: Inbox
+        - generic [ref=e102]:
+          - generic [ref=e103]:
+            - button "‹" [ref=e104] [cursor=pointer]
+            - generic [ref=e105]: май 2026 г.
+            - button "›" [ref=e106] [cursor=pointer]
+          - generic [ref=e107]:
+            - generic [ref=e108]: П
+            - generic [ref=e109]: В
+            - generic [ref=e110]: С
+            - generic [ref=e111]: Ч
+            - generic [ref=e112]: П
+            - generic [ref=e113]: С
+            - generic [ref=e114]: В
+            - button "27" [ref=e115] [cursor=pointer]
+            - button "28" [ref=e116] [cursor=pointer]
+            - button "29" [ref=e117] [cursor=pointer]
+            - button "30" [ref=e118] [cursor=pointer]
+            - button "1" [ref=e119] [cursor=pointer]
+            - button "2" [ref=e120] [cursor=pointer]
+            - button "3" [ref=e121] [cursor=pointer]
+            - button "4" [ref=e122] [cursor=pointer]
+            - button "5" [ref=e123] [cursor=pointer]
+            - button "6" [ref=e124] [cursor=pointer]
+            - button "7" [ref=e125] [cursor=pointer]
+            - button "8" [ref=e126] [cursor=pointer]
+            - button "9" [ref=e127] [cursor=pointer]
+            - button "10" [ref=e128] [cursor=pointer]
+            - button "11" [ref=e129] [cursor=pointer]
+            - button "12" [ref=e130] [cursor=pointer]
+            - button "13" [ref=e131] [cursor=pointer]
+            - button "14" [ref=e132] [cursor=pointer]
+            - button "15" [ref=e133] [cursor=pointer]
+            - button "16" [ref=e134] [cursor=pointer]
+            - button "17" [ref=e135] [cursor=pointer]
+            - button "18" [ref=e136] [cursor=pointer]
+            - button "19" [ref=e137] [cursor=pointer]
+            - button "20" [ref=e138] [cursor=pointer]
+            - button "21" [ref=e139] [cursor=pointer]
+            - button "22" [ref=e140] [cursor=pointer]
+            - button "23" [ref=e141] [cursor=pointer]
+            - button "24" [ref=e142] [cursor=pointer]
+            - button "25" [ref=e143] [cursor=pointer]
+            - button "26" [ref=e144] [cursor=pointer]
+            - button "27" [ref=e145] [cursor=pointer]
+            - button "28" [ref=e146] [cursor=pointer]
+            - button "29" [ref=e147] [cursor=pointer]
+            - button "30" [ref=e148] [cursor=pointer]
+            - button "31" [ref=e149] [cursor=pointer]
+            - button "1" [ref=e150] [cursor=pointer]
+            - button "2" [ref=e151] [cursor=pointer]
+            - button "3" [ref=e152] [cursor=pointer]
+            - button "4" [ref=e153] [cursor=pointer]
+            - button "5" [ref=e154] [cursor=pointer]
+            - button "6" [ref=e155] [cursor=pointer]
+            - button "7" [ref=e156] [cursor=pointer]
+      - generic [ref=e157]:
+        - link "R responsive-test@doday.local Профиль" [ref=e158] [cursor=pointer]:
+          - /url: /app/profile
+          - generic [ref=e159]: R
+          - generic [ref=e160]:
+            - generic [ref=e161]: responsive-test@doday.local
+            - generic [ref=e162]: Профиль
+        - link "Тарифы и Pro-подписка" [ref=e163] [cursor=pointer]:
+          - /url: /pricing
+          - img [ref=e164]
+        - link "Посмотреть лендинг" [ref=e166] [cursor=pointer]:
+          - /url: /?preview=1
+          - img [ref=e167]
+        - button "Выйти из аккаунта" [ref=e170] [cursor=pointer]:
+          - img [ref=e171]
+    - generic [ref=e173]:
+      - banner [ref=e174]:
+        - button "Открыть меню" [ref=e175] [cursor=pointer]:
+          - img [ref=e176]
+        - heading "Doday" [level=1] [ref=e178]
+        - button "Сменить тему — сейчас system" [ref=e179] [cursor=pointer]:
+          - img [ref=e180]
+      - main [ref=e182]:
+        - generic [ref=e183]:
+          - generic [ref=e184]:
+            - heading "Расписание уроков" [level=1] [ref=e185]
+            - paragraph [ref=e186]: Кликни по любой ячейке, чтобы поставить предмет. Расписание появится виджетом на экране «Сегодня».
+          - table [ref=e188]:
+            - rowgroup [ref=e189]:
+              - row "№ Пн Вт Ср Чт Пт Сб" [ref=e190]:
+                - columnheader "№" [ref=e191]
+                - columnheader "Пн" [ref=e192]
+                - columnheader "Вт" [ref=e193]
+                - columnheader "Ср" [ref=e194]
+                - columnheader "Чт" [ref=e195]
+                - columnheader "Пт" [ref=e196]
+                - columnheader "Сб" [ref=e197]
+            - rowgroup [ref=e198]:
+              - row "1 + + + + + +" [ref=e199]:
+                - cell "1" [ref=e200]
+                - cell "+" [ref=e201]:
+                  - button "+" [ref=e202] [cursor=pointer]:
+                    - generic [ref=e203]: +
+                - cell "+" [ref=e204]:
+                  - button "+" [ref=e205] [cursor=pointer]:
+                    - generic [ref=e206]: +
+                - cell "+" [ref=e207]:
+                  - button "+" [ref=e208] [cursor=pointer]:
+                    - generic [ref=e209]: +
+                - cell "+" [ref=e210]:
+                  - button "+" [ref=e211] [cursor=pointer]:
+                    - generic [ref=e212]: +
+                - cell "+" [ref=e213]:
+                  - button "+" [ref=e214] [cursor=pointer]:
+                    - generic [ref=e215]: +
+                - cell "+" [ref=e216]:
+                  - button "+" [ref=e217] [cursor=pointer]:
+                    - generic [ref=e218]: +
+              - row "2 + + + + + +" [ref=e219]:
+                - cell "2" [ref=e220]
+                - cell "+" [ref=e221]:
+                  - button "+" [ref=e222] [cursor=pointer]:
+                    - generic [ref=e223]: +
+                - cell "+" [ref=e224]:
+                  - button "+" [ref=e225] [cursor=pointer]:
+                    - generic [ref=e226]: +
+                - cell "+" [ref=e227]:
+                  - button "+" [ref=e228] [cursor=pointer]:
+                    - generic [ref=e229]: +
+                - cell "+" [ref=e230]:
+                  - button "+" [ref=e231] [cursor=pointer]:
+                    - generic [ref=e232]: +
+                - cell "+" [ref=e233]:
+                  - button "+" [ref=e234] [cursor=pointer]:
+                    - generic [ref=e235]: +
+                - cell "+" [ref=e236]:
+                  - button "+" [ref=e237] [cursor=pointer]:
+                    - generic [ref=e238]: +
+              - row "3 + + + + + +" [ref=e239]:
+                - cell "3" [ref=e240]
+                - cell "+" [ref=e241]:
+                  - button "+" [ref=e242] [cursor=pointer]:
+                    - generic [ref=e243]: +
+                - cell "+" [ref=e244]:
+                  - button "+" [ref=e245] [cursor=pointer]:
+                    - generic [ref=e246]: +
+                - cell "+" [ref=e247]:
+                  - button "+" [ref=e248] [cursor=pointer]:
+                    - generic [ref=e249]: +
+                - cell "+" [ref=e250]:
+                  - button "+" [ref=e251] [cursor=pointer]:
+                    - generic [ref=e252]: +
+                - cell "+" [ref=e253]:
+                  - button "+" [ref=e254] [cursor=pointer]:
+                    - generic [ref=e255]: +
+                - cell "+" [ref=e256]:
+                  - button "+" [ref=e257] [cursor=pointer]:
+                    - generic [ref=e258]: +
+              - row "4 + + + + + +" [ref=e259]:
+                - cell "4" [ref=e260]
+                - cell "+" [ref=e261]:
+                  - button "+" [ref=e262] [cursor=pointer]:
+                    - generic [ref=e263]: +
+                - cell "+" [ref=e264]:
+                  - button "+" [ref=e265] [cursor=pointer]:
+                    - generic [ref=e266]: +
+                - cell "+" [ref=e267]:
+                  - button "+" [ref=e268] [cursor=pointer]:
+                    - generic [ref=e269]: +
+                - cell "+" [ref=e270]:
+                  - button "+" [ref=e271] [cursor=pointer]:
+                    - generic [ref=e272]: +
+                - cell "+" [ref=e273]:
+                  - button "+" [ref=e274] [cursor=pointer]:
+                    - generic [ref=e275]: +
+                - cell "+" [ref=e276]:
+                  - button "+" [ref=e277] [cursor=pointer]:
+                    - generic [ref=e278]: +
+              - row "5 + + + + + +" [ref=e279]:
+                - cell "5" [ref=e280]
+                - cell "+" [ref=e281]:
+                  - button "+" [ref=e282] [cursor=pointer]:
+                    - generic [ref=e283]: +
+                - cell "+" [ref=e284]:
+                  - button "+" [ref=e285] [cursor=pointer]:
+                    - generic [ref=e286]: +
+                - cell "+" [ref=e287]:
+                  - button "+" [ref=e288] [cursor=pointer]:
+                    - generic [ref=e289]: +
+                - cell "+" [ref=e290]:
+                  - button "+" [ref=e291] [cursor=pointer]:
+                    - generic [ref=e292]: +
+                - cell "+" [ref=e293]:
+                  - button "+" [ref=e294] [cursor=pointer]:
+                    - generic [ref=e295]: +
+                - cell "+" [ref=e296]:
+                  - button "+" [ref=e297] [cursor=pointer]:
+                    - generic [ref=e298]: +
+              - row "6 + + + + + +" [ref=e299]:
+                - cell "6" [ref=e300]
+                - cell "+" [ref=e301]:
+                  - button "+" [ref=e302] [cursor=pointer]:
+                    - generic [ref=e303]: +
+                - cell "+" [ref=e304]:
+                  - button "+" [ref=e305] [cursor=pointer]:
+                    - generic [ref=e306]: +
+                - cell "+" [ref=e307]:
+                  - button "+" [ref=e308] [cursor=pointer]:
+                    - generic [ref=e309]: +
+                - cell "+" [ref=e310]:
+                  - button "+" [ref=e311] [cursor=pointer]:
+                    - generic [ref=e312]: +
+                - cell "+" [ref=e313]:
+                  - button "+" [ref=e314] [cursor=pointer]:
+                    - generic [ref=e315]: +
+                - cell "+" [ref=e316]:
+                  - button "+" [ref=e317] [cursor=pointer]:
+                    - generic [ref=e318]: +
+              - row "7 + + + + + +" [ref=e319]:
+                - cell "7" [ref=e320]
+                - cell "+" [ref=e321]:
+                  - button "+" [ref=e322] [cursor=pointer]:
+                    - generic [ref=e323]: +
+                - cell "+" [ref=e324]:
+                  - button "+" [ref=e325] [cursor=pointer]:
+                    - generic [ref=e326]: +
+                - cell "+" [ref=e327]:
+                  - button "+" [ref=e328] [cursor=pointer]:
+                    - generic [ref=e329]: +
+                - cell "+" [ref=e330]:
+                  - button "+" [ref=e331] [cursor=pointer]:
+                    - generic [ref=e332]: +
+                - cell "+" [ref=e333]:
+                  - button "+" [ref=e334] [cursor=pointer]:
+                    - generic [ref=e335]: +
+                - cell "+" [ref=e336]:
+                  - button "+" [ref=e337] [cursor=pointer]:
+                    - generic [ref=e338]: +
+              - row "8 + + + + + +" [ref=e339]:
+                - cell "8" [ref=e340]
+                - cell "+" [ref=e341]:
+                  - button "+" [ref=e342] [cursor=pointer]:
+                    - generic [ref=e343]: +
+                - cell "+" [ref=e344]:
+                  - button "+" [ref=e345] [cursor=pointer]:
+                    - generic [ref=e346]: +
+                - cell "+" [ref=e347]:
+                  - button "+" [ref=e348] [cursor=pointer]:
+                    - generic [ref=e349]: +
+                - cell "+" [ref=e350]:
+                  - button "+" [ref=e351] [cursor=pointer]:
+                    - generic [ref=e352]: +
+                - cell "+" [ref=e353]:
+                  - button "+" [ref=e354] [cursor=pointer]:
+                    - generic [ref=e355]: +
+                - cell "+" [ref=e356]:
+                  - button "+" [ref=e357] [cursor=pointer]:
+                    - generic [ref=e358]: +
+          - paragraph [ref=e359]: Сейчас храним только 8 уроков на каждый день, Пн–Сб. Каникулы и переменные расписания добавим позже.
+  - button "Открыть помощь" [ref=e360] [cursor=pointer]: "?"
+  - navigation [ref=e361]:
+    - link "Inbox" [ref=e362] [cursor=pointer]:
+      - /url: /app/inbox
+      - img [ref=e363]
+      - generic [ref=e365]: Inbox
+    - link "Сегодня" [ref=e366] [cursor=pointer]:
+      - /url: /app/today
+      - img [ref=e367]
+      - generic [ref=e369]: Сегодня
+    - link "Дальше" [ref=e370] [cursor=pointer]:
+      - /url: /app/upcoming
+      - img [ref=e371]
+      - generic [ref=e373]: Дальше
+    - link "Календарь" [ref=e374] [cursor=pointer]:
+      - /url: /app/calendar
+      - img [ref=e375]
+      - generic [ref=e377]: Календарь
+    - link "Профиль" [ref=e378] [cursor=pointer]:
+      - /url: /app/profile
+      - img [ref=e379]
+      - generic [ref=e381]: Профиль
+  - button "Поиск" [ref=e383] [cursor=pointer]:
+    - img [ref=e384]

@@ -1,0 +1,64 @@
+- generic [active] [ref=e1]:
+  - link "Перейти к содержимому" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - link "D Doday" [ref=e5] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e6]: D
+        - generic [ref=e7]: Doday
+      - generic [ref=e9]:
+        - heading "С возвращением" [level=1] [ref=e10]
+        - paragraph [ref=e11]: Залогинься и вперёд к делам.
+        - generic [ref=e12]:
+          - generic [ref=e13]:
+            - textbox "Email" [ref=e14]:
+              - /placeholder: " "
+            - generic: Email
+          - generic [ref=e16]:
+            - textbox "Пароль" [ref=e17]:
+              - /placeholder: " "
+            - generic: Пароль
+            - button "Показать пароль" [ref=e18] [cursor=pointer]:
+              - img [ref=e19]
+          - generic [ref=e21]:
+            - generic [ref=e22] [cursor=pointer]:
+              - checkbox "Запомнить меня" [ref=e23]
+              - text: Запомнить меня
+            - link "Забыл пароль?" [ref=e24] [cursor=pointer]:
+              - /url: /auth/forgot
+          - button "Войти" [ref=e25] [cursor=pointer]:
+            - text: Войти
+            - img [ref=e26]
+        - paragraph [ref=e28]:
+          - text: Ещё нет аккаунта?
+          - link "Создать" [ref=e29] [cursor=pointer]:
+            - /url: /auth/register
+      - paragraph [ref=e30]:
+        - text: © 2026 Doday ·
+        - link "База знаний" [ref=e31] [cursor=pointer]:
+          - /url: /help
+        - text: ·
+        - link "Политика" [ref=e32] [cursor=pointer]:
+          - /url: /privacy
+    - complementary [ref=e33]:
+      - generic [ref=e34]:
+        - generic [ref=e35]: 🎯
+        - blockquote [ref=e36]: «Doday — единственный тудулист, к которому я возвращаюсь по своей воле, а не потому что он мне напомнил.»
+        - paragraph [ref=e37]: Один из счастливых пользователей. Стань вторым.
+        - generic [ref=e38]:
+          - generic [ref=e39]:
+            - generic [ref=e40]: 🍅
+            - generic [ref=e41]: Pomodoro-таймер на каждой задаче
+          - generic [ref=e42]:
+            - generic [ref=e43]: 📅
+            - generic [ref=e44]: Перетаскивай задачи между днями календаря
+          - generic [ref=e45]:
+            - generic [ref=e46]: ⌨️
+            - generic [ref=e47]: Полный набор горячих клавиш
+          - generic [ref=e48]:
+            - generic [ref=e49]: 📦
+            - generic [ref=e50]: Бэкап в JSON одной кнопкой
+          - generic [ref=e51]:
+            - generic [ref=e52]: 🎨
+            - generic [ref=e53]: Тёмная и светлая темы из коробки

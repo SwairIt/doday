@@ -1,0 +1,16 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - link "D Doday" [ref=e4] [cursor=pointer]:
+      - /url: /
+      - generic [ref=e5]: D
+      - generic [ref=e6]: Doday
+  - main [ref=e7]:
+    - generic [ref=e9]:
+      - img [ref=e12]
+      - heading "Проверь почту" [level=1] [ref=e14]
+      - paragraph [ref=e15]: Мы отправили письмо со ссылкой для подтверждения.
+      - paragraph [ref=e16]:
+        - text: Открой письмо и кликни по ссылке.
+        - text: Не пришло? Проверь спам или подожди пару минут.
+      - link "← Вернуться ко входу" [ref=e18] [cursor=pointer]:
+        - /url: /auth/login

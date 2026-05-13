@@ -1,0 +1,145 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e4]:
+      - textbox "купить молоко завтра !! @дом" [ref=e5]
+      - button [disabled] [ref=e6]:
+        - img [ref=e7]
+    - generic [ref=e9]:
+      - generic [ref=e10]:
+        - heading "Сегодня" [level=1] [ref=e11]
+        - paragraph [ref=e12]: 3 из 8 закрыто
+      - generic [ref=e13]:
+        - img [ref=e14]
+        - generic [ref=e17]: 38%
+    - generic [ref=e18]:
+      - heading "Просрочено · 1" [level=2] [ref=e19]
+      - generic [ref=e21]:
+        - generic [ref=e22]:
+          - img [ref=e23]
+          - generic [ref=e25]: Завтра
+        - generic [ref=e26]:
+          - img [ref=e27]
+          - generic [ref=e29]: Готово
+        - article [ref=e30]:
+          - button "Закрыть задачу" [ref=e31] [cursor=pointer]
+          - generic [ref=e32]:
+            - generic [ref=e33]:
+              - generic "Проект" [ref=e34]
+              - generic [ref=e35]: Заполнить тайм-логи за прошлый месяц
+            - generic [ref=e36]:
+              - generic [ref=e37]: "!3"
+              - generic [ref=e38]:
+                - img [ref=e39]
+                - text: "09.05"
+    - generic [ref=e41]:
+      - heading "Сегодня · 4" [level=2] [ref=e42]
+      - generic [ref=e43]:
+        - generic [ref=e44]:
+          - generic [ref=e45]:
+            - img [ref=e46]
+            - generic [ref=e48]: Завтра
+          - generic [ref=e49]:
+            - img [ref=e50]
+            - generic [ref=e52]: Готово
+          - article [ref=e53]:
+            - button "Закрыть задачу" [ref=e54] [cursor=pointer]
+            - generic [ref=e55]:
+              - generic [ref=e56]:
+                - generic "Проект" [ref=e57]
+                - generic [ref=e58]: Подготовить квартальный отчёт по продажам — слайды + цифры из CRM, презентация в пятницу
+              - paragraph [ref=e59]: Нужны срезы по регионам, сравнение с прошлым кварталом. Договориться с аналитиком на четверг.
+              - generic [ref=e60]:
+                - generic [ref=e61]: "@работа"
+                - generic [ref=e62]: "@срочно"
+              - generic "0 из 3 подзадач" [ref=e63]:
+                - img [ref=e64]
+                - generic [ref=e66]: 0/3
+              - generic [ref=e68]:
+                - generic [ref=e69]: "!1"
+                - generic [ref=e70]:
+                  - img [ref=e71]
+                  - text: "11.05"
+        - generic [ref=e73]:
+          - generic [ref=e74]:
+            - img [ref=e75]
+            - generic [ref=e77]: Завтра
+          - generic [ref=e78]:
+            - img [ref=e79]
+            - generic [ref=e81]: Готово
+          - article [ref=e82]:
+            - button "Закрыть задачу" [ref=e83] [cursor=pointer]
+            - generic [ref=e84]:
+              - generic [ref=e85]:
+                - generic "Проект" [ref=e86]
+                - generic [ref=e87]: Написать первый раздел курсовой про распределённые системы
+              - paragraph [ref=e88]: "## План раздела - Введение в проблематику - Раскрыть CAP-теорему с примерами - Сравнение Raft и Paxos с диаграммами - **Главное**: показать почему eventual consistency — не всегда плохо"
+              - generic [ref=e90]: "@идеи"
+              - generic [ref=e91]:
+                - generic [ref=e92]: "!1"
+                - generic [ref=e93]:
+                  - img [ref=e94]
+                  - text: "11.05"
+        - generic [ref=e96]:
+          - generic [ref=e97]:
+            - img [ref=e98]
+            - generic [ref=e100]: Завтра
+          - generic [ref=e101]:
+            - img [ref=e102]
+            - generic [ref=e104]: Готово
+          - article [ref=e105]:
+            - button "Закрыть задачу" [ref=e106] [cursor=pointer]
+            - generic [ref=e107]:
+              - generic [ref=e108]:
+                - generic "Проект" [ref=e109]
+                - generic [ref=e110]: 1:1 с тимлидом
+              - generic [ref=e111]:
+                - generic [ref=e112]: "!2"
+                - generic [ref=e113]:
+                  - img [ref=e114]
+                  - text: "11.05"
+        - generic [ref=e116]:
+          - generic [ref=e117]:
+            - img [ref=e118]
+            - generic [ref=e120]: Завтра
+          - generic [ref=e121]:
+            - img [ref=e122]
+            - generic [ref=e124]: Готово
+          - article [ref=e125]:
+            - button "Закрыть задачу" [ref=e126] [cursor=pointer]
+            - generic [ref=e127]:
+              - generic [ref=e128]:
+                - generic "Проект" [ref=e129]
+                - generic [ref=e130]: Купить молока и хлеба
+              - generic [ref=e132]: "@дом"
+              - generic [ref=e133]:
+                - generic [ref=e134]: "!3"
+                - generic [ref=e135]:
+                  - img [ref=e136]
+                  - text: "11.05"
+    - group [ref=e138]:
+      - generic "Готово · 3" [ref=e139] [cursor=pointer]:
+        - img [ref=e140]
+        - text: Готово · 3
+  - navigation "Mini App" [ref=e142]:
+    - link "Сегодня" [ref=e143] [cursor=pointer]:
+      - /url: /miniapp/
+      - img [ref=e144]
+      - generic [ref=e146]: Сегодня
+    - link "Инбокс" [ref=e147] [cursor=pointer]:
+      - /url: /miniapp/inbox
+      - img [ref=e148]
+      - generic [ref=e150]: Инбокс
+    - link "Календарь" [ref=e151] [cursor=pointer]:
+      - /url: /miniapp/calendar
+      - img [ref=e152]
+      - generic [ref=e154]: Календарь
+    - link "Проекты" [ref=e155] [cursor=pointer]:
+      - /url: /miniapp/projects
+      - img [ref=e156]
+      - generic [ref=e158]: Проекты
+    - link "Я" [ref=e159] [cursor=pointer]:
+      - /url: /miniapp/me
+      - img [ref=e160]
+      - generic [ref=e162]: Я
+  - generic:
+    - img

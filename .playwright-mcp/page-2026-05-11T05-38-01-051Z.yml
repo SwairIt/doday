@@ -1,0 +1,241 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e4]:
+      - textbox "купить молоко завтра !! @дом" [ref=e5]
+      - button [disabled] [ref=e6]:
+        - img [ref=e7]
+    - generic [ref=e9]:
+      - link "К списку проектов" [ref=e10] [cursor=pointer]:
+        - /url: /miniapp/projects
+        - img [ref=e11]
+      - heading "Работа Q3 — переезд офиса и онбординг" [level=1] [ref=e14]
+    - generic [ref=e15]:
+      - generic [ref=e16]:
+        - generic [ref=e17]:
+          - img [ref=e18]
+          - generic [ref=e20]: Завтра
+        - generic [ref=e21]:
+          - img [ref=e22]
+          - generic [ref=e24]: Готово
+        - article [ref=e25]:
+          - button "Закрыть задачу" [ref=e26] [cursor=pointer]
+          - generic [ref=e27]:
+            - generic [ref=e28]:
+              - generic "Проект" [ref=e29]
+              - generic [ref=e30]: Подготовить квартальный отчёт по продажам — слайды + цифры из CRM, презентация в пятницу
+            - paragraph [ref=e31]: Нужны срезы по регионам, сравнение с прошлым кварталом. Договориться с аналитиком на четверг.
+            - generic [ref=e32]:
+              - generic [ref=e33]: "@работа"
+              - generic [ref=e34]: "@срочно"
+            - generic "0 из 3 подзадач" [ref=e35]:
+              - img [ref=e36]
+              - generic [ref=e38]: 0/3
+            - generic [ref=e40]:
+              - generic [ref=e41]: "!1"
+              - generic [ref=e42]:
+                - img [ref=e43]
+                - text: "11.05"
+      - generic [ref=e45]:
+        - generic [ref=e46]:
+          - img [ref=e47]
+          - generic [ref=e49]: Завтра
+        - generic [ref=e50]:
+          - img [ref=e51]
+          - generic [ref=e53]: Готово
+        - article [ref=e54]:
+          - button "Закрыть задачу" [ref=e55] [cursor=pointer]
+          - generic [ref=e56]:
+            - generic [ref=e57]:
+              - generic "Проект" [ref=e58]
+              - generic [ref=e59]: 1:1 с тимлидом
+            - generic [ref=e60]:
+              - generic [ref=e61]: "!2"
+              - generic [ref=e62]:
+                - img [ref=e63]
+                - text: "11.05"
+      - generic [ref=e65]:
+        - generic [ref=e66]:
+          - img [ref=e67]
+          - generic [ref=e69]: Завтра
+        - generic [ref=e70]:
+          - img [ref=e71]
+          - generic [ref=e73]: Готово
+        - article [ref=e74]:
+          - button "Закрыть задачу" [ref=e75] [cursor=pointer]
+          - generic [ref=e76]:
+            - generic [ref=e77]:
+              - generic "Проект" [ref=e78]
+              - generic [ref=e79]: Заполнить тайм-логи за прошлый месяц
+            - generic [ref=e80]:
+              - generic [ref=e81]: "!3"
+              - generic [ref=e82]:
+                - img [ref=e83]
+                - text: "09.05"
+      - generic [ref=e85]:
+        - generic [ref=e86]:
+          - img [ref=e87]
+          - generic [ref=e89]: Завтра
+        - generic [ref=e90]:
+          - img [ref=e91]
+          - generic [ref=e93]: Готово
+        - article [ref=e94]:
+          - button "Закрыть задачу" [ref=e95] [cursor=pointer]
+          - generic [ref=e96]:
+            - generic [ref=e97]:
+              - generic "Проект" [ref=e98]
+              - generic [ref=e99]: Перенести бэкап БД на новый сервер
+            - generic [ref=e100]:
+              - generic [ref=e101]: "!2"
+              - generic [ref=e102]:
+                - img [ref=e103]
+                - text: "12.05"
+      - generic [ref=e105]:
+        - generic [ref=e106]:
+          - img [ref=e107]
+          - generic [ref=e109]: Завтра
+        - generic [ref=e110]:
+          - img [ref=e111]
+          - generic [ref=e113]: Готово
+        - article [ref=e114]:
+          - button "Закрыть задачу" [ref=e115] [cursor=pointer]
+          - generic [ref=e116]:
+            - generic [ref=e117]:
+              - generic "Проект" [ref=e118]
+              - generic [ref=e119]: Спринт-планирование
+            - generic [ref=e120]:
+              - generic [ref=e121]: "!2"
+              - generic [ref=e122]:
+                - img [ref=e123]
+                - text: "16.05"
+      - generic [ref=e125]:
+        - generic [ref=e126]:
+          - img [ref=e127]
+          - generic [ref=e129]: Завтра
+        - generic [ref=e130]:
+          - img [ref=e131]
+          - generic [ref=e133]: Готово
+        - article [ref=e134]:
+          - button "Закрыть задачу" [ref=e135] [cursor=pointer]
+          - generic [ref=e137]:
+            - generic "Проект" [ref=e138]
+            - generic [ref=e139]: Прочитать большую статью про event-sourcing на Хабре
+      - generic [ref=e140]:
+        - generic [ref=e141]:
+          - img [ref=e142]
+          - generic [ref=e144]: Завтра
+        - generic [ref=e145]:
+          - img [ref=e146]
+          - generic [ref=e148]: Готово
+        - article [ref=e149]:
+          - button "Закрыть задачу" [ref=e150] [cursor=pointer]
+          - generic [ref=e151]:
+            - generic [ref=e153]: Собрать цифры из CRM
+            - generic [ref=e155]: "!3"
+      - generic [ref=e156]:
+        - generic [ref=e157]:
+          - img [ref=e158]
+          - generic [ref=e160]: Завтра
+        - generic [ref=e161]:
+          - img [ref=e162]
+          - generic [ref=e164]: Готово
+        - article [ref=e165]:
+          - button "Закрыть задачу" [ref=e166] [cursor=pointer]
+          - generic [ref=e167]:
+            - generic [ref=e169]: Поговорить с аналитиком
+            - generic [ref=e171]: "!3"
+      - generic [ref=e172]:
+        - generic [ref=e173]:
+          - img [ref=e174]
+          - generic [ref=e176]: Завтра
+        - generic [ref=e177]:
+          - img [ref=e178]
+          - generic [ref=e180]: Готово
+        - article [ref=e181]:
+          - button "Закрыть задачу" [ref=e182] [cursor=pointer]
+          - generic [ref=e183]:
+            - generic [ref=e185]: Сверстать слайды
+            - generic [ref=e187]: "!3"
+  - navigation "Mini App" [ref=e188]:
+    - link "Сегодня" [ref=e189] [cursor=pointer]:
+      - /url: /miniapp/
+      - img [ref=e190]
+      - generic [ref=e192]: Сегодня
+    - link "Инбокс" [ref=e193] [cursor=pointer]:
+      - /url: /miniapp/inbox
+      - img [ref=e194]
+      - generic [ref=e196]: Инбокс
+    - link "Календарь" [ref=e197] [cursor=pointer]:
+      - /url: /miniapp/calendar
+      - img [ref=e198]
+      - generic [ref=e200]: Календарь
+    - link "Проекты" [ref=e201] [cursor=pointer]:
+      - /url: /miniapp/projects
+      - img [ref=e202]
+      - generic [ref=e204]: Проекты
+    - link "Я" [ref=e205] [cursor=pointer]:
+      - /url: /miniapp/me
+      - img [ref=e206]
+      - generic [ref=e208]: Я
+  - generic [ref=e211]:
+    - generic [ref=e212]:
+      - heading "Задача" [level=2] [ref=e214]
+      - button [ref=e215] [cursor=pointer]:
+        - img [ref=e216]
+    - generic [ref=e218]:
+      - generic [ref=e219]:
+        - generic [ref=e220]: Текст
+        - textbox [ref=e221]: 1:1 с тимлидом
+      - generic [ref=e222]:
+        - generic [ref=e223]: Приоритет
+        - generic [ref=e224]:
+          - button "P1" [ref=e225] [cursor=pointer]
+          - button "P2" [ref=e226] [cursor=pointer]
+          - button "P3" [ref=e227] [cursor=pointer]
+          - button "—" [ref=e228] [cursor=pointer]
+      - generic [ref=e229]:
+        - generic [ref=e230]: Когда
+        - generic [ref=e231]:
+          - button "Сегодня" [ref=e232] [cursor=pointer]
+          - button "Завтра" [ref=e233] [cursor=pointer]
+          - button "+неделя" [ref=e234] [cursor=pointer]
+          - button "Без даты" [ref=e235] [cursor=pointer]
+        - paragraph [ref=e236]: "Сейчас: 11.05.2026"
+      - generic [ref=e237]:
+        - generic [ref=e238]: Проект
+        - generic [ref=e239]:
+          - button "📥 Входящие" [ref=e240] [cursor=pointer]:
+            - generic [ref=e242]: 📥 Входящие
+          - button "Работа Q3 — переезд офиса и онбординг" [ref=e243] [cursor=pointer]:
+            - generic [ref=e245]: Работа Q3 — переезд офиса и онбординг
+          - button "Дом" [ref=e246] [cursor=pointer]:
+            - generic [ref=e248]: Дом
+          - button "Учёба в магистратуре" [ref=e249] [cursor=pointer]:
+            - generic [ref=e251]: Учёба в магистратуре
+      - generic [ref=e252]:
+        - generic [ref=e253]: Лейблы
+        - generic [ref=e254]:
+          - button "@дом" [ref=e255] [cursor=pointer]:
+            - generic [ref=e257]: "@дом"
+          - button "@идеи" [ref=e258] [cursor=pointer]:
+            - generic [ref=e260]: "@идеи"
+          - button "@работа" [ref=e261] [cursor=pointer]:
+            - generic [ref=e263]: "@работа"
+          - button "@срочно" [ref=e264] [cursor=pointer]:
+            - generic [ref=e266]: "@срочно"
+      - generic [ref=e267]:
+        - generic [ref=e268]: Повтор
+        - generic [ref=e269]:
+          - button "—" [ref=e270] [cursor=pointer]
+          - button "день" [ref=e271] [cursor=pointer]
+          - button "неделя" [ref=e272] [cursor=pointer]
+          - button "месяц" [ref=e273] [cursor=pointer]
+          - button "год" [ref=e274] [cursor=pointer]
+      - button "Подзадачи" [ref=e276] [cursor=pointer]:
+        - generic [ref=e277]: Подзадачи
+        - img [ref=e278]
+      - generic [ref=e280]:
+        - button "📌 Закр." [ref=e281] [cursor=pointer]
+        - button "🗑 Удалить" [ref=e282] [cursor=pointer]
+        - button "Готово" [ref=e283] [cursor=pointer]
+  - generic:
+    - img

@@ -1,0 +1,37 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e4]:
+      - textbox "купить молоко завтра !! @дом" [ref=e5]
+      - button [disabled] [ref=e6]:
+        - img [ref=e7]
+    - generic [ref=e9]:
+      - link "К списку проектов" [ref=e10] [cursor=pointer]:
+        - /url: /miniapp/projects
+        - img [ref=e11]
+      - heading "Пустой проект" [level=1] [ref=e14]
+    - generic [ref=e15]:
+      - img [ref=e16]
+      - paragraph [ref=e19]: В этом проекте пока пусто. Используй поле сверху чтобы добавить задачу.
+  - navigation "Mini App" [ref=e20]:
+    - link "Сегодня" [ref=e21] [cursor=pointer]:
+      - /url: /miniapp/
+      - img [ref=e22]
+      - generic [ref=e24]: Сегодня
+    - link "Инбокс" [ref=e25] [cursor=pointer]:
+      - /url: /miniapp/inbox
+      - img [ref=e26]
+      - generic [ref=e28]: Инбокс
+    - link "Календарь" [ref=e29] [cursor=pointer]:
+      - /url: /miniapp/calendar
+      - img [ref=e30]
+      - generic [ref=e32]: Календарь
+    - link "Проекты" [ref=e33] [cursor=pointer]:
+      - /url: /miniapp/projects
+      - img [ref=e34]
+      - generic [ref=e36]: Проекты
+    - link "Я" [ref=e37] [cursor=pointer]:
+      - /url: /miniapp/me
+      - img [ref=e38]
+      - generic [ref=e40]: Я
+  - generic:
+    - img

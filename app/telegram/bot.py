@@ -41,7 +41,6 @@ import app.custom_filters.models
 import app.habits.models
 import app.labels.models
 import app.links.models
-import app.mood.models
 import app.pomodoro.models
 import app.projects.models
 import app.reminders.models

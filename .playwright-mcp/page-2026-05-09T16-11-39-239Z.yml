@@ -1,0 +1,39 @@
+- generic [ref=e3]:
+  - link "D Doday" [ref=e4] [cursor=pointer]:
+    - /url: /
+    - generic [ref=e5]: D
+    - generic [ref=e6]: Doday
+  - generic [ref=e8]:
+    - heading "С возвращением" [level=1] [ref=e9]
+    - paragraph [ref=e10]: Залогинься и вперёд к делам.
+    - generic [ref=e11]:
+      - generic [ref=e12]:
+        - textbox "Email" [ref=e13]:
+          - /placeholder: " "
+        - generic: Email
+      - generic [ref=e15]:
+        - textbox "Пароль" [ref=e16]:
+          - /placeholder: " "
+        - generic: Пароль
+        - button "Показать пароль" [ref=e17] [cursor=pointer]:
+          - img [ref=e18]
+      - generic [ref=e20]:
+        - generic [ref=e21] [cursor=pointer]:
+          - checkbox "Запомнить меня" [ref=e22]
+          - text: Запомнить меня
+        - link "Забыл пароль?" [ref=e23] [cursor=pointer]:
+          - /url: /auth/forgot
+      - button "Войти" [ref=e24] [cursor=pointer]:
+        - text: Войти
+        - img [ref=e25]
+    - paragraph [ref=e27]:
+      - text: Ещё нет аккаунта?
+      - link "Создать" [ref=e28] [cursor=pointer]:
+        - /url: /auth/register
+  - paragraph [ref=e29]:
+    - text: © 2026 Doday ·
+    - link "База знаний" [ref=e30] [cursor=pointer]:
+      - /url: /help
+    - text: ·
+    - link "Политика" [ref=e31] [cursor=pointer]:
+      - /url: /privacy

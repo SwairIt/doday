@@ -1,0 +1,336 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - link "Прошлая неделя" [ref=e4] [cursor=pointer]:
+        - /url: /miniapp/calendar?date=2026-05-04
+        - img [ref=e5]
+      - heading "May 2026" [level=1] [ref=e8]
+      - link "Следующая неделя" [ref=e9] [cursor=pointer]:
+        - /url: /miniapp/calendar?date=2026-05-18
+        - img [ref=e10]
+    - generic [ref=e12]:
+      - link "Пн 11 4" [ref=e13] [cursor=pointer]:
+        - /url: /miniapp/calendar?date=2026-05-11
+        - generic [ref=e14]: Пн
+        - generic [ref=e15]: "11"
+        - generic [ref=e16]: "4"
+      - link "Вт 12 3" [ref=e17] [cursor=pointer]:
+        - /url: /miniapp/calendar?date=2026-05-12
+        - generic [ref=e18]: Вт
+        - generic [ref=e19]: "12"
+        - generic [ref=e20]: "3"
+      - link "Ср 13" [ref=e21] [cursor=pointer]:
+        - /url: /miniapp/calendar?date=2026-05-13
+        - generic [ref=e22]: Ср
+        - generic [ref=e23]: "13"
+      - link "Чт 14" [ref=e24] [cursor=pointer]:
+        - /url: /miniapp/calendar?date=2026-05-14
+        - generic [ref=e25]: Чт
+        - generic [ref=e26]: "14"
+      - link "Пт 15" [ref=e27] [cursor=pointer]:
+        - /url: /miniapp/calendar?date=2026-05-15
+        - generic [ref=e28]: Пт
+        - generic [ref=e29]: "15"
+      - link "Сб 16 3" [ref=e30] [cursor=pointer]:
+        - /url: /miniapp/calendar?date=2026-05-16
+        - generic [ref=e31]: Сб
+        - generic [ref=e32]: "16"
+        - generic [ref=e33]: "3"
+      - link "Вс 17" [ref=e34] [cursor=pointer]:
+        - /url: /miniapp/calendar?date=2026-05-17
+        - generic [ref=e35]: Вс
+        - generic [ref=e36]: "17"
+    - generic [ref=e37]:
+      - heading "Сегодня · 4" [level=2] [ref=e38]
+      - generic [ref=e39]:
+        - generic [ref=e40]:
+          - generic [ref=e41]:
+            - img [ref=e42]
+            - generic [ref=e44]: Завтра
+          - generic [ref=e45]:
+            - img [ref=e46]
+            - generic [ref=e48]: Готово
+          - article [ref=e49]:
+            - button "Закрыть задачу" [ref=e50] [cursor=pointer]
+            - generic [ref=e51]:
+              - generic [ref=e52]:
+                - generic "Проект" [ref=e53]
+                - generic [ref=e54]: Подготовить квартальный отчёт по продажам — слайды + цифры из CRM, презентация в пятницу
+              - paragraph [ref=e55]: Нужны срезы по регионам, сравнение с прошлым кварталом. Договориться с аналитиком на четверг.
+              - generic [ref=e56]:
+                - generic [ref=e57]: "@работа"
+                - generic [ref=e58]: "@срочно"
+              - generic "0 из 3 подзадач" [ref=e59]:
+                - img [ref=e60]
+                - generic [ref=e62]: 0/3
+              - generic [ref=e64]:
+                - generic [ref=e65]: "!1"
+                - generic [ref=e66]:
+                  - img [ref=e67]
+                  - text: "11.05"
+        - generic [ref=e69]:
+          - generic [ref=e70]:
+            - img [ref=e71]
+            - generic [ref=e73]: Завтра
+          - generic [ref=e74]:
+            - img [ref=e75]
+            - generic [ref=e77]: Готово
+          - article [ref=e78]:
+            - button "Закрыть задачу" [ref=e79] [cursor=pointer]
+            - generic [ref=e80]:
+              - generic [ref=e81]:
+                - generic "Проект" [ref=e82]
+                - generic [ref=e83]: 1:1 с тимлидом
+              - generic [ref=e84]:
+                - generic [ref=e85]: "!2"
+                - generic [ref=e86]:
+                  - img [ref=e87]
+                  - text: "11.05"
+        - generic [ref=e89]:
+          - generic [ref=e90]:
+            - img [ref=e91]
+            - generic [ref=e93]: Завтра
+          - generic [ref=e94]:
+            - img [ref=e95]
+            - generic [ref=e97]: Готово
+          - article [ref=e98]:
+            - button "Закрыть задачу" [ref=e99] [cursor=pointer]
+            - generic [ref=e100]:
+              - generic [ref=e101]:
+                - generic "Проект" [ref=e102]
+                - generic [ref=e103]: Купить молока и хлеба
+              - generic [ref=e105]: "@дом"
+              - generic [ref=e106]:
+                - generic [ref=e107]: "!3"
+                - generic [ref=e108]:
+                  - img [ref=e109]
+                  - text: "11.05"
+        - generic [ref=e111]:
+          - generic [ref=e112]:
+            - img [ref=e113]
+            - generic [ref=e115]: Завтра
+          - generic [ref=e116]:
+            - img [ref=e117]
+            - generic [ref=e119]: Готово
+          - article [ref=e120]:
+            - button "Закрыть задачу" [ref=e121] [cursor=pointer]
+            - generic [ref=e122]:
+              - generic [ref=e123]:
+                - generic "Проект" [ref=e124]
+                - generic [ref=e125]: Написать первый раздел курсовой про распределённые системы
+              - paragraph [ref=e126]: "## План раздела - Введение в проблематику - Раскрыть CAP-теорему с примерами - Сравнение Raft и Paxos с диаграммами - **Главное**: показать почему eventual consistency — не всегда плохо"
+              - generic [ref=e128]: "@идеи"
+              - generic [ref=e129]:
+                - generic [ref=e130]: "!1"
+                - generic [ref=e131]:
+                  - img [ref=e132]
+                  - text: "11.05"
+    - generic [ref=e134]:
+      - heading "Активность · 12 недель" [level=2] [ref=e135]
+      - generic [ref=e136]:
+        - generic [ref=e137]:
+          - link "2026-02-16 · закрыто 0" [ref=e138] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-02-16
+          - link "2026-02-17 · закрыто 0" [ref=e139] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-02-17
+          - link "2026-02-18 · закрыто 0" [ref=e140] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-02-18
+          - link "2026-02-19 · закрыто 0" [ref=e141] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-02-19
+          - link "2026-02-20 · закрыто 0" [ref=e142] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-02-20
+          - link "2026-02-21 · закрыто 0" [ref=e143] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-02-21
+          - link "2026-02-22 · закрыто 0" [ref=e144] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-02-22
+        - generic [ref=e145]:
+          - link "2026-02-23 · закрыто 0" [ref=e146] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-02-23
+          - link "2026-02-24 · закрыто 0" [ref=e147] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-02-24
+          - link "2026-02-25 · закрыто 0" [ref=e148] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-02-25
+          - link "2026-02-26 · закрыто 0" [ref=e149] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-02-26
+          - link "2026-02-27 · закрыто 0" [ref=e150] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-02-27
+          - link "2026-02-28 · закрыто 0" [ref=e151] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-02-28
+          - link "2026-03-01 · закрыто 0" [ref=e152] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-01
+        - generic [ref=e153]:
+          - link "2026-03-02 · закрыто 0" [ref=e154] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-02
+          - link "2026-03-03 · закрыто 0" [ref=e155] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-03
+          - link "2026-03-04 · закрыто 0" [ref=e156] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-04
+          - link "2026-03-05 · закрыто 0" [ref=e157] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-05
+          - link "2026-03-06 · закрыто 0" [ref=e158] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-06
+          - link "2026-03-07 · закрыто 0" [ref=e159] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-07
+          - link "2026-03-08 · закрыто 0" [ref=e160] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-08
+        - generic [ref=e161]:
+          - link "2026-03-09 · закрыто 0" [ref=e162] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-09
+          - link "2026-03-10 · закрыто 0" [ref=e163] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-10
+          - link "2026-03-11 · закрыто 0" [ref=e164] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-11
+          - link "2026-03-12 · закрыто 0" [ref=e165] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-12
+          - link "2026-03-13 · закрыто 0" [ref=e166] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-13
+          - link "2026-03-14 · закрыто 0" [ref=e167] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-14
+          - link "2026-03-15 · закрыто 0" [ref=e168] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-15
+        - generic [ref=e169]:
+          - link "2026-03-16 · закрыто 0" [ref=e170] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-16
+          - link "2026-03-17 · закрыто 0" [ref=e171] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-17
+          - link "2026-03-18 · закрыто 0" [ref=e172] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-18
+          - link "2026-03-19 · закрыто 0" [ref=e173] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-19
+          - link "2026-03-20 · закрыто 0" [ref=e174] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-20
+          - link "2026-03-21 · закрыто 0" [ref=e175] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-21
+          - link "2026-03-22 · закрыто 0" [ref=e176] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-22
+        - generic [ref=e177]:
+          - link "2026-03-23 · закрыто 0" [ref=e178] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-23
+          - link "2026-03-24 · закрыто 0" [ref=e179] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-24
+          - link "2026-03-25 · закрыто 0" [ref=e180] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-25
+          - link "2026-03-26 · закрыто 0" [ref=e181] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-26
+          - link "2026-03-27 · закрыто 0" [ref=e182] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-27
+          - link "2026-03-28 · закрыто 0" [ref=e183] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-28
+          - link "2026-03-29 · закрыто 0" [ref=e184] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-29
+        - generic [ref=e185]:
+          - link "2026-03-30 · закрыто 0" [ref=e186] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-30
+          - link "2026-03-31 · закрыто 0" [ref=e187] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-03-31
+          - link "2026-04-01 · закрыто 0" [ref=e188] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-01
+          - link "2026-04-02 · закрыто 0" [ref=e189] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-02
+          - link "2026-04-03 · закрыто 0" [ref=e190] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-03
+          - link "2026-04-04 · закрыто 0" [ref=e191] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-04
+          - link "2026-04-05 · закрыто 0" [ref=e192] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-05
+        - generic [ref=e193]:
+          - link "2026-04-06 · закрыто 0" [ref=e194] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-06
+          - link "2026-04-07 · закрыто 0" [ref=e195] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-07
+          - link "2026-04-08 · закрыто 0" [ref=e196] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-08
+          - link "2026-04-09 · закрыто 0" [ref=e197] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-09
+          - link "2026-04-10 · закрыто 0" [ref=e198] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-10
+          - link "2026-04-11 · закрыто 0" [ref=e199] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-11
+          - link "2026-04-12 · закрыто 0" [ref=e200] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-12
+        - generic [ref=e201]:
+          - link "2026-04-13 · закрыто 0" [ref=e202] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-13
+          - link "2026-04-14 · закрыто 0" [ref=e203] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-14
+          - link "2026-04-15 · закрыто 0" [ref=e204] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-15
+          - link "2026-04-16 · закрыто 0" [ref=e205] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-16
+          - link "2026-04-17 · закрыто 0" [ref=e206] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-17
+          - link "2026-04-18 · закрыто 0" [ref=e207] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-18
+          - link "2026-04-19 · закрыто 0" [ref=e208] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-19
+        - generic [ref=e209]:
+          - link "2026-04-20 · закрыто 0" [ref=e210] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-20
+          - link "2026-04-21 · закрыто 0" [ref=e211] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-21
+          - link "2026-04-22 · закрыто 0" [ref=e212] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-22
+          - link "2026-04-23 · закрыто 0" [ref=e213] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-23
+          - link "2026-04-24 · закрыто 0" [ref=e214] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-24
+          - link "2026-04-25 · закрыто 0" [ref=e215] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-25
+          - link "2026-04-26 · закрыто 0" [ref=e216] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-26
+        - generic [ref=e217]:
+          - link "2026-04-27 · закрыто 0" [ref=e218] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-27
+          - link "2026-04-28 · закрыто 0" [ref=e219] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-28
+          - link "2026-04-29 · закрыто 0" [ref=e220] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-29
+          - link "2026-04-30 · закрыто 0" [ref=e221] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-04-30
+          - link "2026-05-01 · закрыто 0" [ref=e222] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-05-01
+          - link "2026-05-02 · закрыто 0" [ref=e223] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-05-02
+          - link "2026-05-03 · закрыто 0" [ref=e224] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-05-03
+        - generic [ref=e225]:
+          - link "2026-05-04 · закрыто 0" [ref=e226] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-05-04
+          - link "2026-05-05 · закрыто 0" [ref=e227] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-05-05
+          - link "2026-05-06 · закрыто 0" [ref=e228] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-05-06
+          - link "2026-05-07 · закрыто 0" [ref=e229] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-05-07
+          - link "2026-05-08 · закрыто 0" [ref=e230] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-05-08
+          - link "2026-05-09 · закрыто 0" [ref=e231] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-05-09
+          - link "2026-05-10 · закрыто 0" [ref=e232] [cursor=pointer]:
+            - /url: /miniapp/calendar?date=2026-05-10
+      - generic [ref=e233]:
+        - generic [ref=e234]: меньше
+        - generic [ref=e239]: больше
+  - navigation "Mini App" [ref=e240]:
+    - link "Сегодня" [ref=e241] [cursor=pointer]:
+      - /url: /miniapp/
+      - img [ref=e242]
+      - generic [ref=e244]: Сегодня
+    - link "Инбокс" [ref=e245] [cursor=pointer]:
+      - /url: /miniapp/inbox
+      - img [ref=e246]
+      - generic [ref=e248]: Инбокс
+    - link "Календарь" [ref=e249] [cursor=pointer]:
+      - /url: /miniapp/calendar
+      - img [ref=e250]
+      - generic [ref=e252]: Календарь
+    - link "Проекты" [ref=e253] [cursor=pointer]:
+      - /url: /miniapp/projects
+      - img [ref=e254]
+      - generic [ref=e256]: Проекты
+    - link "Я" [ref=e257] [cursor=pointer]:
+      - /url: /miniapp/me
+      - img [ref=e258]
+      - generic [ref=e260]: Я
+  - generic:
+    - img

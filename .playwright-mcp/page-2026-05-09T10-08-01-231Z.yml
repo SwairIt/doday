@@ -1,0 +1,549 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - navigation [ref=e4]:
+      - link "D Doday" [ref=e5] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e6]: D
+        - generic [ref=e7]: Doday
+      - generic [ref=e8]:
+        - link "Войти" [ref=e9] [cursor=pointer]:
+          - /url: /auth/login
+        - link "бесплатно" [ref=e10] [cursor=pointer]:
+          - /url: /auth/register
+  - main [ref=e11]:
+    - generic [ref=e12]:
+      - paragraph [ref=e13]:
+        - generic [ref=e15]: 14 дней Pro бесплатно при регистрации, без карты
+      - heading "Тудулист, в котором приятно жить" [level=1] [ref=e16]:
+        - text: Тудулист, в котором
+        - text: приятно жить
+      - paragraph [ref=e17]: Задачи, проекты, канбан, календарь, лейблы, повторы, помидор-таймер. Один сайт — для дома, учёбы, работы и команд. Без рекламы и без писем «вернись к нам».
+      - generic [ref=e18]:
+        - link "Создать аккаунт" [ref=e19] [cursor=pointer]:
+          - /url: /auth/register
+          - text: Создать аккаунт
+          - img [ref=e20]
+        - link "Посмотреть возможности" [ref=e22] [cursor=pointer]:
+          - /url: "#features"
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - img [ref=e25]
+          - text: Подтверждение по email
+        - generic [ref=e27]:
+          - img [ref=e28]
+          - text: Открытый исходный код
+        - generic [ref=e30]:
+          - img [ref=e31]
+          - text: Экспорт в JSON, Markdown, iCal
+    - generic [ref=e36]:
+      - generic [ref=e41]: doday.app · Сегодня
+      - generic [ref=e43]:
+        - heading "Сегодня · пятница, 3 мая" [level=3] [ref=e44]:
+          - text: Сегодня
+          - generic [ref=e45]: · пятница, 3 мая
+        - paragraph [ref=e46]: "🎯 Цель: 5 задач · выполнено 1"
+        - generic [ref=e47]:
+          - generic [ref=e49]: Контрольная по алгебре
+          - generic [ref=e50]: "!1"
+        - generic [ref=e51]:
+          - generic [ref=e53]: Прогуляться 30 мин
+          - generic [ref=e54]: "@дом"
+        - generic [ref=e55]:
+          - img [ref=e57]
+          - generic [ref=e59]: Купить хлеб
+    - generic [ref=e61]:
+      - generic [ref=e62]:
+        - generic [ref=e63]: "14"
+        - generic [ref=e64]: дней Pro в подарок
+      - generic [ref=e65]:
+        - generic [ref=e66]: 60+
+        - generic [ref=e67]: фич, которые реально нужны
+      - generic [ref=e68]:
+        - generic [ref=e69]: 310+
+        - generic [ref=e70]: автотестов покрывают код
+      - generic [ref=e71]:
+        - generic [ref=e72]: 0₽
+        - generic [ref=e73]: минимальная цена входа
+    - generic [ref=e74]:
+      - generic [ref=e75]:
+        - paragraph [ref=e76]: Возможности
+        - heading "Всё, что нужно. Ничего лишнего." [level=2] [ref=e77]
+        - paragraph [ref=e78]: Минимум кнопок, максимум скорости. Без обучения и без курса «как правильно вести задачи».
+      - generic [ref=e79]:
+        - generic [ref=e80]:
+          - img [ref=e82]
+          - heading "Сегодня + Просрочено" [level=3] [ref=e84]
+          - paragraph [ref=e85]: "Один экран показывает то, что важно сейчас: задачи на сегодня и всё, что не успел вчера. Считает дневную цель."
+        - generic [ref=e86]:
+          - img [ref=e88]
+          - heading "Проекты, секции, цвета" [level=3] [ref=e90]
+          - paragraph [ref=e91]: Группируй по контекстам. Перетаскивай в сайдбаре. Каждый проект может стать канбан-доской в один клик.
+        - generic [ref=e92]:
+          - img [ref=e94]
+          - heading "Канбан с drag&drop" [level=3] [ref=e96]
+          - paragraph [ref=e97]: Перетаскивай задачи между секциями, переименовывай колонки двойным кликом, переставляй порядок столбцов.
+        - generic [ref=e98]:
+          - img [ref=e100]
+          - heading "Календарь с переносом" [level=3] [ref=e102]
+          - paragraph [ref=e103]: Месячная сетка, drag задачи в любой день — дедлайн обновится. Виден weekend, сегодня, праздники.
+        - generic [ref=e104]:
+          - img [ref=e106]
+          - heading "Быстрый ввод естественным языком" [level=3] [ref=e108]
+          - paragraph [ref=e109]: «Купить молоко завтра !!! @дом» — Doday сам вытащит дату, приоритет и лейбл. Поддержка «след пн», «через неделю», «15 декабря».
+        - generic [ref=e110]:
+          - img [ref=e112]
+          - heading "Подзадачи без лимитов" [level=3] [ref=e114]
+          - paragraph [ref=e115]: Любая глубина вложенности. Раскрывай и сворачивай в один клик. Задача внутри задачи внутри задачи — пожалуйста.
+        - generic [ref=e116]:
+          - img [ref=e118]
+          - heading "Лейблы и кастомные фильтры" [level=3] [ref=e120]
+          - paragraph [ref=e121]: Сохраняй любые комбинации условий (приоритет + проект + дата + текст) как фильтр. Появится в сайдбаре.
+        - generic [ref=e122]:
+          - img [ref=e124]
+          - heading "Pomodoro-таймер" [level=3] [ref=e126]
+          - paragraph [ref=e127]: На каждой задаче. 25 минут работы, 5 минут отдыха, счётчик завершённых сессий. Уведомления через Browser Notification.
+        - generic [ref=e128]:
+          - img [ref=e130]
+          - heading "Активность и статистика" [level=3] [ref=e132]
+          - paragraph [ref=e133]: Лента событий за 30 дней + графики продуктивности с штрихами streak'ов. Видишь рост.
+        - generic [ref=e134]:
+          - img [ref=e136]
+          - heading "Bulk-действия" [level=3] [ref=e138]
+          - paragraph [ref=e139]: Выдели N задач — изменяй приоритет, дату, проект, лейблы; завершай и удаляй пачкой. Esc снимает выделение.
+        - generic [ref=e140]:
+          - img [ref=e142]
+          - heading "Шаблоны проектов" [level=3] [ref=e144]
+          - paragraph [ref=e145]: 8 готовых сценариев (учёба, работа, переезд, путешествие). Сохраняй свои собственные шаблоны и переиспользуй.
+        - generic [ref=e146]:
+          - img [ref=e148]
+          - heading "Импорт-экспорт без замка" [level=3] [ref=e150]
+          - paragraph [ref=e151]: JSON-бэкап всего аккаунта. Markdown проекта. iCalendar — подпишись из Google Calendar. Твои данные — твои.
+    - generic [ref=e152]:
+      - generic [ref=e153]:
+        - paragraph [ref=e154]: Как это работает
+        - heading "Три привычки, которые меняют день" [level=2] [ref=e155]
+      - generic [ref=e156]:
+        - generic [ref=e157]:
+          - generic [ref=e158]:
+            - generic [ref=e159]: "01"
+            - heading "Утром — открой «Сегодня»" [level=3] [ref=e160]
+            - paragraph [ref=e161]: Doday показывает только то, что нужно сегодня и что просрочено вчера. Цель на день — сверху, прогресс-бар заполняется по мере завершений. Никакого «открой 12 списков и реши, с чего начать».
+            - list [ref=e162]:
+              - listitem [ref=e163]:
+                - img [ref=e164]
+                - text: Шорткат
+                - generic [ref=e166]: g + t
+              - listitem [ref=e167]:
+                - img [ref=e168]
+                - text: Просрочка вверху, чтобы не забыть
+              - listitem [ref=e170]:
+                - img [ref=e171]
+                - text: Streak'и подсветят регулярность
+          - generic [ref=e174]:
+            - generic [ref=e175]:
+              - heading "Сегодня" [level=4] [ref=e176]
+              - generic [ref=e177]: 5 / 8 · 62%
+            - generic [ref=e180]:
+              - generic [ref=e181]:
+                - generic [ref=e182]: "!1"
+                - generic [ref=e183]: Закрыть отчёт за квартал
+              - generic [ref=e184]:
+                - generic [ref=e186]: Созвониться с Машей
+                - generic [ref=e187]: 14:00
+              - generic [ref=e190]: Завтрак
+        - generic [ref=e191]:
+          - generic [ref=e192]:
+            - generic [ref=e193]: "02"
+            - heading "Большую штуку — на канбан" [level=3] [ref=e194]
+            - paragraph [ref=e195]: Любой проект превращается в kanban-доску одним кликом. Перетаскивай карточки между «К выполнению / В работе / Готово», переименовывай столбцы двойным кликом, добавляй новые. Всё сохраняется автоматически.
+          - generic [ref=e198]:
+            - generic [ref=e199]:
+              - generic [ref=e200]:
+                - generic [ref=e201]: Сделать
+                - generic [ref=e202]: "3"
+              - generic [ref=e203]:
+                - generic [ref=e204]: Карточка
+                - generic [ref=e205]: Карточка
+                - generic [ref=e206]: Карточка
+            - generic [ref=e207]:
+              - generic [ref=e208]:
+                - generic [ref=e210]: В работе
+                - generic [ref=e211]: "2"
+              - generic [ref=e212]:
+                - generic [ref=e213]: Карточка
+                - generic [ref=e214]: Карточка
+            - generic [ref=e215]:
+              - generic [ref=e216]:
+                - generic [ref=e217]: Готово
+                - generic [ref=e218]: "4"
+              - generic [ref=e219]:
+                - generic [ref=e220]: Карточка
+                - generic [ref=e221]: Карточка
+                - generic [ref=e222]: Карточка
+                - generic [ref=e223]: Карточка
+        - generic [ref=e224]:
+          - generic [ref=e225]:
+            - generic [ref=e226]: "03"
+            - heading "Вечером — посмотри статистику" [level=3] [ref=e227]
+            - paragraph [ref=e228]: График завершений за две недели, текущий streak в днях подряд, лучший день недели. Ничего нет про «продуктивность 80%» — только цифры, которые ты сам можешь интерпретировать.
+          - generic [ref=e231]:
+            - generic [ref=e232]:
+              - generic [ref=e233]: "7"
+              - generic [ref=e234]: Дней подряд
+            - generic [ref=e235]:
+              - generic [ref=e236]: 🔥 Лучший рекорд
+              - generic [ref=e237]: "12"
+    - generic [ref=e253]:
+      - generic [ref=e254]:
+        - paragraph [ref=e255]: Тарифы
+        - 'heading "Честно: бесплатно работает на полную" [level=2] [ref=e256]'
+        - paragraph [ref=e257]: Регистрируешься — и 14 дней получаешь Pro. По окончании trial остаётся Free — до 5 активных проектов, базовый набор. Хочешь больше — подписка.
+      - generic [ref=e258]:
+        - generic [ref=e259]:
+          - generic [ref=e260]:
+            - heading "Free" [level=3] [ref=e261]
+            - generic [ref=e262]: после trial
+          - generic [ref=e263]: 0 ₽ / навсегда
+          - list [ref=e264]:
+            - listitem [ref=e265]:
+              - img [ref=e266]
+              - text: До 5 активных проектов
+            - listitem [ref=e268]:
+              - img [ref=e269]
+              - text: Inbox / Сегодня / Календарь
+            - listitem [ref=e271]:
+              - img [ref=e272]
+              - text: Подзадачи, повтор, Pomodoro
+            - listitem [ref=e274]:
+              - img [ref=e275]
+              - text: Markdown-экспорт
+            - listitem [ref=e277]:
+              - generic [ref=e278]: —
+              - text: Канбан, кастомные фильтры, активность
+          - link "Начать бесплатно" [ref=e279] [cursor=pointer]:
+            - /url: /auth/register
+        - generic [ref=e280]:
+          - generic [ref=e281]: Популярно
+          - heading "Pro" [level=3] [ref=e282]
+          - generic [ref=e283]: 199 ₽ / месяц
+          - list [ref=e284]:
+            - listitem [ref=e285]:
+              - img [ref=e286]
+              - strong [ref=e288]: Безлимит
+              - text: проектов и лейблов
+            - listitem [ref=e289]:
+              - img [ref=e290]
+              - text: Канбан-доски в каждом проекте
+            - listitem [ref=e292]:
+              - img [ref=e293]
+              - text: Свои шаблоны проектов
+            - listitem [ref=e295]:
+              - img [ref=e296]
+              - text: Кастомные фильтры с JSONB-query
+            - listitem [ref=e298]:
+              - img [ref=e299]
+              - text: Экспорт в iCal + лента активности
+            - listitem [ref=e301]:
+              - img [ref=e302]
+              - text: Браузерные уведомления
+          - link "14 дней бесплатно" [ref=e304] [cursor=pointer]:
+            - /url: /auth/register
+          - paragraph [ref=e305]: Без карты, отписка одной кнопкой
+        - generic [ref=e306]:
+          - generic [ref=e307]:
+            - heading "Team" [level=3] [ref=e308]
+            - generic [ref=e309]: скоро
+          - generic [ref=e310]: 499 ₽ / за пользователя в мес.
+          - list [ref=e311]:
+            - listitem [ref=e312]:
+              - img [ref=e313]
+              - text: Всё из Pro
+            - listitem [ref=e315]:
+              - img [ref=e316]
+              - text: Общие проекты команды
+            - listitem [ref=e318]:
+              - img [ref=e319]
+              - text: Назначение задач коллегам
+            - listitem [ref=e321]:
+              - img [ref=e322]
+              - text: Командные шаблоны и фильтры
+            - listitem [ref=e324]:
+              - img [ref=e325]
+              - text: SAML SSO и audit-log
+          - link "Написать нам" [ref=e327] [cursor=pointer]:
+            - /url: mailto:hello@doday.app?subject=Doday%20Team
+    - generic [ref=e328]:
+      - generic [ref=e329]:
+        - paragraph [ref=e330]: Как выглядит
+        - heading "Тёмный, светлый — на твой вкус" [level=2] [ref=e331]
+        - paragraph [ref=e332]: Четыре главных экрана. Внутри — то же самое, никаких сюрпризов после регистрации.
+      - generic [ref=e333]:
+        - generic [ref=e334]:
+          - generic [ref=e335]:
+            - generic [ref=e336]: /app/today
+            - generic [ref=e337]: Сегодня
+          - img "Скриншот экрана Сегодня" [ref=e338]:
+            - generic [ref=e350]: "!1"
+        - generic [ref=e362]:
+          - generic [ref=e363]:
+            - generic [ref=e364]: /app/calendar
+            - generic [ref=e365]: Календарь
+          - img "Скриншот экрана Календарь" [ref=e366]:
+            - generic [ref=e369]:
+              - generic [ref=e370]: пн
+              - generic [ref=e371]: вт
+              - generic [ref=e372]: ср
+              - generic [ref=e373]: чт
+              - generic [ref=e374]: пт
+              - generic [ref=e375]: сб
+              - generic [ref=e376]: вс
+            - generic [ref=e406]: "8"
+        - generic [ref=e412]:
+          - generic [ref=e413]:
+            - generic [ref=e414]: /app/projects/id
+            - generic [ref=e415]: Канбан-доска
+          - img "Скриншот канбан-доски" [ref=e416]:
+            - generic [ref=e419]:
+              - generic [ref=e422]: Сделать
+              - generic [ref=e423]: "4"
+            - generic [ref=e436]:
+              - generic [ref=e439]: В работе
+              - generic [ref=e440]: "3"
+            - generic [ref=e450]:
+              - generic [ref=e453]: Готово
+              - generic [ref=e454]: "5"
+        - generic [ref=e470]:
+          - generic [ref=e471]:
+            - generic [ref=e472]: /app/graph
+            - generic [ref=e473]: Граф связей задач
+          - img "Скриншот графа задач" [ref=e474]:
+            - generic [ref=e485]: ★
+      - paragraph [ref=e491]: Это иллюстрации — реальное приложение работает живо, перетаскивай и нажимай.
+    - generic [ref=e492]:
+      - generic [ref=e493]:
+        - paragraph [ref=e494]: Сравнение
+        - heading "Бесплатно — навсегда. Не trial." [level=2] [ref=e495]
+        - paragraph [ref=e496]: "Многие конкуренты в Free режут даже базовое: лимит на 5 проектов, фильтры под платой, ассистент без планировщика. Doday Free — настоящее Free."
+      - table [ref=e498]:
+        - rowgroup [ref=e499]:
+          - row "Что есть Doday Free 0 ₽ навсегда Todoist Free по их публичному прайсу TickTick Free по их публичному прайсу" [ref=e500]:
+            - columnheader "Что есть" [ref=e501]
+            - columnheader "Doday Free 0 ₽ навсегда" [ref=e502]:
+              - text: Doday Free
+              - generic [ref=e503]: 0 ₽ навсегда
+            - columnheader "Todoist Free по их публичному прайсу" [ref=e504]:
+              - text: Todoist Free
+              - generic [ref=e505]: по их публичному прайсу
+            - columnheader "TickTick Free по их публичному прайсу" [ref=e506]:
+              - text: TickTick Free
+              - generic [ref=e507]: по их публичному прайсу
+        - rowgroup [ref=e508]:
+          - row "Активных проектов 10 5 9 списков" [ref=e509]:
+            - cell "Активных проектов" [ref=e510]
+            - cell "10" [ref=e511]
+            - cell "5" [ref=e512]
+            - cell "9 списков" [ref=e513]
+          - row "Задач в проекте 500 на аккаунт 300 на проект 99 на список" [ref=e514]:
+            - cell "Задач в проекте" [ref=e515]
+            - cell "500 на аккаунт" [ref=e516]
+            - cell "300 на проект" [ref=e517]
+            - cell "99 на список" [ref=e518]
+          - row "Канбан-доски — только Pro" [ref=e519]:
+            - cell "Канбан-доски" [ref=e520]
+            - cell [ref=e521]:
+              - img [ref=e522]
+            - cell "— только Pro" [ref=e524]
+            - cell [ref=e525]:
+              - img [ref=e526]
+          - row "Подзадачи без лимита" [ref=e528]:
+            - cell "Подзадачи без лимита" [ref=e529]
+            - cell [ref=e530]:
+              - img [ref=e531]
+            - cell [ref=e533]:
+              - img [ref=e534]
+            - cell [ref=e536]:
+              - img [ref=e537]
+          - 'row "Кастомные фильтры 3 (Pro: ∞) — только Pro — только Pro" [ref=e539]':
+            - cell "Кастомные фильтры" [ref=e540]
+            - 'cell "3 (Pro: ∞)" [ref=e541]'
+            - cell "— только Pro" [ref=e542]
+            - cell "— только Pro" [ref=e543]
+          - row "Граф связей задач ✗ ✗" [ref=e544]:
+            - cell "Граф связей задач" [ref=e545]
+            - cell [ref=e546]:
+              - img [ref=e547]
+            - cell "✗" [ref=e549]
+            - cell "✗" [ref=e550]
+          - row "Помодоро встроен ✗ — только Pro" [ref=e551]:
+            - cell "Помодоро встроен" [ref=e552]
+            - cell [ref=e553]:
+              - img [ref=e554]
+            - cell "✗" [ref=e556]
+            - cell "— только Pro" [ref=e557]
+          - row "Привычки и стрики ✗ — только Pro" [ref=e558]:
+            - cell "Привычки и стрики" [ref=e559]
+            - cell [ref=e560]:
+              - img [ref=e561]
+            - cell "✗" [ref=e563]
+            - cell "— только Pro" [ref=e564]
+          - row "Russian-natural-language «завтра», «след пн» английский лучше английский лучше" [ref=e565]:
+            - cell "Russian-natural-language" [ref=e566]
+            - cell "«завтра», «след пн»" [ref=e567]
+            - cell "английский лучше" [ref=e568]
+            - cell "английский лучше" [ref=e569]
+          - row "Реклама нет нет нет" [ref=e570]:
+            - cell "Реклама" [ref=e571]
+            - cell "нет" [ref=e572]
+            - cell "нет" [ref=e573]
+            - cell "нет" [ref=e574]
+          - row "Открытый исходник ✓ MIT ✗ ✗" [ref=e575]:
+            - cell "Открытый исходник" [ref=e576]
+            - cell "✓ MIT" [ref=e577]
+            - cell "✗" [ref=e578]
+            - cell "✗" [ref=e579]
+          - row "Хостинг данных РФ, PostgreSQL США Сингапур" [ref=e580]:
+            - cell "Хостинг данных" [ref=e581]
+            - cell "РФ, PostgreSQL" [ref=e582]
+            - cell "США" [ref=e583]
+            - cell "Сингапур" [ref=e584]
+      - paragraph [ref=e585]: Сведения о конкурентах — на дату публикации, по их собственным сравнительным таблицам. Может меняться, проверь у них.
+    - generic [ref=e586]:
+      - generic [ref=e587]:
+        - paragraph [ref=e588]: Отзывы
+        - heading "Здесь будут отзывы пользователей" [level=2] [ref=e589]
+        - paragraph [ref=e590]: Doday запустился совсем недавно — пока мы не публикуем фейковых «5 звёзд» с фотобанка. Будем добавлять настоящие отзывы по мере появления.
+      - generic [ref=e591]:
+        - generic [ref=e592]:
+          - img [ref=e594]
+          - paragraph [ref=e596]: «Место для твоего отзыва»
+          - link "Отправить отзыв →" [ref=e597] [cursor=pointer]:
+            - /url: mailto:hello@doday.app?subject=Отзыв%20о%20Doday
+        - generic [ref=e598]:
+          - img [ref=e600]
+          - paragraph [ref=e602]: «Место для твоего отзыва»
+          - link "Отправить отзыв →" [ref=e603] [cursor=pointer]:
+            - /url: mailto:hello@doday.app?subject=Отзыв%20о%20Doday
+        - generic [ref=e604]:
+          - img [ref=e606]
+          - paragraph [ref=e608]: «Место для твоего отзыва»
+          - link "Отправить отзыв →" [ref=e609] [cursor=pointer]:
+            - /url: mailto:hello@doday.app?subject=Отзыв%20о%20Doday
+    - generic [ref=e610]:
+      - generic [ref=e611]:
+        - paragraph [ref=e612]: Старт за минуту
+        - heading "Три шага — и ты внутри" [level=2] [ref=e613]
+        - paragraph [ref=e614]: Никакой анкеты на 12 полей. Никакого «выбери 5 целей и оцени себя».
+      - generic [ref=e615]:
+        - generic [ref=e616]:
+          - generic [ref=e617]: "1"
+          - generic [ref=e618]: ⏱️ 15 сек
+          - heading "Email и пароль" [level=3] [ref=e619]
+          - paragraph [ref=e620]: Без СМС, без капчи. Подтверди почту по ссылке.
+        - generic [ref=e621]:
+          - generic [ref=e622]: "2"
+          - generic [ref=e623]: 🎯 10 сек
+          - heading "Учёба, работа, жизнь?" [level=3] [ref=e624]
+          - paragraph [ref=e625]: Доday подберёт стартовые задачи и виджеты под твой случай. Можно пропустить.
+        - generic [ref=e626]:
+          - generic [ref=e627]: "3"
+          - generic [ref=e628]: ✏️ 20 сек
+          - heading "Первая задача" [level=3] [ref=e629]
+          - paragraph [ref=e630]: Пиши «купить хлеб завтра !!! @дом». Doday сам поймёт дату, приоритет и лейбл.
+      - link "Начать прямо сейчас" [ref=e632] [cursor=pointer]:
+        - /url: /auth/register
+        - text: Начать прямо сейчас
+        - img [ref=e633]
+    - generic [ref=e635]:
+      - generic [ref=e636]:
+        - paragraph [ref=e637]: FAQ
+        - heading "Что обычно спрашивают" [level=2] [ref=e638]
+      - generic [ref=e639]:
+        - group [ref=e640]:
+          - generic "Сколько стоит?" [ref=e641] [cursor=pointer]:
+            - generic [ref=e642]: Сколько стоит?
+            - img [ref=e643]
+        - group [ref=e645]:
+          - generic "Что будет с моими задачами после 14 дней?" [ref=e646] [cursor=pointer]:
+            - generic [ref=e647]: Что будет с моими задачами после 14 дней?
+            - img [ref=e648]
+        - group [ref=e650]:
+          - generic "Можно ли скачать свои данные?" [ref=e651] [cursor=pointer]:
+            - generic [ref=e652]: Можно ли скачать свои данные?
+            - img [ref=e653]
+        - group [ref=e655]:
+          - generic "Как Doday работает на телефоне?" [ref=e656] [cursor=pointer]:
+            - generic [ref=e657]: Как Doday работает на телефоне?
+            - img [ref=e658]
+        - group [ref=e660]:
+          - generic "Можно как Todoist? Я привык к их синтаксису." [ref=e661] [cursor=pointer]:
+            - generic [ref=e662]: Можно как Todoist? Я привык к их синтаксису.
+            - img [ref=e663]
+        - group [ref=e665]:
+          - generic "Где данные хранятся?" [ref=e666] [cursor=pointer]:
+            - generic [ref=e667]: Где данные хранятся?
+            - img [ref=e668]
+        - group [ref=e670]:
+          - generic "Уведомления приходят на почту?" [ref=e671] [cursor=pointer]:
+            - generic [ref=e672]: Уведомления приходят на почту?
+            - img [ref=e673]
+        - group [ref=e675]:
+          - generic "А реально все 60+ фич нужны?" [ref=e676] [cursor=pointer]:
+            - generic [ref=e677]: А реально все 60+ фич нужны?
+            - img [ref=e678]
+    - generic [ref=e681]:
+      - heading "Хватит планировать в голове" [level=2] [ref=e684]
+      - paragraph [ref=e685]: Полминуты на регистрацию, подтверждение по email — и поехали. 14 дней Pro, без карты.
+      - link "Создать аккаунт бесплатно" [ref=e686] [cursor=pointer]:
+        - /url: /auth/register
+        - text: Создать аккаунт бесплатно
+        - img [ref=e687]
+  - contentinfo [ref=e689]:
+    - generic [ref=e690]:
+      - generic [ref=e691]:
+        - link "D Doday" [ref=e692] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e693]: D
+          - generic [ref=e694]: Doday
+        - paragraph [ref=e695]: Тихий помощник для дел. Без рекламы и без давления.
+      - generic [ref=e696]:
+        - generic [ref=e697]: Продукт
+        - list [ref=e698]:
+          - listitem [ref=e699]:
+            - link "Возможности" [ref=e700] [cursor=pointer]:
+              - /url: "#features"
+          - listitem [ref=e701]:
+            - link "Как работает" [ref=e702] [cursor=pointer]:
+              - /url: "#workflow"
+          - listitem [ref=e703]:
+            - link "Тарифы" [ref=e704] [cursor=pointer]:
+              - /url: "#pricing"
+          - listitem [ref=e705]:
+            - link "FAQ" [ref=e706] [cursor=pointer]:
+              - /url: "#faq"
+      - generic [ref=e707]:
+        - generic [ref=e708]: Помощь
+        - list [ref=e709]:
+          - listitem [ref=e710]:
+            - link "База знаний" [ref=e711] [cursor=pointer]:
+              - /url: /help
+          - listitem [ref=e712]:
+            - link "hello@doday.app" [ref=e713] [cursor=pointer]:
+              - /url: mailto:hello@doday.app
+          - listitem [ref=e714]:
+            - link "Политика" [ref=e715] [cursor=pointer]:
+              - /url: /privacy
+      - generic [ref=e716]:
+        - generic [ref=e717]: Аккаунт
+        - list [ref=e718]:
+          - listitem [ref=e719]:
+            - link "Войти" [ref=e720] [cursor=pointer]:
+              - /url: /auth/login
+          - listitem [ref=e721]:
+            - link "Регистрация" [ref=e722] [cursor=pointer]:
+              - /url: /auth/register
+          - listitem [ref=e723]:
+            - link "GitHub" [ref=e724] [cursor=pointer]:
+              - /url: https://github.com/SwairIt/SchoolProject
+    - generic [ref=e725]:
+      - generic [ref=e726]: © 2026 Doday
+      - generic [ref=e727]: Сделано с фиолетовой любовью к спискам

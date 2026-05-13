@@ -26,7 +26,6 @@ from app.habits import models as _habits_models  # noqa: F401
 from app.labels import models as _labels_models  # noqa: F401
 from app.links import models as _links_models  # noqa: F401
 from app.main import app
-from app.mood import models as _mood_models  # noqa: F401
 from app.pomodoro import models as _pomodoro_models  # noqa: F401
 from app.projects import models as _projects_models  # noqa: F401
 from app.reminders import models as _reminders_models  # noqa: F401

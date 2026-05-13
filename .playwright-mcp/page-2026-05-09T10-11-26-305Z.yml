@@ -1,0 +1,70 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - navigation [ref=e4]:
+      - link "D Doday" [ref=e5] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e6]: D
+        - generic [ref=e7]: Doday
+      - generic [ref=e8]:
+        - link "Войти" [ref=e9] [cursor=pointer]:
+          - /url: /auth/login
+        - link "бесплатно" [ref=e10] [cursor=pointer]:
+          - /url: /auth/register
+  - main [ref=e11]:
+    - navigation [ref=e12]:
+      - link "Помощь" [ref=e13] [cursor=pointer]:
+        - /url: /help
+      - img [ref=e14]
+      - generic [ref=e16]: С чего начать
+    - article [ref=e18]:
+      - generic [ref=e19]:
+        - img [ref=e21]
+        - heading "С чего начать" [level=1] [ref=e23]
+      - paragraph [ref=e24]: Inbox, первая задача, первое завершение.
+      - generic [ref=e25]:
+        - paragraph [ref=e26]:
+          - text: После регистрации Doday кладёт тебя на экран
+          - strong [ref=e27]: Сегодня
+          - text: . Если ничего не запланировано — это нормально. Один туду-лист — это просто пустой список, в который ты сейчас положишь первую вещь.
+        - heading "1. Открой Inbox" [level=3] [ref=e28]
+        - paragraph [ref=e29]:
+          - text: Слева в сайдбаре — пункт
+          - generic [ref=e30]: Inbox
+          - text: . Это специальный «несортированный» проект. Любая задача без проекта попадает сюда. Идеален как «куча всего, чтобы потом разобрать».
+        - heading "2. Добавь первую задачу" [level=3] [ref=e31]
+        - paragraph [ref=e32]:
+          - text: В шапке любого списка — большое поле быстрого ввода. Напечатай
+          - emphasis [ref=e33]: «Купить молоко завтра»
+          - text: и нажми Enter. Doday поймёт, что «завтра» — это срок, и поставит соответствующий дедлайн. Поле также понимает приоритет (
+          - code [ref=e34]: "!"
+          - text: —
+          - code [ref=e35]: "!!!!"
+          - text: ) и лейблы (
+          - code [ref=e36]: "@дом"
+          - text: ).
+        - heading "3. Заверши её" [level=3] [ref=e37]
+        - paragraph [ref=e38]: Кликни кружок слева от задачи. Анимация, эмодзи 🎉 если выполнишь дневную цель. Завершённое уезжает в раздел «Выполнено» внизу проекта (можно скрыть).
+        - heading "4. Добавь свой первый проект" [level=3] [ref=e39]
+        - paragraph [ref=e40]:
+          - text: В сайдбаре кликни
+          - generic [ref=e41]: +
+          - text: рядом с заголовком «Проекты» или нажми
+          - generic [ref=e42]: Shift+P
+          - text: . Открывается модалка — назови проект, выбери цвет, или возьми готовый шаблон («Учёба», «Поездка», «Переезд» — всего 8 встроенных).
+        - paragraph [ref=e43]: Дальше уже всё индивидуально. Загляни в остальные статьи слева.
+      - 'link "Далее Quick-add: синтаксис" [ref=e45] [cursor=pointer]':
+        - /url: /help/quickadd-syntax
+        - generic [ref=e46]:
+          - generic [ref=e47]: Далее
+          - text: "Quick-add: синтаксис"
+        - img [ref=e48]
+  - contentinfo [ref=e50]:
+    - generic [ref=e51]:
+      - generic [ref=e52]: © 2026 Doday
+      - generic [ref=e53]:
+        - link "Главная" [ref=e54] [cursor=pointer]:
+          - /url: /
+        - link "Помощь" [ref=e55] [cursor=pointer]:
+          - /url: /help
+        - link "Связаться" [ref=e56] [cursor=pointer]:
+          - /url: mailto:hello@doday.app

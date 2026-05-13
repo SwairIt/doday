@@ -1,0 +1,50 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e4]:
+      - textbox "купить молоко завтра !! @дом" [ref=e5]
+      - button [disabled] [ref=e6]:
+        - img [ref=e7]
+    - generic [ref=e9]:
+      - heading "Инбокс" [level=1] [ref=e10]
+      - paragraph [ref=e11]: Нераспределённые задачи окажутся здесь.
+    - generic [ref=e13]:
+      - generic [ref=e14]:
+        - img [ref=e15]
+        - generic [ref=e17]: Завтра
+      - generic [ref=e18]:
+        - img [ref=e19]
+        - generic [ref=e21]: Готово
+      - article [ref=e22]:
+        - button "Закрыть задачу" [ref=e23] [cursor=pointer]
+        - generic [ref=e24]:
+          - generic [ref=e25]:
+            - generic "Проект" [ref=e26]
+            - generic [ref=e27]: Записаться на конференцию по ML
+          - generic [ref=e28]:
+            - generic [ref=e29]: "!3"
+            - generic [ref=e30]:
+              - img [ref=e31]
+              - text: "12.05"
+  - navigation "Mini App" [ref=e33]:
+    - link "Сегодня" [ref=e34] [cursor=pointer]:
+      - /url: /miniapp/
+      - img [ref=e35]
+      - generic [ref=e37]: Сегодня
+    - link "Инбокс" [ref=e38] [cursor=pointer]:
+      - /url: /miniapp/inbox
+      - img [ref=e39]
+      - generic [ref=e41]: Инбокс
+    - link "Календарь" [ref=e42] [cursor=pointer]:
+      - /url: /miniapp/calendar
+      - img [ref=e43]
+      - generic [ref=e45]: Календарь
+    - link "Проекты" [ref=e46] [cursor=pointer]:
+      - /url: /miniapp/projects
+      - img [ref=e47]
+      - generic [ref=e49]: Проекты
+    - link "Я" [ref=e50] [cursor=pointer]:
+      - /url: /miniapp/me
+      - img [ref=e51]
+      - generic [ref=e53]: Я
+  - generic:
+    - img

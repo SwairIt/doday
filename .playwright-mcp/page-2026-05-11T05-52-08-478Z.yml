@@ -1,0 +1,57 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - heading "Проекты" [level=1] [ref=e4]
+      - button "Создать проект" [ref=e5] [cursor=pointer]:
+        - img [ref=e6]
+    - generic [ref=e8]:
+      - link "📥 Входящие 1" [ref=e9] [cursor=pointer]:
+        - /url: /miniapp/projects/b26b0eb5-ce7d-468c-91d5-478a95c15460
+        - generic [ref=e11]: 📥 Входящие
+        - generic [ref=e12]: "1"
+        - img [ref=e13]
+      - link "Работа Q3 — переезд офиса и онбординг 3 9" [ref=e15] [cursor=pointer]:
+        - /url: /miniapp/projects/9c7d7820-c8f0-4a39-ad3e-be6ef9010b7c
+        - generic [ref=e17]: Работа Q3 — переезд офиса и онбординг
+        - generic [ref=e18]: "3"
+        - generic [ref=e19]: "9"
+        - img [ref=e20]
+      - link "Дом 1 4" [ref=e22] [cursor=pointer]:
+        - /url: /miniapp/projects/3833f184-6734-47e7-b64b-92ac1f930943
+        - generic [ref=e24]: Дом
+        - generic [ref=e25]: "1"
+        - generic [ref=e26]: "4"
+        - img [ref=e27]
+      - link "Учёба в магистратуре 1 3" [ref=e29] [cursor=pointer]:
+        - /url: /miniapp/projects/307f3665-9660-4765-be49-afd961bc3ac4
+        - generic [ref=e31]: Учёба в магистратуре
+        - generic [ref=e32]: "1"
+        - generic [ref=e33]: "3"
+        - img [ref=e34]
+      - link "Пустой проект" [ref=e36] [cursor=pointer]:
+        - /url: /miniapp/projects/54100f3b-983b-4b52-8b86-e180304c75fc
+        - generic [ref=e38]: Пустой проект
+        - img [ref=e39]
+  - navigation "Mini App" [ref=e41]:
+    - link "Сегодня" [ref=e42] [cursor=pointer]:
+      - /url: /miniapp/
+      - img [ref=e43]
+      - generic [ref=e45]: Сегодня
+    - link "Инбокс" [ref=e46] [cursor=pointer]:
+      - /url: /miniapp/inbox
+      - img [ref=e47]
+      - generic [ref=e49]: Инбокс
+    - link "Календарь" [ref=e50] [cursor=pointer]:
+      - /url: /miniapp/calendar
+      - img [ref=e51]
+      - generic [ref=e53]: Календарь
+    - link "Проекты" [ref=e54] [cursor=pointer]:
+      - /url: /miniapp/projects
+      - img [ref=e55]
+      - generic [ref=e57]: Проекты
+    - link "Я" [ref=e58] [cursor=pointer]:
+      - /url: /miniapp/me
+      - img [ref=e59]
+      - generic [ref=e61]: Я
+  - generic:
+    - img

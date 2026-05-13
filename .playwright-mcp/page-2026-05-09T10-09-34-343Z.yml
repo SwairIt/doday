@@ -1,0 +1,184 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - link "D Doday" [ref=e3] [cursor=pointer]:
+      - /url: /
+      - generic [ref=e4]: D
+      - generic [ref=e5]: Doday
+    - link "Войти" [ref=e6] [cursor=pointer]:
+      - /url: /auth/login
+    - link "Начать" [ref=e7] [cursor=pointer]:
+      - /url: /auth/register
+      - generic [ref=e8]: Начать
+  - main [ref=e9]:
+    - generic [ref=e10]:
+      - heading "Бесплатно — для всех. Pro — когда захочешь." [level=1] [ref=e11]:
+        - text: Бесплатно — для всех.
+        - text: Pro — когда захочешь.
+      - paragraph [ref=e12]: Без рекламы, без слежки, без скрытых лимитов на ровном месте. Школьник пользуется бесплатно вечно. Семья платит 299₽ в месяц если нужны бонусы.
+    - generic [ref=e13]:
+      - generic [ref=e14]:
+        - button "Помесячно" [ref=e15] [cursor=pointer]
+        - button "Годовая −17%" [ref=e16] [cursor=pointer]:
+          - text: Годовая
+          - generic [ref=e17]: −17%
+      - generic [ref=e18]:
+        - generic [ref=e19]:
+          - generic [ref=e20]: Free
+          - heading "Бесплатно" [level=2] [ref=e21]
+          - generic [ref=e22]:
+            - generic [ref=e23]: 0₽
+            - generic [ref=e24]: навсегда
+          - paragraph [ref=e25]: Покрывает 95% реальной потребности — школьнику, студенту, любому индивидуальному пользователю
+          - list [ref=e26]:
+            - listitem [ref=e27]:
+              - generic [ref=e28]: ✓
+              - generic [ref=e29]:
+                - strong [ref=e30]: "10"
+                - text: активных проектов
+            - listitem [ref=e31]:
+              - generic [ref=e32]: ✓
+              - generic [ref=e33]:
+                - strong [ref=e34]: "500"
+                - text: активных задач
+            - listitem [ref=e35]:
+              - generic [ref=e36]: ✓
+              - generic [ref=e37]: Календарь, граф связей, помодоро, привычки, лейблы — все UI
+            - listitem [ref=e38]:
+              - generic [ref=e39]: ✓
+              - generic [ref=e40]: Уведомления в браузере
+            - listitem [ref=e41]:
+              - generic [ref=e42]: ✓
+              - generic [ref=e43]: Подписка календаря (.ics)
+            - listitem [ref=e44]:
+              - generic [ref=e45]: ✓
+              - generic [ref=e46]: Бэкап JSON / CSV / Markdown
+            - listitem [ref=e47]:
+              - generic [ref=e48]: ✓
+              - generic [ref=e49]: Корзина — 14 дней восстановления
+            - listitem [ref=e50]:
+              - generic [ref=e51]: ✓
+              - generic [ref=e52]: 2 темы оформления
+            - listitem [ref=e53]:
+              - generic [ref=e54]: ✓
+              - generic [ref=e55]: 3 кастомных фильтра
+          - link "Начать бесплатно" [ref=e56] [cursor=pointer]:
+            - /url: /auth/register
+        - generic [ref=e57]:
+          - generic [ref=e58]: Большинство берёт
+          - generic [ref=e59]: Pro
+          - heading "Для тех кто въехал" [level=2] [ref=e60]
+          - generic [ref=e61]:
+            - generic [ref=e62]: 166₽
+            - generic [ref=e63]: в месяц
+          - generic [ref=e64]: 1990₽ в год · экономия 398₽
+          - paragraph [ref=e65]: Безлимиты, email-дайджест, Telegram-бот — для тех кому одного кофе в месяц не жалко за tool, который ты юзаешь каждый день
+          - list [ref=e66]:
+            - listitem [ref=e67]:
+              - generic [ref=e68]: ✓
+              - generic [ref=e69]:
+                - text: Всё из
+                - strong [ref=e70]: Free
+            - listitem [ref=e71]:
+              - generic [ref=e72]: ✓
+              - generic [ref=e73]:
+                - strong [ref=e74]: Безлимит
+                - text: на проекты и задачи
+            - listitem [ref=e75]:
+              - generic [ref=e76]: ✓
+              - generic [ref=e77]:
+                - text: Корзина —
+                - strong [ref=e78]: 30 дней
+            - listitem [ref=e79]:
+              - generic [ref=e80]: ✓
+              - generic [ref=e81]: Все темы (Forest, Minimal — Pro-only)
+            - listitem [ref=e82]:
+              - generic [ref=e83]: ◐
+              - generic [ref=e84]: Email-дайджест на утро скоро
+            - listitem [ref=e85]:
+              - generic [ref=e86]: ◐
+              - generic [ref=e87]: Telegram-бот @DodayBot скоро
+            - listitem [ref=e88]:
+              - generic [ref=e89]: ✓
+              - generic [ref=e90]: Bulk-paste до 200 строк
+            - listitem [ref=e91]:
+              - generic [ref=e92]: ✓
+              - generic [ref=e93]: Безлимит кастомных фильтров
+            - listitem [ref=e94]:
+              - generic [ref=e95]: ✓
+              - generic [ref=e96]: Priority support
+          - button "Оформить — Скоро" [disabled] [ref=e97]:
+            - text: Оформить —
+            - generic [ref=e98]: Скоро
+          - paragraph [ref=e99]: Подключаем ЮKassa — карта РФ, СБП, ApplePay
+        - generic [ref=e100]:
+          - generic [ref=e101]: Family
+          - heading "Для семьи" [level=2] [ref=e102]
+          - generic [ref=e103]:
+            - generic [ref=e104]: 249₽
+            - generic [ref=e105]: в месяц / до 5 чел.
+          - generic [ref=e106]: 2990₽ в год на всю семью
+          - paragraph [ref=e107]: Родитель видит прогресс ребёнка, бабушка ведёт свой список, общий проект «Семья» для дома и быта
+          - list [ref=e108]:
+            - listitem [ref=e109]:
+              - generic [ref=e110]: ✓
+              - generic [ref=e111]:
+                - text: Всё из
+                - strong [ref=e112]: Pro
+                - text: для каждого члена
+            - listitem [ref=e113]:
+              - generic [ref=e114]: ✓
+              - generic [ref=e115]:
+                - strong [ref=e116]: "5"
+                - text: аккаунтов под одной подпиской
+            - listitem [ref=e117]:
+              - generic [ref=e118]: ✓
+              - generic [ref=e119]:
+                - text: Общий проект
+                - strong [ref=e120]: «Семья»
+            - listitem [ref=e121]:
+              - generic [ref=e122]: ◐
+              - generic [ref=e123]: Parent dashboard скоро
+            - listitem [ref=e124]:
+              - generic [ref=e125]: ◐
+              - generic [ref=e126]: Уведомления родителю скоро
+            - listitem [ref=e127]:
+              - generic [ref=e128]: ✓
+              - generic [ref=e129]: Один счёт, не нужно платить за каждого ребёнка
+          - button "Оформить — Скоро" [disabled] [ref=e130]:
+            - text: Оформить —
+            - generic [ref=e131]: Скоро
+      - generic [ref=e132]:
+        - heading "Частые вопросы" [level=2] [ref=e133]
+        - group [ref=e134] [cursor=pointer]:
+          - generic "Бесплатный тариф — это правда навсегда? +" [ref=e135]:
+            - generic [ref=e136]: Бесплатный тариф — это правда навсегда?
+            - generic [ref=e137]: +
+        - group [ref=e138] [cursor=pointer]:
+          - generic "Как платить из России? +" [ref=e139]:
+            - generic [ref=e140]: Как платить из России?
+            - generic [ref=e141]: +
+        - group [ref=e142] [cursor=pointer]:
+          - generic "Можно отменить подписку? +" [ref=e143]:
+            - generic [ref=e144]: Можно отменить подписку?
+            - generic [ref=e145]: +
+        - group [ref=e146] [cursor=pointer]:
+          - generic "А скидка для школьников/студентов? +" [ref=e147]:
+            - generic [ref=e148]: А скидка для школьников/студентов?
+            - generic [ref=e149]: +
+        - group [ref=e150] [cursor=pointer]:
+          - generic "Free пользуюсь сейчас — что станет с проектами если их больше 10? +" [ref=e151]:
+            - generic [ref=e152]: Free пользуюсь сейчас — что станет с проектами если их больше 10?
+            - generic [ref=e153]: +
+      - generic [ref=e154]:
+        - paragraph [ref=e155]: Ещё не решил?
+        - link "Начать с Free →" [ref=e156] [cursor=pointer]:
+          - /url: /auth/register
+  - contentinfo [ref=e157]:
+    - link "Главная" [ref=e158] [cursor=pointer]:
+      - /url: /
+    - text: ·
+    - link "Помощь" [ref=e159] [cursor=pointer]:
+      - /url: /help
+    - text: ·
+    - link "Приватность" [ref=e160] [cursor=pointer]:
+      - /url: /privacy

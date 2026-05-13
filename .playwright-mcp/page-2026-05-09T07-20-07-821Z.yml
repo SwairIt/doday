@@ -1,0 +1,162 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - navigation [ref=e4]:
+      - link "D Doday" [ref=e5] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e6]: D
+        - generic [ref=e7]: Doday
+      - generic [ref=e8]:
+        - link "Войти" [ref=e9] [cursor=pointer]:
+          - /url: /auth/login
+        - link "Начать бесплатно" [ref=e10] [cursor=pointer]:
+          - /url: /auth/register
+  - main [ref=e11]:
+    - navigation [ref=e12]:
+      - link "Помощь" [ref=e13] [cursor=pointer]:
+        - /url: /help
+      - img [ref=e14]
+      - generic [ref=e16]: С чего начать
+    - generic [ref=e17]:
+      - complementary [ref=e18]:
+        - generic [ref=e19]: Все статьи
+        - generic [ref=e20]:
+          - link "С чего начать" [ref=e21] [cursor=pointer]:
+            - /url: /help/quick-start
+            - img [ref=e22]
+            - generic [ref=e24]: С чего начать
+          - 'link "Quick-add: синтаксис" [ref=e25] [cursor=pointer]':
+            - /url: /help/quickadd-syntax
+            - img [ref=e26]
+            - generic [ref=e28]: "Quick-add: синтаксис"
+          - link "Проекты, секции, шаблоны" [ref=e29] [cursor=pointer]:
+            - /url: /help/projects
+            - img [ref=e30]
+            - generic [ref=e32]: Проекты, секции, шаблоны
+          - link "Канбан и список" [ref=e33] [cursor=pointer]:
+            - /url: /help/kanban
+            - img [ref=e34]
+            - generic [ref=e36]: Канбан и список
+          - link "Календарь и Upcoming" [ref=e37] [cursor=pointer]:
+            - /url: /help/calendar-upcoming
+            - img [ref=e38]
+            - generic [ref=e40]: Календарь и Upcoming
+          - link "Подзадачи, комментарии, повтор" [ref=e41] [cursor=pointer]:
+            - /url: /help/subtasks-comments-recurrence
+            - img [ref=e42]
+            - generic [ref=e44]: Подзадачи, комментарии, повтор
+          - link "Лейблы и фильтры" [ref=e45] [cursor=pointer]:
+            - /url: /help/labels-filters
+            - img [ref=e46]
+            - generic [ref=e48]: Лейблы и фильтры
+          - link "Pomodoro и дневная цель" [ref=e49] [cursor=pointer]:
+            - /url: /help/pomodoro-goal
+            - img [ref=e50]
+            - generic [ref=e52]: Pomodoro и дневная цель
+          - link "Импорт и экспорт" [ref=e53] [cursor=pointer]:
+            - /url: /help/import-export
+            - img [ref=e54]
+            - generic [ref=e56]: Импорт и экспорт
+          - link "Горячие клавиши" [ref=e57] [cursor=pointer]:
+            - /url: /help/shortcuts
+            - img [ref=e58]
+            - generic [ref=e60]: Горячие клавиши
+          - link "Подписка календаря на задачи" [ref=e61] [cursor=pointer]:
+            - /url: /help/calendar-subscription
+            - img [ref=e62]
+            - generic [ref=e64]: Подписка календаря на задачи
+          - 'link "Школьный дневник: подключение" [ref=e65] [cursor=pointer]':
+            - /url: /help/school-integrations
+            - img [ref=e66]
+            - generic [ref=e68]: "Школьный дневник: подключение"
+          - link "Граф задач и связи между ними" [ref=e69] [cursor=pointer]:
+            - /url: /help/graph-and-links
+            - img [ref=e70]
+            - generic [ref=e72]: Граф задач и связи между ними
+          - link "Привычки и стрики" [ref=e73] [cursor=pointer]:
+            - /url: /help/habits
+            - img [ref=e74]
+            - generic [ref=e76]: Привычки и стрики
+          - link "Корзина и восстановление" [ref=e77] [cursor=pointer]:
+            - /url: /help/trash-restore
+            - img [ref=e78]
+            - generic [ref=e80]: Корзина и восстановление
+          - link "Right-click меню задачи" [ref=e81] [cursor=pointer]:
+            - /url: /help/context-menu
+            - img [ref=e82]
+            - generic [ref=e84]: Right-click меню задачи
+          - link "Клавиатурная навигация" [ref=e85] [cursor=pointer]:
+            - /url: /help/keyboard
+            - img [ref=e86]
+            - generic [ref=e88]: Клавиатурная навигация
+          - link "Мобильное использование и PWA" [ref=e89] [cursor=pointer]:
+            - /url: /help/mobile-pwa
+            - img [ref=e90]
+            - generic [ref=e92]: Мобильное использование и PWA
+          - link "Создать много задач разом" [ref=e93] [cursor=pointer]:
+            - /url: /help/bulk-add
+            - img [ref=e94]
+            - generic [ref=e96]: Создать много задач разом
+          - link "Поиск и фильтрация" [ref=e97] [cursor=pointer]:
+            - /url: /help/search-and-filter
+            - img [ref=e98]
+            - generic [ref=e100]: Поиск и фильтрация
+          - link "Markdown в описаниях и печать" [ref=e101] [cursor=pointer]:
+            - /url: /help/markdown-print
+            - img [ref=e102]
+            - generic [ref=e104]: Markdown в описаниях и печать
+          - link "Mood-tracker и достижения" [ref=e105] [cursor=pointer]:
+            - /url: /help/mood-achievements
+            - img [ref=e106]
+            - generic [ref=e108]: Mood-tracker и достижения
+      - article [ref=e109]:
+        - generic [ref=e110]:
+          - img [ref=e112]
+          - heading "С чего начать" [level=1] [ref=e114]
+        - paragraph [ref=e115]: Inbox, первая задача, первое завершение.
+        - generic [ref=e116]:
+          - paragraph [ref=e117]:
+            - text: После регистрации Doday кладёт тебя на экран
+            - strong [ref=e118]: Сегодня
+            - text: . Если ничего не запланировано — это нормально. Один туду-лист — это просто пустой список, в который ты сейчас положишь первую вещь.
+          - heading "1. Открой Inbox" [level=3] [ref=e119]
+          - paragraph [ref=e120]:
+            - text: Слева в сайдбаре — пункт
+            - generic [ref=e121]: Inbox
+            - text: . Это специальный «несортированный» проект. Любая задача без проекта попадает сюда. Идеален как «куча всего, чтобы потом разобрать».
+          - heading "2. Добавь первую задачу" [level=3] [ref=e122]
+          - paragraph [ref=e123]:
+            - text: В шапке любого списка — большое поле быстрого ввода. Напечатай
+            - emphasis [ref=e124]: «Купить молоко завтра»
+            - text: и нажми Enter. Doday поймёт, что «завтра» — это срок, и поставит соответствующий дедлайн. Поле также понимает приоритет (
+            - code [ref=e125]: "!"
+            - text: —
+            - code [ref=e126]: "!!!!"
+            - text: ) и лейблы (
+            - code [ref=e127]: "@дом"
+            - text: ).
+          - heading "3. Заверши её" [level=3] [ref=e128]
+          - paragraph [ref=e129]: Кликни кружок слева от задачи. Анимация, эмодзи 🎉 если выполнишь дневную цель. Завершённое уезжает в раздел «Выполнено» внизу проекта (можно скрыть).
+          - heading "4. Добавь свой первый проект" [level=3] [ref=e130]
+          - paragraph [ref=e131]:
+            - text: В сайдбаре кликни
+            - generic [ref=e132]: +
+            - text: рядом с заголовком «Проекты» или нажми
+            - generic [ref=e133]: Shift+P
+            - text: . Открывается модалка — назови проект, выбери цвет, или возьми готовый шаблон («Учёба», «Поездка», «Переезд» — всего 8 встроенных).
+          - paragraph [ref=e134]: Дальше уже всё индивидуально. Загляни в остальные статьи слева.
+        - 'link "Далее Quick-add: синтаксис" [ref=e136] [cursor=pointer]':
+          - /url: /help/quickadd-syntax
+          - generic [ref=e137]:
+            - generic [ref=e138]: Далее
+            - text: "Quick-add: синтаксис"
+          - img [ref=e139]
+  - contentinfo [ref=e141]:
+    - generic [ref=e142]:
+      - generic [ref=e143]: © 2026 Doday
+      - generic [ref=e144]:
+        - link "Главная" [ref=e145] [cursor=pointer]:
+          - /url: /
+        - link "Помощь" [ref=e146] [cursor=pointer]:
+          - /url: /help
+        - link "Связаться" [ref=e147] [cursor=pointer]:
+          - /url: mailto:hello@doday.app

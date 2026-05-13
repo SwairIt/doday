@@ -32,7 +32,6 @@ from app.links.router import graph_router as links_graph_router
 from app.links.router import router as links_router
 from app.logging_setup import configure_logging
 from app.miniapp.router import router as miniapp_router
-from app.mood.router import router as mood_router
 from app.pages.router import router as pages_router
 from app.profile.router import router as profile_router
 from app.projects.router import router as projects_router
@@ -144,7 +143,6 @@ app.include_router(calendar_feed_router)
 app.include_router(calendar_token_router)
 app.include_router(habits_router)
 app.include_router(time_tracking_router)
-app.include_router(mood_router)
 app.include_router(links_router)
 app.include_router(links_graph_router)
 app.include_router(digest_router)

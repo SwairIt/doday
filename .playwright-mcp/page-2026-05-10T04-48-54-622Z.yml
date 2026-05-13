@@ -1,0 +1,296 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - link "D Doday" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e6]: D
+          - generic [ref=e7]: Doday
+        - 'link "🌱 режим: Жизнь" [ref=e8] [cursor=pointer]':
+          - /url: /app/profile
+          - generic [ref=e9]: 🌱
+          - generic [ref=e10]: "режим: Жизнь"
+      - navigation [ref=e11]:
+        - generic [ref=e12]: Главное
+        - generic [ref=e13]:
+          - link "Inbox 1" [ref=e14] [cursor=pointer]:
+            - /url: /app/inbox
+            - img [ref=e15]
+            - generic [ref=e17]: Inbox
+            - generic [ref=e18]: "1"
+          - link "Сегодня 8 5" [ref=e19] [cursor=pointer]:
+            - /url: /app/today
+            - img [ref=e20]
+            - generic [ref=e22]: Сегодня
+            - generic [ref=e23]: "8"
+            - 'generic "Просрочено: 5" [ref=e24]': "5"
+          - link "Ближайшие 3" [ref=e25] [cursor=pointer]:
+            - /url: /app/upcoming
+            - img [ref=e26]
+            - generic [ref=e28]: Ближайшие
+            - generic [ref=e29]: "3"
+          - link "Календарь" [ref=e30] [cursor=pointer]:
+            - /url: /app/calendar
+            - img [ref=e31]
+            - generic [ref=e33]: Календарь
+          - link "Статистика" [ref=e34] [cursor=pointer]:
+            - /url: /app/stats
+            - img [ref=e35]
+            - generic [ref=e37]: Статистика
+          - link "Завершённые" [ref=e38] [cursor=pointer]:
+            - /url: /app/done
+            - img [ref=e39]
+            - generic [ref=e41]: Завершённые
+          - link "Лейблы" [ref=e42] [cursor=pointer]:
+            - /url: /app/labels
+            - img [ref=e43]
+            - generic [ref=e45]: Лейблы
+          - link "Активность" [ref=e46] [cursor=pointer]:
+            - /url: /app/activity
+            - img [ref=e47]
+            - generic [ref=e49]: Активность
+          - link "Граф" [ref=e50] [cursor=pointer]:
+            - /url: /app/graph
+            - img [ref=e51]
+            - generic [ref=e53]: Граф
+          - link "Привычки" [ref=e54] [cursor=pointer]:
+            - /url: /app/habits
+            - img [ref=e55]
+            - generic [ref=e57]: Привычки
+          - link "Корзина" [ref=e58] [cursor=pointer]:
+            - /url: /app/trash
+            - img [ref=e59]
+            - generic [ref=e61]: Корзина
+        - generic [ref=e62]: Фильтры
+        - generic [ref=e63]:
+          - generic [ref=e64]: Фильтры
+          - link "Управлять фильтрами" [ref=e65] [cursor=pointer]:
+            - /url: /app/filters
+            - img [ref=e66]
+        - link "Просрочено" [ref=e68] [cursor=pointer]:
+          - /url: /app/filters/overdue
+          - img [ref=e69]
+          - generic [ref=e71]: Просрочено
+        - link "Без даты" [ref=e72] [cursor=pointer]:
+          - /url: /app/filters/no-date
+          - img [ref=e73]
+          - generic [ref=e75]: Без даты
+        - link "Высокий приоритет" [ref=e76] [cursor=pointer]:
+          - /url: /app/filters/high-priority
+          - img [ref=e77]
+          - generic [ref=e79]: Высокий приоритет
+        - link "На этой неделе" [ref=e80] [cursor=pointer]:
+          - /url: /app/filters/this-week
+          - img [ref=e81]
+          - generic [ref=e83]: На этой неделе
+        - generic [ref=e84]:
+          - button "Избранное" [ref=e85] [cursor=pointer]:
+            - generic [ref=e86]:
+              - img [ref=e87]
+              - text: Избранное
+            - img [ref=e89]
+          - generic [ref=e92]:
+            - img [ref=e94]
+            - link "Учёба в магистратуре 3" [ref=e101] [cursor=pointer]:
+              - /url: /app/projects/study
+              - generic [ref=e103]: Учёба в магистратуре
+              - img [ref=e104]
+              - generic [ref=e106]: "3"
+            - button [ref=e108] [cursor=pointer]:
+              - img [ref=e109]
+        - generic [ref=e113]:
+          - generic [ref=e114]: Проекты
+          - generic [ref=e115]:
+            - link "Архив" [ref=e116] [cursor=pointer]:
+              - /url: /app/projects-archive
+              - img [ref=e117]
+            - button "Новый проект" [ref=e119] [cursor=pointer]:
+              - img [ref=e120]
+        - generic [ref=e122]:
+          - generic [ref=e123]:
+            - img [ref=e125]
+            - link "Входящие 1" [ref=e132] [cursor=pointer]:
+              - /url: /app/projects/inbox
+              - generic [ref=e134]: Входящие
+              - generic [ref=e135]: "1"
+          - generic [ref=e136]:
+            - img [ref=e138]
+            - link "Работа Q3 — переезд офиса и онбординг 6" [ref=e145] [cursor=pointer]:
+              - /url: /app/projects/work-q3
+              - generic [ref=e147]: Работа Q3 — переезд офиса и онбординг
+              - generic [ref=e148]: "6"
+            - button [ref=e150] [cursor=pointer]:
+              - img [ref=e151]
+          - generic [ref=e155]:
+            - img [ref=e157]
+            - link "Дом 4" [ref=e164] [cursor=pointer]:
+              - /url: /app/projects/home
+              - generic [ref=e166]: Дом
+              - generic [ref=e167]: "4"
+            - button [ref=e169] [cursor=pointer]:
+              - img [ref=e170]
+        - generic [ref=e174]:
+          - generic [ref=e175]:
+            - button "‹" [ref=e176] [cursor=pointer]
+            - generic [ref=e177]: май 2026 г.
+            - button "›" [ref=e178] [cursor=pointer]
+          - generic [ref=e179]:
+            - generic [ref=e180]: П
+            - generic [ref=e181]: В
+            - generic [ref=e182]: С
+            - generic [ref=e183]: Ч
+            - generic [ref=e184]: П
+            - generic [ref=e185]: С
+            - generic [ref=e186]: В
+            - button "27" [ref=e187] [cursor=pointer]
+            - button "28" [ref=e188] [cursor=pointer]
+            - button "29" [ref=e189] [cursor=pointer]
+            - button "30" [ref=e190] [cursor=pointer]
+            - button "1" [ref=e191] [cursor=pointer]
+            - button "2" [ref=e192] [cursor=pointer]
+            - button "3" [ref=e193] [cursor=pointer]
+            - button "4" [ref=e194] [cursor=pointer]
+            - button "5" [ref=e195] [cursor=pointer]
+            - button "6" [ref=e196] [cursor=pointer]
+            - button "7" [ref=e197] [cursor=pointer]
+            - button "8" [ref=e198] [cursor=pointer]: "8"
+            - button "9" [ref=e200] [cursor=pointer]
+            - button "10" [ref=e201] [cursor=pointer]: "10"
+            - button "11" [ref=e203] [cursor=pointer]
+            - button "12" [ref=e204] [cursor=pointer]
+            - button "13" [ref=e205] [cursor=pointer]
+            - button "14" [ref=e206] [cursor=pointer]
+            - button "15" [ref=e207] [cursor=pointer]: "15"
+            - button "16" [ref=e209] [cursor=pointer]
+            - button "17" [ref=e210] [cursor=pointer]
+            - button "18" [ref=e211] [cursor=pointer]
+            - button "19" [ref=e212] [cursor=pointer]
+            - button "20" [ref=e213] [cursor=pointer]
+            - button "21" [ref=e214] [cursor=pointer]
+            - button "22" [ref=e215] [cursor=pointer]
+            - button "23" [ref=e216] [cursor=pointer]
+            - button "24" [ref=e217] [cursor=pointer]
+            - button "25" [ref=e218] [cursor=pointer]
+            - button "26" [ref=e219] [cursor=pointer]
+            - button "27" [ref=e220] [cursor=pointer]
+            - button "28" [ref=e221] [cursor=pointer]
+            - button "29" [ref=e222] [cursor=pointer]
+            - button "30" [ref=e223] [cursor=pointer]: "30"
+            - button "31" [ref=e225] [cursor=pointer]
+            - button "1" [ref=e226] [cursor=pointer]
+            - button "2" [ref=e227] [cursor=pointer]
+            - button "3" [ref=e228] [cursor=pointer]
+            - button "4" [ref=e229] [cursor=pointer]
+            - button "5" [ref=e230] [cursor=pointer]
+            - button "6" [ref=e231] [cursor=pointer]
+            - button "7" [ref=e232] [cursor=pointer]
+      - generic [ref=e233]:
+        - link "R responsive-test@doday.local Профиль" [ref=e234] [cursor=pointer]:
+          - /url: /app/profile
+          - generic [ref=e235]: R
+          - generic [ref=e236]:
+            - generic [ref=e237]: responsive-test@doday.local
+            - generic [ref=e238]: Профиль
+        - link "Тарифы и Pro-подписка" [ref=e239] [cursor=pointer]:
+          - /url: /pricing
+          - img [ref=e240]
+        - link "Посмотреть лендинг" [ref=e242] [cursor=pointer]:
+          - /url: /?preview=1
+          - img [ref=e243]
+        - button "Выйти из аккаунта" [ref=e246] [cursor=pointer]:
+          - img [ref=e247]
+    - generic [ref=e249]:
+      - banner [ref=e250]:
+        - button "Открыть меню" [ref=e251] [cursor=pointer]:
+          - img [ref=e252]
+        - heading "Doday" [level=1] [ref=e254]
+        - button "Поиск" [ref=e255] [cursor=pointer]:
+          - img [ref=e256]
+        - button "Сменить тему — сейчас system" [ref=e258] [cursor=pointer]:
+          - img [ref=e259]
+      - main [ref=e261]:
+        - generic [ref=e262]:
+          - generic [ref=e267]:
+            - heading "Входящие" [level=1] [ref=e268]
+            - paragraph [ref=e269]: 1 активных · 1 выполнено · системный проект
+            - generic [ref=e273]: 50%
+          - generic [ref=e275]:
+            - generic [ref=e276]: Список
+            - link "Доска" [ref=e277] [cursor=pointer]:
+              - /url: "?view=kanban"
+          - generic [ref=e279]:
+            - generic [ref=e280]:
+              - img [ref=e282]
+              - textbox "Новая задача" [ref=e284]
+              - button "+" [ref=e285] [cursor=pointer]:
+                - generic [ref=e286]: +
+            - generic [ref=e287]:
+              - text: "Подсказки:"
+              - code [ref=e288]: сегодня
+              - code [ref=e289]: завтра
+              - code [ref=e290]: пт
+              - code [ref=e291]: след пн
+              - code [ref=e292]: через 5 дней
+              - code [ref=e293]: через неделю
+              - code [ref=e294]: 15 декабря
+              - code [ref=e295]: "25.05"
+              - text: · приоритет
+              - code [ref=e296]: "!"
+              - text: —
+              - code [ref=e297]: "!!!!"
+              - text: · лейбл
+              - code [ref=e298]: "@название"
+              - text: · проект
+              - code [ref=e299]: "#название"
+          - generic [ref=e300]:
+            - button "вручную" [ref=e302] [cursor=pointer]:
+              - img [ref=e303]
+              - generic [ref=e305]: вручную
+            - button "нет" [ref=e307] [cursor=pointer]:
+              - img [ref=e308]
+              - generic [ref=e310]: нет
+            - button "Готово" [ref=e311] [cursor=pointer]:
+              - img [ref=e312]
+              - generic [ref=e314]: Готово
+          - generic [ref=e317]:
+            - checkbox [ref=e319]
+            - button "Подзадачи" [ref=e320] [cursor=pointer]:
+              - img [ref=e321]
+            - button "Завершить" [ref=e323] [cursor=pointer]
+            - generic [ref=e325]:
+              - generic "Проект" [ref=e326]
+              - button "Записаться на конференцию по ML" [ref=e327] [cursor=pointer]
+            - generic [ref=e328]:
+              - button "!3" [ref=e330] [cursor=pointer]
+              - button "10.05" [ref=e332] [cursor=pointer]
+              - button "Открыть меню задачи" [ref=e333] [cursor=pointer]:
+                - img [ref=e334]
+          - button "Добавить секцию" [ref=e339] [cursor=pointer]:
+            - img [ref=e340]
+            - text: Добавить секцию
+          - button "Выполнено · 1" [ref=e343] [cursor=pointer]:
+            - img [ref=e344]
+            - text: Выполнено
+            - generic [ref=e346]: · 1
+  - button "Открыть помощь" [ref=e347] [cursor=pointer]: "?"
+  - navigation [ref=e348]:
+    - link "Inbox" [ref=e349] [cursor=pointer]:
+      - /url: /app/inbox
+      - img [ref=e350]
+      - generic [ref=e352]: Inbox
+    - link "Сегодня" [ref=e353] [cursor=pointer]:
+      - /url: /app/today
+      - img [ref=e354]
+      - generic [ref=e356]: Сегодня
+    - link "Дальше" [ref=e357] [cursor=pointer]:
+      - /url: /app/upcoming
+      - img [ref=e358]
+      - generic [ref=e360]: Дальше
+    - link "Календарь" [ref=e361] [cursor=pointer]:
+      - /url: /app/calendar
+      - img [ref=e362]
+      - generic [ref=e364]: Календарь
+    - link "Профиль" [ref=e365] [cursor=pointer]:
+      - /url: /app/profile
+      - img [ref=e366]
+      - generic [ref=e368]: Профиль

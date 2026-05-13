@@ -1,0 +1,79 @@
+- generic [ref=e3]:
+  - link "D Doday" [ref=e4] [cursor=pointer]:
+    - /url: /
+    - generic [ref=e5]: D
+    - generic [ref=e6]: Doday
+  - generic [ref=e8]:
+    - heading "Создай аккаунт" [level=1] [ref=e9]
+    - paragraph [ref=e10]: Полминуты — и можно начинать. 14 дней Pro в подарок.
+    - generic [ref=e11]:
+      - generic [ref=e12]:
+        - paragraph [ref=e13]: Для чего туду-лист?
+        - generic [ref=e14]:
+          - generic [ref=e15] [cursor=pointer]:
+            - radio "🎓 Учёба Уроки, дедлайны, экзамены" [ref=e16]
+            - generic [ref=e17]:
+              - generic [ref=e18]: 🎓
+              - generic [ref=e19]: Учёба
+              - generic [ref=e20]: Уроки, дедлайны, экзамены
+          - generic [ref=e21] [cursor=pointer]:
+            - radio "💼 Работа Спринты, проекты, команда" [ref=e22]
+            - generic [ref=e23]:
+              - generic [ref=e24]: 💼
+              - generic [ref=e25]: Работа
+              - generic [ref=e26]: Спринты, проекты, команда
+          - generic [ref=e27] [cursor=pointer]:
+            - radio "🌱 Жизнь Привычки, дом, заметки" [ref=e28]
+            - generic [ref=e29]:
+              - generic [ref=e30]: 🌱
+              - generic [ref=e31]: Жизнь
+              - generic [ref=e32]: Привычки, дом, заметки
+        - paragraph [ref=e33]: Можно пропустить — поменяешь в настройках.
+      - generic [ref=e34]:
+        - textbox "Email" [ref=e35]:
+          - /placeholder: " "
+        - generic: Email
+      - generic [ref=e36]:
+        - generic [ref=e37]:
+          - textbox "Пароль" [ref=e38]:
+            - /placeholder: " "
+          - generic: Пароль
+          - button "Показать пароль" [ref=e39] [cursor=pointer]:
+            - img [ref=e40]
+        - generic [ref=e43]:
+          - generic [ref=e44]: Надёжность пароля
+          - generic [ref=e45]: —
+        - list [ref=e47]:
+          - listitem [ref=e48]:
+            - img [ref=e49]
+            - text: 8+ символов
+          - listitem [ref=e51]:
+            - img [ref=e52]
+            - text: Буквы Aa
+          - listitem [ref=e54]:
+            - img [ref=e55]
+            - text: Цифра
+          - listitem [ref=e57]:
+            - img [ref=e58]
+            - text: Спецсимвол
+      - generic [ref=e60] [cursor=pointer]:
+        - checkbox "Согласен с политикой и обработкой персональных данных. Мы не шлём спам — только письма про подтверждение и сброс пароля." [ref=e61]
+        - generic [ref=e62]:
+          - text: Согласен с
+          - link "политикой" [ref=e63]:
+            - /url: /privacy
+          - text: и обработкой персональных данных. Мы не шлём спам — только письма про подтверждение и сброс пароля.
+      - button "Создать аккаунт" [ref=e64] [cursor=pointer]:
+        - text: Создать аккаунт
+        - img [ref=e65]
+    - paragraph [ref=e67]:
+      - text: Уже зарегистрирован?
+      - link "Войти" [ref=e68] [cursor=pointer]:
+        - /url: /auth/login
+  - paragraph [ref=e69]:
+    - text: © 2026 Doday ·
+    - link "База знаний" [ref=e70] [cursor=pointer]:
+      - /url: /help
+    - text: ·
+    - link "Политика" [ref=e71] [cursor=pointer]:
+      - /url: /privacy

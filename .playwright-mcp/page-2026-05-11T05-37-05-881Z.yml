@@ -1,0 +1,135 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - heading "responsive-test@doday.local" [level=1] [ref=e4]
+      - paragraph [ref=e5]: Личная статистика
+    - generic [ref=e7]:
+      - generic [ref=e9]: 🔥
+      - generic [ref=e10]:
+        - generic [ref=e11]: "1"
+        - generic [ref=e12]: день streak
+      - generic [ref=e13]:
+        - generic [ref=e14]: Рекорд
+        - generic [ref=e15]: "1"
+    - generic [ref=e16]:
+      - heading "Закрыто" [level=2] [ref=e17]
+      - generic [ref=e18]:
+        - generic [ref=e19]:
+          - generic [ref=e20]: "3"
+          - generic [ref=e21]: сегодня
+        - generic [ref=e22]:
+          - generic [ref=e23]: "3"
+          - generic [ref=e24]: неделя
+        - generic [ref=e25]:
+          - generic [ref=e26]: "3"
+          - generic [ref=e27]: месяц
+        - generic [ref=e28]:
+          - generic [ref=e29]: "3"
+          - generic [ref=e30]: всего
+    - generic [ref=e31]:
+      - generic [ref=e32]:
+        - heading "Последние 14 дней" [level=2] [ref=e33]
+        - generic [ref=e34]: макс 3
+      - generic [ref=e35]:
+        - img [ref=e36]:
+          - 'generic "28.04: 0"'
+          - 'generic "29.04: 0"'
+          - 'generic "30.04: 0"'
+          - 'generic "01.05: 0"'
+          - 'generic "02.05: 0"'
+          - 'generic "03.05: 0"'
+          - 'generic "04.05: 0"'
+          - 'generic "05.05: 0"'
+          - 'generic "06.05: 0"'
+          - 'generic "07.05: 0"'
+          - 'generic "08.05: 0"'
+          - 'generic "09.05: 0"'
+          - 'generic "10.05: 0"'
+          - 'generic "11.05: 3" [ref=e37]'
+        - generic [ref=e38]:
+          - generic [ref=e39]: "28.04"
+          - generic [ref=e40]: "05.05"
+          - generic [ref=e41]: "11.05"
+    - generic [ref=e42]:
+      - heading "По приоритетам · 17 активных" [level=2] [ref=e43]
+      - generic [ref=e44]:
+        - img [ref=e45]
+        - generic [ref=e51]:
+          - generic [ref=e52]:
+            - generic [ref=e54]: P1
+            - generic [ref=e55]: "2"
+            - generic [ref=e56]: 12%
+          - generic [ref=e57]:
+            - generic [ref=e59]: P2
+            - generic [ref=e60]: "5"
+            - generic [ref=e61]: 29%
+          - generic [ref=e62]:
+            - generic [ref=e64]: P3
+            - generic [ref=e65]: "7"
+            - generic [ref=e66]: 41%
+          - generic [ref=e67]:
+            - generic [ref=e69]: P4
+            - generic [ref=e70]: "3"
+            - generic [ref=e71]: 18%
+    - generic [ref=e72]:
+      - heading "Топ проектов · активных" [level=2] [ref=e73]
+      - generic [ref=e74]:
+        - generic [ref=e75]:
+          - generic [ref=e77]: Работа Q3 — переезд офиса и онбординг
+          - generic [ref=e80]: "9"
+        - generic [ref=e81]:
+          - generic [ref=e83]: Дом
+          - generic [ref=e86]: "4"
+        - generic [ref=e87]:
+          - generic [ref=e89]: Учёба в магистратуре
+          - generic [ref=e92]: "3"
+        - generic [ref=e93]:
+          - generic [ref=e95]: 📥 Входящие
+          - generic [ref=e98]: "1"
+    - generic [ref=e99]:
+      - heading "Деталь" [level=2] [ref=e100]
+      - generic [ref=e101]:
+        - generic [ref=e102]:
+          - generic [ref=e103]: Лучший день
+          - generic [ref=e104]: Пн (1)
+        - generic [ref=e105]:
+          - generic [ref=e106]: В среднем за день
+          - generic [ref=e107]: "3.0"
+        - generic [ref=e108]:
+          - generic [ref=e109]: Активных дней
+          - generic [ref=e110]: "1"
+        - generic "Среднее время created→completed" [ref=e111]:
+          - generic [ref=e112]: Скорость
+          - generic [ref=e113]: 12.4 ч
+    - generic [ref=e114]:
+      - button "Поиск по задачам…" [ref=e115] [cursor=pointer]:
+        - img [ref=e116]
+        - generic [ref=e118]: Поиск по задачам…
+      - link "Открыть полную версию →" [ref=e119] [cursor=pointer]:
+        - /url: https://getdoday.ru/app/today
+      - link "📊 Полная статистика на сайте" [ref=e120] [cursor=pointer]:
+        - /url: https://getdoday.ru/app/stats
+    - generic [ref=e121]: Doday Mini App · бета
+  - navigation "Mini App" [ref=e122]:
+    - link "Сегодня" [ref=e123] [cursor=pointer]:
+      - /url: /miniapp/
+      - img [ref=e124]
+      - generic [ref=e126]: Сегодня
+    - link "Инбокс" [ref=e127] [cursor=pointer]:
+      - /url: /miniapp/inbox
+      - img [ref=e128]
+      - generic [ref=e130]: Инбокс
+    - link "Календарь" [ref=e131] [cursor=pointer]:
+      - /url: /miniapp/calendar
+      - img [ref=e132]
+      - generic [ref=e134]: Календарь
+    - link "Проекты" [ref=e135] [cursor=pointer]:
+      - /url: /miniapp/projects
+      - img [ref=e136]
+      - generic [ref=e138]: Проекты
+    - link "Я" [ref=e139] [cursor=pointer]:
+      - /url: /miniapp/me
+      - img [ref=e140]
+      - generic [ref=e142]: Я
+  - generic:
+    - img
