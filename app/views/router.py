@@ -127,30 +127,6 @@ async def today_view(request: Request, user: RequiredUser, session: DbSession) -
 
     completed_today = await list_completed_today(session, user.id, limit=10)
 
-    today_by_subject: list[dict[str, object]] = []
-    if user.audience == "school" and today:
-        from app.school.subjects import detect_subject
-
-        bucket_meta: dict[str, dict[str, str]] = {}
-        bucket_tasks: dict[str, list[Task]] = {}
-        for t in today:
-            subj = detect_subject(t.title)
-            key = subj["code"] if subj else "_other"
-            if key not in bucket_meta:
-                bucket_meta[key] = {
-                    "code": key,
-                    "name": subj["name"] if subj else "Без предмета",
-                    "emoji": subj["emoji"] if subj else "📌",
-                    "color": subj["color"] if subj else "slate",
-                }
-                bucket_tasks[key] = []
-            bucket_tasks[key].append(t)
-        # Sort: known subjects first, "Без предмета" last.
-        ordered_keys = [k for k in bucket_meta if k != "_other"]
-        if "_other" in bucket_meta:
-            ordered_keys.append("_other")
-        today_by_subject = [{**bucket_meta[k], "tasks": bucket_tasks[k]} for k in ordered_keys]
-
     return templates.TemplateResponse(
         request,
         "app/today.html",
@@ -165,7 +141,6 @@ async def today_view(request: Request, user: RequiredUser, session: DbSession) -
             "done_today_count": done_today_count,
             "done_week_count": done_week_count,
             "completed_today": completed_today,
-            "today_by_subject": today_by_subject,
         },
     )
 
