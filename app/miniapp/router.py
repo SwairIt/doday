@@ -699,8 +699,7 @@ async def api_complete_task(
     user: CurrentUser,
     session: DbSession,
 ) -> JSONResponse:
-    """Toggle complete. На completion → award XP + check achievements (γ).
-    Возвращает {is_completed, xp_gained?, level_up?, new_level?, unlocked?}."""
+    """Toggle complete. Returns {is_completed}."""
     if user is None:
         return JSONResponse({"error": "auth_required"}, status_code=401)
     from uuid import UUID
