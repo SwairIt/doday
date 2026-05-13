@@ -371,21 +371,6 @@ async def stats_view(request: Request, user: RequiredUser, session: DbSession) -
     )
 
 
-@router.get("/graph", response_class=HTMLResponse)
-async def graph_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
-    """Cosmic force-directed graph of all active tasks + their links + parent/child."""
-    projects = await list_projects(session, user.id)
-    return templates.TemplateResponse(
-        request,
-        "app/graph.html",
-        {
-            "current_user": user,
-            "current_view": "graph",
-            "projects": projects,
-        },
-    )
-
-
 @router.get("/activity", response_class=HTMLResponse)
 async def activity_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
     """Derived activity feed — created/completed tasks + new comments, last 30 days."""
