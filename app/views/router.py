@@ -10,12 +10,6 @@ from fastapi.templating import Jinja2Templates
 
 from app.auth.deps import DbSession, RequiredUser
 from app.auth.models import User
-from app.custom_filters.service import (
-    CustomFilterNotFound,
-    execute_custom_filter,
-    get_custom_filter,
-    list_custom_filters,
-)
 from app.projects.service import (
     ProjectNotFound,
     get_project_by_slug,
@@ -413,57 +407,6 @@ async def graph_view(request: Request, user: RequiredUser, session: DbSession) -
             "current_user": user,
             "current_view": "graph",
             "projects": projects,
-        },
-    )
-
-
-@router.get("/filters/custom/{filter_id}", response_class=HTMLResponse)
-async def custom_filter_view(
-    filter_id: UUID,
-    request: Request,
-    user: RequiredUser,
-    session: DbSession,
-) -> HTMLResponse:
-    try:
-        custom = await get_custom_filter(session, user.id, filter_id)
-    except CustomFilterNotFound as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "фильтр не найден") from e
-    tasks = await execute_custom_filter(session, user.id, custom)
-    projects = await list_projects(session, user.id)
-    project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
-    custom_filters = await list_custom_filters(session, user.id)
-    return templates.TemplateResponse(
-        request,
-        "app/custom_filter.html",
-        {
-            "current_user": user,
-            "current_view": f"custom-filter:{filter_id}",
-            "projects": projects,
-            "project_color_map": project_color_map,
-            "custom": custom,
-            "tasks": tasks,
-            "custom_filters": custom_filters,
-        },
-    )
-
-
-@router.get("/filters", response_class=HTMLResponse, include_in_schema=False)
-async def filters_manage_view(
-    request: Request, user: RequiredUser, session: DbSession
-) -> HTMLResponse:
-    """Manage custom filters: list, create, edit, delete."""
-    projects = await list_projects(session, user.id)
-    project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
-    custom_filters = await list_custom_filters(session, user.id)
-    return templates.TemplateResponse(
-        request,
-        "app/filters_manage.html",
-        {
-            "current_user": user,
-            "current_view": "filters-manage",
-            "projects": projects,
-            "project_color_map": project_color_map,
-            "custom_filters": custom_filters,
         },
     )
 

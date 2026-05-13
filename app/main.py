@@ -21,7 +21,6 @@ from app.calendar_feed.router import router as calendar_feed_router
 from app.calendar_feed.router import token_router as calendar_token_router
 from app.comments.router import comments_router, task_comments_router
 from app.config import get_settings
-from app.custom_filters.router import router as custom_filters_router
 from app.digest.router import router as digest_router
 from app.help.router import router as help_router
 from app.labels.router import router as labels_router
@@ -38,8 +37,6 @@ from app.sections.router import router as sections_router
 from app.stats.router import router as stats_router
 from app.tasks.router import reorder_router as tasks_reorder_router
 from app.tasks.router import router as tasks_router
-from app.user_templates.router import router as user_templates_router
-from app.user_templates.router import save_router as save_as_template_router
 from app.views.htmx import router as htmx_router
 from app.views.router import router as views_router
 
@@ -128,9 +125,6 @@ app.include_router(sections_router)
 app.include_router(backup_router)
 app.include_router(task_comments_router)
 app.include_router(comments_router)
-app.include_router(custom_filters_router)
-app.include_router(user_templates_router)
-app.include_router(save_as_template_router)
 app.include_router(billing_router)
 app.include_router(help_router)
 app.include_router(school_router)

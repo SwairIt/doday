@@ -4,8 +4,8 @@ Each TIERS feature flag must enforce in 2 places:
 1. UI / endpoint — Free user gets 402 Payment Required when trying to opt-in
 2. Service-layer — even if endpoint bypassed, downstream still respects tier
 
-Tests cover: email_digest, tg_bot, user_templates (save-as), trash retention,
-premium_themes (UI-only), and the new helper `require_pro` raising 402.
+Tests cover: email_digest, tg_bot, trash retention, premium_themes (UI-only),
+and the new helper `require_pro` raising 402.
 """
 
 from datetime import UTC, datetime, timedelta
@@ -165,46 +165,6 @@ async def test_telegram_link_allows_pro(db_session: AsyncSession, client: AsyncC
     r = await client.post("/api/profile/telegram-link")
     assert r.status_code == 200
     assert "deeplink" in r.json()
-
-
-# --- user_templates save-as gating -----------------------------------------
-
-
-async def test_save_template_blocks_free(db_session: AsyncSession, client: AsyncClient) -> None:
-    """Создание шаблона из проекта требует Pro. Listing/instantiate — нет."""
-    from app.projects.service import ensure_inbox
-
-    user = await _make_user(db_session, "fst@test.com", tier="free", trial_active=False)
-    inbox = await ensure_inbox(db_session, user.id)
-
-    login = await client.post(
-        "/auth/login",
-        data={"email": "fst@test.com", "password": "strongpass123"},
-    )
-    assert login.status_code == 303
-    r = await client.post(
-        f"/api/projects/{inbox.id}/save-as-template",
-        json={"name": "test"},
-    )
-    assert r.status_code == 402
-
-
-async def test_save_template_allows_pro(db_session: AsyncSession, client: AsyncClient) -> None:
-    from app.projects.service import ensure_inbox
-
-    user = await _make_user(db_session, "pst@test.com", tier="pro", trial_active=False)
-    inbox = await ensure_inbox(db_session, user.id)
-
-    login = await client.post(
-        "/auth/login",
-        data={"email": "pst@test.com", "password": "strongpass123"},
-    )
-    assert login.status_code == 303
-    r = await client.post(
-        f"/api/projects/{inbox.id}/save-as-template",
-        json={"name": "тест шаблон"},
-    )
-    assert r.status_code == 201
 
 
 # --- trash retention by tier -----------------------------------------------

@@ -37,7 +37,6 @@ from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandl
 # импорт moduls. У бота нет роутеров, поэтому импортируем модели явно.
 import app.auth.models
 import app.comments.models
-import app.custom_filters.models
 import app.labels.models
 import app.links.models
 import app.pomodoro.models
@@ -46,8 +45,7 @@ import app.reminders.models
 import app.school.models
 import app.sections.models
 import app.tasks.models
-import app.telegram.models
-import app.user_templates.models  # noqa: F401
+import app.telegram.models  # noqa: F401 — mapper warmup
 from app.auth.models import User
 from app.config import get_settings
 from app.quickadd.parser import parse_quick_add

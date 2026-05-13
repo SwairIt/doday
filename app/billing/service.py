@@ -13,7 +13,6 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import User
-from app.custom_filters.models import CustomFilter
 from app.projects.models import Project
 from app.tasks.models import Task
 
@@ -21,11 +20,8 @@ from app.tasks.models import Task
 class TierLimits(TypedDict):
     max_active_projects: int | None  # None = unlimited
     max_active_tasks: int | None
-    max_custom_filters: int | None
     max_bulk_paste_lines: int
     trash_retention_days: int
-    custom_filters: bool  # legacy: kept True everywhere now (was Pro-only)
-    user_templates: bool
     kanban_view: bool
     icalendar_export: bool
     pomodoro: bool
@@ -43,11 +39,8 @@ TIERS: dict[str, TierLimits] = {
     "free": {
         "max_active_projects": 10,
         "max_active_tasks": 500,
-        "max_custom_filters": 3,
         "max_bulk_paste_lines": 50,
         "trash_retention_days": 14,
-        "custom_filters": True,  # allowed but capped via max_custom_filters
-        "user_templates": False,
         "kanban_view": True,
         "icalendar_export": True,
         "pomodoro": True,
@@ -63,11 +56,8 @@ TIERS: dict[str, TierLimits] = {
     "pro": {
         "max_active_projects": None,
         "max_active_tasks": None,
-        "max_custom_filters": None,
         "max_bulk_paste_lines": 200,
         "trash_retention_days": 30,
-        "custom_filters": True,
-        "user_templates": True,
         "kanban_view": True,
         "icalendar_export": True,
         "pomodoro": True,
@@ -83,11 +73,8 @@ TIERS: dict[str, TierLimits] = {
     "family": {
         "max_active_projects": None,
         "max_active_tasks": None,
-        "max_custom_filters": None,
         "max_bulk_paste_lines": 200,
         "trash_retention_days": 30,
-        "custom_filters": True,
-        "user_templates": True,
         "kanban_view": True,
         "icalendar_export": True,
         "pomodoro": True,
@@ -104,11 +91,8 @@ TIERS: dict[str, TierLimits] = {
     "team": {
         "max_active_projects": None,
         "max_active_tasks": None,
-        "max_custom_filters": None,
         "max_bulk_paste_lines": 200,
         "trash_retention_days": 30,
-        "custom_filters": True,
-        "user_templates": True,
         "kanban_view": True,
         "icalendar_export": True,
         "pomodoro": True,
@@ -201,24 +185,6 @@ async def can_create_task(session: AsyncSession, user: User) -> tuple[bool, str 
     if current >= cap:
         return False, (
             f"Достигнут лимит Free-тарифа: {cap} активных задач. Pro снимает лимит за 199₽/мес."
-        )
-    return True, None
-
-
-async def can_create_custom_filter(session: AsyncSession, user: User) -> tuple[bool, str | None]:
-    """Returns (allowed, reason_if_blocked)."""
-    limits = limits_for(user)
-    cap = limits["max_custom_filters"]
-    if cap is None:
-        return True, None
-    row = await session.execute(
-        select(func.count()).select_from(CustomFilter).where(CustomFilter.user_id == user.id)
-    )
-    current = row.scalar_one()
-    if current >= cap:
-        return False, (
-            f"Достигнут лимит Free-тарифа: {cap} сохранённых фильтра. "
-            "Pro даёт безлимит за 199₽/мес."
         )
     return True, None
 
