@@ -23,7 +23,6 @@ from app.auth import models as _auth_models  # noqa: F401  register tables with 
 from app.config import get_settings
 from app.db import Base, get_session
 from app.labels import models as _labels_models  # noqa: F401
-from app.links import models as _links_models  # noqa: F401
 from app.main import app
 from app.pomodoro import models as _pomodoro_models  # noqa: F401
 from app.projects import models as _projects_models  # noqa: F401

@@ -560,62 +560,6 @@
 
   <section class="card p-6"
            x-data="{
-             tokenUrl: '',
-             cookieUrl: window.location.origin + '/api/calendar/all.ics',
-             copied: false,
-             rotating: false,
-             async loadToken() {
-               try {
-                 const r = await fetch('/api/profile/ical-token', {credentials:'include'});
-                 if (r.ok) {
-                   const d = await r.json();
-                   this.tokenUrl = window.location.origin + d.url;
-                 }
-               } catch(e){}
-             },
-             async rotate() {
-               if (!confirm('Создать новый токен? Старая подписка перестанет работать.')) return;
-               this.rotating = true;
-               try {
-                 const r = await fetch('/api/profile/ical-token/rotate', {method:'POST', credentials:'include'});
-                 if (r.ok) {
-                   const d = await r.json();
-                   this.tokenUrl = window.location.origin + d.url;
-                 }
-               } finally { this.rotating = false; }
-             },
-             async copy() {
-               try { await navigator.clipboard.writeText(this.tokenUrl); this.copied = true;
-                     setTimeout(() => this.copied = false, 2000); } catch(e){}
-             },
-           }"
-           x-init="loadToken()">
-    <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">Календарь-подписка</h2>
-    <p class="text-sm text-[var(--text-muted)] mb-3">
-      Подпиши Apple Calendar или Google Calendar на эту ссылку — все задачи Doday
-      с датой будут видны как события. Изменения подтянутся каждые 15-30 минут.
-      <a href="/help/calendar-subscription" class="text-[var(--accent)] hover:underline">Как настроить →</a>
-    </p>
-    <div class="flex items-center gap-2 mb-2">
-      <code class="flex-1 min-w-0 truncate px-3 py-2 text-xs font-mono rounded-lg bg-[var(--surface-2)] border border-[var(--border)]"
-            x-text="tokenUrl || 'Загружаю токен…'"></code>
-      <button @click="copy()" :disabled="!tokenUrl" class="btn-ghost px-3 py-2 text-xs inline-flex items-center gap-1.5">
-        <span x-show="!copied">📋 Скопировать</span>
-        <span x-show="copied" class="text-emerald-400">✓ Скопировано</span>
-      </button>
-      <a :href="cookieUrl" download="doday-all.ics" class="btn-primary px-3 py-2 text-xs">Скачать .ics</a>
-    </div>
-    <div class="flex items-center justify-between gap-2 text-[10px] text-[var(--text-muted)]">
-      <span>🔒 В ссылке секретный токен — храни как пароль. Утёк — кнопкой справа сделай новый.</span>
-      <button @click="rotate()" :disabled="rotating"
-              class="text-[var(--text-muted)] hover:text-rose-400 underline shrink-0">
-        <span x-text="rotating ? 'Обновляю…' : 'Сбросить токен'"></span>
-      </button>
-    </div>
-  </section>
-
-  <section class="card p-6"
-           x-data="{
              integrations: [],
              provider: 'school_mo',
              token: '',

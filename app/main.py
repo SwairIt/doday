@@ -17,16 +17,12 @@ from app.admin.router import (
 from app.auth.router import router as auth_router
 from app.backup.router import router as backup_router
 from app.billing.router import router as billing_router
-from app.calendar_feed.router import router as calendar_feed_router
-from app.calendar_feed.router import token_router as calendar_token_router
 from app.comments.router import comments_router, task_comments_router
 from app.config import get_settings
 from app.digest.router import router as digest_router
 from app.help.router import router as help_router
 from app.labels.router import router as labels_router
 from app.labels.router import task_labels_router
-from app.links.router import graph_router as links_graph_router
-from app.links.router import router as links_router
 from app.logging_setup import configure_logging
 from app.miniapp.router import router as miniapp_router
 from app.pages.router import router as pages_router
@@ -129,10 +125,6 @@ app.include_router(billing_router)
 app.include_router(help_router)
 app.include_router(school_router)
 app.include_router(stats_router)
-app.include_router(calendar_feed_router)
-app.include_router(calendar_token_router)
-app.include_router(links_router)
-app.include_router(links_graph_router)
 app.include_router(digest_router)
 app.include_router(complaints_router)
 app.include_router(admin_router)

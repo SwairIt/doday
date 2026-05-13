@@ -405,7 +405,6 @@ async def task_detail(
     """Full task panel: title + description + labels + subtasks + comments."""
     from app.comments.service import list_comments
     from app.labels.service import list_labels, list_task_labels
-    from app.links.service import list_links_for_task
     from app.projects.service import get_project
 
     try:
@@ -417,7 +416,6 @@ async def task_detail(
     attached = await list_task_labels(session, user.id, task_id)
     all_labels = await list_labels(session, user.id)
     comments = await list_comments(session, user.id, task_id)
-    links = await list_links_for_task(session, user.id, task_id)
     return templates.TemplateResponse(
         request,
         "_partials/task_detail.html",
@@ -429,7 +427,6 @@ async def task_detail(
             "all_labels": all_labels,
             "attached_label_ids": {lab.id for lab in attached},
             "comments": comments,
-            "links": links,
             "project_color_map": await _project_color_map(session, user.id),
         },
     )
