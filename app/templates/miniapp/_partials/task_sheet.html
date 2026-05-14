@@ -104,6 +104,30 @@
         </div>
       </div>
 
+      {# Assignee picker — shown only when project has multiple members #}
+      <div x-show="members.length > 1" x-cloak>
+        <label class="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-muted)] block mb-2">Исполнитель</label>
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1" style="scrollbar-width:none;">
+          <button @click="setAssignee(null)"
+                  :class="assignedTo === null
+                    ? 'ring-2 ring-[var(--accent)] bg-[var(--accent)]/15 font-bold'
+                    : 'bg-[var(--surface-2)]'"
+                  class="shrink-0 px-3 py-2 rounded-lg text-xs transition active:scale-95">
+            убрать
+          </button>
+          <template x-for="m in members" :key="m.user_id">
+            <button @click="setAssignee(m.user_id)"
+                    :class="assignedTo === m.user_id
+                      ? 'ring-2 ring-[var(--accent)] bg-[var(--accent)]/15 font-bold'
+                      : 'bg-[var(--surface-2)]'"
+                    class="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs transition active:scale-95">
+              <span class="w-2 h-2 rounded-full bg-[var(--accent)] shrink-0"></span>
+              <span x-text="m.email"></span>
+            </button>
+          </template>
+        </div>
+      </div>
+
       {# Recurrence picker — V5 #}
       <div>
         <label class="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-muted)] block mb-2">Повтор</label>
@@ -304,9 +328,11 @@
       open: false,
       loading: false,
       err: '',
-      task: { id: null, title: '', priority: 'p4', due_at: null, recurrence: null, project_id: null, labels: [], pinned_at: null },
+      task: { id: null, title: '', priority: 'p4', due_at: null, recurrence: null, project_id: null, labels: [], pinned_at: null, assigned_to: null },
       projects: [],
       labels: [],
+      members: [],
+      assignedTo: null,
       subtasks: [],
       subtasksOpen: false,
       newSubtaskTitle: '',
@@ -323,10 +349,13 @@
         this.comments = null;
         this.commentsOpen = false;
         this.newComment = '';
+        this.members = [];
+        this.assignedTo = null;
         try {
           const r = await fetch('/miniapp/api/tasks/' + taskId, { credentials: 'include' });
           if (!r.ok) { this.err = 'Не удалось загрузить'; this.loading = false; return; }
           this.task = await r.json();
+          this.assignedTo = this.task.assigned_to || null;
           // Загружаем проекты + labels лениво (один раз — пока sheet открыт)
           if (this.labels.length === 0) {
             try {
@@ -354,12 +383,32 @@
               }
             } catch (e) {}
           }
+          // Load project members for assignee picker
+          if (this.task.project_id) {
+            try {
+              const mr = await fetch('/api/projects/' + this.task.project_id + '/members', { credentials: 'include' });
+              if (mr.ok) this.members = await mr.json();
+            } catch (e) {}
+          }
         } catch (e) { this.err = 'Нет сети'; }
         this.loading = false;
       },
       setProject(projectId) {
         this.task.project_id = projectId;
+        this.members = [];
         this.patch({project_id: projectId});
+        // Reload members for the new project
+        if (projectId) {
+          fetch('/api/projects/' + projectId + '/members', { credentials: 'include' })
+            .then(r => r.ok ? r.json() : [])
+            .then(data => { this.members = data; })
+            .catch(() => {});
+        }
+      },
+      setAssignee(userId) {
+        this.assignedTo = userId;
+        this.task.assigned_to = userId;
+        this.patch({assigned_to: userId});
       },
       toggleLabel(labelId) {
         const had = (this.task.labels || []).some(l => l.id === labelId);

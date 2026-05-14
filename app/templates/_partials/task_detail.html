@@ -205,6 +205,63 @@
              class="absolute right-0 top-full mt-1 z-30"></div>
       </div>
 
+      {# Assignee selector — visible only when project has multiple members #}
+      <div x-data="{
+               open: false,
+               members: [],
+               currentAssignee: {{ (task.assigned_to|string|tojson if task.assigned_to else 'null')|forceescape }},
+               async load() {
+                 try {
+                   const r = await fetch('/api/projects/{{ task.project_id }}/members', {credentials: 'include'});
+                   if (r.ok) this.members = await r.json();
+                 } catch (e) {}
+               },
+               async setAssignee(userId) {
+                 const r = await fetch('/api/tasks/{{ task.id }}', {
+                   method: 'PATCH', credentials: 'include',
+                   headers: {'Content-Type': 'application/json'},
+                   body: JSON.stringify({assigned_to: userId}),
+                 });
+                 if (r.ok) {
+                   this.currentAssignee = userId;
+                   this.open = false;
+                   htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/detail', {target: '#task-detail-slot', swap: 'innerHTML'});
+                 }
+               },
+               currentLabel() {
+                 if (!this.currentAssignee) return 'Не назначено';
+                 const m = this.members.find(m => m.user_id === this.currentAssignee);
+                 return m ? m.email : 'Не назначено';
+               },
+             }" x-init="load()" x-show="members.length > 1" x-cloak class="relative">
+        <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider mb-2 flex items-center justify-between">
+          <span>Исполнитель</span>
+          <button type="button" @click="open = !open"
+                  class="text-[10px] normal-case font-medium px-2 py-0.5 rounded hover:bg-[var(--surface-2)] text-[var(--accent)]">
+            <span x-text="currentLabel()"></span>
+            <svg class="w-3 h-3 inline -mt-0.5 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+        </div>
+        <div x-show="open" x-cloak @click.outside="open = false" x-transition
+             class="absolute right-0 top-full mt-1 z-30 card p-1 w-60 shadow-lg space-y-0.5">
+          <button type="button" @click="setAssignee(null)"
+                  :class="!currentAssignee ? 'bg-[var(--accent)]/15 text-[var(--accent)]' : 'hover:bg-[var(--surface-2)]'"
+                  class="w-full text-left text-sm px-3 py-1.5 rounded transition flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+            — не назначено —
+          </button>
+          <template x-for="m in members" :key="m.user_id">
+            <button type="button" @click="setAssignee(m.user_id)"
+                    :class="currentAssignee === m.user_id ? 'bg-[var(--accent)]/15 text-[var(--accent)]' : 'hover:bg-[var(--surface-2)]'"
+                    class="w-full text-left text-sm px-3 py-1.5 rounded transition flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-[var(--accent)]"></span>
+              <span class="truncate" x-text="m.email"></span>
+              <span x-show="m.role === 'owner'" x-cloak class="ml-auto text-[10px] text-[var(--text-muted)]">владелец</span>
+            </button>
+          </template>
+        </div>
+      </div>
+
       <div x-data="{ pickerOpen: false }">
         <div class="flex items-center justify-between mb-2">
           <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider">Повтор</div>
