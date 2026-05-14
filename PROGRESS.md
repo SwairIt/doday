@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-05-14 — Phase γ: comments UI завершён
+
+Mini App task_sheet получил секцию комментариев (lazy-fetch accordion,
+add/delete, бьёт в /api/tasks/{id}/comments). Web comments уже работали
+с прошлых фаз — не трогали. Закрыт β3-concern: context-menu получил
+labels + comments actions, desktop hover-strip из task_row убран —
+единственная точка входа в действия теперь ⋯.
+
+Smoke 23/23 GREEN. Next: Phase δ — team collaboration.
+
+---
+
 ## 2026-05-14 — Phase β: UI redesign завершён
 
 Mini App переведён на light-theme по умолчанию (anti-flash + currentSaved).
