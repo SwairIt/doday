@@ -15,7 +15,17 @@
     </a>
   </div>
 
-  <nav class="px-3 flex-1 space-y-0.5">
+  <nav class="px-3 flex-1 space-y-0.5"
+       x-data="{
+         counts: {},
+         async load() {
+           try {
+             const r = await fetch('/api/projects/sidebar-counts', {credentials:'include'});
+             if (r.ok) this.counts = await r.json();
+           } catch(e){}
+         },
+       }"
+       x-init="load()">
     <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider px-3 pt-2 pb-1">Главное</div>
 
     {% set primary_nav = [
@@ -31,16 +41,7 @@
       ('activity', '/app/activity', 'Активность','M13 10V3L4 14h7v7l9-11h-7z'),
       ('trash',    '/app/trash',    'Корзина',   'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3'),
     ] %}
-    <div x-data="{
-           counts: {},
-           async load() {
-             try {
-               const r = await fetch('/api/projects/sidebar-counts', {credentials:'include'});
-               if (r.ok) this.counts = await r.json();
-             } catch(e){}
-           },
-         }"
-         x-init="load()">
+    <div>
     {% for key, href, label, icon in primary_nav %}
       {% set active = view == key %}
       {% set count_key = {'inbox': 'inbox', 'today': 'today', 'upcoming': 'upcoming', 'trash': 'trash'}.get(key) %}
@@ -145,18 +146,9 @@
       </div>
     {% endif %}
 
-    {# Вторичная навигация — спрятана под «Ещё» чтобы sidebar был чище #}
-    <div x-data="{
-           counts2: {},
-           async load2() {
-             try {
-               const r = await fetch('/api/projects/sidebar-counts', {credentials:'include'});
-               if (r.ok) this.counts2 = await r.json();
-             } catch(e){}
-           },
-         }"
-         x-init="load2()"
-         class="mt-2 px-3">
+    {# Вторичная навигация — спрятана под «Ещё» чтобы sidebar был чище.
+       counts наследуется от <nav> x-data — отдельный fetch не нужен. #}
+    <div class="mt-2 px-3">
       <details class="group/more">
         <summary class="flex items-center gap-2 py-1.5 text-sm text-[var(--text-muted)] cursor-pointer select-none list-none hover:text-[var(--text)]">
           <svg class="w-4 h-4 transition group-open/more:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -177,10 +169,10 @@
               </svg>
               <span class="flex-1">{{ label }}</span>
               {% if count_key %}
-                <span x-show="counts2['{{ count_key }}'] > 0" x-cloak
+                <span x-show="counts['{{ count_key }}'] > 0" x-cloak
                       :class="{% if active %}'bg-white/20 text-white'{% else %}'bg-[var(--surface-2)] text-[var(--text-muted)]'{% endif %}"
                       class="text-[10px] tabular-nums px-1.5 py-0.5 rounded-md font-mono"
-                      x-text="counts2['{{ count_key }}']"></span>
+                      x-text="counts['{{ count_key }}']"></span>
               {% endif %}
             </a>
           {% endfor %}
