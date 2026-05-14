@@ -5,6 +5,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.projects.membership import is_member
 from app.projects.service import get_project
 from app.sections.models import Section
 
@@ -25,7 +26,9 @@ async def list_sections(session: AsyncSession, user_id: UUID, project_id: UUID) 
 
 async def get_section(session: AsyncSession, user_id: UUID, section_id: UUID) -> Section:
     section = await session.get(Section, section_id)
-    if section is None or section.user_id != user_id:
+    if section is None:
+        raise SectionNotFound(str(section_id))
+    if not await is_member(session, section.project_id, user_id):
         raise SectionNotFound(str(section_id))
     return section
 

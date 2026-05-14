@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.comments.models import Comment
 from app.labels.models import Label, task_labels
-from app.projects.models import Project
+from app.projects.models import Project, ProjectMember
 from app.projects.service import slugify
 from app.sections.models import Section
 from app.tasks.models import Task, TaskPriority
@@ -138,6 +138,8 @@ async def import_user_data(
             description=p.get("description"),
         )
         session.add(new_proj)
+        await session.flush()
+        session.add(ProjectMember(project_id=new_proj.id, user_id=user_id, role="owner"))
         await session.flush()
         project_id_map[p["id"]] = new_proj.id
         project_count += 1

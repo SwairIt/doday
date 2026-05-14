@@ -9,7 +9,8 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.projects.models import Project
+from app.projects.membership import is_member, is_owner, member_project_ids
+from app.projects.models import Project, ProjectMember
 from app.projects.templates_data import ProjectTemplate
 
 
@@ -32,7 +33,8 @@ class CannotDeleteInbox(Exception):
 async def list_projects(
     session: AsyncSession, user_id: UUID, *, include_archived: bool = False
 ) -> list[Project]:
-    stmt = select(Project).where(Project.user_id == user_id)
+    ids = await member_project_ids(session, user_id)
+    stmt = select(Project).where(Project.id.in_(ids))
     if not include_archived:
         stmt = stmt.where(Project.is_archived.is_(False))
     stmt = stmt.order_by(Project.position, Project.created_at)
@@ -41,9 +43,10 @@ async def list_projects(
 
 
 async def list_archived_projects(session: AsyncSession, user_id: UUID) -> list[Project]:
+    ids = await member_project_ids(session, user_id)
     result = await session.execute(
         select(Project)
-        .where(Project.user_id == user_id, Project.is_archived.is_(True))
+        .where(Project.id.in_(ids), Project.is_archived.is_(True))
         .order_by(Project.updated_at.desc())
     )
     return list(result.scalars().all())
@@ -51,7 +54,9 @@ async def list_archived_projects(session: AsyncSession, user_id: UUID) -> list[P
 
 async def get_project(session: AsyncSession, user_id: UUID, project_id: UUID) -> Project:
     project = await session.get(Project, project_id)
-    if project is None or project.user_id != user_id:
+    if project is None:
+        raise ProjectNotFound(str(project_id))
+    if not await is_member(session, project_id, user_id):
         raise ProjectNotFound(str(project_id))
     return project
 
@@ -87,6 +92,8 @@ async def create_project(
         position=position,
     )
     session.add(project)
+    await session.flush()
+    session.add(ProjectMember(project_id=project.id, user_id=user_id, role="owner"))
     await session.commit()
     await session.refresh(project)
     return project
@@ -394,6 +401,8 @@ async def reorder_projects(session: AsyncSession, user_id: UUID, ids: list[UUID]
 
 async def delete_project(session: AsyncSession, user_id: UUID, project_id: UUID) -> None:
     project = await get_project(session, user_id, project_id)
+    if not await is_owner(session, project_id, user_id):
+        raise ProjectNotFound(str(project_id))
     if project.is_inbox:
         raise CannotDeleteInbox(str(project_id))
     await session.delete(project)
@@ -485,6 +494,8 @@ async def ensure_inbox(session: AsyncSession, user_id: UUID) -> Project:
         is_inbox=True,
     )
     session.add(inbox)
+    await session.flush()
+    session.add(ProjectMember(project_id=inbox.id, user_id=user_id, role="owner"))
     await session.commit()
     await session.refresh(inbox)
     return inbox
