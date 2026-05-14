@@ -42,3 +42,25 @@ class ProjectOut(BaseModel):
 
 class ProjectReorder(BaseModel):
     ids: list[UUID] = Field(min_length=1)
+
+
+class MemberOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    user_id: UUID
+    email: str
+    role: str
+    joined_at: datetime
+
+
+class InvitationOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    invitee_email: str
+    status: str
+    expires_at: datetime
+
+
+class InviteCreate(BaseModel):
+    invitee_email: str = Field(min_length=1, max_length=255)

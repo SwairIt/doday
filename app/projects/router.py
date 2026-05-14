@@ -1,13 +1,24 @@
 """Project HTTP endpoints — JSON CRUD."""
 
+import logging
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
+from sqlalchemy import select
 
 from app.auth.deps import DbSession, RequiredUser
-from app.projects.schemas import ProjectCreate, ProjectOut, ProjectReorder, ProjectUpdate
+from app.auth.models import User
+from app.projects.schemas import (
+    InvitationOut,
+    InviteCreate,
+    MemberOut,
+    ProjectCreate,
+    ProjectOut,
+    ProjectReorder,
+    ProjectUpdate,
+)
 from app.projects.service import (
     CannotDeleteInbox,
     ProjectNotFound,
@@ -17,12 +28,15 @@ from app.projects.service import (
     duplicate_project,
     export_project_to_ics,
     export_project_to_markdown,
+    get_project,
     list_archived_projects,
     list_projects,
     reorder_projects,
     update_project,
 )
 from app.projects.templates_data import TEMPLATES, get_template
+
+log = logging.getLogger(__name__)
 
 
 class ProjectTemplateOut(BaseModel):
@@ -41,6 +55,7 @@ class FromTemplatePayload(BaseModel):
 
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
+invites_router = APIRouter(prefix="/api/invites", tags=["invites"])
 
 
 @router.get("", response_model=list[ProjectOut])
@@ -344,4 +359,169 @@ async def delete_endpoint(project_id: UUID, user: RequiredUser, session: DbSessi
         raise HTTPException(status.HTTP_404_NOT_FOUND, "проект не найден") from e
     except CannotDeleteInbox as e:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Inbox удалить нельзя") from e
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+# ─── Members & Invitations ────────────────────────────────────────────────────
+
+
+@router.get("/{project_id}/members", response_model=list[MemberOut])
+async def list_members_endpoint(
+    project_id: UUID, user: RequiredUser, session: DbSession
+) -> list[MemberOut]:
+    """List all members of a project. Any member may call this."""
+    from app.projects.membership import list_members
+
+    try:
+        await get_project(session, user.id, project_id)
+    except ProjectNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "проект не найден") from e
+
+    members = await list_members(session, project_id)
+
+    # Fetch emails in one query
+    user_ids = [m.user_id for m in members]
+    if user_ids:
+        rows = await session.execute(select(User).where(User.id.in_(user_ids)))
+        email_map: dict[UUID, str] = {u.id: u.email for u in rows.scalars().all()}
+    else:
+        email_map = {}
+
+    return [
+        MemberOut(
+            user_id=m.user_id,
+            email=email_map.get(m.user_id, ""),
+            role=m.role,
+            joined_at=m.joined_at,
+        )
+        for m in members
+    ]
+
+
+@router.post(
+    "/{project_id}/invites",
+    response_model=InvitationOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_invite_endpoint(
+    project_id: UUID, payload: InviteCreate, user: RequiredUser, session: DbSession
+) -> InvitationOut:
+    """Create an invitation (owner-only) and send an email."""
+    from app.auth.email import send_invitation_email
+    from app.config import get_settings
+    from app.projects.invitations import InvitationError, create_invitation
+
+    try:
+        project = await get_project(session, user.id, project_id)
+    except ProjectNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "проект не найден") from e
+
+    try:
+        invitation = await create_invitation(
+            session,
+            project_id=project_id,
+            inviter_id=user.id,
+            invitee_email=payload.invitee_email,
+        )
+    except InvitationError as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e)) from e
+
+    invite_url = get_settings().app_base_url.rstrip("/") + "/invite/" + invitation.token
+    try:
+        await send_invitation_email(
+            to=payload.invitee_email,
+            invite_url=invite_url,
+            project_name=project.name,
+            inviter_email=user.email,
+        )
+    except Exception:
+        log.warning(
+            "invite_email_failed: invitation_id=%s invitee=%s",
+            invitation.id,
+            payload.invitee_email,
+            exc_info=True,
+        )
+
+    return InvitationOut(
+        id=invitation.id,
+        invitee_email=invitation.invitee_email,
+        status=invitation.status,
+        expires_at=invitation.expires_at,
+    )
+
+
+@router.get("/{project_id}/invites", response_model=list[InvitationOut])
+async def list_invites_endpoint(
+    project_id: UUID, user: RequiredUser, session: DbSession
+) -> list[InvitationOut]:
+    """List pending invitations (owner-only)."""
+    from app.projects.invitations import list_pending
+    from app.projects.membership import is_owner
+
+    try:
+        await get_project(session, user.id, project_id)
+    except ProjectNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "проект не найден") from e
+
+    if not await is_owner(session, project_id, user.id):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "только для владельца проекта")
+
+    pending = await list_pending(session, project_id)
+    return [
+        InvitationOut(
+            id=inv.id,
+            invitee_email=inv.invitee_email,
+            status=inv.status,
+            expires_at=inv.expires_at,
+        )
+        for inv in pending
+    ]
+
+
+@router.delete("/{project_id}/members/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def remove_member_endpoint(
+    project_id: UUID, user_id: UUID, user: RequiredUser, session: DbSession
+) -> Response:
+    """Remove a member (owner-only). Cannot remove the last owner."""
+    from app.projects.membership import is_owner, list_members, remove_member
+
+    try:
+        await get_project(session, user.id, project_id)
+    except ProjectNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "проект не найден") from e
+
+    if not await is_owner(session, project_id, user.id):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "только для владельца проекта")
+
+    members = await list_members(session, project_id)
+    target_role = next((m.role for m in members if m.user_id == user_id), None)
+    if target_role is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "участник не найден")
+
+    if target_role == "owner":
+        owners = [m for m in members if m.role == "owner"]
+        if len(owners) == 1:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Нельзя удалить последнего владельца")
+
+    await remove_member(session, project_id, user_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+# ─── /api/invites/{invitation_id} ────────────────────────────────────────────
+
+
+@invites_router.delete("/{invitation_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def revoke_invite_endpoint(
+    invitation_id: UUID, user: RequiredUser, session: DbSession
+) -> Response:
+    """Revoke an invitation (owner-only)."""
+    from app.projects.invitations import InvitationError, revoke_invitation
+
+    try:
+        await revoke_invitation(session, invitation_id=invitation_id, requester_id=user.id)
+    except InvitationError as e:
+        msg = str(e)
+        if "не найдено" in msg:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, msg) from e
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, msg) from e
     return Response(status_code=status.HTTP_204_NO_CONTENT)

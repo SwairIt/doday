@@ -147,3 +147,166 @@ async def test_revoke_invitation(
             user_id=second_user.id,  # type: ignore[attr-defined]
             user_email=second_user.email,  # type: ignore[attr-defined]
         )
+
+
+# ─── Endpoint-level tests ─────────────────────────────────────────────────────
+
+
+async def test_list_members_endpoint(db_session: AsyncSession, logged_in_client: "object") -> None:
+    """Owner is listed as a member via GET /api/projects/{id}/members."""
+    from httpx import AsyncClient
+
+    _owner, project = await _project_owned_by(db_session, "logged-in@example.com", "Ep1")
+    client = logged_in_client  # type: ignore[assignment]
+    assert isinstance(client, AsyncClient)
+
+    r = await client.get(f"/api/projects/{project.id}/members")  # type: ignore[attr-defined]
+    assert r.status_code == 200
+    data = r.json()
+    assert isinstance(data, list)
+    assert len(data) == 1
+    assert data[0]["role"] == "owner"
+    assert data[0]["email"] == "logged-in@example.com"
+
+
+async def test_post_invite_endpoint_owner(
+    db_session: AsyncSession, logged_in_client: "object"
+) -> None:
+    """Owner can POST an invite; response includes invitee_email."""
+    from httpx import AsyncClient
+
+    _owner, project = await _project_owned_by(db_session, "logged-in@example.com", "Ep2")
+    client = logged_in_client  # type: ignore[assignment]
+    assert isinstance(client, AsyncClient)
+
+    r = await client.post(
+        f"/api/projects/{project.id}/invites",  # type: ignore[attr-defined]
+        json={"invitee_email": "guest@example.com"},
+    )
+    assert r.status_code == 201
+    data = r.json()
+    assert data["invitee_email"] == "guest@example.com"
+    assert data["status"] == "pending"
+    assert "id" in data
+    assert "expires_at" in data
+
+
+async def test_post_invite_endpoint_non_member_404(
+    db_session: AsyncSession,
+    logged_in_client: "object",
+    second_logged_in_client: "object",
+) -> None:
+    """Non-member POSTing invite gets 404 (get_project gate)."""
+    from httpx import AsyncClient
+
+    _owner, project = await _project_owned_by(db_session, "logged-in@example.com", "Ep3")
+    client2 = second_logged_in_client  # type: ignore[assignment]
+    assert isinstance(client2, AsyncClient)
+
+    r = await client2.post(
+        f"/api/projects/{project.id}/invites",  # type: ignore[attr-defined]
+        json={"invitee_email": "attacker@example.com"},
+    )
+    assert r.status_code == 404
+
+
+async def test_get_invites_endpoint_owner(
+    db_session: AsyncSession, logged_in_client: "object"
+) -> None:
+    """Owner can list pending invitations."""
+    from httpx import AsyncClient
+
+    from app.projects.invitations import create_invitation
+
+    owner, project = await _project_owned_by(db_session, "logged-in@example.com", "Ep4")
+    await create_invitation(
+        db_session,
+        project_id=project.id,  # type: ignore[attr-defined]
+        inviter_id=owner.id,  # type: ignore[attr-defined]
+        invitee_email="pending@example.com",
+    )
+    client = logged_in_client  # type: ignore[assignment]
+    assert isinstance(client, AsyncClient)
+
+    r = await client.get(f"/api/projects/{project.id}/invites")  # type: ignore[attr-defined]
+    assert r.status_code == 200
+    data = r.json()
+    assert len(data) == 1
+    assert data[0]["invitee_email"] == "pending@example.com"
+    assert data[0]["status"] == "pending"
+
+
+async def test_revoke_invite_endpoint(db_session: AsyncSession, logged_in_client: "object") -> None:
+    """Owner can DELETE (revoke) an invitation via /api/invites/{id}."""
+    from httpx import AsyncClient
+
+    from app.projects.invitations import create_invitation
+
+    owner, project = await _project_owned_by(db_session, "logged-in@example.com", "Ep5")
+    inv = await create_invitation(
+        db_session,
+        project_id=project.id,  # type: ignore[attr-defined]
+        inviter_id=owner.id,  # type: ignore[attr-defined]
+        invitee_email="todelete@example.com",
+    )
+    client = logged_in_client  # type: ignore[assignment]
+    assert isinstance(client, AsyncClient)
+
+    r = await client.delete(f"/api/invites/{inv.id}")
+    assert r.status_code == 204
+
+
+async def test_get_invite_page_renders(
+    db_session: AsyncSession, logged_in_client: "object"
+) -> None:
+    """GET /invite/{token} renders the project name for a valid invitation."""
+    from httpx import AsyncClient
+
+    from app.projects.invitations import create_invitation
+
+    owner, project = await _project_owned_by(db_session, "logged-in@example.com", "Ep6-Page")
+    inv = await create_invitation(
+        db_session,
+        project_id=project.id,  # type: ignore[attr-defined]
+        inviter_id=owner.id,  # type: ignore[attr-defined]
+        invitee_email="viewer@example.com",
+    )
+    client = logged_in_client  # type: ignore[assignment]
+    assert isinstance(client, AsyncClient)
+
+    r = await client.get(f"/invite/{inv.token}")
+    assert r.status_code == 200
+    assert "Ep6-Page" in r.text
+
+
+async def test_accept_via_post_endpoint(
+    db_session: AsyncSession,
+    logged_in_client: "object",
+    second_logged_in_client: "object",
+    second_user: "object",
+) -> None:
+    """second_user POSTs /invite/{token} and becomes a project member."""
+    from httpx import AsyncClient
+
+    from app.projects.invitations import create_invitation
+    from app.projects.membership import is_member
+
+    owner, project = await _project_owned_by(db_session, "logged-in@example.com", "Ep7")
+    inv = await create_invitation(
+        db_session,
+        project_id=project.id,  # type: ignore[attr-defined]
+        inviter_id=owner.id,  # type: ignore[attr-defined]
+        invitee_email=second_user.email,  # type: ignore[attr-defined]
+    )
+    client2 = second_logged_in_client  # type: ignore[assignment]
+    assert isinstance(client2, AsyncClient)
+
+    r = await client2.post(f"/invite/{inv.token}", follow_redirects=False)
+    assert r.status_code == 303
+
+    # Verify second_user is now a member
+    assert await is_member(
+        db_session,
+        project.id,
+        second_user.id,  # type: ignore[attr-defined]
+    )

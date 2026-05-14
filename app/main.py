@@ -27,6 +27,7 @@ from app.logging_setup import configure_logging
 from app.miniapp.router import router as miniapp_router
 from app.pages.router import router as pages_router
 from app.profile.router import router as profile_router
+from app.projects.router import invites_router
 from app.projects.router import router as projects_router
 from app.school.router import router as school_router
 from app.sections.router import router as sections_router
@@ -110,6 +111,7 @@ async def _security_headers(
 app.include_router(auth_router)
 app.include_router(pages_router)
 app.include_router(projects_router)
+app.include_router(invites_router)
 app.include_router(tasks_router)
 app.include_router(tasks_reorder_router)
 app.include_router(labels_router)
