@@ -979,6 +979,14 @@ async def test_me_page_shows_streak_and_stats(
     assert "hero-blob" in body
 
 
+async def test_miniapp_task_sheet_has_comments_section(logged_in_client: AsyncClient) -> None:
+    """γ: task_sheet включает секцию комментариев."""
+    r = await logged_in_client.get("/miniapp/")
+    assert r.status_code == 200
+    assert "loadComments" in r.text
+    assert "Комментарии" in r.text
+
+
 async def test_polish_skeleton_and_empty_svgs_in_base(client: AsyncClient) -> None:
     """P1+P4: skeleton-keyframes есть в base CSS, empty-svg-partials видны
     через рендер inbox/projects/calendar empty-states."""
