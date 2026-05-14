@@ -16,5 +16,6 @@ async def test_profile_redirects_to_settings(logged_in_client: AsyncClient) -> N
 
 
 async def test_settings_unauth_redirects(client: AsyncClient) -> None:
+    # /app/* routes use RequiredUser which raises 401 (not a redirect)
     r = await client.get("/app/settings", follow_redirects=False)
-    assert r.status_code in (302, 303, 307)
+    assert r.status_code == 401

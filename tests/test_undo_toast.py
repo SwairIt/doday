@@ -18,7 +18,7 @@ async def test_delete_button_dispatches_event(logged_in_client: AsyncClient) -> 
         await logged_in_client.post("/api/tasks", json={"title": "to-delete", "due_at": today_iso})
     ).json()
     body = (await logged_in_client.get("/app/today")).text
-    # the row now wires the dispatch on htmx:after-request
+    # delete is now via context menu (data-ctx="delete"); undo toast listens for doday-task-deleted
     assert task["id"] in body
-    assert "htmx:after-request" in body
+    assert 'data-ctx="delete"' in body
     assert "doday-task-deleted" in body
