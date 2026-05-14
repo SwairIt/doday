@@ -47,7 +47,7 @@ MINIAPP_JS = r"""// Doday Mini App — клиентская инициализа
     try { tg.setBottomBarColor && tg.setBottomBarColor(p.secondaryBg); } catch (e) {}
   }
   function currentSaved() {
-    try { return localStorage.getItem('dodayTheme') || 'dark'; } catch (e) { return 'dark'; }
+    try { return localStorage.getItem('dodayTheme') || 'light'; } catch (e) { return 'light'; }
   }
   applyTheme(currentSaved());
   // Глобальная функция для UI-переключателя на /miniapp/me.

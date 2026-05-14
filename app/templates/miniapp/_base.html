@@ -7,18 +7,20 @@
   <meta name="theme-color" content="#7c3aed">
   <title>{% block title %}Doday{% endblock %}</title>
 
-  {# Anti-flash: применяем сохранённую тему ДО первого paint. Default — dark
-     (наш бренд). System-режим без TG SDK = dark fallback; финальное
-     разрешение system делает miniapp.js когда tg.colorScheme станет
-     доступным. #}
+  {# Anti-flash: применяем сохранённую тему ДО первого paint. Default — light.
+     System-режим резолвится через prefers-color-scheme; финальное разрешение
+     system делает miniapp.js когда tg.colorScheme станет доступным. #}
   <script>
     (function () {
       try {
-        var t = localStorage.getItem('dodayTheme') || 'dark';
-        var eff = (t === 'system') ? 'dark' : t;
+        var t = localStorage.getItem('dodayTheme') || 'light';
+        var eff = t;
+        if (t === 'system') {
+          eff = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
         document.documentElement.setAttribute('data-theme', eff);
       } catch (e) {
-        document.documentElement.setAttribute('data-theme', 'dark');
+        document.documentElement.setAttribute('data-theme', 'light');
       }
     })();
   </script>
