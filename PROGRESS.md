@@ -4,6 +4,23 @@
 
 ---
 
+## 2026-05-14 — Phase β: UI redesign завершён
+
+Mini App переведён на light-theme по умолчанию (anti-flash + currentSaved).
+Web sidebar урезан с 9 пунктов до 5 главных (Inbox/Сегодня/Ближайшие/
+Календарь + проекты), остальное — collapsible «Ещё». Task row (web) —
+одна строка: toggle + заголовок + первый лейбл + дата + overflow ⋯;
+description/stale-badge/subtask-progress/recurrence убраны в detail-панель.
+Mini App task_card упрощён синхронно. /app/settings — единый экран
+настроек, /app/profile → 303-редирект, profile.html удалён.
+
+Известный concern: labels-popover + comments-toggle ещё в desktop
+hover-strip (3 кнопки) — не перенесены в context-menu. Follow-up.
+
+Smoke 23/23 GREEN. Next: Phase γ — comments UI polish.
+
+---
+
 ## 2026-05-13 — Phase α: aggressive cleanup завершён
 
 Удалены 9 lazy-модулей (gamification, achievements, mood, habits,
