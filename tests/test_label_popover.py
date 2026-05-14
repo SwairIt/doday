@@ -47,4 +47,6 @@ async def test_label_chips_render_in_task_row(logged_in_client: AsyncClient) -> 
     await logged_in_client.post(f"/htmx/tasks/{task['id']}/labels/{label['id']}/toggle")
 
     page = await logged_in_client.get(f"/app/projects/{proj['slug']}")
-    assert "@shown" in page.text
+    # β redesign: task row shows first label inline as "— labelname" (no @ prefix).
+    # Multi-label chips (with @) moved to detail panel; context-menu handles label edit.
+    assert "shown" in page.text

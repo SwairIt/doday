@@ -58,9 +58,10 @@ async def test_age_badge_in_task_row(logged_in_client: AsyncClient) -> None:
     proj = (await logged_in_client.post("/api/projects", json={"name": "Aged"})).json()
     await logged_in_client.post("/api/tasks", json={"title": "Old", "project_id": proj["id"]})
     body = (await logged_in_client.get(f"/app/projects/{proj['slug']}")).text
-    # Just-created task — age JS computes 0 days, so the literal "Висит уже" still renders into HTML
-    # (Alpine x-show=false hides it client-side); marker present means template wired in.
-    assert "Висит уже" in body
+    # β redesign: stale-badge "Висит уже" removed from the task row (chip-overload
+    # collapse); verify the task row itself renders correctly.
+    assert "Old" in body
+    assert f"/app/projects/{proj['slug']}" in body or "Old" in body
 
 
 async def test_bulk_duplicate_creates_copies(logged_in_client: AsyncClient) -> None:

@@ -6,14 +6,17 @@ from httpx import AsyncClient
 
 async def test_snooze_popover_in_task_row(logged_in_client: AsyncClient) -> None:
     proj = (await logged_in_client.post("/api/projects", json={"name": "P"})).json()
-    await logged_in_client.post("/api/tasks", json={"title": "T", "project_id": proj["id"]})
-    body = (await logged_in_client.get(f"/app/projects/{proj['slug']}")).text
-    # New popover offers multiple presets, not just +1.
-    assert "+ 1 день" in body
-    assert "+ 3 дня" in body
-    assert "+ 1 неделя" in body
-    assert "+ 2 недели" in body
-    assert "До следующего пн" in body
+    task = (
+        await logged_in_client.post("/api/tasks", json={"title": "T", "project_id": proj["id"]})
+    ).json()
+    # β redesign: snooze dropdown removed from task row (moved to context-menu).
+    # Verify snooze endpoint still works correctly.
+    r = await logged_in_client.post(f"/htmx/tasks/{task['id']}/snooze", data={"days": "1"})
+    assert r.status_code == 200
+    r3 = await logged_in_client.post(f"/htmx/tasks/{task['id']}/snooze", data={"days": "3"})
+    assert r3.status_code == 200
+    r7 = await logged_in_client.post(f"/htmx/tasks/{task['id']}/snooze", data={"days": "7"})
+    assert r7.status_code == 200
 
 
 async def test_subtask_stats_endpoint(logged_in_client: AsyncClient) -> None:
@@ -66,10 +69,16 @@ async def test_subtask_badge_template_present(logged_in_client: AsyncClient) -> 
             "/api/tasks", json={"title": "Parent", "project_id": proj["id"]}
         )
     ).json()
-    await logged_in_client.post(
-        "/api/tasks",
-        json={"title": "Child", "parent_task_id": parent["id"], "project_id": proj["id"]},
-    )
-    body = (await logged_in_client.get(f"/app/projects/{proj['slug']}")).text
-    # The badge is rendered for parent (top-level) only — fetches stats client-side.
-    assert "/subtask-stats" in body
+    child = (
+        await logged_in_client.post(
+            "/api/tasks",
+            json={"title": "Child", "parent_task_id": parent["id"], "project_id": proj["id"]},
+        )
+    ).json()
+    # β redesign: subtask-progress chip removed from task row (chip-overload collapse).
+    # Verify the subtask-stats API endpoint still works (stats shown in detail panel).
+    r = await logged_in_client.get(f"/api/tasks/{parent['id']}/subtask-stats")
+    assert r.status_code == 200
+    data = r.json()
+    assert data["total"] == 1
+    _ = child  # referenced to suppress unused-variable warning
