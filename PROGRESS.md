@@ -4,6 +4,22 @@
 
 ---
 
+## 2026-05-14 — Phase δ: team collaboration завершён
+
+Shared projects в Todoist-стиле. Схема: project_members (owner|member) +
+project_invitations (token, 7-дневный expiry) + tasks.assigned_to.
+Permission-слой встроен в get_project/get_task/get_section — доступ по
+membership, не по user_id. list_projects показывает проекты где юзер
+участник. Email-инвайты через aiosmtplib, страница /invite/{token}.
+UI: «Поделиться» modal (owner-only), список участников, выбор
+исполнителя в task_detail + miniapp task_sheet.
+
+Миграция 0030 + backfill (каждый проект → owner-row). Smoke 23/23 GREEN.
+Spec docs/superpowers/specs/2026-05-13-doday-simplify-and-teams-design.md
+полностью закрыт (α+β+γ+δ).
+
+---
+
 ## 2026-05-14 — Phase γ: comments UI завершён
 
 Mini App task_sheet получил секцию комментариев (lazy-fetch accordion,
