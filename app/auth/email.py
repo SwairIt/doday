@@ -197,3 +197,42 @@ async def send_verification_email(*, to: str, verification_url: str) -> None:
         password=settings.smtp_password or None,
         start_tls=settings.smtp_start_tls,
     )
+
+
+async def send_invitation_email(
+    *, to: str, invite_url: str, project_name: str, inviter_email: str
+) -> None:
+    """Send a project invitation email. Mirrors send_verification_email."""
+    settings = get_settings()
+    subject = f"Тебя пригласили в проект «{project_name}» на Doday"
+    text = (
+        f"Привет!\n\n"
+        f"{inviter_email} приглашает тебя в проект «{project_name}» на Doday — "
+        f"это совместный to-do list.\n\n"
+        f"Принять приглашение: {invite_url}\n"
+        f"(ссылка действует 7 дней)\n\n"
+        f"Если ты не знаешь этого человека — просто проигнорируй письмо."
+    )
+    html = (
+        f"<p>Привет!</p>"
+        f"<p><b>{inviter_email}</b> приглашает тебя в проект "
+        f"«<b>{project_name}</b>» на Doday — это совместный to-do list.</p>"
+        f'<p><a href="{invite_url}">Принять приглашение</a> (ссылка действует 7 дней)</p>'
+        f"<p style='color:#888;font-size:13px'>Если ты не знаешь этого человека — "
+        f"просто проигнорируй письмо.</p>"
+    )
+    msg = EmailMessage()
+    msg["From"] = f"Doday <{settings.smtp_from}>"
+    msg["To"] = to
+    msg["Subject"] = subject
+    msg.set_content(text)
+    msg.add_alternative(html, subtype="html")
+
+    await aiosmtplib.send(
+        msg,
+        hostname=settings.smtp_host,
+        port=settings.smtp_port,
+        username=settings.smtp_username or None,
+        password=settings.smtp_password or None,
+        start_tls=settings.smtp_start_tls,
+    )
