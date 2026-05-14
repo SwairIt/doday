@@ -286,6 +286,13 @@ async def purge_task(session: AsyncSession, user_id: UUID, task_id: UUID) -> Non
     await session.commit()
 
 
+class _Unset:
+    """Sentinel type so mypy can distinguish 'not provided' from explicit None."""
+
+
+_SENTINEL = _Unset()
+
+
 async def update_task(
     session: AsyncSession,
     user_id: UUID,
@@ -301,6 +308,7 @@ async def update_task(
     section_id: UUID | None = None,
     clear_section: bool = False,
     recurrence: str | None = None,
+    assigned_to: UUID | None | _Unset = _SENTINEL,
 ) -> Task:
     from app.sections.service import get_section
 
@@ -331,6 +339,13 @@ async def update_task(
         task.section_id = section_id
     if recurrence is not None:
         task.recurrence = recurrence
+    if not isinstance(assigned_to, _Unset):
+        if assigned_to is None:
+            task.assigned_to = None
+        else:
+            if not await is_member(session, task.project_id, assigned_to):
+                raise ValueError("assigned user is not a member of the project")
+            task.assigned_to = assigned_to
     await session.commit()
     await session.refresh(task)
     return task

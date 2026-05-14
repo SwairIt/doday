@@ -787,6 +787,7 @@ async def _task_to_dict(session: DbSession, task: Task) -> dict[str, object]:
         "section_id": str(task.section_id) if task.section_id else None,
         "subtask_stats": {"done": subtask_done, "total": subtask_total},
         "age_days": age_days,
+        "assigned_to": str(task.assigned_to) if task.assigned_to else None,
     }
 
 
@@ -936,6 +937,7 @@ class TaskPatchIn(BaseModel):
     recurrence: str | None = None  # daily/weekly/monthly/yearly или "" to clear (V5)
     toggle_pin: bool | None = None  # toggle pinned_at (V5)
     section_id: str | None = None  # UUID — для kanban drag (ζ K4), "" чтоб убрать
+    assigned_to: str | None = None  # UUID | "" to clear | absent = no change
 
 
 @router.patch("/api/tasks/{task_id}")
@@ -1047,6 +1049,21 @@ async def api_patch_task(
             if sec is None:
                 return JSONResponse({"error": "section_not_found"}, status_code=404)
             task.section_id = new_section_id
+    if "assigned_to" in payload.model_fields_set:
+        if payload.assigned_to is None or payload.assigned_to == "":
+            task.assigned_to = None
+        else:
+            from uuid import UUID as _UUID
+
+            from app.projects.membership import is_member as _is_member
+
+            try:
+                new_assignee_id = _UUID(payload.assigned_to)
+            except ValueError:
+                return JSONResponse({"error": "bad_assigned_to"}, status_code=400)
+            if not await _is_member(session, task.project_id, new_assignee_id):
+                return JSONResponse({"error": "assignee_not_member"}, status_code=400)
+            task.assigned_to = new_assignee_id
     await session.commit()
     await session.refresh(task)
     return JSONResponse(await _task_to_dict(session, task))

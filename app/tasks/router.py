@@ -12,6 +12,7 @@ from app.projects.service import ProjectNotFound
 from app.sections.service import SectionNotFound
 from app.tasks.schemas import TaskBulkCreate, TaskCreate, TaskOut, TaskReorder, TaskUpdate
 from app.tasks.service import (
+    _SENTINEL,
     TaskNotFound,
     complete_task,
     create_task,
@@ -214,6 +215,7 @@ async def update_endpoint(
     task_id: UUID, payload: TaskUpdate, user: RequiredUser, session: DbSession
 ) -> TaskOut:
     section_was_set = "section_id" in payload.model_fields_set
+    assigned_to_was_set = "assigned_to" in payload.model_fields_set
     try:
         task = await update_task(
             session,
@@ -228,6 +230,7 @@ async def update_endpoint(
             parent_task_id=payload.parent_task_id,
             section_id=payload.section_id if section_was_set else None,
             clear_section=section_was_set and payload.section_id is None,
+            assigned_to=payload.assigned_to if assigned_to_was_set else _SENTINEL,
         )
     except TaskNotFound as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e

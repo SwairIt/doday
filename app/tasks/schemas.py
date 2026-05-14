@@ -33,6 +33,7 @@ class TaskUpdate(BaseModel):
     due_date_only: bool | None = None
     priority: TaskPriority | None = None
     recurrence: Recurrence | None = None
+    assigned_to: UUID | None = None
 
 
 class TaskOut(BaseModel):
@@ -52,6 +53,7 @@ class TaskOut(BaseModel):
     pinned_at: datetime | None = None
     position: int
     recurrence: str | None
+    assigned_to: UUID | None = None
     created_at: datetime
     updated_at: datetime
 
