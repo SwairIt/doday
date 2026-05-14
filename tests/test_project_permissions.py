@@ -75,3 +75,25 @@ async def test_owner_sees_only_own_projects_in_list(
     projects = r.json()
     names = [p["name"] for p in projects]
     assert "Mine" not in names
+
+
+async def test_member_can_open_shared_project_by_slug(
+    db_session: AsyncSession,
+    logged_in_client: AsyncClient,
+    second_logged_in_client: AsyncClient,
+    second_user: object,
+) -> None:
+    """Member can GET /app/projects/{slug} of a shared project."""
+    from app.auth.models import User
+    from app.projects.membership import add_member
+    from app.projects.service import create_project
+
+    owner = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    project = await create_project(db_session, owner.id, name="SharedBySlug", color="violet")
+    await db_session.commit()
+    await add_member(db_session, project.id, second_user.id, role="member")  # type: ignore[attr-defined]
+    await db_session.commit()
+    r = await second_logged_in_client.get(f"/app/projects/{project.slug}", follow_redirects=False)
+    assert r.status_code == 200

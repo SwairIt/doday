@@ -18,7 +18,7 @@ async def list_sections(session: AsyncSession, user_id: UUID, project_id: UUID) 
     await get_project(session, user_id, project_id)
     result = await session.execute(
         select(Section)
-        .where(Section.project_id == project_id, Section.user_id == user_id)
+        .where(Section.project_id == project_id)
         .order_by(Section.position, Section.created_at)
     )
     return list(result.scalars().all())
@@ -87,7 +87,6 @@ async def reorder_sections(
     await get_project(session, user_id, project_id)
     rows = await session.execute(
         select(Section).where(
-            Section.user_id == user_id,
             Section.project_id == project_id,
             Section.id.in_(ids),
         )

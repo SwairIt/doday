@@ -618,9 +618,12 @@ async def search_endpoint(
     )
     tasks = list(task_rows.scalars().all())
 
+    from app.projects.membership import member_project_ids as _member_project_ids
+
+    _member_ids = await _member_project_ids(session, user.id)
     project_rows = await session.execute(
         select(Project)
-        .where(Project.user_id == user.id, func.lower(Project.name).like(pattern))
+        .where(Project.id.in_(_member_ids), func.lower(Project.name).like(pattern))
         .order_by(Project.position)
         .limit(8)
     )

@@ -510,7 +510,6 @@ async def reorder_tasks(
 
     result = await session.execute(
         select(Task).where(
-            Task.user_id == user_id,
             Task.project_id == project_id,
             Task.id.in_(ordered_ids),
         )

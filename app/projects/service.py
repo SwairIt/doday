@@ -62,10 +62,13 @@ async def get_project(session: AsyncSession, user_id: UUID, project_id: UUID) ->
 
 
 async def get_project_by_slug(session: AsyncSession, user_id: UUID, slug: str) -> Project:
+    ids = await member_project_ids(session, user_id)
     result = await session.execute(
-        select(Project).where(Project.user_id == user_id, Project.slug == slug)
+        select(Project)
+        .where(Project.id.in_(ids), Project.slug == slug)
+        .order_by((Project.user_id == user_id).desc())
     )
-    project = result.scalar_one_or_none()
+    project = result.scalars().first()
     if project is None:
         raise ProjectNotFound(slug)
     return project
