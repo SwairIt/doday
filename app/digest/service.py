@@ -143,7 +143,7 @@ def compose_text(
 
     parts.append(f"Открыть Doday: {base_url}/app/today")
     parts.append("")
-    parts.append(f"Отписаться: {base_url}/app/profile (раздел Уведомления)")
+    parts.append(f"Отписаться: {base_url}/app/settings (раздел Уведомления)")
     return "\n".join(parts)
 
 
@@ -229,8 +229,8 @@ color:#1a1230;">
                  border-top:1px solid #ede9fe;">
         <p style="margin:0;font-size:11px;color:#9890b8;line-height:1.5;">
           Получаешь это письмо потому что включил утренний дайджест.
-          <a href="{base_url}/app/profile" style="color:#a78bfa;text-decoration:underline;">
-            Отписаться можно в Профиле
+          <a href="{base_url}/app/settings" style="color:#a78bfa;text-decoration:underline;">
+            Отписаться можно в Настройках
           </a> · одна галка.
         </p>
       </td>

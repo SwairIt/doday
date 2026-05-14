@@ -581,8 +581,13 @@ async def projects_archive_view(
     )
 
 
-@router.get("/profile", response_class=HTMLResponse)
-async def profile_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
+@router.get("/profile")
+async def profile_redirect() -> RedirectResponse:
+    return RedirectResponse("/app/settings", status_code=303)
+
+
+@router.get("/settings", response_class=HTMLResponse)
+async def settings_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
     from sqlalchemy import func
     from sqlalchemy import select as sa_select
 
@@ -619,10 +624,10 @@ async def profile_view(request: Request, user: RequiredUser, session: DbSession)
 
     return templates.TemplateResponse(
         request,
-        "app/profile.html",
+        "app/settings.html",
         {
             "current_user": user,
-            "current_view": "profile",
+            "current_view": "settings",
             "projects": projects,
             "project_color_map": project_color_map,
             "stats": stats,

@@ -1,9 +1,9 @@
 {% extends "app_base.html" %}
-{% block title %}Профиль — Doday{% endblock %}
-{% block view_title %}Профиль{% endblock %}
+{% block title %}Настройки — Doday{% endblock %}
+{% block view_title %}Настройки{% endblock %}
 {% block content %}
 <div class="mb-8">
-  <h1 class="text-3xl md:text-4xl font-bold mb-1">Профиль</h1>
+  <h1 class="text-3xl md:text-4xl font-bold mb-1">Настройки</h1>
   <p class="text-[var(--text-muted)]">Аккаунт и данные.</p>
 </div>
 
@@ -577,7 +577,7 @@
           </p>
           <div class="flex items-center gap-2 flex-wrap">
             <a draggable="true"
-               href="javascript:(function(){var d=document,h=location.hostname,p=null;if(/mosreg/.test(h))p='school_mo';else if(/dnevnik\.mos/.test(h)||/mos\.ru/.test(h))p='mesh';else{alert('Открой школьный портал перед кликом по закладке (school.mosreg.ru или dnevnik.mos.ru)');return;}var t=null;d.cookie.split(';').forEach(function(c){var kv=c.trim().split('=');if(['auth_token','aupd_token'].indexOf(kv[0])!==-1)t=kv.slice(1).join('=');});if(!t)try{for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(/token/i.test(k)){var v=localStorage.getItem(k);if(v&&v.length>40&&!/\s/.test(v)){t=v;break;}}}}catch(e){}if(!t){alert('Не нашёл токен. Возможно портал хранит его в HttpOnly cookie. Тогда только через F12 — Application — Cookies.');return;}location.href='https://getdoday.ru/app/profile?school_provider='+p+'&school_token='+encodeURIComponent(t)+'#school';})();"
+               href="javascript:(function(){var d=document,h=location.hostname,p=null;if(/mosreg/.test(h))p='school_mo';else if(/dnevnik\.mos/.test(h)||/mos\.ru/.test(h))p='mesh';else{alert('Открой школьный портал перед кликом по закладке (school.mosreg.ru или dnevnik.mos.ru)');return;}var t=null;d.cookie.split(';').forEach(function(c){var kv=c.trim().split('=');if(['auth_token','aupd_token'].indexOf(kv[0])!==-1)t=kv.slice(1).join('=');});if(!t)try{for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(/token/i.test(k)){var v=localStorage.getItem(k);if(v&&v.length>40&&!/\s/.test(v)){t=v;break;}}}}catch(e){}if(!t){alert('Не нашёл токен. Возможно портал хранит его в HttpOnly cookie. Тогда только через F12 — Application — Cookies.');return;}location.href='https://getdoday.ru/app/settings?school_provider='+p+'&school_token='+encodeURIComponent(t)+'#school';})();"
                onclick="event.preventDefault(); alert('☝ Перетащи эту кнопку в панель закладок (обычно сверху или Ctrl+Shift+B чтобы её показать), а потом нажимай её на странице школьного портала.');"
                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg grad-bg text-white text-xs font-semibold shadow-glow cursor-grab active:cursor-grabbing">
               📥 Получить токен Doday

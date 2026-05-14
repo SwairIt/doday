@@ -57,7 +57,7 @@ async def test_sound_fx_partial_included(logged_in_client: AsyncClient) -> None:
 
 
 async def test_sound_toggle_in_profile(logged_in_client: AsyncClient) -> None:
-    body = (await logged_in_client.get("/app/profile")).text
+    body = (await logged_in_client.get("/app/settings")).text
     assert "Звук завершения" in body
     assert "doday-sound-on" in body
 
