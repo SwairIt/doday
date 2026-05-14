@@ -47,6 +47,9 @@ class Task(Base):
     section_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("sections.id", ondelete="SET NULL"), nullable=True
     )
+    assigned_to: Mapped[UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
     title: Mapped[str] = mapped_column(String(500), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

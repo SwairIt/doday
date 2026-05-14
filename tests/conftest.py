@@ -118,3 +118,42 @@ async def logged_in_client(client: AsyncClient, db_session: AsyncSession) -> Asy
     )
     assert response.status_code == 303
     return client
+
+
+@pytest.fixture
+async def second_user(db_session: AsyncSession) -> "object":
+    """A second distinct user — for permission / sharing tests."""
+    from datetime import UTC, datetime
+
+    from app.auth.schemas import RegisterIn
+    from app.auth.service import register_user
+
+    user = await register_user(
+        db_session,
+        RegisterIn(email="second@example.com", password="strongpass456"),
+    )
+    user.email_verified_at = datetime.now(UTC)
+    await db_session.commit()
+    await db_session.refresh(user)
+    return user
+
+
+@pytest.fixture
+async def second_logged_in_client(
+    db_session: AsyncSession, second_user: "object"
+) -> AsyncIterator[AsyncClient]:
+    """AsyncClient logged in as second_user — separate cookie jar."""
+
+    async def override_get_session() -> AsyncIterator[AsyncSession]:
+        yield db_session
+
+    app.dependency_overrides[get_session] = override_get_session
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        response = await ac.post(
+            "/auth/login",
+            data={"email": "second@example.com", "password": "strongpass456"},
+        )
+        assert response.status_code == 303
+        yield ac
+    app.dependency_overrides.clear()
