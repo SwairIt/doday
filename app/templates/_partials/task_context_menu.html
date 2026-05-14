@@ -5,6 +5,8 @@
      class="card p-1 shadow-glow text-sm min-w-[200px]">
   <button data-ctx="detail" class="ctx-item">📂 Открыть детали</button>
   <button data-ctx="edit" class="ctx-item">✏️ Редактировать</button>
+  <button data-ctx="labels" class="ctx-item">🏷 Лейблы</button>
+  <button data-ctx="comments" class="ctx-item">💬 Комментарии</button>
   <button data-ctx="duplicate" class="ctx-item">📑 Дублировать</button>
   <hr class="my-1 border-[var(--border)]">
   <button data-ctx="prio-1" class="ctx-item">🔴 Приоритет P1</button>
@@ -178,6 +180,19 @@
       }
       if (action === 'edit') {
         if (window.htmx) htmx.ajax('GET', '/htmx/tasks/' + tid + '/edit', {target: '#task-' + tid, swap: 'outerHTML'});
+        return;
+      }
+      if (action === 'labels') {
+        if (window.htmx) htmx.ajax('GET', '/htmx/tasks/' + tid + '/labels-popover', {target: '#labels-slot-' + tid, swap: 'innerHTML'});
+        return;
+      }
+      if (action === 'comments') {
+        const slot = document.getElementById('comments-slot-' + tid);
+        if (slot && slot.innerHTML.trim()) {
+          slot.innerHTML = '';
+        } else if (window.htmx) {
+          htmx.ajax('GET', '/htmx/tasks/' + tid + '/comments', {target: '#comments-slot-' + tid, swap: 'innerHTML'});
+        }
         return;
       }
       if (action === 'duplicate') {
