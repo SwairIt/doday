@@ -468,7 +468,7 @@ async def test_api_subtask_stats_endpoint(
 async def test_task_card_renders_pin_description_labels(
     db_session: AsyncSession, logged_in_client: AsyncClient
 ) -> None:
-    """V2: task_card показывает 📌, description, label-chips."""
+    """β: task_card показывает 📌, description, first label inline."""
     from datetime import UTC, datetime
 
     from sqlalchemy import select
@@ -503,7 +503,7 @@ async def test_task_card_renders_pin_description_labels(
     body = r.text
     assert "📌" in body
     assert "Кратко: купить молоко" in body
-    assert "@home" in body
+    assert "— home" in body  # β: label now inline, italic, no @ prefix
 
 
 async def test_sections_crud_and_kanban(

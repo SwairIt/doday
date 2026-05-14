@@ -73,56 +73,14 @@
           <span class="w-1.5 h-1.5 rounded-full bg-{{ proj_color }}-400 shrink-0" title="Проект"></span>
         {% endif %}
         <span class="text-sm leading-snug {% if is_done %}line-through{% endif %} break-words">{{ task.title }}</span>
+        {% if task.labels %}
+          <span class="text-[10px] text-[var(--text-muted)] italic ml-1">— {{ task.labels[0].name }}</span>
+        {% endif %}
       </div>
 
       {# Description preview — 1-line clamped #}
       {% if task.description %}
         <p class="text-[10px] text-[var(--text-muted)] mt-0.5 line-clamp-1">{{ task.description }}</p>
-      {% endif %}
-
-      {# Labels — цветные chips #}
-      {% if task.labels %}
-        <div class="flex flex-wrap gap-1 mt-1">
-          {% for lab in task.labels %}
-            <span class="text-[10px] px-1.5 py-0.5 rounded bg-{{ lab.color }}-500/15 text-{{ lab.color }}-400">@{{ lab.name }}</span>
-          {% endfor %}
-        </div>
-      {% endif %}
-
-      {# Subtask progress chip — Alpine fetch on mount, скрыт если total=0 #}
-      {% if not is_subtask %}
-        <span x-data="{
-                stats: null,
-                async load() {
-                  try { const r = await fetch('/miniapp/api/tasks/{{ task.id }}/subtask-stats', {credentials:'include'}); if (r.ok) this.stats = await r.json(); } catch(e){}
-                }
-              }"
-              x-init="load()"
-              x-show="stats && stats.total > 0"
-              x-cloak
-              class="inline-flex items-center gap-1 mt-1 text-[10px] px-1.5 py-0.5 rounded bg-[var(--surface)] text-[var(--text-muted)]"
-              :title="stats ? (stats.done + ' из ' + stats.total + ' подзадач') : ''">
-          <svg class="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-          <span x-text="stats ? (stats.done + '/' + stats.total) : ''"></span>
-          <span class="w-6 h-1 bg-[var(--border)] rounded-full overflow-hidden ml-0.5">
-            <span class="block h-full bg-{{ proj_color }}-400" :style="stats ? ('width: ' + Math.round(stats.done / Math.max(1, stats.total) * 100) + '%') : ''"></span>
-          </span>
-        </span>
-      {% endif %}
-
-      {# «Висит N дн.» для stale задач ≥7 дней (только активные) #}
-      {% if not is_done %}
-        <span x-data="{
-                age() {
-                  const created = new Date('{{ task.created_at.isoformat() }}');
-                  return Math.floor((Date.now() - created.getTime()) / 86400000);
-                }
-              }"
-              x-show="age() >= 7"
-              x-cloak
-              :title="'Открыта уже ' + age() + ' дн.'"
-              class="block text-[9px] text-[var(--text-muted)] italic mt-0.5"
-              x-text="'Висит уже ' + age() + ' дн.'"></span>
       {% endif %}
 
       {# Chips-strip — priority/date/recurrence #}
