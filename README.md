@@ -1,106 +1,166 @@
 # Doday
 
-Free todo-list for everyone — kids, adults, companies. Hosted at **https://getdoday.ru**.
+> A focused to-do app that lives inside Telegram. Built by a 15-year-old.
 
-Was originally "SchoolTodo" with auto-sync of Russian electronic school diaries (МО / МЭШ); pivoted 2026-05-03 to a universal product. Diary parsing kept as an optional integration. See [pivot spec](docs/superpowers/specs/2026-05-03-pivot-design-spec.md) and [PROGRESS.md](PROGRESS.md) for current status.
+[![Tests](https://github.com/SwairIt/doday/actions/workflows/test.yml/badge.svg)](https://github.com/SwairIt/doday/actions)
+[![Python](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-## What's implemented (Plan 1 — auth foundation)
+**[Live → getdoday.ru](https://getdoday.ru)** · **[Telegram bot → @DodayTaskBot](https://t.me/DodayTaskBot)** · *(Russian-language UI)*
 
-- Email + password registration with mandatory privacy-policy consent.
-- Email verification (token via `itsdangerous`, sent via SMTP).
-- Login with session cookie (signed via Starlette `SessionMiddleware`).
-- Logout.
-- Landing page that shows different state for anonymous vs logged-in users.
-- Privacy policy stub at `/privacy` (final text comes pre-launch).
+![Doday Mini App demo](docs/assets/demo.gif)
 
-What's intentionally **not** here yet: diary integration, homework UI, parent dashboard, gamification, notifications. Those land in Plans 2–4.
+> _The GIF placeholder above will be filled with a 30-second demo of the Mini App (swipe-actions, Pomodoro, comments). See [docs/assets/HOW_TO_RECORD.md](docs/assets/HOW_TO_RECORD.md) for how to record it._
+
+## What it is
+
+A todo-list with three surfaces sharing one backend:
+
+- **Web app** — fast HTMX-driven UI. Inbox, Today, Upcoming, Calendar, Projects with sections, labels, recurring tasks, Pomodoro timer, basic stats.
+- **Telegram Mini App** — full feature parity in a bottom-sheet UI. Swipe-actions, drag-to-reorder, native haptics, light/dark/system theme.
+- **Telegram bot** — entry point that opens the Mini App. Quick add via `/add`, daily morning digest, reminders.
+
+Plus **shared projects** in Todoist style — invite teammates by email, they join via a one-click link, everyone sees + edits + comments + can be assigned tasks.
+
+100% free, no ads, no subscriptions yet (`BETA_FREE_FOR_ALL=true`). Early users will keep Pro forever when paid plans return.
+
+## Why it might be interesting
+
+- **Zero React, zero JS build step.** FastAPI + Jinja + HTMX + Alpine.js + Tailwind CDN. SPA feel without a bundler. Sub-100KB JS payload.
+- **`mypy --strict` across 38 modules, `ruff` with `E,F,I,UP,B,S,A,RUF`, `pre-commit` enforces both on every commit.** 650+ tests, CI on every push.
+- **One-line deploy: `git push`.** A cron-poll on the VPS pulls `master` every 60s, runs migrations, restarts uvicorn.
+- **Authorization model is centrally enforced in 3 service functions** — `get_project` / `get_task` / `get_section`. Every router calls them with `user.id`. Sharing was added without touching 40 routers.
+- **Telegram Mini App auth via `initData` HMAC validation** + cookie session bridge — Mini App and web share the same auth layer.
+
+## Tech stack
+
+| Layer | Choice |
+|---|---|
+| Backend | FastAPI 0.115 · async SQLAlchemy 2.0 · Pydantic v2 |
+| Database | PostgreSQL 16 (asyncpg) · Alembic |
+| Templates | Jinja2 (server-side) |
+| Interactivity | HTMX 2 · Alpine.js |
+| Styles | Tailwind CSS (CDN — no build) |
+| Telegram | python-telegram-bot v21 · WebApp SDK |
+| Email | aiosmtplib |
+| Auth | argon2-cffi · itsdangerous (signed session cookie) |
+| Observability | structlog (JSON) · Sentry · Yandex Metrika |
+| Dev tools | uv · ruff · mypy --strict · pre-commit |
+| CI | GitHub Actions |
 
 ## Local setup
 
-Prerequisites: [uv](https://docs.astral.sh/uv/), Python 3.12+, access to a Postgres server.
+Prerequisites: [uv](https://docs.astral.sh/uv/), Python 3.12+, a running PostgreSQL.
 
-1. Copy `.env.example` to `.env` and fill in real values:
+1. Clone + copy `.env.example` → `.env`:
+   - `APP_SECRET_KEY` — `python -c "import secrets; print(secrets.token_urlsafe(48))"`
+   - `DATABASE_URL` — your Postgres URL
+   - `TEST_DATABASE_URL` — separate DB, truncated between test functions
+   - `SMTP_*` — defaults assume a local debug SMTP on `localhost:1025`. For real email, point to a real provider.
 
-   - `APP_SECRET_KEY` — random ≥32 chars (`python -c "import secrets; print(secrets.token_urlsafe(48))"`).
-   - `DATABASE_URL` — your Postgres URL.
-   - `TEST_DATABASE_URL` — a separate Postgres database used by tests (truncated between test functions).
-   - `SMTP_*` — defaults assume a local debug SMTP on `localhost:1025`. For real email, point to a real provider before going public.
-
-2. Create the two databases on your Postgres server:
-
+2. Create the databases:
    ```sql
-   CREATE USER schooltodo WITH PASSWORD '<your password>';
-   CREATE DATABASE schooltodo OWNER schooltodo;
-   CREATE DATABASE schooltodo_test OWNER schooltodo;
+   CREATE USER doday WITH PASSWORD 'changeme';
+   CREATE DATABASE doday OWNER doday;
+   CREATE DATABASE doday_test OWNER doday;
    ```
 
-3. Sync deps and apply migrations:
-
+3. Install + migrate + run:
    ```bash
    uv sync
    uv run alembic upgrade head
-   ```
-
-4. Run tests:
-
-   ```bash
-   uv run pytest
-   ```
-
-5. Run the app:
-
-   ```bash
    uv run uvicorn app.main:app --reload
    ```
 
-## End-to-end manual check
+4. (Optional) Capture verification emails locally:
+   ```bash
+   uv run python -m aiosmtpd -n -l localhost:1025
+   ```
 
-For a one-time SMTP capture during dev, install [aiosmtpd](https://aiosmtpd.aio-libs.org/) globally and run a debug catcher in another terminal:
+5. Open `http://localhost:8000` → register → check the SMTP terminal for the verify link → log in.
 
-```bash
-uv run python -m aiosmtpd -n -l localhost:1025
+## Project structure
+
 ```
+app/
+├── auth/             registration, login, sessions, email verify
+├── tasks/            tasks: CRUD, recurrence, subtasks, completion
+├── projects/         projects + sections + sharing (members + invitations)
+├── comments/         comments on tasks and subtasks
+├── labels/           labels per task
+├── pomodoro/         persistent Pomodoro timer (sessions in DB)
+├── reminders/        per-task scheduled reminders
+├── stats/            daily-streak + per-priority + per-project stats
+├── miniapp/          Telegram Mini App router + initData auth + JS bundle
+├── telegram/         bot: long-polling worker + commands + JobQueue
+├── school/           optional Russian school-diary integration (dormant)
+├── views/            HTMX page handlers
+├── pages/            static pages (landing, privacy, pricing)
+├── billing/          tier definitions (paused via BETA_FREE_FOR_ALL)
+├── digest/           daily email digest (cron-triggered)
+├── help/             in-app help drawer + articles
+├── admin/            admin-only routes
+├── backup/           JSON/CSV user-data export + import
+├── profile/          settings endpoints (theme, password, account delete)
+├── sections/         sections within projects
+└── templates/        Jinja2 (web + miniapp + email)
 
-Then:
-
-1. Open `http://localhost:8000` → see "Зарегистрироваться" / "Войти" buttons.
-2. Click "Зарегистрироваться", fill form, **check the privacy box**, submit.
-3. The aiosmtpd terminal prints the verification email — copy the link.
-4. Paste the link → redirected to `/auth/login`.
-5. Log in with the same credentials → land on `/` showing your email + "Выйти" button.
-6. Click "Выйти" → back to anonymous landing.
+alembic/versions/     30+ migrations
+tests/                pytest suite (TRUNCATE between functions, mode=auto)
+docs/superpowers/     all design specs + implementation plans
+scripts/smoke_test.py 23-endpoint smoke test against prod
+```
 
 ## Quality bar
 
-All three must be green before any commit:
+Every commit must pass:
 
 ```bash
-uv run ruff check .
 uv run ruff format --check .
-uv run mypy .
+uv run ruff check .
+uv run mypy --strict app/ scripts/
+uv run python scripts/lint_templates.py
+uv run pytest -q
 ```
 
-## Layout
+`pre-commit install` wires the first four into a git hook. Migrations are forward-only — destructive ones (drop table / drop column) raise `NotImplementedError` on `downgrade()`; restore from a pre-cleanup tag + `pg_dump` if needed.
 
-```
-app/                FastAPI application
-├── config.py       Settings (pydantic-settings v2)
-├── db.py           Async SQLAlchemy engine + session factory
-├── logging_setup.py  structlog (JSON) configuration
-├── main.py         FastAPI entrypoint + middleware + router includes
-├── auth/           Auth feature
-│   ├── deps.py     get_current_user / require_user
-│   ├── email.py    send_verification_email
-│   ├── models.py   User
-│   ├── router.py   /auth/* endpoints
-│   ├── schemas.py  RegisterIn / LoginIn
-│   ├── security.py argon2 hashing + email-verification tokens
-│   └── service.py  register_user / mark_email_verified / authenticate
-├── pages/          Shared pages
-│   └── router.py   GET / and GET /privacy
-└── templates/      Jinja2 (Tailwind via CDN, HTMX preloaded)
+## Deployment model
 
-alembic/            Migrations
-tests/              pytest suite (TRUNCATE between test functions)
-docs/superpowers/   Specs and implementation plans
-```
+There is one VPS. A cron job runs `/var/www/.../deploy-poll.sh` every minute:
+
+1. `git fetch origin master`
+2. If `HEAD != origin/master`: `git reset --hard origin/master`, `alembic upgrade head`, kill uvicorn on `:8011`, restart.
+
+End-to-end deploy: `git push` → live in ~60 seconds. Smoke test (`scripts/smoke_test.py`) hits 23 critical endpoints and confirms `200`/`303`/`401` per expectation.
+
+## Contributing
+
+PRs welcome. Before submitting:
+
+- Run the full quality bar above.
+- Add tests for any new behavior — service-layer tests are preferred over endpoint tests where possible.
+- Follow the per-feature folder pattern (`app/<feature>/{router,service,models,schemas}.py`).
+- Keep the file you touch focused — if it grows past ~600 lines, splitting it is fair game.
+- Commit messages in Russian past-tense are how this repo is written (Russian-speaking author) but English is fine for PRs.
+
+Open an issue first for anything bigger than a bug-fix — happy to discuss scope.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
+
+---
+
+## По-русски
+
+Doday — это бесплатный to-do app, который живёт прямо в Telegram. Web + Mini App + бот.
+
+- **Сайт:** [getdoday.ru](https://getdoday.ru)
+- **Бот:** [@DodayTaskBot](https://t.me/DodayTaskBot) → тапни menu-кнопку «Doday» → откроется Mini App
+- **Open source:** этот репо, лицензия MIT
+- **Бесплатно** — без рекламы и подписок (бета). Ранние юзеры останутся на Pro навсегда, когда оплата вернётся.
+
+Все Pro-фичи сейчас бесплатно для всех — `BETA_FREE_FOR_ALL=true` в проде.
+
+История проекта, технические детали и грабли описаны в Хабр-статье — ссылка появится тут после публикации.
