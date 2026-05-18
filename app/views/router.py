@@ -774,3 +774,20 @@ async def admin_root_view(request: Request, session: DbSession) -> HTMLResponse:
             "user_emails": user_emails,
         },
     )
+
+
+@router.get("/simple/today", response_class=HTMLResponse)
+async def simple_today_view(
+    request: Request, user: RequiredUser, session: DbSession
+) -> HTMLResponse:
+    tasks = await list_today(session, user.id)
+    today_date = datetime.now(UTC).date()
+    return templates.TemplateResponse(
+        request,
+        "simple/today.html",
+        {
+            "current_user": user,
+            "tasks": tasks,
+            "today_label": _today_label(today_date),
+        },
+    )
