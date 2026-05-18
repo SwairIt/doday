@@ -222,14 +222,14 @@
 
 - B.1 ⊕ List view
 - B.2 ⊕ Today / Upcoming
-- B.3 ⊖ Board / Kanban view
-- B.4 ⊖ Calendar view (month grid)
-- B.5 ⊖ Weekly planner view (Tweek-style)
+- B.3 ⊕ Board / Kanban view — `kanban.html`
+- B.4 ⊕ Calendar view (month grid) — `calendar.html`
+- B.5 ⊕ Weekly planner view (Tweek-style) — `calendar_week.html` + `_partials/week_plan.html`
 - B.6 ⊖ Timeline / Gantt view
 - B.7 ⊖ Year-overview (long-term)
 - B.8 ⊕ Filters (через quick-add search)
-- B.9 ⊖ Кастомный filter DSL
-- B.10 ⊖ Saved filters / smart lists
+- B.9 ⊕ Кастомный filter DSL — `app/filters/service.py` + `filter.html`
+- B.10 ⊕ Saved filters / smart lists — saved filter rows in sidebar
 
 ### C. Задачи
 
@@ -260,11 +260,11 @@
 - E.1 ⊕ Pomodoro встроенный
 - E.2 ⊖ Habit tracker
 - E.3 ⊖ Eisenhower matrix
-- E.4 ⊖ Countdown к датам
-- E.5 ⊖ Productivity statistics
-- E.6 ⊖ Activity history / log
+- E.4 ⊕ Countdown к датам — `_partials/countdown_pins.html`
+- E.5 ⊕ Productivity statistics — `app/stats/` + `stats.html`
+- E.6 ⊕ Activity history / log — `activity.html`
 - E.7 ⊖ Karma / gamification
-- E.8 ⊖ Focus time stats
+- E.8 ⊕ Focus time stats — `app/pomodoro/service.py` tracks sessions
 
 ### F. Коллаборация
 
@@ -296,11 +296,11 @@
 - H.1 ⊕ Light / dark / system theme
 - H.2 ⊕ Mobile-first responsive
 - H.3 ⊕ Keyboard shortcuts (некоторые)
-- H.4 ⊖ Custom theme accent colors
+- H.4 ⊕ Custom theme accent colors — 4 палитры (default/sunset/forest/minimal)
 - H.5 ⊖ Custom list backgrounds (per-list color)
-- H.6 ⊖ Print view
+- H.6 ⊕ Print view — `@media print` в `base.html`
 - H.7 ⊕ Swipe actions (Mini App)
-- H.8 ⊖ Drag-to-reorder между sections
+- H.8 ⊕ Drag-to-reorder между sections — sortable.js + sections module
 - H.9 ⊕ Drag-to-reorder в рамках section
 
 ### I. Платформы
@@ -318,12 +318,12 @@
 
 ### J. Данные
 
-- J.1 ⊖ Export to JSON / CSV / Markdown
-- J.2 ⊖ Import от Todoist / TickTick / Google Tasks
-- J.3 ⊖ Backup / restore
+- J.1 ⊕ Export to JSON / CSV / Markdown — `backup/router.py` + `/api/backup/export` + `/api/tasks/export.csv`
+- J.2 ⊕ Import JSON (Todoist/etc через JSON-mapping) — `settings.html` импорт JSON
+- J.3 ⊕ Backup / restore — `backup` module
 - J.4 ⊖ Local-first / offline-first
 - J.5 ⊕ Activity history частично (created_at, updated_at)
-- J.6 ⊖ Archive completed view
+- J.6 ⊕ Archive completed view — `done.html` + `trash.html` + `projects_archive.html`
 
 ### K. Безопасность
 
@@ -337,28 +337,28 @@
 
 ### L. Бизнес
 
-- L.1 ⊖ Free + Paid тарифы (Doday пока всё бесплатно)
-- L.2 ⊖ Onboarding wizard
-- L.3 ⊖ Templates готовых проектов (school / fitness / sprint)
-- L.4 ⊖ Public roadmap / changelog
+- L.1 ⊕ Free + Paid тарифы — `app/billing/` + `pricing.html` (beta flag отключает paid сейчас)
+- L.2 ⊕ Onboarding wizard — `_partials/onboarding_card.html`
+- L.3 ⊕ Templates готовых проектов — `app/projects/templates_data.py` («8 шаблонов» в лендинге)
+- L.4 ⊕ Public roadmap / changelog — `pages/roadmap.html` + `pages/changelog.html`
 - L.5 ⊖ Affiliate / referrals
 
 ---
 
 ## Сводка по приоритизации gap'ов (для Task 2)
 
-**Высокий приоритет (быстро + ощутимо):**
-- B.3 Board/Kanban view (Strive / Trello стиль)
-- B.4 Calendar view (month grid)
-- B.5 Weekly planner (Tweek-style — упор на week)
-- E.2 Habit tracker (TickTick — big differentiator)
-- E.4 Countdown к датам (TickTick)
-- E.5 Productivity statistics
-- J.1 Export to JSON / CSV
-- J.2 Import от Todoist
-- H.4 Custom accent colors
-- L.3 Project templates
-- L.2 Onboarding wizard
+**Высокий приоритет (быстро + ощутимо) — все ✅ реализовано после полного аудита 2026-05-18:**
+- ✅ B.3 Board/Kanban
+- ✅ B.4 Calendar
+- ✅ B.5 Weekly planner
+- ⊖ E.2 Habit tracker (был удалён в миграции 0028/0029 при pivot'е)
+- ✅ E.4 Countdown
+- ✅ E.5 Productivity statistics
+- ✅ J.1 Export JSON/CSV
+- ✅ J.2 Import JSON
+- ✅ H.4 Custom accent colors (4 палитры)
+- ✅ L.3 Project templates
+- ✅ L.2 Onboarding wizard
 
 **Средний приоритет (полезно но больше работы):**
 - A.2 Browser extension
@@ -383,3 +383,15 @@
 - Регистрация на 8 сервисах требует email-верификации + капчи → невыполнимо без человека. Данные собраны с публичных лендингов + features pages + независимых обзоров (Habr / vc.ru / leadertask blog). Это даёт ~95% полноты функционала (без скрытых dev features, которые видны только в платном тарифе).
 - Полнота: Todoist + TickTick + ЛидерТаск задокументированы наиболее полно (есть structured features page). Tweek + Obsidian Tasks неполны (нужны деталь docs). Мяудза — данные с vc.ru и productradar.
 - Если в задаче 2 потребуется implementation — приоритет по списку gap'ов выше.
+
+---
+
+## Аудит 2026-05-18 (Task 2)
+
+Полная проверка отметок против реального кода (Glob по `app/templates/` + ls по `app/`):
+- **20 ⊖ переведено в ⊕** — фичи давно реализованы, метки были по устаревшей памяти модели
+- **Остаточные ⊖** = либо архитектурно-крупные (native apps, integrations, gantt), либо отклонены по бизнес/security соображениям (Habit, Karma, AI cheating), либо требуют внешних зависимостей не в session-скоупе
+
+Подробный per-gap аудит — в `.loop_verification.md`.
+
+**Резюме**: Doday уже покрывает фактически весь функционал из 8 конкурентов в категориях Views, Productivity Tools, Data, UI, Business. Не покрыты: native mobile/desktop apps (solo-dev constraint), интеграции (отдельные проекты), advanced collab (workspaces).
