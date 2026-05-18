@@ -45,3 +45,6 @@ node_modules/
 
 # Temp diagnostic scripts (SSH/debug)
 .tmp_*
+
+# /loop runtime artifacts
+.loop_*
