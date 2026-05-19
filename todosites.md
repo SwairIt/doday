@@ -610,3 +610,11 @@ PKM-приложение, задачи через community plugin Tasks (авт
 ## Gap-анализ для Doday (для Task 2)
 
 Полный матч на actual code в `app/`. См. Task 2 ниже.
+
+---
+
+## Task 2 verification (Playwright deep audit)
+
+Зарегистрирован тестовый юзер (`loop-test-19may-v2@example.com`), 18 страниц Doday прокликаны через Playwright. Скриншоты в `docs/screenshots/doday-{01-18}-*.png`. Per-feature аудит против 8 категорий A-L — в `.loop_verification.md`.
+
+**Итог**: 45 фич ⊕ реально работают, 30 ⊖ остаются gap'ом (документировано с причиной — либо архитектурно крупно, либо отклонено в pivot'е, либо требуют внешних зависимостей вне session).
