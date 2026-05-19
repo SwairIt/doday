@@ -491,3 +491,297 @@ v1.0 — 2026-05-18. Извлечено из текущего `base.html` пос
 - `app/templates/miniapp/_base.html` (lines 40-130) — Mini App палитра + bottom-nav
 - `app/templates/landing.html` (lines 12-200) — reveal patterns + hero + stats + features grid
 - Статистика использования: 49 `btn-primary`, 54 `btn-ghost`, 90 `card` в шаблонах
+
+---
+
+## 22. Mobile gestures (Mini App + responsive web)
+
+### 22.1 Swipe-actions на task row
+
+В Mini App `_partials/task_card.html` поддерживает:
+- **Swipe-left** (translateX -110%) → «Перенести на завтра» / snooze
+- **Swipe-right** (translateX +110%) → «Готово» (complete)
+
+CSS-state classes:
+- `.swipe-row.swiping` — отключает transition пока юзер тянет
+- `.swipe-row.completing` — animate `max-height: 0` после done
+- `.swipe-row.removed` — translateX(-110%) + opacity 0
+- `.swipe-row.snoozed` — translateX(110%) + opacity 0
+
+JS — vanilla touch-events в `app/miniapp/static.py` (нет Hammer.js).
+
+### 22.2 Drag-to-reorder (sortable.js)
+
+`Sortable.create(element, { handle: '.drag-handle', animation: 150 })`.
+Используется в:
+- Sidebar projects (`_partials/sidebar.html`)
+- Sections within project
+- Tasks within section
+- Kanban columns
+
+### 22.3 HapticFeedback (Mini App only)
+
+`Telegram.WebApp.HapticFeedback.impactOccurred('light')` — на complete / delete / move.
+`'medium'` — на drag-end.
+`'heavy'` — на error.
+
+### 22.4 Pull-to-refresh
+
+НЕ имплементирован осознанно (HTMX swap покрывает refresh-cases).
+
+---
+
+## 23. Bottom-sheet / modal patterns
+
+### 23.1 Mini App task_sheet
+
+`_partials/task_sheet.html` — bottom-sheet с задачей:
+- `position: fixed; bottom: 0; left: 0; right: 0`
+- `transform: translateY(100%)` → `translateY(0)` при open
+- `transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1)` (spring-soft)
+- `border-radius: 16px 16px 0 0`
+- Handle bar сверху для swipe-to-close
+
+### 23.2 Web modals
+
+`_partials/new_project_modal.html`, `edit_project_modal.html`, `share_modal.html`, `upgrade_modal.html`. Структура:
+- Overlay: `fixed inset-0 bg-black/40 z-40`
+- Container: `fixed inset-0 z-50 flex items-center justify-center p-4`
+- Content: `.card max-w-md w-full animate-pop-in`
+- Close: иконка X в top-right + Esc key + overlay click
+- Focus trap: первый input получает focus на open
+- Body scroll lock: `overflow: hidden` на `<html>` пока open
+
+### 23.3 Alpine pattern
+
+```html
+<div x-data="{ open: false }" x-show="open" x-transition.opacity>
+  <div @click.away="open = false" @keydown.escape="open = false">
+    ...
+  </div>
+</div>
+```
+
+---
+
+## 24. Loading states / skeleton
+
+### 24.1 HTMX indicator
+
+```html
+<button hx-post="/api/save" hx-indicator="#save-spinner">
+  Save <span id="save-spinner" class="htmx-indicator">spinner</span>
+</button>
+```
+
+`.htmx-indicator` скрыт по умолчанию, показывается во время request.
+
+### 24.2 Skeleton loaders
+
+Для медленных загрузок:
+```html
+<div class="animate-pulse">
+  <div class="h-4 bg-[var(--surface-2)] rounded w-3/4"></div>
+</div>
+```
+
+### 24.3 Spinner для button
+
+Inline SVG с `animate-spin` Tailwind утилитой.
+
+---
+
+## 25. Empty states
+
+### 25.1 Mini App templates
+
+`_partials/empty_*.html`:
+- `empty_today.html`
+- `empty_inbox.html`
+- `empty_calendar.html`
+- `empty_projects.html`
+- `empty_search.html`
+
+Структура: emoji + headline + (опц.) CTA-кнопка.
+
+### 25.2 Web empty states
+
+Inline в `today.html`:
+```html
+<div class="card p-8 text-center">
+  <div class="text-5xl mb-3">checkmark</div>
+  <h3 class="font-semibold mb-1">Все задачи сделаны</h3>
+  <p class="text-[var(--text-muted)]">Время на чашку чая.</p>
+</div>
+```
+
+### 25.3 Правила
+
+- Используй emoji или иконку (не пустой div)
+- Краткий headline (до 5 слов)
+- Опц. CTA-кнопка
+- НЕ показывай error message в empty state
+
+---
+
+## 26. Error states
+
+### 26.1 4xx pages
+
+- `404.html` — «Страница не найдена», `.btn-ghost` назад на `/app/today`
+- Auth 401 → redirect на `/auth/login?next={current_path}`
+
+### 26.2 Inline form errors
+
+```html
+<input class="input" aria-invalid="true" aria-describedby="err-email">
+<p id="err-email" class="text-sm text-[var(--danger)] mt-1">
+  Email уже зарегистрирован
+</p>
+```
+
+### 26.3 Undo toast
+
+`_partials/undo_toast.html` — fixed bottom + animate-slide-up + auto-dismiss 5s.
+
+---
+
+## 27. HTMX patterns
+
+### 27.1 Inline edit
+
+```html
+<span hx-get="/api/task/{id}/edit-inline" hx-trigger="dblclick" hx-swap="outerHTML">
+  Title
+</span>
+```
+
+### 27.2 Optimistic toggle
+
+```html
+<input type="checkbox" hx-post="/api/task/{id}/toggle"
+       hx-target="closest li" hx-swap="outerHTML">
+```
+
+### 27.3 Infinite scroll
+
+```html
+<div hx-get="/api/tasks?cursor={last_id}" hx-trigger="revealed" hx-swap="afterend">
+  Loading
+</div>
+```
+
+### 27.4 Out-of-band swap
+
+`hx-swap-oob="true"` для обновления sidebar counters.
+
+### 27.5 Boost navigation
+
+`<a hx-boost="true">` превращает navigation в HTMX swap.
+
+---
+
+## 28. Toast / notifications
+
+### 28.1 Browser Notification API
+
+Для reminders + Pomodoro. Permission запрос lazy.
+
+### 28.2 Undo toast
+
+После destructive action — toast с Undo + 5s auto-dismiss.
+
+### 28.3 Permanent banner
+
+`_partials/beta_banner.html`. Dismiss через `localStorage`.
+
+---
+
+## 29. Confetti / celebrations
+
+При completion important task / streak / milestone:
+```js
+const stage = document.querySelector('.confetti-stage');
+for (let i = 0; i < 60; i++) { ... }
+```
+
+CSS-keyframes `confetti-fall` уже в base.html.
+
+---
+
+## 30. Tooltips
+
+- Простые через `title` атрибут (a11y)
+- Кастомные через Alpine + `@mouseenter`/`@mouseleave`
+
+---
+
+## 31. Quick-add UX
+
+### 31.1 Hotkey Q
+Открывает quick-add modal (web).
+
+### 31.2 NLP синтаксис (`app/quickadd/parser.py`)
+- `купить молоко завтра` → due_at = tomorrow
+- `!1`, `!2`, `!3`, `!4` → priority
+- `@label`, `#project` → label/project
+
+### 31.3 Search palette
+`Ctrl/Cmd+K` → fuzzy search.
+
+---
+
+## 32. Sortable.js convention
+
+```js
+Sortable.create(el, {
+  handle: '.drag-handle',
+  animation: 150,
+  ghostClass: 'opacity-50',
+  onEnd: function(evt) {
+    htmx.ajax('POST', '/api/reorder', {
+      values: { from: evt.oldIndex, to: evt.newIndex },
+      swap: 'none'
+    });
+  }
+});
+```
+
+---
+
+## 33. Onboarding
+
+`_partials/onboarding_card.html`:
+- Sticky card в `/app/today` после регистрации
+- Emoji + headline + 3-step intro
+- «Понятно» button → POST `/api/onboarding/dismiss`
+- Flag в `localStorage` чтобы не показывать снова
+
+---
+
+## 34. Дополнения к чек-листу новой страницы
+
+К §20:
+
+- [ ] Empty state предусмотрен
+- [ ] Loading state (htmx-indicator или skeleton)
+- [ ] Error state (404, validation)
+- [ ] Mobile swipe / gestures если применимо
+- [ ] HTMX boost для navigation
+- [ ] Sortable handle если списки переставляются
+- [ ] Modal patterns (focus trap, Esc, overlay-click)
+- [ ] Toast feedback после destructive actions
+- [ ] HapticFeedback (Mini App)
+- [ ] Tooltip + aria-label на icon-only кнопках
+
+---
+
+## 35. Версия v2
+
+v2.0 — 2026-05-19. Добавлено 14 новых секций (22-34) после Playwright-обхода: gestures, sheets, loaders, empty/error/loading states, HTMX patterns, toasts, confetti, tooltips, quick-add, sortable convention, onboarding.
+
+Источники для v2:
+- `app/templates/miniapp/_base.html` lines 134-340 (swipe + sheet + transitions)
+- `app/templates/_partials/*.html` (empty, undo_toast, onboarding_card, search_palette, shortcuts)
+- `app/miniapp/static.py` (touch + sortable + haptic)
+- Playwright observations of 18 страниц
