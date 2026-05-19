@@ -1,0 +1,45 @@
+{% extends "simple/_base.html" %}
+{% block title %}Настройки — Doday Simple{% endblock %}
+{% set active_tab = 'settings' %}
+
+{% block simple_content %}
+  <h1 class="text-2xl font-bold mb-6">Настройки</h1>
+
+  <div class="space-y-6">
+
+    <section class="card p-4">
+      <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">Тема</h2>
+      <p class="text-sm text-[var(--text-muted)] mb-3">Выбор внешнего вида интерфейса.</p>
+      <div class="flex gap-2 flex-wrap" x-data>
+        <button @click="localStorage.setItem('doday-theme', 'light'); window.dodayApplyTheme && window.dodayApplyTheme()"
+                class="btn-ghost !py-2 !px-3 text-sm">☀️ Светлая</button>
+        <button @click="localStorage.setItem('doday-theme', 'dark'); window.dodayApplyTheme && window.dodayApplyTheme()"
+                class="btn-ghost !py-2 !px-3 text-sm">🌙 Тёмная</button>
+        <button @click="localStorage.setItem('doday-theme', 'system'); window.dodayApplyTheme && window.dodayApplyTheme()"
+                class="btn-ghost !py-2 !px-3 text-sm">⚙️ Системная</button>
+      </div>
+    </section>
+
+    <section class="card p-4">
+      <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">Аккаунт</h2>
+      <p class="text-sm text-[var(--text-muted)] mb-3">
+        Вошли как <span class="font-medium text-[var(--text)]">{{ current_user.email }}</span>
+      </p>
+      <form method="post" action="/auth/logout">
+        <button type="submit" class="btn-ghost !py-2 !px-3 text-sm">Выйти</button>
+      </form>
+    </section>
+
+    <section class="card p-4">
+      <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">Версия интерфейса</h2>
+      <p class="text-sm text-[var(--text-muted)] mb-3">
+        Сейчас активен упрощённый режим — только «Сегодня», «Inbox» и быстрое добавление.
+      </p>
+      <a href="/app/today" class="btn-primary !py-2 !px-4 text-sm inline-flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        Вернуть полный интерфейс
+      </a>
+    </section>
+
+  </div>
+{% endblock %}

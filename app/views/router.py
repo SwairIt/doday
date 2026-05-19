@@ -780,7 +780,9 @@ async def admin_root_view(request: Request, session: DbSession) -> HTMLResponse:
 async def simple_today_view(
     request: Request, user: RequiredUser, session: DbSession
 ) -> HTMLResponse:
-    tasks = await list_today(session, user.id)
+    from app.tasks.service import list_today as _list_today_simple
+
+    tasks = await _list_today_simple(session, user.id)
     today_date = datetime.now(UTC).date()
     return templates.TemplateResponse(
         request,
@@ -791,3 +793,90 @@ async def simple_today_view(
             "today_label": _today_label(today_date),
         },
     )
+
+
+@router.get("/simple/inbox", response_class=HTMLResponse)
+async def simple_inbox_view(
+    request: Request, user: RequiredUser, session: DbSession
+) -> HTMLResponse:
+    from app.projects.service import ensure_inbox
+    from app.tasks.service import list_tasks as _list_tasks_simple
+
+    inbox = await ensure_inbox(session, user.id)
+    tasks = await _list_tasks_simple(session, user.id, project_id=inbox.id, include_completed=False)
+    return templates.TemplateResponse(
+        request,
+        "simple/inbox.html",
+        {"current_user": user, "tasks": tasks},
+    )
+
+
+@router.get("/simple/add", response_class=HTMLResponse)
+async def simple_add_form(request: Request, user: RequiredUser) -> HTMLResponse:
+    return templates.TemplateResponse(request, "simple/add.html", {"current_user": user})
+
+
+@router.post("/simple/add", response_class=RedirectResponse)
+async def simple_add_submit(
+    request: Request,
+    user: RequiredUser,
+    session: DbSession,
+) -> RedirectResponse:
+
+    from app.tasks.service import create_task as _create_task_simple
+
+    form = await request.form()
+    title_value = form.get("title", "")
+    title = str(title_value).strip() if title_value else ""
+    due_date_value = form.get("due_date", "")
+    due_date = str(due_date_value).strip() if due_date_value else ""
+    if not title:
+        return RedirectResponse(url="/app/simple/add", status_code=status.HTTP_303_SEE_OTHER)
+
+    due_at: datetime | None = None
+    if due_date:
+        try:
+            d = date.fromisoformat(due_date)
+            due_at = datetime(d.year, d.month, d.day, 23, 59, 59, tzinfo=UTC)
+        except ValueError:
+            due_at = None
+
+    await _create_task_simple(session, user.id, title=title, due_at=due_at)
+
+    redirect = "/app/simple/today" if due_at else "/app/simple/inbox"
+    return RedirectResponse(url=redirect, status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/simple/task/{task_id}/toggle", response_class=HTMLResponse)
+async def simple_toggle_task(
+    request: Request, user: RequiredUser, session: DbSession, task_id: UUID
+) -> HTMLResponse:
+    from app.tasks.service import (
+        complete_task,
+        get_task,
+        uncomplete_task,
+    )
+
+    task = await get_task(session, user.id, task_id)
+    if task.is_completed:
+        task = await uncomplete_task(session, user.id, task_id)
+    else:
+        task = await complete_task(session, user.id, task_id)
+    return templates.TemplateResponse(
+        request,
+        "simple/_partials/task_row.html",
+        {"task": task},
+    )
+
+
+@router.post("/simple/task/{task_id}/delete", response_class=HTMLResponse)
+async def simple_delete_task(user: RequiredUser, session: DbSession, task_id: UUID) -> HTMLResponse:
+    from app.tasks.service import delete_task as _delete_task_simple
+
+    await _delete_task_simple(session, user.id, task_id)
+    return HTMLResponse(content="", status_code=200)
+
+
+@router.get("/simple/settings", response_class=HTMLResponse)
+async def simple_settings_view(request: Request, user: RequiredUser) -> HTMLResponse:
+    return templates.TemplateResponse(request, "simple/settings.html", {"current_user": user})

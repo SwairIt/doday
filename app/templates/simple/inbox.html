@@ -1,0 +1,23 @@
+{% extends "simple/_base.html" %}
+{% block title %}Inbox — Doday Simple{% endblock %}
+{% set active_tab = 'inbox' %}
+
+{% block simple_content %}
+  <h1 class="text-2xl font-bold mb-1">Inbox</h1>
+  <p class="text-sm text-[var(--text-muted)] mb-6">
+    {{ tasks|length }} задач{% if tasks|length == 1 %}а{% elif 2 <= tasks|length <= 4 %}и{% else %}{% endif %} без даты
+  </p>
+
+  {% if not tasks %}
+    <div class="card p-8 text-center">
+      <div class="text-5xl mb-3">📥</div>
+      <p class="text-[var(--text-muted)]">Inbox пуст.<br>Добавьте задачу — она появится здесь.</p>
+    </div>
+  {% else %}
+    <ul class="space-y-2">
+      {% for task in tasks %}
+        {% include "simple/_partials/task_row.html" %}
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endblock %}
