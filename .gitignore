@@ -49,3 +49,4 @@ node_modules/
 # /loop runtime artifacts
 .loop_*
 .playwright-mcp/
+.uvicorn.pid
