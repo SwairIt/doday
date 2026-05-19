@@ -1,17 +1,18 @@
 {% extends "simple/_base.html" %}
 {% block title %}Сегодня — Doday Simple{% endblock %}
 {% set active_tab = 'today' %}
+{% block page_heading %}{{ today_label }}{% endblock %}
 
 {% block simple_content %}
-  <h1 class="text-2xl font-bold mb-1">{{ today_label }}</h1>
   <p class="text-sm text-[var(--text-muted)] mb-6">
     {{ tasks|length }} задач{% if tasks|length == 1 %}а{% elif 2 <= tasks|length <= 4 %}и{% else %}{% endif %} на сегодня
   </p>
 
   {% if not tasks %}
-    <div class="card p-8 text-center">
-      <div class="text-5xl mb-3">🌿</div>
-      <p class="text-[var(--text-muted)]">На сегодня всё спокойно.<br>Нажмите «+», чтобы добавить задачу.</p>
+    <div class="card p-10 text-center">
+      <div class="text-6xl mb-4">🌿</div>
+      <h2 class="text-lg font-semibold mb-1">На сегодня всё спокойно</h2>
+      <p class="text-[var(--text-muted)]">Нажмите «Добавить», когда появится новая задача.</p>
     </div>
   {% else %}
     <ul class="space-y-2">

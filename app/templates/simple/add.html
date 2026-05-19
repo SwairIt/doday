@@ -1,28 +1,33 @@
 {% extends "simple/_base.html" %}
 {% block title %}Новая задача — Doday Simple{% endblock %}
 {% set active_tab = 'today' %}
-{% set hide_add_fab = True %}
+{% block page_heading %}Новая задача{% endblock %}
+
+{% block header_actions %}
+  <a href="/app/simple/today" class="btn-ghost !py-1.5 !px-3 text-sm whitespace-nowrap">
+    Отмена
+  </a>
+{% endblock %}
 
 {% block simple_content %}
-  <h1 class="text-2xl font-bold mb-6">Новая задача</h1>
-
-  <form method="post" action="/app/simple/add" class="space-y-4">
+  <form method="post" action="/app/simple/add" class="space-y-5">
     <div>
-      <label for="title" class="block text-sm text-[var(--text-muted)] mb-2">Что нужно сделать?</label>
+      <label for="title" class="block text-sm font-medium mb-2">Что нужно сделать?</label>
       <input id="title" name="title" type="text" required minlength="1" maxlength="500"
              autofocus class="input"
              placeholder="Например: купить молоко">
     </div>
 
     <div>
-      <label for="due_date" class="block text-sm text-[var(--text-muted)] mb-2">На когда?</label>
+      <label for="due_date" class="block text-sm font-medium mb-2">На когда?</label>
       <input id="due_date" name="due_date" type="date" class="input">
-      <p class="text-xs text-[var(--text-muted)] mt-1">Оставьте пустым — задача попадёт в Inbox.</p>
+      <p class="text-xs text-[var(--text-muted)] mt-2">
+        Оставьте пустым — задача попадёт в Inbox.
+      </p>
     </div>
 
     <div class="flex gap-3 pt-2">
-      <button type="submit" class="btn-primary flex-1">Добавить</button>
-      <a href="/app/simple/today" class="btn-ghost">Отмена</a>
+      <button type="submit" class="btn-primary flex-1 sm:flex-none">Добавить</button>
     </div>
   </form>
 {% endblock %}

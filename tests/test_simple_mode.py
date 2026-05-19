@@ -17,7 +17,7 @@ async def test_simple_today_renders_for_authed_user(
     assert response.status_code == 200
     body = response.text
     assert "Doday" in body
-    assert "простой" in body
+    assert "simple" in body
     assert 'href="/app/today"' in body
 
 
@@ -142,13 +142,28 @@ async def test_simple_settings_renders(logged_in_client: AsyncClient) -> None:
     assert 'href="/app/today"' in body
 
 
-async def test_simple_pages_have_bottom_nav(logged_in_client: AsyncClient) -> None:
+async def test_simple_pages_have_sidebar_nav(logged_in_client: AsyncClient) -> None:
+    """All simple-mode pages render the sidebar with 3 navigation links."""
     for path in ["/app/simple/today", "/app/simple/inbox", "/app/simple/settings"]:
         response = await logged_in_client.get(path)
         assert response.status_code == 200
         assert 'href="/app/simple/today"' in response.text
         assert 'href="/app/simple/inbox"' in response.text
         assert 'href="/app/simple/settings"' in response.text
+        # back-to-full link is always available
+        assert 'href="/app/today"' in response.text
+
+
+async def test_simple_pages_have_add_button(logged_in_client: AsyncClient) -> None:
+    """Today/Inbox/Settings show the header «Добавить» button linking to /add."""
+    for path in ["/app/simple/today", "/app/simple/inbox", "/app/simple/settings"]:
+        response = await logged_in_client.get(path)
+        body = response.text
+        # add-page itself shows «Отмена» instead, not «Добавить»
+        if path == "/app/simple/add":
+            assert "Отмена" in body
+        else:
+            assert "/app/simple/add" in body
 
 
 async def test_simple_toggle_requires_auth(client: AsyncClient) -> None:
