@@ -32,6 +32,7 @@ from app.projects.router import router as projects_router
 from app.school.router import router as school_router
 from app.sections.router import router as sections_router
 from app.stats.router import router as stats_router
+from app.taptower_proxy import router as taptower_router
 from app.tasks.router import reorder_router as tasks_reorder_router
 from app.tasks.router import router as tasks_router
 from app.views.htmx import router as htmx_router
@@ -132,6 +133,7 @@ app.include_router(complaints_router)
 app.include_router(admin_router)
 app.include_router(admin_token_router)
 app.include_router(miniapp_router)
+app.include_router(taptower_router)
 
 
 _templates_404 = Jinja2Templates(directory="app/templates")
