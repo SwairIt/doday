@@ -98,7 +98,13 @@ async def _security_headers(
     request.state.telegram_channel_url = _settings.telegram_channel_url
     response = await call_next(request)
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
-    response.headers.setdefault("X-Frame-Options", "DENY")
+    # Tap Tower Mini App (/taptower/*) is loaded inside Telegram's frame, so
+    # framing must be allowed — do not send X-Frame-Options for these paths.
+    if request.url.path.startswith("/taptower"):
+        if "X-Frame-Options" in response.headers:
+            del response.headers["X-Frame-Options"]
+    else:
+        response.headers.setdefault("X-Frame-Options", "DENY")
     response.headers.setdefault("Referrer-Policy", "same-origin")
     response.headers.setdefault("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
     if _is_prod:
