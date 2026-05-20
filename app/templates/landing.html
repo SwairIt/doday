@@ -62,8 +62,11 @@
 
   <main class="flex-1">
 
+    {# ───── 3D particle hero (scroll → checkmark assembly) ───── #}
+    {% include "_partials/hero_3d.html" %}
+
     {# ───── HERO ───── #}
-    <section class="relative max-w-5xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-16 sm:pb-24 text-center">
+    <section class="relative z-[1] max-w-5xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-16 sm:pb-24 text-center">
       <div class="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
         <div class="absolute top-10 left-1/4 w-72 h-72 bg-violet-500/20 rounded-full blur-3xl float-slow"></div>
         <div class="absolute top-32 right-1/4 w-72 h-72 bg-fuchsia-500/20 rounded-full blur-3xl float-slow" style="animation-delay: -3s"></div>
