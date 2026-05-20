@@ -121,7 +121,15 @@
       <div class="absolute bottom-1/4 right-1/4 w-72 h-72 bg-fuchsia-500/40 rounded-full blur-3xl blob-2"></div>
     </div>
 
-    <div class="max-w-md text-left">
+    {# 3D particle «D» — дышит, не мешает форме (слева) #}
+    {% set fx_shape = 'logo' %}
+    {% set fx_mode = 'breathe' %}
+    {% set fx_count = 2200 %}
+    {% set fx_opacity_cap = 0.85 %}
+    {% set fx_contained = true %}
+    {% include "_partials/particles_fx.html" %}
+
+    <div class="relative max-w-md text-left">
       <div class="text-5xl mb-6">🎯</div>
       <blockquote class="text-2xl md:text-3xl font-semibold leading-snug mb-5">
         «Doday — единственный тудулист, к которому я возвращаюсь по своей воле, а не потому что он мне напомнил.»

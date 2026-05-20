@@ -63,7 +63,10 @@
   <main class="flex-1">
 
     {# ───── 3D particle hero (scroll → checkmark assembly) ───── #}
-    {% include "_partials/hero_3d.html" %}
+    {% set fx_shape = 'checkmark' %}
+    {% set fx_mode = 'scroll' %}
+    {% set fx_count = 3800 %}
+    {% include "_partials/particles_fx.html" %}
 
     {# ───── HERO ───── #}
     <section class="relative z-[1] max-w-5xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-16 sm:pb-24 text-center">

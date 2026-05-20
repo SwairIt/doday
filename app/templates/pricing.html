@@ -3,6 +3,13 @@
 {% block seo_description %}Doday бесплатный для всех — без рекламы, без слежки. В бета-режиме все функции доступны без оплаты. Когда введём подписку, ранние юзеры получат Pro бесплатно навсегда.{% endblock %}
 
 {% block layout %}
+{# subtle ambient particle-фон за тарифами (низкая прозрачность, не отвлекает) #}
+{% set fx_shape = 'cloud' %}
+{% set fx_mode = 'cloud' %}
+{% set fx_count = 1800 %}
+{% set fx_opacity_cap = 0.4 %}
+{% include "_partials/particles_fx.html" %}
+
 {% include "_partials/beta_banner.html" %}
 <header class="sticky top-0 z-20 glass border-b border-[var(--border)] px-4 md:px-6 py-3 flex items-center gap-2 md:gap-4">
   <a href="/" class="flex items-center gap-2 font-bold text-lg shrink-0">

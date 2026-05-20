@@ -171,7 +171,15 @@
       <div class="absolute bottom-1/4 left-1/4 w-72 h-72 bg-violet-500/40 rounded-full blur-3xl blob-2"></div>
     </div>
 
-    <div class="max-w-md text-left">
+    {# 3D particle «D» — дышит, не мешает форме #}
+    {% set fx_shape = 'logo' %}
+    {% set fx_mode = 'breathe' %}
+    {% set fx_count = 2200 %}
+    {% set fx_opacity_cap = 0.85 %}
+    {% set fx_contained = true %}
+    {% include "_partials/particles_fx.html" %}
+
+    <div class="relative max-w-md text-left">
       <div class="text-5xl mb-6">🚀</div>
       <h2 class="text-3xl md:text-4xl font-bold leading-tight mb-4">
         14 дней Pro<br><span class="grad-text">бесплатно</span>

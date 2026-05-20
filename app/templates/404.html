@@ -1,7 +1,14 @@
 {% extends "base.html" %}
 {% block title %}Страница не найдена — Doday{% endblock %}
 {% block layout %}
-<div class="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 py-12 text-center">
+{# 3D particle «звёздная пыль» — в тему «улетела в космос» #}
+{% set fx_shape = 'cloud' %}
+{% set fx_mode = 'cloud' %}
+{% set fx_count = 2600 %}
+{% set fx_opacity_cap = 0.7 %}
+{% include "_partials/particles_fx.html" %}
+
+<div class="relative z-[1] min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 py-12 text-center">
   <div class="max-w-md w-full">
     {# 404 hero — gradient «404» с большим эмодзи. #}
     <div class="relative inline-block mb-6">
