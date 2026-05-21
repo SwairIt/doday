@@ -19,6 +19,21 @@
 {% endif %}
 
 {% if trashed %}
+<div class="flex justify-end mb-3"
+     x-data="{
+       busy: false,
+       async purgeAll() {
+         if (!confirm('Стереть все задачи в корзине навсегда? Отменить нельзя.')) return;
+         this.busy = true;
+         try {
+           const r = await fetch('/api/tasks/trash', {method:'DELETE', credentials:'include'});
+           if (r.ok) window.location.reload();
+         } finally { this.busy = false; }
+       },
+     }">
+  <button @click="purgeAll()" :disabled="busy"
+          class="text-xs text-rose-400 hover:underline px-3 py-1.5">🗑 Очистить корзину</button>
+</div>
 <div class="space-y-2">
   {% for task in trashed %}
     <div id="trash-row-{{ task.id }}"

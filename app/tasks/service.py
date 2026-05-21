@@ -2,9 +2,10 @@
 
 from calendar import monthrange
 from datetime import UTC, date, datetime, timedelta
+from typing import Any, cast
 from uuid import UUID
 
-from sqlalchemy import and_, case, delete, func, select
+from sqlalchemy import CursorResult, and_, case, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.projects.membership import is_member, member_project_ids
@@ -362,6 +363,23 @@ async def purge_task(session: AsyncSession, user_id: UUID, task_id: UUID) -> Non
     task = await get_task(session, user_id, task_id)
     await session.delete(task)
     await session.commit()
+
+
+async def purge_all_trashed(session: AsyncSession, user_id: UUID) -> int:
+    """Hard-delete every soft-deleted task of this user. Returns how many rows
+    were removed. Only the user's own trashed tasks (deleted_at IS NOT NULL) are
+    affected — non-deleted tasks and other users' tasks are never touched.
+    Subtasks of a purged parent fall away via FK-cascade, exactly like
+    `purge_task`."""
+    result = await session.execute(
+        delete(Task).where(
+            Task.user_id == user_id,
+            Task.deleted_at.is_not(None),
+        )
+    )
+    await session.commit()
+    # DELETE yields a CursorResult; `rowcount` is the number of rows removed.
+    return cast("CursorResult[Any]", result).rowcount or 0
 
 
 class _Unset:

@@ -24,6 +24,7 @@ from app.tasks.service import (
     list_trash,
     list_upcoming,
     pin_task,
+    purge_all_trashed,
     purge_task,
     reorder_tasks,
     restore_task,
@@ -316,6 +317,15 @@ async def trash_endpoint(user: RequiredUser, session: DbSession) -> list[TaskOut
 
     rows = await list_trash(session, user.id, max_age_days=limits_for(user)["trash_retention_days"])
     return [TaskOut.model_validate(t) for t in rows]
+
+
+@router.delete("/trash", response_model=dict[str, int])
+async def purge_trash_endpoint(user: RequiredUser, session: DbSession) -> dict[str, int]:
+    """Empty the whole trash for the current user — hard-delete every soft-deleted
+    task at once. Returns ``{"purged": n}``. Declared before ``/{task_id}`` so the
+    literal ``trash`` segment never gets parsed as a task UUID."""
+    purged = await purge_all_trashed(session, user.id)
+    return {"purged": purged}
 
 
 @router.post("/{task_id}/restore", response_model=TaskOut)

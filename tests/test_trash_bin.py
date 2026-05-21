@@ -85,3 +85,45 @@ async def test_trash_view_renders(logged_in_client: AsyncClient) -> None:
 async def test_sidebar_includes_trash_link(logged_in_client: AsyncClient) -> None:
     body = (await logged_in_client.get("/app/today")).text
     assert "/app/trash" in body
+
+
+async def test_purge_all_empties_trash(logged_in_client: AsyncClient) -> None:
+    # Soft-delete three tasks…
+    ids = []
+    for i in range(3):
+        t = (await logged_in_client.post("/api/tasks", json={"title": f"T{i}"})).json()
+        await logged_in_client.delete(f"/api/tasks/{t['id']}")
+        ids.append(t["id"])
+    # …then empty the whole trash at once.
+    response = await logged_in_client.delete("/api/tasks/trash")
+    assert response.status_code == 200
+    assert response.json() == {"purged": 3}
+    # Trash is now empty.
+    trash = (await logged_in_client.get("/api/tasks/trash")).json()
+    assert trash == []
+
+
+async def test_purge_all_spares_active_and_other_users(
+    logged_in_client: AsyncClient, db_session: AsyncSession
+) -> None:
+    # An active (non-deleted) task must survive emptying the trash.
+    keep = (await logged_in_client.post("/api/tasks", json={"title": "Keep me"})).json()
+    trashed = (await logged_in_client.post("/api/tasks", json={"title": "Bin me"})).json()
+    await logged_in_client.delete(f"/api/tasks/{trashed['id']}")
+
+    response = await logged_in_client.delete("/api/tasks/trash")
+    assert response.status_code == 200
+    assert response.json() == {"purged": 1}
+
+    # Active task is still listed; trashed one is gone for good.
+    listing = (await logged_in_client.get("/api/tasks")).json()
+    assert keep["id"] in [t["id"] for t in listing]
+    row = (
+        await db_session.execute(select(Task).where(Task.id == UUID(trashed["id"])))
+    ).scalar_one_or_none()
+    assert row is None
+
+
+async def test_purge_all_anonymous_blocked(client: AsyncClient) -> None:
+    response = await client.delete("/api/tasks/trash")
+    assert response.status_code == 401
