@@ -342,6 +342,23 @@ console errors** (было 2). Скрин `docs/screenshots/topbar-streak-fix-no
 
 ---
 
+## 2026-05-21 — Ralph-loop: фильтр по исполнителю на канбан-доске
+
+В list-вью фильтр по исполнителю был (f2025c3), на доске — нет (у доски не было
+тулбара вообще). Добавил чипы «Все · Мои · Не назначено · участники» над доской.
+Чистый клиент: логика в `<script>`-функции `window.applyKanbanAssigneeFilter`
+(прячет `.kanban-card` по `data-assignee`, пересчитывает счётчики колонок),
+Alpine-`x-data` держит только состояние + персист localStorage и зовёт функцию —
+**намеренно без селекторов с двойными кавычками в x-data** (обход Alpine quoting
+trap f2025c3). Gated `assignee_map|length>1`. Данные (`data-assignee` на kcard,
+`assignee_map`, `current_user`) уже были. Тесты `tests/test_kanban_assignee_filter.py`
+(2), `pytest -q` 724 passed. Playwright: доска owner/teammate/none → Все=3/Мои=1/
+Не назначено=1, 0 console errors (нет SyntaxError). Скрин
+`docs/screenshots/kanban-assignee-filter.png`. Деплой: prod `/version` sha=f8d6f8c
+за ~50с, smoke 24/24 green. Commit `f8d6f8c`.
+
+---
+
 ## 2026-05-21 — Ralph-loop: «Перенести в секцию →» в контекст-меню
 
 Дополнение к «Перенести в проект →»: быстрый перенос задачи между секциями
