@@ -1,6 +1,7 @@
 {# Right-click context menu on any task row. Listens globally; positions
    itself at cursor; closes on click-outside / Escape. #}
 <div id="task-ctx-menu"
+     data-me="{{ current_user.id }}"
      style="display: none; position: fixed; z-index: 60;"
      class="card p-1 shadow-glow text-sm min-w-[200px]">
   <button data-ctx="detail" class="ctx-item">📂 Открыть детали</button>
@@ -8,6 +9,9 @@
   <button data-ctx="labels" class="ctx-item">🏷 Лейблы</button>
   <button data-ctx="comments" class="ctx-item">💬 Комментарии</button>
   <button data-ctx="duplicate" class="ctx-item">📑 Дублировать</button>
+  <hr class="my-1 border-[var(--border)]">
+  <button data-ctx="assign-me" class="ctx-item">🙋 Назначить на меня</button>
+  <button data-ctx="unassign" class="ctx-item">🙅 Снять назначение</button>
   <hr class="my-1 border-[var(--border)]">
   <button data-ctx="prio-1" class="ctx-item">🔴 Приоритет P1</button>
   <button data-ctx="prio-2" class="ctx-item">🟠 Приоритет P2</button>
@@ -200,6 +204,8 @@
         location.reload();
         return;
       }
+      if (action === 'assign-me') { await patch({assigned_to: menu.dataset.me}); location.reload(); return; }
+      if (action === 'unassign') { await patch({assigned_to: null}); location.reload(); return; }
       if (action.startsWith('prio-')) {
         await patch({priority: 'p' + action.slice(5)});
         location.reload();

@@ -90,6 +90,22 @@ async def test_count_assigned_excludes_non_member(db_session: AsyncSession) -> N
     assert await count_assigned_to_user(db_session, outsider.id) == 0
 
 
+async def test_update_assigns_and_unassigns_self(db_session: AsyncSession) -> None:
+    from app.tasks.models import Task
+    from app.tasks.service import update_task
+
+    user = await _user(db_session, "ctxassign@s.ru")
+    t = await create_task(db_session, user.id, title="X")
+
+    await update_task(db_session, user.id, t.id, assigned_to=user.id)
+    refreshed = await db_session.get(Task, t.id)
+    assert refreshed is not None and refreshed.assigned_to == user.id
+
+    await update_task(db_session, user.id, t.id, assigned_to=None)
+    cleared = await db_session.get(Task, t.id)
+    assert cleared is not None and cleared.assigned_to is None
+
+
 async def test_assignee_map_includes_member(db_session: AsyncSession) -> None:
     user = await _user(db_session, "amap@s.ru")
     t = await create_task(db_session, user.id, title="X")

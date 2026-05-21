@@ -4,6 +4,21 @@
 
 ---
 
+## 2026-05-21 — Ralph-loop: быстрое «Назначить на меня / Снять» в контекст-меню
+
+Чистый фронт (бэкенд PATCH `assigned_to` уже поддерживал назначение и снятие
+через `_SENTINEL`). В `_partials/task_context_menu.html` добавлены пункты
+«🙋 Назначить на меня» (PATCH `assigned_to=current_user.id`) и «🙅 Снять
+назначение» (PATCH `assigned_to=null`); id текущего юзера проброшен через
+`data-me="{{ current_user.id }}"` на меню (доступен, т.к. меню инклудится в
+app_base, а `current_user` в контексте всех /app). Без изменений схемы БД и без
+нового эндпоинта. Тест `tests/test_assigned.py` (13, +1): `update_task`
+назначает self и снимает (None). mypy strict + ruff + lint_templates зелёные,
+Playwright: меню → «Назначить на меня» → у задачи появился аватар «R», 0 console
+errors. Скрин `docs/screenshots/ctx-assign-me.png`.
+
+---
+
 ## 2026-05-21 — Ralph-loop: аватар исполнителя в строке задачи (проект-вью)
 
 Замыкает серию «Назначено мне». Новый `app.projects.membership.assignee_map_for_project`
