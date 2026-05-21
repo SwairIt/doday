@@ -342,6 +342,22 @@ console errors** (было 2). Скрин `docs/screenshots/topbar-streak-fix-no
 
 ---
 
+## 2026-05-21 — Ralph-loop: вид «Команда» (team workload)
+
+Кросс-проектный обзор всей команды: открытые задачи всех участников
+shared-проектов, сгруппированные по исполнителю (дополняет «Назначено мне» —
+только свои). Новый `membership.shared_project_ids` (проекты юзера с >1
+участником), `tasks.service.list_team_tasks` (открытые задачи по shared, без
+completed/trashed), веб-роут `GET /app/team` + шаблон `team.html` (группы по
+участнику + «Не назначено», переиспользует task_row), ссылка «Команда» в
+сайдбаре, `/app/team` добавлен в smoke_test (25 endpoint). Без изменений схемы БД
+и API. Тесты `tests/test_team_view.py` (5), `pytest -q` 729 passed. Playwright:
+shared-проект owner/teammate/none → 3 группы (teammate·1, trashpurge·1, Не
+назначено·1), 0 console errors. Скрин `docs/screenshots/team-view.png`. Деплой:
+prod `/version` sha=5722e04 за ~15с, smoke 25/25 green. Commit `5722e04`.
+
+---
+
 ## 2026-05-21 — Ralph-loop: фильтр по исполнителю на канбан-доске
 
 В list-вью фильтр по исполнителю был (f2025c3), на доске — нет (у доски не было
