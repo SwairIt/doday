@@ -42,6 +42,42 @@
   </div>
 </div>
 
+{% if assignee_map and assignee_map|length > 1 %}
+{# Assignee filter — client-side, hides cards by data-assignee. The x-data holds
+   only state and calls a global function (defined in the script block) so no
+   selectors with double quotes live inside the attribute (Alpine quoting trap). #}
+<div class="flex items-center gap-1.5 flex-wrap mb-4 text-xs"
+     x-data="{
+       f: localStorage.getItem('doday-kanban-assignee-filter-{{ project.id }}') || 'all',
+       set(v) {
+         this.f = v;
+         localStorage.setItem('doday-kanban-assignee-filter-{{ project.id }}', v);
+         if (window.applyKanbanAssigneeFilter) window.applyKanbanAssigneeFilter(v);
+       }
+     }"
+     x-init="$nextTick(() => { if (window.applyKanbanAssigneeFilter) window.applyKanbanAssigneeFilter(f); })">
+  <span class="text-[var(--text-muted)] mr-1">Исполнитель:</span>
+  <button type="button" @click="set('all')"
+          :class="f === 'all' ? 'bg-[var(--accent)]/15 text-[var(--accent)]' : 'hover:bg-[var(--surface-2)] text-[var(--text-muted)]'"
+          class="px-2.5 py-1 rounded-lg transition">Все</button>
+  <button type="button" @click="set('_mine')"
+          :class="f === '_mine' ? 'bg-[var(--accent)]/15 text-[var(--accent)]' : 'hover:bg-[var(--surface-2)] text-[var(--text-muted)]'"
+          class="px-2.5 py-1 rounded-lg transition">Мои</button>
+  <button type="button" @click="set('_none')"
+          :class="f === '_none' ? 'bg-[var(--accent)]/15 text-[var(--accent)]' : 'hover:bg-[var(--surface-2)] text-[var(--text-muted)]'"
+          class="px-2.5 py-1 rounded-lg transition">Не назначено</button>
+  {% for uid, a in assignee_map.items() %}
+    <button type="button" @click="set('{{ uid }}')"
+            :class="f === '{{ uid }}' ? 'bg-[var(--accent)]/15 text-[var(--accent)]' : 'hover:bg-[var(--surface-2)] text-[var(--text-muted)]'"
+            class="px-2.5 py-1 rounded-lg transition flex items-center gap-1">
+      {# lint-ignore-next-line: small-text #}
+      <span class="w-4 h-4 rounded-full inline-flex items-center justify-center text-[10px] font-bold text-white bg-{{ a.color }}-500 shrink-0">{{ a.initial }}</span>
+      <span class="truncate max-w-[120px]">{{ a.label }}</span>
+    </button>
+  {% endfor %}
+</div>
+{% endif %}
+
 <div class="overflow-x-auto pb-4 -mx-4 sm:mx-0 px-4 sm:px-0">
   <div class="flex gap-3 sm:gap-4 min-h-[60vh]" id="kanban-board">
     {# Column for tasks without a section #}
@@ -130,6 +166,27 @@
 </div>
 
 <script>
+  // Client-side assignee filter for the board. Called from the toolbar's Alpine
+  // x-data (state only) so no querySelectorAll strings live inside x-data.
+  window.applyKanbanAssigneeFilter = function(filter) {
+    var me = '{{ current_user.id }}';
+    document.querySelectorAll('.kanban-card').forEach(function(card) {
+      var a = card.dataset.assignee || '';
+      var show = filter === 'all'
+        || (filter === '_mine' && a === me)
+        || (filter === '_none' && a === '')
+        || (a === filter);
+      card.style.display = show ? '' : 'none';
+    });
+    // Reflect visible-card counts in the column badges.
+    document.querySelectorAll('.kanban-column').forEach(function(col) {
+      var visible = Array.from(col.children).filter(function(c) {
+        return c.id && c.id.indexOf('kcard-') === 0 && c.style.display !== 'none';
+      }).length;
+      var badge = col.parentElement.querySelector('[data-count]');
+      if (badge) badge.textContent = visible;
+    });
+  };
   (function() {
     function initKanban() {
       var board = document.getElementById('kanban-board');
