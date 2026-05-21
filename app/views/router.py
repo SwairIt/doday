@@ -98,6 +98,7 @@ async def today_view(request: Request, user: RequiredUser, session: DbSession) -
 
     projects = await list_projects(session, user.id)
     project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
+    project_name_map: dict[UUID, str] = {p.id: p.name for p in projects}
 
     tasks = await list_today(session, user.id)
     today_date = datetime.now(UTC).date()
@@ -140,6 +141,7 @@ async def today_view(request: Request, user: RequiredUser, session: DbSession) -
             "current_view": "today",
             "projects": projects,
             "project_color_map": project_color_map,
+            "project_name_map": project_name_map,
             "today_label": _today_label(today_date),
             "overdue": overdue,
             "today": today,
@@ -356,6 +358,7 @@ async def filter_view(
     tasks = await list_for_filter(session, user.id, slug)
     projects = await list_projects(session, user.id)
     project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
+    project_name_map: dict[UUID, str] = {p.id: p.name for p in projects}
     return templates.TemplateResponse(
         request,
         "app/filter.html",
@@ -364,6 +367,7 @@ async def filter_view(
             "current_view": f"filter:{slug}",
             "projects": projects,
             "project_color_map": project_color_map,
+            "project_name_map": project_name_map,
             "filter": FILTERS[slug],
             "tasks": tasks,
         },
@@ -591,6 +595,7 @@ async def label_tasks_view(
     tasks = await list_tasks_by_label(session, user.id, label_id)
     projects = await list_projects(session, user.id)
     project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
+    project_name_map: dict[UUID, str] = {p.id: p.name for p in projects}
     return templates.TemplateResponse(
         request,
         "app/filter.html",
@@ -599,6 +604,7 @@ async def label_tasks_view(
             "current_view": f"label:{label_id}",
             "projects": projects,
             "project_color_map": project_color_map,
+            "project_name_map": project_name_map,
             "filter": {
                 "name": f"@{label.name}",
                 "color": label.color,
@@ -638,6 +644,7 @@ async def done_view(request: Request, user: RequiredUser, session: DbSession) ->
 
     projects = await list_projects(session, user.id)
     project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
+    project_name_map: dict[UUID, str] = {p.id: p.name for p in projects}
 
     return templates.TemplateResponse(
         request,
@@ -647,6 +654,7 @@ async def done_view(request: Request, user: RequiredUser, session: DbSession) ->
             "current_view": "done",
             "projects": projects,
             "project_color_map": project_color_map,
+            "project_name_map": project_name_map,
             "days": days,
             "total": len(tasks),
         },
@@ -790,6 +798,7 @@ async def schedule_view(request: Request, user: RequiredUser, session: DbSession
 async def upcoming_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
     projects = await list_projects(session, user.id)
     project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
+    project_name_map: dict[UUID, str] = {p.id: p.name for p in projects}
 
     tasks = await list_upcoming(session, user.id, days=7)
     today_date = datetime.now(UTC).date()
@@ -823,6 +832,7 @@ async def upcoming_view(request: Request, user: RequiredUser, session: DbSession
             "current_view": "upcoming",
             "projects": projects,
             "project_color_map": project_color_map,
+            "project_name_map": project_name_map,
             "days": days,
             "range_label": range_label,
         },

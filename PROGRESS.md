@@ -4,6 +4,19 @@
 
 ---
 
+## 2026-05-21 — Ralph-loop: имя проекта в строке задачи (кросс-проектные виды)
+
+`today/upcoming/filter/label/done` views теперь отдают `project_name_map`
+(`{id: name}`). В `_partials/task_row.html` под guard `project_name_map is defined
+and task.project_id in …` — точка проекта получает `title` = имя, и рядом
+приглушённый чип имени (truncate, цвет проекта). Одиночный `project_view` map не
+передаёт → чип не дублируется (паттерн assignee_map/subtask_counts). Без бэкенда
+и схемы БД. mypy strict + ruff + lint_templates зелёные, тесты 31 passed,
+Playwright: на Today у задач чип «Inbox» (title «Проект: Inbox»), 0 console
+errors. Скрин `docs/screenshots/project-name-in-row.png`. Деплой подтверждён через /version.
+
+---
+
 ## 2026-05-21 — Ralph-loop: относительные подписи дедлайна (Сегодня/Завтра/Вчера)
 
 Новый `app/views/template_filters.py::due_label(task)` рядом с `due_state`:

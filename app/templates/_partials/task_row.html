@@ -82,9 +82,14 @@
     {% if task.pinned_at %}
       <span class="text-amber-400 text-xs shrink-0" title="Закреплено">📌</span>
     {% endif %}
+    {% set _pname = project_name_map[task.project_id] if (project_name_map is defined and project_name_map and task.project_id in project_name_map) else None %}
     {% if not is_subtask %}
       <span class="w-1.5 h-1.5 rounded-full bg-{{ color }}-400 shrink-0"
-            title="Проект"></span>
+            title="{{ _pname or 'Проект' }}"></span>
+    {% endif %}
+    {% if _pname %}
+      <span class="text-[10px] text-{{ color }}-400/90 truncate shrink-0 max-w-[7rem]"
+            title="Проект: {{ _pname }}">{{ _pname }}</span>
     {% endif %}
     <button type="button"
             class="text-left truncate min-w-0 {% if task.is_completed %}line-through text-[var(--text-muted)]{% endif %} hover:text-[var(--accent)] transition"
