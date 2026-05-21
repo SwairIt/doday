@@ -290,7 +290,7 @@ async def bulk_action(
     label_id: Annotated[str, Form()] = "",
 ) -> Response:
     """Apply an action to many tasks at once. action ∈ {complete, delete, set_priority,
-    move_project, set_due, attach_label, detach_label, duplicate}."""
+    move_project, set_due, attach_label, detach_label, duplicate, assign_me, unassign}."""
     from uuid import UUID as _UUID
 
     from app.labels.service import LabelNotFound, attach_label, detach_label
@@ -378,6 +378,12 @@ async def bulk_action(
         for tid in ids:
             try:
                 await update_task(session, user.id, tid, assigned_to=user.id)
+            except (TaskNotFound, ValueError):
+                pass
+    elif action == "unassign":
+        for tid in ids:
+            try:
+                await update_task(session, user.id, tid, assigned_to=None)
             except (TaskNotFound, ValueError):
                 pass
     else:

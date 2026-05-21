@@ -212,6 +212,28 @@ async def test_bulk_assign_me(logged_in_client: AsyncClient, db_session: AsyncSe
     assert refreshed.assigned_to == owner.id
 
 
+async def test_bulk_unassign(logged_in_client: AsyncClient, db_session: AsyncSession) -> None:
+    from sqlalchemy import select
+
+    from app.tasks.models import Task
+
+    owner = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    t = await create_task(db_session, owner.id, title="bulk-unassign")
+    await _assign(db_session, t.id, owner.id)
+
+    resp = await logged_in_client.post(
+        "/htmx/bulk", data={"action": "unassign", "ids": [str(t.id)]}
+    )
+    assert resp.status_code == 200
+
+    refreshed = await db_session.get(Task, t.id)
+    assert refreshed is not None
+    await db_session.refresh(refreshed)
+    assert refreshed.assigned_to is None
+
+
 async def test_bulk_anonymous_blocked(client: AsyncClient) -> None:
     resp = await client.post("/htmx/bulk", data={"action": "assign_me", "ids": []})
     assert resp.status_code == 401
