@@ -51,6 +51,7 @@ ENDPOINTS: list[Endpoint] = [
     Endpoint("/app/today", 401, "auth-gate-today"),
     Endpoint("/app/inbox", 401, "auth-gate-inbox"),
     Endpoint("/app/calendar", 401, "auth-gate-calendar"),
+    Endpoint("/app/team", 401, "auth-gate-team"),
     Endpoint("/app/profile", 303, "profile-redirects-settings"),
     Endpoint("/miniapp/", 303, "miniapp-redirects-link"),
     Endpoint("/miniapp/link", 200, "miniapp-link-page"),

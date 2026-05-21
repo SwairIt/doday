@@ -1,0 +1,47 @@
+{% extends "app_base.html" %}
+{% block title %}Команда — Doday{% endblock %}
+{% block view_title %}Команда{% endblock %}
+{% block content %}
+<div class="mb-8">
+  <h1 class="text-3xl md:text-4xl font-bold mb-1">Команда</h1>
+  <p class="text-[var(--text-muted)] text-sm">
+    Открытые задачи всех участников твоих общих проектов, сгруппированные по исполнителю. Всего: {{ total }}.
+  </p>
+</div>
+
+{% if groups %}
+  <div class="space-y-8">
+    {% for group in groups %}
+      <section class="animate-fade-in">
+        <div class="flex items-center gap-2 mb-3">
+          {% if group.assignee %}
+            {# lint-ignore-next-line: small-text #}
+            <span class="w-6 h-6 rounded-full inline-flex items-center justify-center text-[10px] font-bold text-white bg-{{ group.assignee.color }}-500 shrink-0">{{ group.assignee.initial }}</span>
+            <h2 class="text-sm font-semibold text-[var(--text)] truncate">
+              {{ group.assignee.label }}
+              <span class="text-xs text-[var(--text-muted)] font-normal">· {{ group.tasks|length }}</span>
+            </h2>
+          {% else %}
+            <span class="w-6 h-6 rounded-full inline-flex items-center justify-center bg-[var(--surface-2)] text-[var(--text-muted)] shrink-0">∅</span>
+            <h2 class="text-sm font-semibold text-[var(--text-muted)]">
+              Не назначено
+              <span class="text-xs font-normal">· {{ group.tasks|length }}</span>
+            </h2>
+          {% endif %}
+        </div>
+        <div class="space-y-2">
+          {% for task in group.tasks %}
+            {% include "_partials/task_row.html" %}
+          {% endfor %}
+        </div>
+      </section>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="card p-10 text-center text-[var(--text-muted)]">
+    <div class="text-5xl mb-3">👥</div>
+    <div>Здесь появятся задачи команды.</div>
+    <div class="text-xs mt-1">Создай общий проект и пригласи участников — открытые задачи всех будут видны тут.</div>
+  </div>
+{% endif %}
+{% endblock %}

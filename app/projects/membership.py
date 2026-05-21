@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import User
@@ -130,5 +130,23 @@ async def member_project_ids(session: AsyncSession, user_id: UUID) -> list[UUID]
     """All project ids the user is a member of (any role)."""
     rows = await session.execute(
         select(ProjectMember.project_id).where(ProjectMember.user_id == user_id)
+    )
+    return list(rows.scalars().all())
+
+
+async def shared_project_ids(session: AsyncSession, user_id: UUID) -> list[UUID]:
+    """Project ids the user belongs to that have more than one member.
+
+    These are the "team" projects — the ones worth showing on the cross-project
+    «Команда» view. Single-member (personal) projects are excluded.
+    """
+    pids = await member_project_ids(session, user_id)
+    if not pids:
+        return []
+    rows = await session.execute(
+        select(ProjectMember.project_id)
+        .where(ProjectMember.project_id.in_(pids))
+        .group_by(ProjectMember.project_id)
+        .having(func.count() > 1)
     )
     return list(rows.scalars().all())

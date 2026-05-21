@@ -327,6 +327,32 @@ async def list_assigned_to_user(session: AsyncSession, user_id: UUID) -> list[Ta
     return list(result.scalars().all())
 
 
+async def list_team_tasks(session: AsyncSession, user_id: UUID) -> list[Task]:
+    """Open tasks across every *shared* project the user belongs to.
+
+    Powers the «Команда» view — a team-wide workload overview. Only spans
+    projects with more than one member (personal projects are excluded), and
+    only open, non-trashed tasks. Assigned tasks come first (so the view can
+    group them by member); unassigned ones sort last.
+    """
+    from app.projects.membership import shared_project_ids
+
+    project_ids = await shared_project_ids(session, user_id)
+    if not project_ids:
+        return []
+    stmt = (
+        select(Task)
+        .where(
+            Task.project_id.in_(project_ids),
+            Task.is_completed.is_(False),
+            Task.deleted_at.is_(None),
+        )
+        .order_by(Task.assigned_to.is_(None), Task.due_at.is_(None), Task.due_at, Task.priority)
+    )
+    result = await session.execute(stmt)
+    return list(result.scalars().all())
+
+
 async def count_assigned_to_user(session: AsyncSession, user_id: UUID) -> int:
     """How many open tasks are assigned to this user (same filter as the view).
 

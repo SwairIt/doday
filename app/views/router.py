@@ -24,6 +24,7 @@ from app.tasks.service import (
     list_completed_today,
     list_in_range,
     list_tasks,
+    list_team_tasks,
     list_today,
     list_upcoming,
     subtask_counts_for,
@@ -428,6 +429,56 @@ async def assigned_view(request: Request, user: RequiredUser, session: DbSession
             "current_view": "assigned",
             "projects": projects,
             "project_color_map": project_color_map,
+            "groups": groups,
+            "total": len(tasks),
+        },
+    )
+
+
+@router.get("/team", response_class=HTMLResponse)
+async def team_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
+    """Team workload — open tasks across all shared projects, grouped by assignee.
+
+    The counterpart to «Назначено мне»: instead of just my plate, it shows the
+    whole team's open tasks (every member of every shared project), so an owner
+    can see who is working on what and balance the load.
+    """
+    from app.projects.membership import assignee_map_for_project, shared_project_ids
+
+    shared = await shared_project_ids(session, user.id)
+    assignee_map: dict[UUID, dict[str, str]] = {}
+    for pid in shared:
+        assignee_map.update(await assignee_map_for_project(session, pid))
+
+    tasks = await list_team_tasks(session, user.id)
+    projects = await list_projects(session, user.id)
+    project_name_map: dict[UUID, str] = {p.id: p.name for p in projects}
+    project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
+
+    by_assignee: dict[UUID | None, list[Task]] = defaultdict(list)
+    for t in tasks:
+        by_assignee[t.assigned_to].append(t)
+
+    groups: list[dict[str, object]] = []
+    for uid, tlist in by_assignee.items():
+        if uid is None:
+            continue
+        info = assignee_map.get(uid, {"label": "—", "initial": "?", "color": "slate"})
+        groups.append({"assignee": info, "tasks": tlist})
+    groups.sort(key=lambda g: str(g["assignee"]["label"]))  # type: ignore[index]
+    if None in by_assignee:
+        groups.append({"assignee": None, "tasks": by_assignee[None]})
+
+    return templates.TemplateResponse(
+        request,
+        "app/team.html",
+        {
+            "current_user": user,
+            "current_view": "team",
+            "projects": projects,
+            "project_color_map": project_color_map,
+            "project_name_map": project_name_map,
+            "assignee_map": assignee_map,
             "groups": groups,
             "total": len(tasks),
         },
