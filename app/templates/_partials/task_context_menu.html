@@ -207,7 +207,12 @@
       }
       if (action === 'copy-link') {
         const url = location.origin + location.pathname + '?task=' + tid;
-        try { if (navigator.clipboard) await navigator.clipboard.writeText(url); } catch(e) {}
+        try {
+          if (navigator.clipboard) await navigator.clipboard.writeText(url);
+          if (window.dodayToast) window.dodayToast('Ссылка скопирована', {icon: '🔗'});
+        } catch(e) {
+          if (window.dodayToast) window.dodayToast('Не удалось скопировать', {icon: '⚠'});
+        }
         return;
       }
       if (action === 'assign-me') { await patch({assigned_to: menu.dataset.me}); location.reload(); return; }

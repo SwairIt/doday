@@ -4,6 +4,20 @@
 
 ---
 
+## 2026-05-21 — Ralph-loop: переиспользуемые toast-уведомления (dodayToast)
+
+Новый партиал `_partials/toast.html` — singleton с глобальной
+`window.dodayToast(message, {icon?, duration=2500})` (Alpine, по образцу
+undo_toast, fixed bottom-center, role=status/aria-live, авто-скрытие). Подключён
+в `app_base.html`. «🔗 Скопировать ссылку» в task_context_menu теперь даёт
+отклик: success → «Ссылка скопирована», ошибка → «Не удалось скопировать». Без
+бэкенда и схемы. lint_templates 0 errors, тесты 16 passed, Playwright +
+evaluate-проверка: тост рендерится (display:flex, opacity:1, текст
+«🔗 Ссылка скопирована»), 0 console errors. Скрин
+`docs/screenshots/toast-copied.png`. Деплой подтверждён через /version.
+
+---
+
 ## 2026-05-21 — Ralph-loop: кнопка «Перенести просроченное на сегодня» (Today)
 
 Focused-todo классика. В `app/templates/app/today.html` секции «Просрочено»
