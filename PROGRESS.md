@@ -342,6 +342,22 @@ console errors** (было 2). Скрин `docs/screenshots/topbar-streak-fix-no
 
 ---
 
+## 2026-05-21 — Ralph-loop: «Перенести в секцию →» в контекст-меню
+
+Дополнение к «Перенести в проект →»: быстрый перенос задачи между секциями
+проекта из правого меню (на list и kanban). Фронт-only: новый пункт
+`move-section` + сабменю в `task_context_menu.html`, лениво тянет `GET
+/api/sections?project_id` (кэш по проекту, пункт виден только если секций ≥1),
+клик → `PATCH /api/tasks/{id}` `{section_id}` (или null для «Без секции») →
+reload. Бэкенд/эндпоинты/схему не трогал — PATCH уже умеет ставить/снимать
+section_id. Опирается на `data-project` (есть на task-wrap и kcard). Тест
+`tests/test_move_section_menu.py`, `pytest -q` 722 passed. Playwright: правый
+клик → «Перенести в секцию →» → «В работе» → задача внутри section-контейнера, 0
+console errors. Скрин `docs/screenshots/move-to-section-submenu.png`. Деплой:
+prod `/version` sha=b824edf за ~30с, smoke 24/24 green. Commit `b824edf`.
+
+---
+
 ## 2026-05-21 — Ralph-loop: контекст-меню (правый клик) на канбан-карточках
 
 Богатое right-click меню работало только в list-вью (листенер матчил
