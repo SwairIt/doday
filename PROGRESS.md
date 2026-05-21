@@ -342,6 +342,22 @@ console errors** (было 2). Скрин `docs/screenshots/topbar-streak-fix-no
 
 ---
 
+## 2026-05-21 — Ralph-loop: массовое «Назначить на участника» в bulk-баре
+
+Дополнение к bulk «На меня»/«Снять»: дропдаун «Назначить» назначает выделенные
+задачи на конкретного участника проекта. Без изменений схемы БД и эндпоинтов:
+ветка `assign_user` в `bulk_action` (assignee_id → update_task(assigned_to),
+не-member пропускается), дропдаун в `bulk_bar.html` определяет общий проект
+выделения по `data-project`, грузит `/api/projects/{id}/members`. Переиспользует
+паттерн дропдауна «Секция» 1:1 (common-project detection + ручной fetch, не
+hx-post — Alpine-динамика). Тесты `tests/test_bulk_assign_user.py` (3), `pytest
+-q` 737 passed. Playwright: 2 задачи → «Назначить» → teammate → обе
+`data-assignee` = id напарника, URL чистый, 0 console errors. Скрин
+`docs/screenshots/bulk-assign-member.png`. Деплой: prod `/version` sha=8d62db0 за
+~50с, smoke 25/25 green. Commit `8d62db0`.
+
+---
+
 ## 2026-05-21 — Ralph-loop: массовое «Перенести в секцию» в bulk-баре
 
 Дополнение к bulk «В проект»: дропдаун «Секция» раскладывает выделенные задачи по
