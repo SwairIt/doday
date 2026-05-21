@@ -342,6 +342,21 @@ console errors** (было 2). Скрин `docs/screenshots/topbar-streak-fix-no
 
 ---
 
+## 2026-05-21 — Ralph-loop: бейдж комментариев 💬 N на канбан-карточке
+
+Паритет с list-вью: на канбан-доске карточки теперь показывают «💬 N» (в списке
+бейдж был с a48e872, на доске — нет). Шаблон-only: в `kanban_card.html` чип рядом
+с subtask/assignee/priority/due, gated через `comment_count_map`, плюс расширил
+условие видимости meta-ряда на `_comments` (иначе карточка с одними комментами
+не отрисовала бы ряд). Данные `comment_count_map` уже клались в контекст канбана
+из `project_view` — бэкенд/схему не трогал. Тесты `tests/test_comment_counts.py`
+(+2 на `?view=kanban`), `pytest -q` 719 passed. Playwright: kanban Inbox →
+карточки «💬 1»/«💬 2», 0 console errors. Скрин
+`docs/screenshots/kanban-comment-badge.png`. Деплой: prod `/version` sha=4d7e632
+за ~40с, smoke 24/24 green. Commit `4d7e632`.
+
+---
+
 ## 2026-05-21 — Ralph-loop: «Назначить на → участника» в контекст-меню
 
 Контекст-меню умело только assign-me/unassign — переназначить на конкретного
