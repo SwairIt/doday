@@ -342,6 +342,21 @@ console errors** (было 2). Скрин `docs/screenshots/topbar-streak-fix-no
 
 ---
 
+## 2026-05-21 — Ralph-loop: поиск находит задачи команды в общих проектах
+
+Глобальный поиск искал задачи только созданные мной (`Task.user_id == user`) —
+задачи напарников в shared-проектах не находились (хотя поиск проектов уже шёл по
+членству — рассогласование). Сменил фильтр задач на `Task.project_id IN
+member_project_ids`; JSON project-name lookup тоже по member_ids. Без изменений
+схемы БД и эндпоинтов; выдача строго ⊇ прежней в пределах прав (member_ids
+включает личные проекты). Тесты `tests/test_search_team.py` (3), `pytest -q` 743
+passed. Playwright: teammate создал задачу в shared-проекте → owner находит её
+(JSON + живой ⌘K keyup), project_name резолвится, 0 console errors. Скрин
+`docs/screenshots/search-team-tasks.png`. Деплой: prod `/version` sha=d0987ef за
+~50с, smoke 25/25 green. Commit `d0987ef`.
+
+---
+
 ## 2026-05-21 — Ralph-loop: «Создал: <участник>» в панели задачи
 
 В детали-панели теперь виден автор задачи (создатель) для shared-проектов —
