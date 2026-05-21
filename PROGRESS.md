@@ -342,6 +342,18 @@ console errors** (было 2). Скрин `docs/screenshots/topbar-streak-fix-no
 
 ---
 
+## 2026-05-22 — Ralph-loop: массовое «Вернуть в работу» (uncomplete) в bulk-баре
+
+Обратное к bulk «Завершить»: ветка `uncomplete` в `bulk_action` (uncomplete_task
+по выбранным) + кнопка «↩ Вернуть» в bulk_bar.html (статичная hx-post форма).
+`uncomplete_task` уже был. Без изменений схемы БД/эндпоинтов. Тест в
+`tests/test_bulk.py`, `pytest -q` 752 passed. Playwright: 2 завершённые на
+/app/done → «Вернуть» → обе active, 0 console errors. Скрин
+`docs/screenshots/bulk-uncomplete.png`. Деплой: prod `/version` sha=05a8dec за
+~25с, smoke 25/25 green. Commit `05a8dec`.
+
+---
+
 ## 2026-05-22 — Ralph-loop: хоткей a — назначить выделенную задачу на меня
 
 Клавиатурный triage: на выделенной (j/k) задаче `a` → назначить на себя
