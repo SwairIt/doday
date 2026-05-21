@@ -1,0 +1,38 @@
+{% extends "app_base.html" %}
+{% block title %}Назначено мне — Doday{% endblock %}
+{% block view_title %}Назначено мне{% endblock %}
+{% block content %}
+<div class="mb-8">
+  <h1 class="text-3xl md:text-4xl font-bold mb-1">Назначено мне</h1>
+  <p class="text-[var(--text-muted)] text-sm">
+    Открытые задачи, которые назначены лично тебе во всех проектах. Всего: {{ total }}.
+  </p>
+</div>
+
+{% if groups %}
+  <div class="space-y-8">
+    {% for group in groups %}
+      <section class="animate-fade-in">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="w-2.5 h-2.5 rounded-full bg-{{ group.color }}-500 shrink-0"></span>
+          <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text)]">
+            {{ group.name }}
+            <span class="text-xs text-[var(--text-muted)] font-normal">· {{ group.tasks|length }}</span>
+          </h2>
+        </div>
+        <div class="space-y-2">
+          {% for task in group.tasks %}
+            {% include "_partials/task_row.html" %}
+          {% endfor %}
+        </div>
+      </section>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="card p-10 text-center text-[var(--text-muted)]">
+    <div class="text-5xl mb-3">🙌</div>
+    <div>Тебе пока ничего не назначено.</div>
+    <div class="text-xs mt-1">Когда участник команды назначит тебе задачу в общем проекте — она появится здесь.</div>
+  </div>
+{% endif %}
+{% endblock %}

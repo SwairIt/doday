@@ -4,6 +4,25 @@
 
 ---
 
+## 2026-05-21 — Ralph-loop: вид «Назначено мне» (assigned to me)
+
+Аддитивная team-collab фича поверх δ. Новый сервис
+`app.tasks.service.list_assigned_to_user` — открытые (не завершённые, не в
+корзине) задачи, назначенные текущему юзеру, по всем проектам где он участник
+(фильтр через `member_project_ids`, чтобы stale-назначение из проекта, откуда
+юзера убрали, не утекало). Веб-роут `GET /app/assigned` (`app/views/router.py`),
+шаблон `app/templates/app/assigned.html` (группировка по проекту, переиспользует
+`_partials/task_row.html`, пустое состояние), ссылка в сайдбаре (блок «Ещё»).
+Без изменений схемы БД. Тесты `tests/test_assigned.py` (6) зелёные, mypy strict
+чист, ruff/lint_templates чисто, curl `/app/assigned` → 401, Playwright-смоук
+залогиненным OK (скрин `docs/screenshots/assigned-empty.png`).
+
+**Замечен предсуществующий баг** (не из этой задачи): чип стрика в топбаре
+кидает `Cannot read properties of null (reading 'current')` на всех `/app/*`
+для нового юзера без streak-данных — кандидат на отдельную задачу.
+
+---
+
 ## 2026-05-14 — Phase δ: team collaboration завершён
 
 Shared projects в Todoist-стиле. Схема: project_members (owner|member) +

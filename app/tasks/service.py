@@ -7,7 +7,7 @@ from uuid import UUID
 from sqlalchemy import and_, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.projects.membership import is_member
+from app.projects.membership import is_member, member_project_ids
 from app.projects.service import ensure_inbox, get_project
 from app.tasks.models import Task, TaskPriority
 
@@ -266,6 +266,31 @@ async def list_trash(session: AsyncSession, user_id: UUID, *, max_age_days: int 
         select(Task)
         .where(Task.user_id == user_id, Task.deleted_at.is_not(None))
         .order_by(Task.deleted_at.desc())
+    )
+    result = await session.execute(stmt)
+    return list(result.scalars().all())
+
+
+async def list_assigned_to_user(session: AsyncSession, user_id: UUID) -> list[Task]:
+    """Open tasks assigned to this user across every project they belong to.
+
+    Powers the "Назначено мне" view. Excludes completed and trashed tasks, and
+    only spans projects where the user is a member (so a stale assignment in a
+    project they were removed from never leaks). Tasks with a due date come
+    first (earliest first), then the undated ones by priority/position.
+    """
+    project_ids = await member_project_ids(session, user_id)
+    if not project_ids:
+        return []
+    stmt = (
+        select(Task)
+        .where(
+            Task.assigned_to == user_id,
+            Task.project_id.in_(project_ids),
+            Task.is_completed.is_(False),
+            Task.deleted_at.is_(None),
+        )
+        .order_by(Task.due_at.is_(None), Task.due_at, Task.priority, Task.position)
     )
     result = await session.execute(stmt)
     return list(result.scalars().all())

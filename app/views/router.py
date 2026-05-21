@@ -18,6 +18,7 @@ from app.projects.service import (
 )
 from app.tasks.models import Task
 from app.tasks.service import (
+    list_assigned_to_user,
     list_completed,
     list_completed_today,
     list_in_range,
@@ -370,6 +371,45 @@ async def stats_view(request: Request, user: RequiredUser, session: DbSession) -
             "current_view": "stats",
             "projects": projects,
             "stats": stats,
+        },
+    )
+
+
+@router.get("/assigned", response_class=HTMLResponse)
+async def assigned_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
+    """All open tasks assigned to the current user, grouped by project.
+
+    Cross-project «Назначено мне» view — the team-collaboration counterpart to
+    Today/Inbox: one place to see everything teammates put on your plate.
+    """
+    tasks = await list_assigned_to_user(session, user.id)
+    projects = await list_projects(session, user.id)
+    project_name_map: dict[UUID, str] = {p.id: p.name for p in projects}
+    project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
+
+    by_project: dict[UUID, list[Task]] = defaultdict(list)
+    for t in tasks:
+        by_project[t.project_id].append(t)
+    groups = [
+        {
+            "project_id": pid,
+            "name": project_name_map.get(pid, "Без проекта"),
+            "color": project_color_map.get(pid, "violet"),
+            "tasks": tlist,
+        }
+        for pid, tlist in by_project.items()
+    ]
+
+    return templates.TemplateResponse(
+        request,
+        "app/assigned.html",
+        {
+            "current_user": user,
+            "current_view": "assigned",
+            "projects": projects,
+            "project_color_map": project_color_map,
+            "groups": groups,
+            "total": len(tasks),
         },
     )
 
