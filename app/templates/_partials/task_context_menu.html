@@ -32,6 +32,7 @@
   <hr class="my-1 border-[var(--border)]">
   <button data-ctx="pin" class="ctx-item">📌 Закрепить / открепить</button>
   <button data-ctx="move" class="ctx-item">📁 Перенести в проект →</button>
+  <button id="ctx-move-section" data-ctx="move-section" class="ctx-item" style="display: none;">🗂 Перенести в секцию →</button>
   <button data-ctx="delete" class="ctx-item text-rose-400">🗑️ В корзину</button>
 </div>
 <div id="task-ctx-move-submenu"
@@ -45,6 +46,12 @@
      class="card p-1 shadow-glow text-sm min-w-[200px] max-h-[400px] overflow-y-auto">
   <div class="text-[10px] uppercase tracking-wider text-[var(--text-muted)] px-2 py-1">Назначить на участника</div>
   <div id="task-ctx-assign-list"></div>
+</div>
+<div id="task-ctx-section-submenu"
+     style="display: none; position: fixed; z-index: 61;"
+     class="card p-1 shadow-glow text-sm min-w-[200px] max-h-[400px] overflow-y-auto">
+  <div class="text-[10px] uppercase tracking-wider text-[var(--text-muted)] px-2 py-1">В какую секцию?</div>
+  <div id="task-ctx-section-list"></div>
 </div>
 
 <style>
@@ -68,10 +75,14 @@
     const assignSubmenu = document.getElementById('task-ctx-assign-submenu');
     const assignList = document.getElementById('task-ctx-assign-list');
     const assignItem = document.getElementById('ctx-assign-member');
+    const sectionSubmenu = document.getElementById('task-ctx-section-submenu');
+    const sectionList = document.getElementById('task-ctx-section-list');
+    const sectionItem = document.getElementById('ctx-move-section');
     let activeTaskId = null;
     let activeProjectId = null;
     let projectsCache = null;
     const membersCache = {};
+    const sectionsCache = {};
     async function loadProjects() {
       if (projectsCache) return projectsCache;
       try {
@@ -89,10 +100,23 @@
       } catch(e) {}
       return membersCache[pid] || [];
     }
+    async function loadSections(pid) {
+      if (!pid) return [];
+      if (sectionsCache[pid]) return sectionsCache[pid];
+      try {
+        const r = await fetch('/api/sections?project_id=' + pid, {credentials: 'include'});
+        if (r.ok) sectionsCache[pid] = await r.json();
+      } catch(e) {}
+      return sectionsCache[pid] || [];
+    }
     function escapeHtml(s) {
       return (s || '').replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
     }
-    function hideSubmenu() { submenu.style.display = 'none'; assignSubmenu.style.display = 'none'; }
+    function hideSubmenu() {
+      submenu.style.display = 'none';
+      assignSubmenu.style.display = 'none';
+      sectionSubmenu.style.display = 'none';
+    }
     async function showSubmenu(x, y) {
       const projects = await loadProjects();
       submenuList.innerHTML = '';
@@ -170,6 +194,46 @@
       } catch(e) {}
     });
 
+    async function showSectionSubmenu(x, y) {
+      const sections = await loadSections(activeProjectId);
+      sectionList.innerHTML = '';
+      // "No section" option first (data-section-id="" → clears the section).
+      const none = document.createElement('button');
+      none.className = 'ctx-item text-[var(--text-muted)]';
+      none.dataset.sectionId = '';
+      none.textContent = '— Без секции';
+      sectionList.appendChild(none);
+      for (const s of sections) {
+        const btn = document.createElement('button');
+        btn.className = 'ctx-item flex items-center gap-2';
+        btn.dataset.sectionId = s.id;
+        btn.innerHTML = '<span class="truncate">' + escapeHtml(s.name) + '</span>';
+        sectionList.appendChild(btn);
+      }
+      sectionSubmenu.style.display = 'block';
+      const rect = sectionSubmenu.getBoundingClientRect();
+      const maxX = window.innerWidth - rect.width - 8;
+      const maxY = window.innerHeight - rect.height - 8;
+      sectionSubmenu.style.left = Math.min(x, maxX) + 'px';
+      sectionSubmenu.style.top = Math.min(y, maxY) + 'px';
+    }
+    sectionSubmenu.addEventListener('click', async function(e) {
+      const btn = e.target.closest('[data-section-id]');
+      if (!btn || !activeTaskId) return;
+      const sectionId = btn.dataset.sectionId;  // "" → no section
+      hideSubmenu();
+      const tid = activeTaskId;
+      activeTaskId = null;
+      try {
+        const r = await fetch('/api/tasks/' + tid, {
+          method: 'PATCH', credentials: 'include',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({section_id: sectionId || null}),
+        });
+        if (r.ok) location.reload();
+      } catch(e) {}
+    });
+
     function todayISO(off) {
       const d = new Date();
       d.setDate(d.getDate() + (off || 0));
@@ -219,14 +283,20 @@
       activeProjectId = wrap.dataset.project || null;
       // Reveal "Назначить на →" only for shared projects (>1 member).
       assignItem.style.display = 'none';
+      // Reveal "Перенести в секцию →" only when the project has sections.
+      sectionItem.style.display = 'none';
       const openedFor = activeTaskId;
       loadMembers(activeProjectId).then(members => {
         if (members.length > 1 && activeTaskId === openedFor) assignItem.style.display = 'block';
       });
+      loadSections(activeProjectId).then(sections => {
+        if (sections.length > 0 && activeTaskId === openedFor) sectionItem.style.display = 'block';
+      });
       showAt(e.clientX, e.clientY);
     });
     document.addEventListener('click', function(e) {
-      if (!menu.contains(e.target) && !submenu.contains(e.target) && !assignSubmenu.contains(e.target)) hide();
+      if (!menu.contains(e.target) && !submenu.contains(e.target)
+          && !assignSubmenu.contains(e.target) && !sectionSubmenu.contains(e.target)) hide();
     });
     document.addEventListener('keydown', function(e) { if (e.key === 'Escape') hide(); });
 
@@ -248,6 +318,12 @@
         const rect = menu.getBoundingClientRect();
         menu.style.display = 'none';
         showAssignSubmenu(rect.right + 4, rect.top);
+        return;
+      }
+      if (action === 'move-section') {
+        const rect = menu.getBoundingClientRect();
+        menu.style.display = 'none';
+        showSectionSubmenu(rect.right + 4, rect.top);
         return;
       }
       hide();
