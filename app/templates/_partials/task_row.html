@@ -105,8 +105,9 @@
       type="button"
       @click="open = !open"
       title="Изменить дату"
+      {% set _ds = due_state(task) %}
       class="text-xs font-medium transition hover:scale-105 whitespace-nowrap
-             {% if task.due_at %}px-2 py-1 rounded-md bg-{{ color }}-500/10 text-{{ color }}-400{% else %}hidden lg:inline-flex lg:opacity-0 lg:group-hover:opacity-100 px-2 py-1 rounded-md bg-[var(--surface-2)] text-[var(--text-muted)] items-center gap-1{% endif %}"
+             {% if task.due_at %}px-2 py-1 rounded-md {% if _ds == 'overdue' %}bg-rose-500/10 text-rose-400 font-semibold{% elif _ds == 'today' %}bg-amber-500/10 text-amber-400{% else %}bg-{{ color }}-500/10 text-{{ color }}-400{% endif %}{% else %}hidden lg:inline-flex lg:opacity-0 lg:group-hover:opacity-100 px-2 py-1 rounded-md bg-[var(--surface-2)] text-[var(--text-muted)] items-center gap-1{% endif %}"
     >
       {% if task.due_at %}
         {% if task.due_date_only %}{{ task.due_at.strftime('%d.%m') }}{% else %}{{ task.due_at.strftime('%d.%m %H:%M') }}{% endif %}

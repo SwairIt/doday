@@ -4,6 +4,20 @@
 
 ---
 
+## 2026-05-21 — Ralph-loop: подсветка просроченных/сегодняшних дедлайнов
+
+Новый Jinja-helper `app/views/template_filters.py::due_state(task) ->
+overdue|today|future|none` (date-only — по дню, timed — по моменту UTC;
+завершённые не overdue). Зарегистрирован глобалом на template-env в
+`views/router.py` и `views/htmx.py` (оба рендерят task_row). Чип даты в
+`_partials/task_row.html` и `_partials/kanban_card.html`: overdue → красный
+(rose), today → янтарный (amber), иначе цвет проекта. Без изменений схемы БД.
+Тесты `tests/test_due_state.py` (8). mypy strict + ruff + lint_templates
+зелёные, Playwright: 18.05 красная, 21.05 янтарная, 22.05 приглушённая, 0
+console errors. Скрин `docs/screenshots/due-overdue-highlight.png`.
+
+---
+
 ## 2026-05-21 — Ralph-loop: быстрое «Назначить на меня / Снять» в контекст-меню
 
 Чистый фронт (бэкенд PATCH `assigned_to` уже поддерживал назначение и снятие

@@ -26,9 +26,11 @@ from app.tasks.service import (
     list_today,
     list_upcoming,
 )
+from app.views.template_filters import due_state
 
 router = APIRouter(prefix="/app", tags=["app"])
 templates = Jinja2Templates(directory="app/templates")
+templates.env.globals["due_state"] = due_state
 
 _RU_WEEKDAYS = [
     "понедельник",
