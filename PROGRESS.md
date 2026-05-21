@@ -4,6 +4,19 @@
 
 ---
 
+## 2026-05-21 — Ralph-loop: кнопка «Перенести просроченное на сегодня» (Today)
+
+Focused-todo классика. В `app/templates/app/today.html` секции «Просрочено»
+добавлена кнопка «📅 На сегодня» + инлайн-скрипт `dodayRescheduleOverdue()`:
+собирает id задач из `#overdue-section`, шлёт `POST /htmx/bulk`
+(`action=set_due`, `due=сегодня YYYY-MM-DD`), reload. Переиспользует
+существующий bulk-эндпоинт — без бэкенда и схемы БД. lint_templates 0 errors,
+тесты 16 passed, Playwright: клик убрал секцию «Просрочено», задача (18.05)
+переехала в «Сегодня · 3» с янтарной датой, 0 console errors. Скрин
+`docs/screenshots/reschedule-overdue-today.png`. Деплой подтверждён через /version.
+
+---
+
 ## 2026-05-21 — Ralph-loop: deep-link на задачу (?task=) + «Скопировать ссылку»
 
 Чистый фронт в `_partials/task_context_menu.html` (глобальный скрипт на всех
