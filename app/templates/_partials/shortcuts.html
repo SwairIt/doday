@@ -37,6 +37,8 @@
           if (e.key === 'a') { e.preventDefault(); window.location.href = '/app/projects-archive'; return; }
           if (e.key === 'f') { e.preventDefault(); window.location.href = '/app/filters'; return; }
           if (e.key === 'r') { e.preventDefault(); window.location.href = '/app/schedule'; return; }
+          if (e.key === 'm') { e.preventDefault(); window.location.href = '/app/team'; return; }
+          if (e.key === 'e') { e.preventDefault(); window.location.href = '/app/assigned'; return; }
           return;
         }
 
@@ -86,6 +88,8 @@
               ('g i', 'Inbox'),
               ('g t', 'Сегодня'),
               ('g u', 'Ближайшие'),
+              ('g m', 'Команда'),
+              ('g e', 'Назначено мне'),
               ('g c', 'Календарь'),
               ('g s', 'Статистика'),
               ('g d', 'Завершённые'),
