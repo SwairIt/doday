@@ -521,6 +521,31 @@ async def remove_member_endpoint(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+@router.post("/{project_id}/leave", status_code=status.HTTP_204_NO_CONTENT)
+async def leave_project_endpoint(
+    project_id: UUID, user: RequiredUser, session: DbSession
+) -> Response:
+    """Let a non-owner member remove themselves from a shared project."""
+    from app.projects.membership import get_role, remove_member
+
+    try:
+        await get_project(session, user.id, project_id)
+    except ProjectNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "проект не найден") from e
+
+    role = await get_role(session, project_id, user.id)
+    if role is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "вы не участник этого проекта")
+    if role == "owner":
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "владелец не может покинуть проект — передайте владение или удалите проект",
+        )
+
+    await remove_member(session, project_id, user.id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 # ─── /api/invites/{invitation_id} ────────────────────────────────────────────
 
 

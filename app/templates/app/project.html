@@ -58,6 +58,17 @@
         </svg>
         <span class="hidden sm:inline">Поделиться</span>
       </button>
+    {% elif not project.is_inbox %}
+      <button type="button"
+              class="shrink-0 px-3 py-1.5 rounded-lg hover:bg-rose-500/10 text-[var(--text-muted)] hover:text-rose-400 transition flex items-center gap-1.5 text-sm border border-[var(--border)]"
+              hx-post="/api/projects/{{ project.id }}/leave"
+              hx-confirm="Покинуть проект «{{ project.name }}»? Задачи останутся у остальных участников."
+              hx-on::after-request="if (event.detail.successful) location.href = '/app/today'">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+        </svg>
+        <span class="hidden sm:inline">Покинуть</span>
+      </button>
     {% endif %}
   </div>
 </div>

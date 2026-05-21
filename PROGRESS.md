@@ -4,6 +4,21 @@
 
 ---
 
+## 2026-05-21 — Ralph-loop: «Покинуть проект» для участника-не-владельца
+
+Новый эндпоинт `POST /api/projects/{id}/leave` (`app/projects/router.py`):
+участник удаляет себя через `remove_member`; владелец → 400, не-член → 400,
+без auth → 401. Кнопка «🚪 Покинуть» в шапке `project.html` для не-владельца
+не-inbox проекта (`{% elif not project.is_inbox %}`), `hx-confirm` +
+`hx-on::after-request` редирект на /app/today. Без изменений схемы БД. Тесты
+`tests/test_leave_project.py` (3): участник выходит (204, role→None), владелец
+400, аноним 401. mypy strict + ruff + lint_templates зелёные, Playwright:
+участник видит «Покинуть» → confirm → редирект, проект исчез из сайдбара, 0
+console errors. Скрин `docs/screenshots/leave-project-button.png`. Деплой
+подтверждён через /version.
+
+---
+
 ## 2026-05-21 — Ralph-loop: «Перенести всё на сегодня» на фильтре Просрочено
 
 Расширение Today-фичи на `/app/filters/overdue`. В `app/templates/app/filter.html`
