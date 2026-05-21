@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-05-21 — Ralph-loop: эндпоинт /version для проверки доставки деплоя
+
+Enabler для авто-проверки деплоя в лупе. `app/main.py::_read_git_sha()` читает
+git SHA один раз при старте (env `DODAY_GIT_SHA` → `git rev-parse HEAD` в repo →
+"unknown"), `GET /version` отдаёт `{"sha": ...}`. Добавлен в `scripts/smoke_test.py`
+(24 endpoint'а). Теперь луп после push поллит `https://getdoday.ru/version`
+пока SHA != запушенного, и только тогда считает деплой дошедшим; если не доходит
+за ~4 мин — самолечение (SSH git pull + рестарт, диагностика cron-poll).
+
+---
+
 ## 2026-05-21 — Ralph-loop: подсветка просроченных/сегодняшних дедлайнов
 
 Новый Jinja-helper `app/views/template_filters.py::due_state(task) ->

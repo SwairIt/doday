@@ -45,6 +45,7 @@ ENDPOINTS: list[Endpoint] = [
     Endpoint("/manifest.webmanifest", 200, "pwa-manifest"),
     Endpoint("/service-worker.js", 200, "pwa-sw"),
     Endpoint("/health", 200, "health"),
+    Endpoint("/version", 200, "version"),
     Endpoint("/auth/register", 200, "register-page"),
     Endpoint("/auth/login", 200, "login-page"),
     Endpoint("/app/today", 401, "auth-gate-today"),

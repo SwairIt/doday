@@ -1,5 +1,7 @@
 """FastAPI application entrypoint."""
 
+import os
+import subprocess
 from collections.abc import Awaitable, Callable
 
 from fastapi import FastAPI, Request
@@ -171,6 +173,40 @@ async def _pretty_404(
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+def _read_git_sha() -> str:
+    """Resolve the deployed commit SHA once at startup.
+
+    Powers `/version` so the deploy loop can confirm a pushed commit actually
+    reached prod. Prefers the `DODAY_GIT_SHA` env override, else asks git in the
+    repo dir, else "unknown". Must never raise — falls back gracefully.
+    """
+    env_sha = os.environ.get("DODAY_GIT_SHA")
+    if env_sha:
+        return env_sha.strip()
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],  # noqa: S607 — git resolved from PATH on server
+            capture_output=True,
+            text=True,
+            timeout=5,
+            cwd=os.path.dirname(os.path.dirname(__file__)),
+        )
+    except (OSError, subprocess.SubprocessError):
+        return "unknown"
+    if result.returncode != 0:
+        return "unknown"
+    return result.stdout.strip() or "unknown"
+
+
+_GIT_SHA = _read_git_sha()
+
+
+@app.get("/version")
+async def version() -> dict[str, str]:
+    """Deployed commit SHA — lets the deploy loop verify a push reached prod."""
+    return {"sha": _GIT_SHA}
 
 
 @app.get("/robots.txt", include_in_schema=False)
