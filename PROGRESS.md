@@ -342,6 +342,23 @@ console errors** (было 2). Скрин `docs/screenshots/topbar-streak-fix-no
 
 ---
 
+## 2026-05-21 — Ralph-loop: «Назначить на → участника» в контекст-меню
+
+Контекст-меню умело только assign-me/unassign — переназначить на конкретного
+напарника требовало открыть детали. Добавил подпункт «👤 Назначить на →» со
+списком участников проекта. Без изменений схемы БД и без новых эндпоинтов: на
+`task-wrap` добавлен `data-project`, меню лениво тянет `GET
+/api/projects/{id}/members` (кэш по проекту), клик → `PATCH /api/tasks/{id}`
+`{assigned_to}` → reload. Пункт показывается только в проектах с >1 участником
+(ленивый members-fetch на открытии меню); свой помечен «(вы)», текущий — ✓. Весь
+JS в `<script>`-блоке. Тесты `tests/test_assign_member_menu.py` (2), `pytest -q`
+717 passed. Playwright: shared-проект 2 участника → меню → сабменю с обоими →
+клик teammate → строка переназначена (data-assignee сменился), 0 console errors.
+Скрин `docs/screenshots/assign-member-submenu.png`. Деплой: prod `/version`
+sha=0e44b66 за ~60с, smoke 24/24 green. Commit `0e44b66`.
+
+---
+
 ## 2026-05-21 — Ralph-loop: фильтр по исполнителю на доске проекта
 
 На странице проекта была группировка по исполнителю, но не было фильтра — нельзя
