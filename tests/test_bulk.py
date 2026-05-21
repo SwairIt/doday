@@ -30,6 +30,24 @@ async def test_bulk_complete_marks_all_as_done(
     assert all(r.is_completed for r in rows)
 
 
+async def test_bulk_uncomplete_reopens_all(
+    logged_in_client: AsyncClient, db_session: AsyncSession
+) -> None:
+    a = (await logged_in_client.post("/api/tasks", json={"title": "UA"})).json()
+    b = (await logged_in_client.post("/api/tasks", json={"title": "UB"})).json()
+    ids = [a["id"], b["id"]]
+    # Complete them first, then bulk-reopen.
+    await logged_in_client.post("/htmx/bulk", data={"action": "complete", "ids": ids})
+    response = await logged_in_client.post("/htmx/bulk", data={"action": "uncomplete", "ids": ids})
+    assert response.status_code == 200
+    assert response.headers.get("HX-Refresh") == "true"
+
+    rows = (
+        (await db_session.execute(select(Task).where(Task.title.in_(["UA", "UB"])))).scalars().all()
+    )
+    assert all(not r.is_completed for r in rows)
+
+
 async def test_bulk_delete_removes_all(
     logged_in_client: AsyncClient, db_session: AsyncSession
 ) -> None:
