@@ -407,6 +407,7 @@ async def assigned_view(request: Request, user: RequiredUser, session: DbSession
     projects = await list_projects(session, user.id)
     project_name_map: dict[UUID, str] = {p.id: p.name for p in projects}
     project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
+    comment_count_map = await comment_counts_for(session, [t.id for t in tasks])
 
     by_project: dict[UUID, list[Task]] = defaultdict(list)
     for t in tasks:
@@ -429,6 +430,7 @@ async def assigned_view(request: Request, user: RequiredUser, session: DbSession
             "current_view": "assigned",
             "projects": projects,
             "project_color_map": project_color_map,
+            "comment_count_map": comment_count_map,
             "groups": groups,
             "total": len(tasks),
         },
@@ -454,6 +456,7 @@ async def team_view(request: Request, user: RequiredUser, session: DbSession) ->
     projects = await list_projects(session, user.id)
     project_name_map: dict[UUID, str] = {p.id: p.name for p in projects}
     project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
+    comment_count_map = await comment_counts_for(session, [t.id for t in tasks])
 
     by_assignee: dict[UUID | None, list[Task]] = defaultdict(list)
     for t in tasks:
@@ -479,6 +482,7 @@ async def team_view(request: Request, user: RequiredUser, session: DbSession) ->
             "project_color_map": project_color_map,
             "project_name_map": project_name_map,
             "assignee_map": assignee_map,
+            "comment_count_map": comment_count_map,
             "groups": groups,
             "total": len(tasks),
         },
