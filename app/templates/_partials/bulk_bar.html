@@ -50,6 +50,16 @@
     </button>
   </form>
 
+  <form hx-post="/htmx/bulk" hx-include="this" hx-vals='js:{action: "assign_me"}' class="contents">
+    <template x-for="id in $store.selection.ids" :key="id">
+      <input type="hidden" name="ids" :value="id">
+    </template>
+    <button type="submit" class="btn-ghost px-3 py-1.5 text-sm gap-1.5" title="Назначить выбранные на меня">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+      На меня
+    </button>
+  </form>
+
   <div x-data="{ open: false }" class="relative">
     <button type="button" @click="open = !open"
             class="btn-ghost px-3 py-1.5 text-sm gap-1.5">

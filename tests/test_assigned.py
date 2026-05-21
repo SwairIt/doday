@@ -170,6 +170,32 @@ async def test_sidebar_counts_anonymous_blocked(client: AsyncClient) -> None:
     assert response.status_code == 401
 
 
+async def test_bulk_assign_me(logged_in_client: AsyncClient, db_session: AsyncSession) -> None:
+    from sqlalchemy import select
+
+    from app.tasks.models import Task
+
+    owner = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    t = await create_task(db_session, owner.id, title="bulk-assign-me")
+
+    resp = await logged_in_client.post(
+        "/htmx/bulk", data={"action": "assign_me", "ids": [str(t.id)]}
+    )
+    assert resp.status_code == 200
+
+    refreshed = await db_session.get(Task, t.id)
+    assert refreshed is not None
+    await db_session.refresh(refreshed)
+    assert refreshed.assigned_to == owner.id
+
+
+async def test_bulk_anonymous_blocked(client: AsyncClient) -> None:
+    resp = await client.post("/htmx/bulk", data={"action": "assign_me", "ids": []})
+    assert resp.status_code == 401
+
+
 async def test_assigned_view_anonymous_blocked(client: AsyncClient) -> None:
     response = await client.get("/app/assigned")
     assert response.status_code == 401

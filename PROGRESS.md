@@ -4,6 +4,21 @@
 
 ---
 
+## 2026-05-21 — Ralph-loop: bulk «Назначить выбранные на меня»
+
+Замыкает набор assign-операций (одиночное — ctx-меню/детали). Ветка
+`assign_me` в `app/views/htmx.py::bulk_action` (для каждого id
+`update_task(assigned_to=user.id)`, try/except TaskNotFound/ValueError —
+не-член пропускается). Кнопка «🙋 На меня» в `_partials/bulk_bar.html` (форма
+как complete/duplicate). Без изменений схемы БД и нового эндпоинта. Тесты
+`tests/test_assigned.py` (18, +2): bulk assign_me назначает на юзера, /htmx/bulk
+401 без auth. mypy strict + ruff + lint_templates зелёные, Playwright: выделил
+2 задачи → «На меня» → ушли в группу «ralphassigned» с аватарами, 0 console
+errors. Скрин `docs/screenshots/bulk-assign-me.png`. Деплой подтверждён через
+/version.
+
+---
+
 ## 2026-05-21 — Ralph-loop: аватары участников в шапке shared-проекта
 
 В шапке `app/templates/app/project.html` добавлен кластер аватаров участников

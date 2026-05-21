@@ -373,6 +373,12 @@ async def bulk_action(
                 await duplicate_task(session, user.id, tid)
             except TaskNotFound:
                 pass
+    elif action == "assign_me":
+        for tid in ids:
+            try:
+                await update_task(session, user.id, tid, assigned_to=user.id)
+            except (TaskNotFound, ValueError):
+                pass
     else:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, f"unknown action: {action}")
 
