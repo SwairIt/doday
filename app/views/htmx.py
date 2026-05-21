@@ -596,15 +596,18 @@ async def comments_block(
 ) -> Response:
     """Return the comments block (rows + add-comment form) for inline display."""
     from app.comments.service import list_comments
+    from app.projects.membership import assignee_map_for_project
 
     try:
+        task = await get_task(session, user.id, task_id)
         comments = await list_comments(session, user.id, task_id)
     except TaskNotFound as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
+    author_map = await assignee_map_for_project(session, task.project_id)
     return templates.TemplateResponse(
         request,
         "_partials/comments_block.html",
-        {"task_id": task_id, "comments": comments},
+        {"task_id": task_id, "comments": comments, "author_map": author_map},
     )
 
 
@@ -618,16 +621,19 @@ async def comment_create(
 ) -> Response:
     """Add a comment and return the refreshed comments block."""
     from app.comments.service import create_comment, list_comments
+    from app.projects.membership import assignee_map_for_project
 
     try:
+        task = await get_task(session, user.id, task_id)
         await create_comment(session, user.id, task_id=task_id, body=body.strip())
     except TaskNotFound as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "задача не найдена") from e
     comments = await list_comments(session, user.id, task_id)
+    author_map = await assignee_map_for_project(session, task.project_id)
     return templates.TemplateResponse(
         request,
         "_partials/comments_block.html",
-        {"task_id": task_id, "comments": comments},
+        {"task_id": task_id, "comments": comments, "author_map": author_map},
     )
 
 

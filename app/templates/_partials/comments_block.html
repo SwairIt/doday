@@ -38,7 +38,22 @@
               </button>
             </div>
           </div>
-          <div class="text-[10px] text-[var(--text-muted)] mt-1">{{ c.created_at.strftime('%d.%m %H:%M') }}</div>
+          <div class="flex items-center gap-1.5 text-[10px] text-[var(--text-muted)] mt-1">
+            {% if author_map is defined %}
+              {% set _ca = author_map.get(c.user_id) %}
+              {% if _ca %}
+                <span class="w-4 h-4 rounded-full inline-flex items-center justify-center text-[8px] font-bold text-white bg-{{ _ca.color }}-500 shrink-0"
+                      title="{{ _ca.label }}">{{ _ca.initial }}</span>
+                <span class="font-medium text-[var(--text)] truncate max-w-[12rem]">{{ _ca.label }}</span>
+                <span aria-hidden="true">·</span>
+              {% else %}
+                <span class="w-4 h-4 rounded-full inline-flex items-center justify-center text-[8px] font-bold text-white bg-slate-400 shrink-0"
+                      title="Неизвестный участник">?</span>
+                <span aria-hidden="true">·</span>
+              {% endif %}
+            {% endif %}
+            <span class="shrink-0">{{ c.created_at.strftime('%d.%m %H:%M') }}</span>
+          </div>
         </div>
       {% endfor %}
     </div>

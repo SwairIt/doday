@@ -47,6 +47,29 @@ async def test_htmx_comment_create_form(logged_in_client: AsyncClient) -> None:
     assert "via form" in response.text
 
 
+async def test_htmx_comments_block_shows_author(logged_in_client: AsyncClient) -> None:
+    """The comments block renders the author (email label + initial) of each comment.
+
+    The logged-in test user is `logged-in@example.com`, who is the owner-member of
+    their Inbox project, so `assignee_map_for_project` resolves the author.
+    """
+    tid = await _make_task(logged_in_client)
+    await logged_in_client.post(f"/api/tasks/{tid}/comments", json={"body": "who"})
+    html = (await logged_in_client.get(f"/htmx/tasks/{tid}/comments")).text
+    # Author label (email) and initial both present in the meta line.
+    assert "logged-in@example.com" in html
+    assert ">L</span>" in html
+
+
+async def test_htmx_comment_create_returns_author(logged_in_client: AsyncClient) -> None:
+    """Posting via the htmx form returns the refreshed block with the author chip."""
+    tid = await _make_task(logged_in_client)
+    response = await logged_in_client.post(f"/htmx/tasks/{tid}/comments", data={"body": "via form"})
+    assert response.status_code == 200
+    assert "via form" in response.text
+    assert "logged-in@example.com" in response.text
+
+
 async def test_comment_on_unknown_task_404(logged_in_client: AsyncClient) -> None:
     fake_uuid = "00000000-0000-0000-0000-000000000000"
     response = await logged_in_client.post(f"/api/tasks/{fake_uuid}/comments", json={"body": "no"})
