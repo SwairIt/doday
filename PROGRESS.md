@@ -4,6 +4,21 @@
 
 ---
 
+## 2026-05-21 — Ralph-loop: «Перенести всё на сегодня» на фильтре Просрочено
+
+Расширение Today-фичи на `/app/filters/overdue`. В `app/templates/app/filter.html`
+кнопка «📅 На сегодня» + инлайн `dodayRescheduleAllOverdue()` рендерятся только
+при `filter.slug == 'overdue'` и непустом списке (другие фильтры и label-view с
+dict-filter без slug не затронуты — Jinja Undefined-guard). Собирает id всех
+задач страницы → `/htmx/bulk` set_due=сегодня → reload. Без бэкенда и схемы.
+Тест `tests/test_label_tasks.py` (5, +1): label-view с dict-filter рендерится 200
+(не падает на filter.slug). lint_templates 0 errors, тесты 23 passed, Playwright:
+на overdue-фильтре кнопка → задача ушла («найдено: 0»), на no-date кнопки нет, 0
+console errors. Скрин `docs/screenshots/overdue-filter-reschedule.png`. Деплой
+подтверждён через /version.
+
+---
+
 ## 2026-05-21 — Ralph-loop: бейджи-счётчики у фильтров в сайдбаре
 
 `app/filters/service.py`: вынес where-условия в `_filter_conditions`, добавил

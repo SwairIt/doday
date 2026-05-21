@@ -39,3 +39,19 @@ async def test_list_tasks_by_label_excludes_completed(db_session: AsyncSession) 
 async def test_label_view_anonymous_blocked(client: AsyncClient) -> None:
     response = await client.get("/app/labels/00000000-0000-0000-0000-000000000000")
     assert response.status_code == 401
+
+
+async def test_label_view_renders_with_dict_filter(
+    logged_in_client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """Label view reuses filter.html with a dict 'filter' (no .slug) — must not crash."""
+    from sqlalchemy import select
+
+    owner = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    label = await create_label(db_session, owner.id, name="render-test")
+
+    resp = await logged_in_client.get(f"/app/labels/{label.id}")
+    assert resp.status_code == 200
+    assert "@render-test" in resp.text

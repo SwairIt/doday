@@ -14,7 +14,31 @@
       {{ filter.description }} · найдено: <strong>{{ tasks|length }}</strong>
     </p>
   </div>
+  {% if filter.slug == 'overdue' and tasks %}
+    <button type="button" onclick="dodayRescheduleAllOverdue(this)"
+            class="shrink-0 text-xs font-medium px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition inline-flex items-center gap-1"
+            title="Перенести все просроченные задачи на сегодня">
+      📅 На сегодня
+    </button>
+  {% endif %}
 </div>
+{% if filter.slug == 'overdue' and tasks %}
+  <script>
+    function dodayRescheduleAllOverdue(btn) {
+      var ids = Array.from(document.querySelectorAll('[id^=task-wrap-]'))
+        .map(function (el) { return el.id.replace('task-wrap-', ''); });
+      if (!ids.length) return;
+      if (btn) btn.disabled = true;
+      var f = new FormData();
+      f.append('action', 'set_due');
+      f.append('due', new Date().toISOString().slice(0, 10));
+      ids.forEach(function (id) { f.append('ids', id); });
+      fetch('/htmx/bulk', { method: 'POST', credentials: 'include', body: f })
+        .then(function () { location.reload(); })
+        .catch(function () { if (btn) btn.disabled = false; });
+    }
+  </script>
+{% endif %}
 
 {% if not tasks %}
   <div class="card p-12 text-center">
