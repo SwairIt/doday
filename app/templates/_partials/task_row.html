@@ -17,7 +17,7 @@
   class="task-row group flex items-center gap-1.5 sm:gap-2 p-2.5 sm:p-3 rounded-xl border border-[var(--border)]
          hover:border-[var(--accent)] transition {% if task.is_completed %}opacity-60{% endif %}"
   :class="$store.selection.has('{{ tid }}') ? 'ring-2 ring-[var(--accent)] bg-[var(--surface-2)]' : ''"
-  x-data="{ subsOpen: false, commentsOpen: false }"
+  x-data="{ subsOpen: false, commentsOpen: false, descOpen: false }"
 >
   {# Bulk-selection checkbox — visible by default on mobile (no hover state),
      visible-on-hover on desktop, always visible when anything's selected. #}
@@ -74,6 +74,23 @@
               if (commentsOpen) htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/comments', { target: '#comments-slot-{{ task.id }}', swap: 'innerHTML' });
               else document.getElementById('comments-slot-{{ task.id }}').innerHTML = '';
             ">💬 {{ _cc }}</button>
+  {% endif %}
+
+  {# Description-preview toggle "📝" — only when the task has a description.
+     Renders the markdown inline (XSS-safe via window.dodayMd) without opening
+     the full detail panel. Description text is JSON-embedded below the row. #}
+  {% if task.description and task.description.strip() %}
+    {# lint-ignore-next-line: small-text #}
+    <button type="button"
+            class="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--accent)] transition"
+            :class="descOpen ? 'text-[var(--accent)]' : ''"
+            title="Показать описание"
+            @click="
+              descOpen = !descOpen;
+              const slot = document.getElementById('desc-slot-{{ task.id }}');
+              if (descOpen) slot.innerHTML = window.dodayMd(JSON.parse(document.getElementById('desc-data-{{ task.id }}').textContent));
+              else slot.innerHTML = '';
+            ">📝</button>
   {% endif %}
 
   {# Complete-toggle circle. #}
@@ -208,6 +225,10 @@
   </button>
 
 </div>
+{% if task.description and task.description.strip() %}
+<script type="application/json" id="desc-data-{{ task.id }}">{{ task.description|tojson }}</script>
+<div id="desc-slot-{{ task.id }}" class="md-preview text-sm text-[var(--text-muted)] pl-9 pr-2 pt-1 pb-1 leading-relaxed"></div>
+{% endif %}
 <div id="subtasks-of-{{ task.id }}-slot"></div>
 <div id="comments-slot-{{ task.id }}"></div>
 <div id="labels-slot-{{ task.id }}" class="relative"></div>
