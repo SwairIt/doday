@@ -280,7 +280,7 @@ async def project_view(
     view: str = "list",
 ) -> HTMLResponse:
     """Project list view + sections grouping. ?view=kanban switches to board layout."""
-    from app.projects.membership import is_owner
+    from app.projects.membership import assignee_map_for_project, is_owner
     from app.sections.service import list_sections
 
     try:
@@ -303,6 +303,7 @@ async def project_view(
     projects = await list_projects(session, user.id)
     project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
     is_proj_owner = await is_owner(session, project.id, user.id)
+    assignee_map = await assignee_map_for_project(session, project.id)
 
     template_name = "app/kanban.html" if view == "kanban" else "app/project.html"
     return templates.TemplateResponse(
@@ -319,6 +320,7 @@ async def project_view(
             "section_groups": section_groups,
             "completed": completed,
             "is_owner": is_proj_owner,
+            "assignee_map": assignee_map,
         },
     )
 

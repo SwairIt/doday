@@ -4,6 +4,22 @@
 
 ---
 
+## 2026-05-21 — Ralph-loop: аватар исполнителя в строке задачи (проект-вью)
+
+Замыкает серию «Назначено мне». Новый `app.projects.membership.assignee_map_for_project`
+— `dict[user_id, {initial, label, color}]` (join ProjectMember+User, цвет
+детерминированно из палитры Tailwind по `user_id.hex`). `project_view` кладёт
+`assignee_map` в контекст project.html/kanban.html. В `_partials/task_row.html`
+и `_partials/kanban_card.html` — аватар-кружок с инициалом исполнителя, guard
+`assignee_map is defined and task.assigned_to in assignee_map` (обратно-совместимо:
+today/inbox/filter map не передают → ничего не рендерится). Без изменений схемы БД.
+Тесты `tests/test_assigned.py` (12, +2): map содержит участника с верным
+инициалом/цветом, пустой map для неизвестного проекта. mypy strict + ruff +
+lint_templates зелёные, Playwright залогиненным: на задаче виден аватар «R»
+с тултипом, 0 console errors. Скрин `docs/screenshots/task-row-assignee-avatar.png`.
+
+---
+
 ## 2026-05-21 — Ralph-loop: бейдж-счётчик «Назначено мне» в сайдбаре
 
 Продолжение фичи /app/assigned. Новый `app.tasks.service.count_assigned_to_user`

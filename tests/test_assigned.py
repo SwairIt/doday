@@ -90,6 +90,27 @@ async def test_count_assigned_excludes_non_member(db_session: AsyncSession) -> N
     assert await count_assigned_to_user(db_session, outsider.id) == 0
 
 
+async def test_assignee_map_includes_member(db_session: AsyncSession) -> None:
+    user = await _user(db_session, "amap@s.ru")
+    t = await create_task(db_session, user.id, title="X")
+
+    from app.projects.membership import assignee_map_for_project
+
+    amap = await assignee_map_for_project(db_session, t.project_id)
+    assert user.id in amap
+    assert amap[user.id]["initial"] == "A"
+    assert amap[user.id]["label"] == "amap@s.ru"
+    assert amap[user.id]["color"]  # deterministic palette colour, non-empty
+
+
+async def test_assignee_map_empty_for_unknown_project(db_session: AsyncSession) -> None:
+    from uuid import uuid4
+
+    from app.projects.membership import assignee_map_for_project
+
+    assert await assignee_map_for_project(db_session, uuid4()) == {}
+
+
 async def test_sidebar_counts_has_assigned_key(logged_in_client: AsyncClient) -> None:
     response = await logged_in_client.get("/api/projects/sidebar-counts")
     assert response.status_code == 200

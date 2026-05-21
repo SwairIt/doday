@@ -90,6 +90,15 @@
     {% endif %}
   </div>
 
+  {# Assignee avatar — only on project views that pass `assignee_map`
+     (list/kanban). Other views (today/inbox/filter) don't pass it, so nothing
+     renders — backward compatible. #}
+  {% if assignee_map is defined and task.assigned_to and task.assigned_to in assignee_map %}
+    {% set _a = assignee_map[task.assigned_to] %}
+    <span class="shrink-0 w-5 h-5 rounded-full inline-flex items-center justify-center text-[10px] font-bold text-white bg-{{ _a.color }}-500"
+          title="Исполнитель: {{ _a.label }}">{{ _a.initial }}</span>
+  {% endif %}
+
   {# Due date — text only, right-aligned, no wrap. #}
   <div x-data="{ open: false, today: new Date().toISOString().slice(0,10), tomorrow: new Date(Date.now()+86400000).toISOString().slice(0,10), nextweek: new Date(Date.now()+7*86400000).toISOString().slice(0,10) }" class="relative shrink-0">
     <button

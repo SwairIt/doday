@@ -31,8 +31,13 @@
     </button>
   </div>
 
-  {% if task.due_at or task.priority.value != 'p4' or task.recurrence %}
+  {% if task.due_at or task.priority.value != 'p4' or task.recurrence or (assignee_map is defined and task.assigned_to and task.assigned_to in assignee_map) %}
     <div class="flex items-center gap-1.5 mt-2 flex-wrap">
+      {% if assignee_map is defined and task.assigned_to and task.assigned_to in assignee_map %}
+        {% set _a = assignee_map[task.assigned_to] %}
+        <span class="w-5 h-5 rounded-full inline-flex items-center justify-center text-[10px] font-bold text-white bg-{{ _a.color }}-500"
+              title="Исполнитель: {{ _a.label }}">{{ _a.initial }}</span>
+      {% endif %}
       {% if task.priority.value != 'p4' %}
         <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-{{ prio_class }}-500/15 text-{{ prio_class }}-400 font-semibold">!{{ task.priority.value[1:] }}</span>
       {% endif %}
