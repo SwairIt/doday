@@ -289,10 +289,11 @@ async def bulk_action(
     due: Annotated[str, Form()] = "",
     label_id: Annotated[str, Form()] = "",
     section_id: Annotated[str, Form()] = "",
+    assignee_id: Annotated[str, Form()] = "",
 ) -> Response:
     """Apply an action to many tasks at once. action ∈ {complete, delete, set_priority,
     move_project, set_due, attach_label, detach_label, duplicate, assign_me, unassign,
-    set_section}."""
+    set_section, assign_user}."""
     from uuid import UUID as _UUID
 
     from app.labels.service import LabelNotFound, attach_label, detach_label
@@ -387,6 +388,17 @@ async def bulk_action(
             try:
                 await update_task(session, user.id, tid, assigned_to=None)
             except (TaskNotFound, ValueError):
+                pass
+    elif action == "assign_user":
+        try:
+            assignee = _UUID(assignee_id)
+        except ValueError as e:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "неверный assignee_id") from e
+        for tid in ids:
+            try:
+                await update_task(session, user.id, tid, assigned_to=assignee)
+            except (TaskNotFound, ValueError):
+                # Skip tasks whose project the assignee isn't a member of.
                 pass
     elif action == "set_section":
         from app.sections.service import SectionNotFound
