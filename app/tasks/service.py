@@ -5,7 +5,7 @@ from datetime import UTC, date, datetime, timedelta
 from typing import Any, cast
 from uuid import UUID
 
-from sqlalchemy import CursorResult, and_, case, delete, func, select
+from sqlalchemy import CursorResult, and_, case, delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.projects.membership import is_member, member_project_ids
@@ -405,6 +405,20 @@ async def purge_all_trashed(session: AsyncSession, user_id: UUID) -> int:
     )
     await session.commit()
     # DELETE yields a CursorResult; `rowcount` is the number of rows removed.
+    return cast("CursorResult[Any]", result).rowcount or 0
+
+
+async def restore_all_trashed(session: AsyncSession, user_id: UUID) -> int:
+    """Restore every soft-deleted task of this user (clear deleted_at). Returns
+    how many rows were restored. Only the user's own trashed tasks are affected;
+    non-deleted and other users' tasks are never touched. The symmetric
+    counterpart of `purge_all_trashed`."""
+    result = await session.execute(
+        update(Task)
+        .where(Task.user_id == user_id, Task.deleted_at.is_not(None))
+        .values(deleted_at=None)
+    )
+    await session.commit()
     return cast("CursorResult[Any]", result).rowcount or 0
 
 

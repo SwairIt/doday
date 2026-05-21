@@ -27,6 +27,7 @@ from app.tasks.service import (
     purge_all_trashed,
     purge_task,
     reorder_tasks,
+    restore_all_trashed,
     restore_task,
     uncomplete_task,
     unpin_task,
@@ -326,6 +327,15 @@ async def purge_trash_endpoint(user: RequiredUser, session: DbSession) -> dict[s
     literal ``trash`` segment never gets parsed as a task UUID."""
     purged = await purge_all_trashed(session, user.id)
     return {"purged": purged}
+
+
+@router.post("/trash/restore", response_model=dict[str, int])
+async def restore_trash_endpoint(user: RequiredUser, session: DbSession) -> dict[str, int]:
+    """Restore the whole trash for the current user — clear deleted_at on every
+    soft-deleted task at once. Returns ``{"restored": n}``. Declared before
+    ``/{task_id}/restore`` so the literal ``trash`` segment isn't parsed as a UUID."""
+    restored = await restore_all_trashed(session, user.id)
+    return {"restored": restored}
 
 
 @router.post("/{task_id}/restore", response_model=TaskOut)

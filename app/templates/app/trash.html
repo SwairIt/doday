@@ -19,9 +19,16 @@
 {% endif %}
 
 {% if trashed %}
-<div class="flex justify-end mb-3"
+<div class="flex justify-end items-center gap-3 mb-3"
      x-data="{
        busy: false,
+       async restoreAll() {
+         this.busy = true;
+         try {
+           const r = await fetch('/api/tasks/trash/restore', {method:'POST', credentials:'include'});
+           if (r.ok) window.location.reload();
+         } finally { this.busy = false; }
+       },
        async purgeAll() {
          if (!confirm('Стереть все задачи в корзине навсегда? Отменить нельзя.')) return;
          this.busy = true;
@@ -31,6 +38,8 @@
          } finally { this.busy = false; }
        },
      }">
+  <button @click="restoreAll()" :disabled="busy"
+          class="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] px-3 py-1.5">↩ Восстановить всё</button>
   <button @click="purgeAll()" :disabled="busy"
           class="text-xs text-rose-400 hover:underline px-3 py-1.5">🗑 Очистить корзину</button>
 </div>

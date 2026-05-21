@@ -127,3 +127,44 @@ async def test_purge_all_spares_active_and_other_users(
 async def test_purge_all_anonymous_blocked(client: AsyncClient) -> None:
     response = await client.delete("/api/tasks/trash")
     assert response.status_code == 401
+
+
+async def test_restore_all_brings_back_trashed(logged_in_client: AsyncClient) -> None:
+    ids = []
+    for i in range(3):
+        t = (await logged_in_client.post("/api/tasks", json={"title": f"R{i}"})).json()
+        await logged_in_client.delete(f"/api/tasks/{t['id']}")
+        ids.append(t["id"])
+
+    response = await logged_in_client.post("/api/tasks/trash/restore")
+    assert response.status_code == 200
+    assert response.json() == {"restored": 3}
+
+    # Trash is empty; all three are back in the active listing.
+    assert (await logged_in_client.get("/api/tasks/trash")).json() == []
+    listing_ids = [t["id"] for t in (await logged_in_client.get("/api/tasks")).json()]
+    for tid in ids:
+        assert tid in listing_ids
+
+
+async def test_restore_all_spares_active(
+    logged_in_client: AsyncClient, db_session: AsyncSession
+) -> None:
+    active = (await logged_in_client.post("/api/tasks", json={"title": "Already active"})).json()
+    trashed = (await logged_in_client.post("/api/tasks", json={"title": "In bin"})).json()
+    await logged_in_client.delete(f"/api/tasks/{trashed['id']}")
+
+    response = await logged_in_client.post("/api/tasks/trash/restore")
+    assert response.status_code == 200
+    assert response.json() == {"restored": 1}
+
+    # The previously-active task is untouched (not double-processed).
+    row = await db_session.get(Task, UUID(active["id"]))
+    assert row is not None
+    await db_session.refresh(row)
+    assert row.deleted_at is None
+
+
+async def test_restore_all_anonymous_blocked(client: AsyncClient) -> None:
+    response = await client.post("/api/tasks/trash/restore")
+    assert response.status_code == 401
