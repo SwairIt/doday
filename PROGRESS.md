@@ -4,6 +4,19 @@
 
 ---
 
+## 2026-05-21 — Ralph-loop: deep-link на задачу (?task=) + «Скопировать ссылку»
+
+Чистый фронт в `_partials/task_context_menu.html` (глобальный скрипт на всех
+/app). Пункт меню «🔗 Скопировать ссылку» → `navigator.clipboard.writeText(
+origin+pathname+'?task='+id)`. На загрузке страницы `openDeepLinkedTask()` читает
+`?task=<uuid>` и открывает деталь через существующий `GET /htmx/tasks/{id}/detail`
+в `#task-detail-slot` (UUID-regex, guard на htmx/slot). Без бэкенда и схемы.
+lint_templates 0 errors, тесты 16 passed, Playwright: `?task=<id>` авто-открыл
+панель детали, 0 console errors. Скрин `docs/screenshots/deep-link-task.png`.
+Деплой подтверждён через /version.
+
+---
+
 ## 2026-05-21 — Ralph-loop: группировка задач по исполнителю (проект-вью)
 
 Расширил существующий Alpine-механизм `groupBy` в `app/templates/app/project.html`

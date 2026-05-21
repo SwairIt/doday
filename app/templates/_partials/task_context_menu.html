@@ -9,6 +9,7 @@
   <button data-ctx="labels" class="ctx-item">🏷 Лейблы</button>
   <button data-ctx="comments" class="ctx-item">💬 Комментарии</button>
   <button data-ctx="duplicate" class="ctx-item">📑 Дублировать</button>
+  <button data-ctx="copy-link" class="ctx-item">🔗 Скопировать ссылку</button>
   <hr class="my-1 border-[var(--border)]">
   <button data-ctx="assign-me" class="ctx-item">🙋 Назначить на меня</button>
   <button data-ctx="unassign" class="ctx-item">🙅 Снять назначение</button>
@@ -204,6 +205,11 @@
         location.reload();
         return;
       }
+      if (action === 'copy-link') {
+        const url = location.origin + location.pathname + '?task=' + tid;
+        try { if (navigator.clipboard) await navigator.clipboard.writeText(url); } catch(e) {}
+        return;
+      }
       if (action === 'assign-me') { await patch({assigned_to: menu.dataset.me}); location.reload(); return; }
       if (action === 'unassign') { await patch({assigned_to: null}); location.reload(); return; }
       if (action.startsWith('prio-')) {
@@ -236,5 +242,16 @@
         return;
       }
     });
+
+    // Deep-link: open a task's detail panel if the URL carries ?task=<uuid>.
+    function openDeepLinkedTask() {
+      var tid = new URLSearchParams(location.search).get('task');
+      var slot = document.getElementById('task-detail-slot');
+      if (tid && /^[0-9a-fA-F-]{36}$/.test(tid) && slot && window.htmx) {
+        htmx.ajax('GET', '/htmx/tasks/' + tid + '/detail', {target: '#task-detail-slot', swap: 'innerHTML'});
+      }
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', openDeepLinkedTask);
+    else openDeepLinkedTask();
   })();
 </script>
