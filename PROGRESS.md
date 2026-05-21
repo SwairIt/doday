@@ -342,6 +342,25 @@ console errors** (было 2). Скрин `docs/screenshots/topbar-streak-fix-no
 
 ---
 
+## 2026-05-21 — Ralph-loop: кнопка «Очистить корзину» (массовый purge)
+
+В корзине был только поштучный purge — добавил массовую очистку. Сервис
+`app.tasks.service.purge_all_trashed(session, user_id) -> int` — один `DELETE`
+по `deleted_at IS NOT NULL` для своих задач, возвращает кол-во (через
+`cast(CursorResult, result).rowcount` для mypy strict; подзадачи уходят по
+FK-cascade). Эндпоинт `DELETE /api/tasks/trash` → `{"purged": n}`, объявлен
+**до** `/{task_id}`-маршрутов, иначе литерал `trash` распарсился бы как UUID
+(422). Кнопка «🗑 Очистить корзину» в `app/templates/app/trash.html` (только
+когда непусто) с `confirm` → fetch DELETE → reload. Без изменений схемы БД.
+Тесты в `tests/test_trash_bin.py` (+3: массовая очистка, сохранность активных и
+чужих, 401 без auth), `pytest -q` 709 passed, pre-commit зелёный. Playwright
+залогинен: 3 → удалить → «Очистить корзину» → confirm → «Пусто», 0 console
+errors. Скрины `docs/screenshots/trash-purge-all-{button,empty}.png`. Деплой
+подтверждён: prod `/version` sha=3a57096 за ~40с, smoke 24/24 green. Commit
+`3a57096`.
+
+---
+
 ## 2026-05-14 — Phase δ: team collaboration завершён
 
 Shared projects в Todoist-стиле. Схема: project_members (owner|member) +
