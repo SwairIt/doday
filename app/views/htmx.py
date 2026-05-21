@@ -658,10 +658,24 @@ async def search_endpoint(
     # Use lower() on both sides — Postgres ILIKE only lowercases ASCII in C locale,
     # which breaks Cyrillic case-insensitive matching.
     pattern = f"%{q.lower()}%"
+
+    # Scope by project membership (not just own tasks) so search finds teammates'
+    # tasks in shared projects — everything the user is already allowed to see.
+    from app.projects.membership import member_project_ids as _member_project_ids
+
+    _member_ids = await _member_project_ids(session, user.id)
+    if not _member_ids:
+        empty: dict[str, list[object]] = {"tasks": [], "projects": []}
+        if format_ == "json":
+            return JSONResponse(empty)
+        return templates.TemplateResponse(
+            request, "_partials/search_results.html", {"q": q, **empty}
+        )
+
     task_rows = await session.execute(
         select(Task)
         .where(
-            Task.user_id == user.id,
+            Task.project_id.in_(_member_ids),
             Task.deleted_at.is_(None),
             or_(
                 func.lower(Task.title).like(pattern),
@@ -673,9 +687,6 @@ async def search_endpoint(
     )
     tasks = list(task_rows.scalars().all())
 
-    from app.projects.membership import member_project_ids as _member_project_ids
-
-    _member_ids = await _member_project_ids(session, user.id)
     project_rows = await session.execute(
         select(Project)
         .where(Project.id.in_(_member_ids), func.lower(Project.name).like(pattern))
@@ -687,9 +698,10 @@ async def search_endpoint(
     color_map = await _project_color_map(session, user.id)
 
     if format_ == "json":
-        # Project lookup for project_name on each task hit.
+        # Project lookup for project_name on each task hit — across member projects
+        # so teammates' shared-project names resolve too.
         proj_name_rows = await session.execute(
-            select(Project.id, Project.name).where(Project.user_id == user.id)
+            select(Project.id, Project.name).where(Project.id.in_(_member_ids))
         )
         names = {pid: pname for pid, pname in proj_name_rows.all()}
         return JSONResponse(
