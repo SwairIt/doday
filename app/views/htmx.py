@@ -288,9 +288,11 @@ async def bulk_action(
     project_id: Annotated[str, Form()] = "",
     due: Annotated[str, Form()] = "",
     label_id: Annotated[str, Form()] = "",
+    section_id: Annotated[str, Form()] = "",
 ) -> Response:
     """Apply an action to many tasks at once. action ∈ {complete, delete, set_priority,
-    move_project, set_due, attach_label, detach_label, duplicate, assign_me, unassign}."""
+    move_project, set_due, attach_label, detach_label, duplicate, assign_me, unassign,
+    set_section}."""
     from uuid import UUID as _UUID
 
     from app.labels.service import LabelNotFound, attach_label, detach_label
@@ -385,6 +387,24 @@ async def bulk_action(
             try:
                 await update_task(session, user.id, tid, assigned_to=None)
             except (TaskNotFound, ValueError):
+                pass
+    elif action == "set_section":
+        from app.sections.service import SectionNotFound
+
+        target_section = None
+        if section_id:
+            try:
+                target_section = _UUID(section_id)
+            except ValueError as e:
+                raise HTTPException(status.HTTP_400_BAD_REQUEST, "неверный section_id") from e
+        for tid in ids:
+            try:
+                if target_section is None:
+                    await update_task(session, user.id, tid, clear_section=True)
+                else:
+                    await update_task(session, user.id, tid, section_id=target_section)
+            except (TaskNotFound, SectionNotFound, ValueError):
+                # Skip tasks whose project doesn't contain the target section.
                 pass
     else:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, f"unknown action: {action}")

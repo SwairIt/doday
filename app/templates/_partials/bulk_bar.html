@@ -115,6 +115,71 @@
 
   <div x-data="{
          open: false,
+         sections: [],
+         mixed: false,
+         async refresh() {
+           const ids = $store.selection.ids;
+           let pid = null, mixed = false;
+           for (const id of ids) {
+             const el = document.getElementById('task-wrap-' + id);
+             const p = el ? (el.dataset.project || '') : '';
+             if (!p) { mixed = true; break; }
+             if (pid === null) pid = p; else if (pid !== p) { mixed = true; break; }
+           }
+           this.mixed = mixed || !pid;
+           this.sections = [];
+           if (!this.mixed) {
+             try {
+               const r = await fetch('/api/sections?project_id=' + pid, {credentials: 'include'});
+               if (r.ok) this.sections = await r.json();
+             } catch (e) {}
+           }
+         },
+         toggle() { this.open = !this.open; if (this.open) this.refresh(); },
+       }" class="relative">
+    <button type="button" @click="toggle()" class="btn-ghost px-3 py-1.5 text-sm gap-1.5">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7"/></svg>
+      Секция
+    </button>
+    <div x-show="open" x-cloak @click.outside="open = false" x-transition
+         class="absolute bottom-full mb-2 left-0 card p-1 w-56 max-h-64 overflow-y-auto shadow-lg z-30 space-y-0.5">
+      <template x-if="mixed">
+        <div class="text-xs text-[var(--text-muted)] italic px-3 py-2">Выберите задачи одного проекта</div>
+      </template>
+      <template x-if="!mixed">
+        <div>
+          <button type="button"
+                  @click="
+                    const f = new FormData();
+                    f.append('action', 'set_section');
+                    f.append('section_id', '');
+                    $store.selection.ids.forEach(id => f.append('ids', id));
+                    fetch('/htmx/bulk', {method: 'POST', credentials: 'include', body: f}).then(() => location.reload());
+                    open = false;
+                  "
+                  class="w-full text-left text-sm px-3 py-1.5 rounded hover:bg-[var(--surface-2)] text-[var(--text-muted)] transition">— Без секции</button>
+          <template x-for="sec in sections" :key="sec.id">
+            <button type="button"
+                    @click="
+                      const f = new FormData();
+                      f.append('action', 'set_section');
+                      f.append('section_id', sec.id);
+                      $store.selection.ids.forEach(id => f.append('ids', id));
+                      fetch('/htmx/bulk', {method: 'POST', credentials: 'include', body: f}).then(() => location.reload());
+                      open = false;
+                    "
+                    class="w-full text-left text-sm px-3 py-1.5 rounded hover:bg-[var(--surface-2)] truncate transition" x-text="sec.name"></button>
+          </template>
+          <template x-if="sections.length === 0">
+            <div class="text-xs text-[var(--text-muted)] italic px-3 py-2">В проекте нет секций</div>
+          </template>
+        </div>
+      </template>
+    </div>
+  </div>
+
+  <div x-data="{
+         open: false,
          today: new Date().toISOString().slice(0,10),
          tomorrow: new Date(Date.now()+86400000).toISOString().slice(0,10),
          nextweek: new Date(Date.now()+7*86400000).toISOString().slice(0,10),
