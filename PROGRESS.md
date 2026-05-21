@@ -342,6 +342,25 @@ console errors** (было 2). Скрин `docs/screenshots/topbar-streak-fix-no
 
 ---
 
+## 2026-05-21 — Ralph-loop: бейдж-счётчик комментариев 💬 N в строке задачи
+
+В shared-проектах обсуждение в комментариях, но в списке не было видно, у каких
+задач они есть. Новый `app.comments.service.comment_counts_for(session,
+task_ids) -> dict[UUID, int]` — один group-by COUNT по `comments` (без N+1,
+задачи без комментов отсутствуют), зеркалит `subtask_counts_for`. `project_view`
+кладёт `comment_count_map` в контекст. Чип «💬 N» в `_partials/task_row.html`
+рядом с бейджем подзадач, gated через `comment_count_map is defined` →
+одиночные/прочие вью не затронуты; клик раскрывает существующий
+comments-аккордеон. Без изменений схемы БД. Тесты `tests/test_comment_counts.py`
+(4: группировка, пустой ввод, наличие/отсутствие бейджа в рендере),
+`pytest -q` 713 passed, pre-commit зелёный. Playwright залогинен: «💬 2» у
+задачи с 2 комментами, клик раскрыл аккордеон, без комментов — без бейджа, 0
+console errors. Скрин `docs/screenshots/comment-count-badge.png`. Деплой
+подтверждён: prod `/version` sha=a48e872 за ~40с, smoke 24/24 green. Commit
+`a48e872`.
+
+---
+
 ## 2026-05-21 — Ralph-loop: кнопка «Очистить корзину» (массовый purge)
 
 В корзине был только поштучный purge — добавил массовую очистку. Сервис
