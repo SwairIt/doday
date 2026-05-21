@@ -342,6 +342,22 @@ console errors** (было 2). Скрин `docs/screenshots/topbar-streak-fix-no
 
 ---
 
+## 2026-05-21 — Ralph-loop: контекст-меню (правый клик) на канбан-карточках
+
+Богатое right-click меню работало только в list-вью (листенер матчил
+`task-wrap-`), на доске карточки `kcard-` его не открывали. Включил меню на
+канбане. Фронт-only: в `kanban_card.html` добавил `data-project`+`data-assignee`
+на корень; в `task_context_menu.html` листенер теперь матчит и `task-wrap-` и
+`kcard-` (id через regex-replace), плюс гварды для list-only DOM (`delete` без
+wrap → reload; `comments`/`labels` без slot → открыть деталь). Бэкенд/эндпоинты/
+схему не трогал. Тест `tests/test_kanban_context_menu.py`, `pytest -q` 721
+passed. Playwright: правый клик по карточке доски → меню → «Назначить на →» →
+teammate → карточка переназначена, 0 console errors. Скрин
+`docs/screenshots/kanban-context-menu.png`. Деплой: prod `/version` sha=c751681
+за ~50с, smoke 24/24 green. Commit `c751681`.
+
+---
+
 ## 2026-05-21 — Ralph-loop: массовое «Снять назначение» в bulk-баре
 
 Обратное к «На меня»: bulk-бар умел массово назначать на себя, но не снимать. Без
