@@ -4,6 +4,22 @@
 
 ---
 
+## 2026-05-21 — Ralph-loop: передача владения проектом
+
+Закрывает дыру из leave-фичи («передайте владение»). `app/projects/membership.py`:
+новый `set_role(session, project_id, user_id, role)`. Эндпоинт
+`POST /api/projects/{id}/members/{user_id}/make-owner` (owner-only): target→owner,
+caller→member (полная передача), 403 для не-владельца, 404 для не-члена.
+В `share_modal.html` у участника — действие «👑 Передать владение» (confirm →
+make-owner → reload). Без изменений схемы БД. Тесты `tests/test_leave_project.py`
+(6, +3): передача меняет роли, требует владельца (403), аноним 401. mypy strict +
+ruff + lint_templates зелёные, Playwright: владелец → «Передать владение» →
+confirm → reload, в шапке стало «Покинуть» (бывший владелец — участник), 0
+console errors. Скрин `docs/screenshots/transfer-ownership.png`. Деплой подтверждён
+через /version. Цикл членства замкнут: добавить → передать владение → покинуть.
+
+---
+
 ## 2026-05-21 — Ralph-loop: «Покинуть проект» для участника-не-владельца
 
 Новый эндпоинт `POST /api/projects/{id}/leave` (`app/projects/router.py`):

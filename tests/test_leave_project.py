@@ -45,3 +45,46 @@ async def test_owner_cannot_leave(logged_in_client: AsyncClient, db_session: Asy
 async def test_leave_anonymous_blocked(client: AsyncClient) -> None:
     resp = await client.post("/api/projects/00000000-0000-0000-0000-000000000000/leave")
     assert resp.status_code == 401
+
+
+async def test_transfer_ownership(
+    logged_in_client: AsyncClient,
+    db_session: AsyncSession,
+    second_user: Any,
+) -> None:
+    owner = await _owner(db_session)
+    proj = await create_project(db_session, owner.id, name="Передаваемый")
+    await add_member(db_session, proj.id, second_user.id, role="member")
+
+    resp = await logged_in_client.post(
+        f"/api/projects/{proj.id}/members/{second_user.id}/make-owner"
+    )
+    assert resp.status_code == 204
+    assert await get_role(db_session, proj.id, second_user.id) == "owner"
+    assert await get_role(db_session, proj.id, owner.id) == "member"
+
+
+async def test_make_owner_requires_owner(
+    second_logged_in_client: AsyncClient,
+    db_session: AsyncSession,
+    second_user: Any,
+) -> None:
+    owner = User(email="mo-owner@example.com", password_hash="argon2-fake")
+    db_session.add(owner)
+    await db_session.commit()
+    proj = await create_project(db_session, owner.id, name="Чужой")
+    await add_member(db_session, proj.id, second_user.id, role="member")
+
+    # second_user is a member, not owner → 403
+    resp = await second_logged_in_client.post(
+        f"/api/projects/{proj.id}/members/{owner.id}/make-owner"
+    )
+    assert resp.status_code == 403
+
+
+async def test_make_owner_anonymous_blocked(client: AsyncClient) -> None:
+    resp = await client.post(
+        "/api/projects/00000000-0000-0000-0000-000000000000/members/"
+        "00000000-0000-0000-0000-000000000000/make-owner"
+    )
+    assert resp.status_code == 401

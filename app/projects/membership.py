@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import User
@@ -103,6 +103,16 @@ async def add_member(
     await session.commit()
     await session.refresh(member)
     return member
+
+
+async def set_role(session: AsyncSession, project_id: UUID, user_id: UUID, role: str) -> None:
+    """Update a member's role (e.g. transfer ownership). Idempotent if unchanged."""
+    await session.execute(
+        update(ProjectMember)
+        .where(ProjectMember.project_id == project_id, ProjectMember.user_id == user_id)
+        .values(role=role)
+    )
+    await session.commit()
 
 
 async def remove_member(session: AsyncSession, project_id: UUID, user_id: UUID) -> None:

@@ -546,6 +546,32 @@ async def leave_project_endpoint(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+@router.post("/{project_id}/members/{user_id}/make-owner", status_code=status.HTTP_204_NO_CONTENT)
+async def make_owner_endpoint(
+    project_id: UUID, user_id: UUID, user: RequiredUser, session: DbSession
+) -> Response:
+    """Transfer ownership: promote a member to owner, demote the caller to member."""
+    from app.projects.membership import get_role, is_owner, set_role
+
+    try:
+        await get_project(session, user.id, project_id)
+    except ProjectNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "проект не найден") from e
+
+    if not await is_owner(session, project_id, user.id):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "только для владельца проекта")
+    if user_id == user.id:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "вы уже владелец")
+
+    target_role = await get_role(session, project_id, user_id)
+    if target_role is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "участник не найден")
+
+    await set_role(session, project_id, user_id, "owner")
+    await set_role(session, project_id, user.id, "member")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 # ─── /api/invites/{invitation_id} ────────────────────────────────────────────
 
 
