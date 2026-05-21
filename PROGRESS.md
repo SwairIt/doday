@@ -342,6 +342,21 @@ console errors** (было 2). Скрин `docs/screenshots/topbar-streak-fix-no
 
 ---
 
+## 2026-05-21 — Ralph-loop: «Создал: <участник>» в панели задачи
+
+В детали-панели теперь виден автор задачи (создатель) для shared-проектов —
+командная подотчётность (раньше виден только assignee). Без изменений схемы БД и
+эндпоинтов: `task_detail` зовёт `assignee_map_for_project` → `is_shared` +
+`creator = map[task.user_id]` (без доп. запроса), `task_detail.html` рисует
+строку «Создал: аватар+email» в мета-футере, gated `is_shared` (одиночные
+проекты не меняются), fallback «бывший участник». `Task.user_id` = создатель уже
+есть. Тесты `tests/test_task_creator.py` (3), `pytest -q` 740 passed. Playwright:
+деталь в shared-проекте → «Создал: trashpurge@example.com», 0 console errors.
+Скрин `docs/screenshots/task-creator-detail.png`. Деплой: prod `/version`
+sha=e16d862 за ~25с, smoke 25/25 green. Commit `e16d862`.
+
+---
+
 ## 2026-05-21 — Ralph-loop: массовое «Назначить на участника» в bulk-баре
 
 Дополнение к bulk «На меня»/«Снять»: дропдаун «Назначить» назначает выделенные
