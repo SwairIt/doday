@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-05-21 — Ralph-loop: аватары участников в шапке shared-проекта
+
+В шапке `app/templates/app/project.html` добавлен кластер аватаров участников
+(перед «Поделиться»): инициалы на цветном фоне из `assignee_map`, наложение
+`-space-x-2`, ring под фон. Показывается только при `assignee_map|length > 1`
+(соло-проекты не засоряются), первые 5 + «+N». Без бэкенда и схемы
+(assignee_map уже в контексте). lint_templates 0 errors, тесты 16 passed,
+Playwright: для команды (2 участника R+T) кластер виден, 0 console errors. Скрин
+`docs/screenshots/project-member-avatars.png`. Деплой подтверждён через /version.
+
+---
+
 ## 2026-05-21 — Ralph-loop: вид «задачи по лейблу» + кликабельные лейблы
 
 Новый `app.labels.service.list_tasks_by_label` (join task_labels, открытые

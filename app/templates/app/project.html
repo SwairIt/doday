@@ -39,6 +39,17 @@
         </div>
       {% endif %}
     </div>
+    {% if assignee_map and assignee_map|length > 1 %}
+      <div class="shrink-0 hidden sm:flex items-center -space-x-2 mt-1" title="Участники проекта">
+        {% for a in (assignee_map.values()|list)[:5] %}
+          <span class="w-6 h-6 rounded-full ring-2 ring-[var(--surface)] inline-flex items-center justify-center text-[10px] font-bold text-white bg-{{ a.color }}-500"
+                title="{{ a.label }}">{{ a.initial }}</span>
+        {% endfor %}
+        {% if assignee_map|length > 5 %}
+          <span class="w-6 h-6 rounded-full ring-2 ring-[var(--surface)] inline-flex items-center justify-center text-[10px] font-semibold bg-[var(--surface-2)] text-[var(--text-muted)]">+{{ assignee_map|length - 5 }}</span>
+        {% endif %}
+      </div>
+    {% endif %}
     {% if is_owner %}
       <button type="button" @click="shareOpen = true"
               class="shrink-0 px-3 py-1.5 rounded-lg hover:bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--text)] transition flex items-center gap-1.5 text-sm border border-[var(--border)]">
