@@ -342,6 +342,21 @@ console errors** (было 2). Скрин `docs/screenshots/topbar-streak-fix-no
 
 ---
 
+## 2026-05-22 — Ralph-loop: хоткей a — назначить выделенную задачу на меня
+
+Клавиатурный triage: на выделенной (j/k) задаче `a` → назначить на себя
+(дополняет c/1-4/t/w/e/p/Delete). Фронт-only: ветка `a` в `task_keyboard.html`
+через существующий `patchSelected({assigned_to: me})` (me из `#task-ctx-menu`
+data-me) + подсказка в shortcuts overlay. Без бэкенда/схемы. Тест
+`tests/test_assign_hotkey.py`, `pytest -q` 751 passed. Playwright: j→a → БД
+assigned_to==me (API), после reload аватар в строке, 0 console errors. Скрин
+`docs/screenshots/assign-hotkey-a.png`. Деплой: prod `/version` sha=8cadacc за
+~15с, smoke 25/25 green. Commit `8cadacc`. (Worklog: 2 заметки по тестам —
+persisted localStorage-фильтры скрывают строки в смоуке; htmx row-swap не
+освежает data-атрибуты внешнего wrapper.)
+
+---
+
 ## 2026-05-22 — Ralph-loop: кнопка «Восстановить всё» в корзине (bulk restore)
 
 Симметричный комплемент к «Очистить корзину»: массовое восстановление всех
