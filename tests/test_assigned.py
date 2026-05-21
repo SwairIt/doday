@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.models import User
 from app.tasks.service import (
     complete_task,
+    count_assigned_to_user,
     create_task,
     list_assigned_to_user,
 )
@@ -66,6 +67,40 @@ async def test_assigned_excludes_non_member_project(db_session: AsyncSession) ->
     assert result == []
     # owner is a member but the task is assigned to outsider → owner sees nothing
     assert await list_assigned_to_user(db_session, owner.id) == []
+
+
+async def test_count_assigned_matches_list(db_session: AsyncSession) -> None:
+    user = await _user(db_session, "counter@s.ru")
+    assert await count_assigned_to_user(db_session, user.id) == 0
+    t1 = await create_task(db_session, user.id, title="A")
+    t2 = await create_task(db_session, user.id, title="B")
+    await _assign(db_session, t1.id, user.id)
+    await _assign(db_session, t2.id, user.id)
+    assert await count_assigned_to_user(db_session, user.id) == 2
+    # completing one drops the count
+    await complete_task(db_session, user.id, t1.id)
+    assert await count_assigned_to_user(db_session, user.id) == 1
+
+
+async def test_count_assigned_excludes_non_member(db_session: AsyncSession) -> None:
+    owner = await _user(db_session, "cowner@s.ru")
+    outsider = await _user(db_session, "coutsider@s.ru")
+    t = await create_task(db_session, owner.id, title="Чужая")
+    await _assign(db_session, t.id, outsider.id)
+    assert await count_assigned_to_user(db_session, outsider.id) == 0
+
+
+async def test_sidebar_counts_has_assigned_key(logged_in_client: AsyncClient) -> None:
+    response = await logged_in_client.get("/api/projects/sidebar-counts")
+    assert response.status_code == 200
+    body = response.json()
+    assert "assigned" in body
+    assert isinstance(body["assigned"], int)
+
+
+async def test_sidebar_counts_anonymous_blocked(client: AsyncClient) -> None:
+    response = await client.get("/api/projects/sidebar-counts")
+    assert response.status_code == 401
 
 
 async def test_assigned_view_anonymous_blocked(client: AsyncClient) -> None:

@@ -174,6 +174,10 @@ async def sidebar_counts_endpoint(user: RequiredUser, session: DbSession) -> dic
     )
     archive_count = int(archive_count_row.scalar_one())
 
+    from app.tasks.service import count_assigned_to_user
+
+    assigned_count = await count_assigned_to_user(session, user.id)
+
     return {
         "inbox": inbox_count,
         "today": today_count,
@@ -181,6 +185,7 @@ async def sidebar_counts_endpoint(user: RequiredUser, session: DbSession) -> dic
         "overdue": overdue_count,
         "trash": trash_count,
         "archive": archive_count,
+        "assigned": assigned_count,
     }
 
 

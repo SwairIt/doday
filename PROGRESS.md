@@ -4,6 +4,22 @@
 
 ---
 
+## 2026-05-21 — Ralph-loop: бейдж-счётчик «Назначено мне» в сайдбаре
+
+Продолжение фичи /app/assigned. Новый `app.tasks.service.count_assigned_to_user`
+(тот же фильтр, что у `list_assigned_to_user` — open, не в корзине, только
+проекты-членства). Эндпоинт `GET /api/projects/sidebar-counts` расширен ключом
+`"assigned"` (контракт `dict[str,int]` — только новый ключ). В
+`_partials/sidebar.html` пункт `assigned` в `secondary_nav` получил бейдж по
+паттерну inbox/today (`x-show counts['assigned']>0`). Без изменений схемы БД.
+Тесты `tests/test_assigned.py` (10, +4): count матчит list, исключает
+завершённые/непринадлежащие, эндпоинт отдаёт ключ `assigned`, 401 без auth.
+mypy strict + ruff + lint_templates зелёные, curl эндпоинт → 401, Playwright
+0 console errors, эндпоинт в браузере вернул `"assigned":0`. Скрин
+`docs/screenshots/sidebar-assigned-badge.png`.
+
+---
+
 ## 2026-05-21 — Ralph-loop: фикс console-ошибки чипа стрика в топбаре
 
 Чип стрика в `_partials/topbar.html` инициализировал `s: null` и фетчил

@@ -160,7 +160,7 @@
         <div class="mt-1 space-y-0.5">
           {% for key, href, label, icon in secondary_nav %}
             {% set active = view == key %}
-            {% set count_key = {'trash': 'trash'}.get(key) %}
+            {% set count_key = {'trash': 'trash', 'assigned': 'assigned'}.get(key) %}
             <a href="{{ href }}"
                {% if active %}aria-current="page"{% endif %}
                class="flex items-center gap-3 px-3 py-2 rounded-lg transition

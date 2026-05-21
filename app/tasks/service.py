@@ -296,6 +296,29 @@ async def list_assigned_to_user(session: AsyncSession, user_id: UUID) -> list[Ta
     return list(result.scalars().all())
 
 
+async def count_assigned_to_user(session: AsyncSession, user_id: UUID) -> int:
+    """How many open tasks are assigned to this user (same filter as the view).
+
+    Powers the sidebar badge on «Назначено мне». Matches
+    `list_assigned_to_user` exactly: open, non-trashed, only within projects the
+    user still belongs to.
+    """
+    project_ids = await member_project_ids(session, user_id)
+    if not project_ids:
+        return 0
+    stmt = (
+        select(func.count())
+        .select_from(Task)
+        .where(
+            Task.assigned_to == user_id,
+            Task.project_id.in_(project_ids),
+            Task.is_completed.is_(False),
+            Task.deleted_at.is_(None),
+        )
+    )
+    return int((await session.execute(stmt)).scalar_one())
+
+
 async def restore_task(session: AsyncSession, user_id: UUID, task_id: UUID) -> Task:
     task = await get_task(session, user_id, task_id)
     task.deleted_at = None
