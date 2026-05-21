@@ -121,7 +121,7 @@
              {% if task.due_at %}px-2 py-1 rounded-md {% if _ds == 'overdue' %}bg-rose-500/10 text-rose-400 font-semibold{% elif _ds == 'today' %}bg-amber-500/10 text-amber-400{% else %}bg-{{ color }}-500/10 text-{{ color }}-400{% endif %}{% else %}hidden lg:inline-flex lg:opacity-0 lg:group-hover:opacity-100 px-2 py-1 rounded-md bg-[var(--surface-2)] text-[var(--text-muted)] items-center gap-1{% endif %}"
     >
       {% if task.due_at %}
-        {% if task.due_date_only %}{{ task.due_at.strftime('%d.%m') }}{% else %}{{ task.due_at.strftime('%d.%m %H:%M') }}{% endif %}
+        {{ due_label(task) }}
       {% else %}
         <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
         Дата

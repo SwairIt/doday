@@ -3,7 +3,7 @@
 from datetime import UTC, datetime, timedelta
 
 from app.tasks.models import Task
-from app.views.template_filters import due_state
+from app.views.template_filters import due_label, due_state
 
 
 def test_no_due_date() -> None:
@@ -45,3 +45,23 @@ def test_today_timed_later() -> None:
 def test_future_timed() -> None:
     later = datetime.now(UTC) + timedelta(days=2)
     assert due_state(Task(due_at=later, due_date_only=False, is_completed=False)) == "future"
+
+
+def test_due_label_relative_words() -> None:
+    now = datetime.now(UTC)
+    assert due_label(Task(due_at=now, due_date_only=True, is_completed=False)) == "Сегодня"
+    assert (
+        due_label(Task(due_at=now + timedelta(days=1), due_date_only=True, is_completed=False))
+        == "Завтра"
+    )
+    assert (
+        due_label(Task(due_at=now - timedelta(days=1), due_date_only=True, is_completed=False))
+        == "Вчера"
+    )
+
+
+def test_due_label_absolute_and_timed() -> None:
+    far = datetime(2030, 12, 15, tzinfo=UTC)
+    assert due_label(Task(due_at=far, due_date_only=True, is_completed=False)) == "15.12"
+    assert due_label(Task(due_at=far, due_date_only=False, is_completed=False)) == "15.12 00:00"
+    assert due_label(Task(due_at=None, due_date_only=True, is_completed=False)) == ""

@@ -38,3 +38,28 @@ def due_state(task: Task) -> str:
     if due.date() == today:
         return "today"
     return "future"
+
+
+def due_label(task: Task) -> str:
+    """Short, human deadline label for the task-row date chip.
+
+    Yesterday/today/tomorrow get relative words; anything else keeps ``dd.mm``.
+    Timed deadlines append ``HH:MM``. Returns "" when there is no due date.
+    """
+    due = task.due_at
+    if due is None:
+        return ""
+    today = datetime.now(UTC).date()
+    day = due.date()
+    delta = (day - today).days
+    if delta == 0:
+        base = "Сегодня"
+    elif delta == 1:
+        base = "Завтра"
+    elif delta == -1:
+        base = "Вчера"
+    else:
+        base = due.strftime("%d.%m")
+    if not task.due_date_only:
+        base += due.strftime(" %H:%M")
+    return base

@@ -4,6 +4,20 @@
 
 ---
 
+## 2026-05-21 — Ralph-loop: относительные подписи дедлайна (Сегодня/Завтра/Вчера)
+
+Новый `app/views/template_filters.py::due_label(task)` рядом с `due_state`:
+вчера/сегодня/завтра → слова, дальше — `dd.mm` (timed +` HH:MM`). Зарегистрирован
+Jinja-глобалом в `views/router.py` и `views/htmx.py`. Чип даты в
+`_partials/task_row.html` и `_partials/kanban_card.html` теперь рендерит
+`{{ due_label(task) }}` вместо `strftime`. Цвет (`due_state`) и date-dropdown не
+тронуты. Без бэкенда и схемы БД. Тесты `tests/test_due_state.py` (10, +2):
+относительные слова и абсолютный/timed формат. mypy strict + ruff + lint_templates
+зелёные, Playwright: чип сегодняшних задач показывает «Сегодня», 0 console errors.
+Скрин `docs/screenshots/relative-due-labels.png`. Деплой подтверждён через /version.
+
+---
+
 ## 2026-05-21 — Ralph-loop: метаданные задачи в task_detail (создано/завершено)
 
 В `_partials/task_detail.html` добавлен футер с `border-t`, мелким текстом:

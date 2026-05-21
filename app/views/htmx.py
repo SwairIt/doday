@@ -23,11 +23,12 @@ from app.tasks.service import (
     uncomplete_task,
     update_task,
 )
-from app.views.template_filters import due_state
+from app.views.template_filters import due_label, due_state
 
 router = APIRouter(prefix="/htmx", tags=["htmx"])
 templates = Jinja2Templates(directory="app/templates")
 templates.env.globals["due_state"] = due_state
+templates.env.globals["due_label"] = due_label
 
 
 async def _project_color_map(session: DbSession, user_id: UUID) -> dict[UUID, str]:

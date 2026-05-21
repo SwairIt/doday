@@ -55,7 +55,7 @@
       {% if task.due_at %}
         {% set _ds = due_state(task) %}
         <span class="text-[10px] px-1.5 py-0.5 rounded-md font-medium {% if _ds == 'overdue' %}bg-rose-500/10 text-rose-400 font-semibold{% elif _ds == 'today' %}bg-amber-500/10 text-amber-400{% else %}bg-{{ color }}-500/10 text-{{ color }}-400{% endif %}">
-          {{ task.due_at.strftime('%d.%m') }}
+          {{ due_label(task) }}
         </span>
       {% endif %}
     </div>
