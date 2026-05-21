@@ -103,6 +103,28 @@ async def revoke_invitation(
     await session.commit()
 
 
+async def list_invitations_for_email(
+    session: AsyncSession, email: str
+) -> list[tuple[ProjectInvitation, str]]:
+    """Pending, non-expired invitations addressed to an email, with project name.
+
+    Powers the in-app "incoming invitations" banner. Returns [(invitation, project_name)].
+    """
+    email = email.lower().strip()
+    now = datetime.now(UTC)
+    rows = await session.execute(
+        select(ProjectInvitation, Project.name)
+        .join(Project, Project.id == ProjectInvitation.project_id)
+        .where(
+            ProjectInvitation.invitee_email == email,
+            ProjectInvitation.status == "pending",
+            ProjectInvitation.expires_at >= now,
+        )
+        .order_by(ProjectInvitation.created_at.desc())
+    )
+    return [(inv, name) for inv, name in rows.all()]
+
+
 async def list_pending(session: AsyncSession, project_id: UUID) -> list[ProjectInvitation]:
     """Return all pending invitations for a project, newest first."""
     rows = await session.execute(

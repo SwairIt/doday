@@ -4,6 +4,24 @@
 
 ---
 
+## 2026-05-21 — Ralph-loop: входящие приглашения (in-app баннер «Принять»)
+
+Раньше приглашение принималось только по email-ссылке `/invite/{token}`.
+`app/projects/invitations.py`: `list_invitations_for_email(session, email)` →
+[(invitation, project_name)] (pending, не истёкшие, join Project). Эндпоинты в
+invites_router: `GET /api/invites/incoming` (приглашения для email текущего
+юзера, схема `IncomingInviteOut`), `POST /api/invites/{token}/accept`
+(переиспользует `accept_invitation`). Баннер `_partials/incoming_invites.html`
+(Alpine, fetch на загрузке, «Принять»/скрыть) подключён в app_base. Без
+изменений схемы БД. Тесты `tests/test_incoming_invites.py` (3): сервис видит
+свои pending, incoming-эндпоинт + accept присоединяет к проекту, 401 без auth.
+mypy strict + ruff + lint_templates зелёные, Playwright: приглашённый видит
+баннер «Вас пригласили…» → «Принять» → проект в сайдбаре, 0 console errors. Скрин
+`docs/screenshots/incoming-invite-banner.png`. Деплой подтверждён через /version.
+Цикл членства полный: пригласить → принять in-app → передать владение → покинуть.
+
+---
+
 ## 2026-05-21 — Ralph-loop: передача владения проектом
 
 Закрывает дыру из leave-фичи («передайте владение»). `app/projects/membership.py`:

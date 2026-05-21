@@ -1,0 +1,43 @@
+{# In-app banner for pending project invitations addressed to the current user.
+   Fetches /api/invites/incoming on load; accept reuses /api/invites/{token}/accept. #}
+<div
+  x-data="{
+    invites: [],
+    async load() {
+      try {
+        const r = await fetch('/api/invites/incoming', {credentials: 'include'});
+        if (r.ok) this.invites = await r.json();
+      } catch (e) {}
+    },
+    async accept(token) {
+      try {
+        const r = await fetch('/api/invites/' + token + '/accept', {
+          method: 'POST', credentials: 'include',
+        });
+        if (r.ok) location.reload();
+      } catch (e) {}
+    },
+    dismiss(token) { this.invites = this.invites.filter(i => i.token !== token); },
+  }"
+  x-init="load()"
+  x-show="invites.length > 0"
+  x-cloak
+  class="fixed top-3 left-1/2 -translate-x-1/2 z-50 w-[min(95vw,30rem)] space-y-2"
+>
+  <template x-for="inv in invites" :key="inv.token">
+    <div class="card px-4 py-3 shadow-glow border border-[var(--accent)]/40 flex items-center gap-3 text-sm">
+      <span class="text-lg shrink-0">📨</span>
+      <span class="flex-1 min-w-0">
+        Вас пригласили в проект «<span class="font-semibold" x-text="inv.project_name"></span>»
+      </span>
+      <button type="button" @click="accept(inv.token)"
+              class="btn-primary px-3 py-1 text-xs shrink-0">Принять</button>
+      <button type="button" @click="dismiss(inv.token)" title="Скрыть"
+              class="shrink-0 p-1 rounded hover:bg-[var(--surface-2)] text-[var(--text-muted)] transition">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  </template>
+</div>

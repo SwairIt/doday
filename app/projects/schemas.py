@@ -64,3 +64,10 @@ class InvitationOut(BaseModel):
 
 class InviteCreate(BaseModel):
     invitee_email: str = Field(min_length=1, max_length=255)
+
+
+class IncomingInviteOut(BaseModel):
+    """A pending invitation addressed to the current user (in-app banner)."""
+
+    token: str
+    project_name: str

@@ -11,6 +11,7 @@ from sqlalchemy import select
 from app.auth.deps import DbSession, RequiredUser
 from app.auth.models import User
 from app.projects.schemas import (
+    IncomingInviteOut,
     InvitationOut,
     InviteCreate,
     MemberOut,
@@ -573,6 +574,32 @@ async def make_owner_endpoint(
 
 
 # ─── /api/invites/{invitation_id} ────────────────────────────────────────────
+
+
+@invites_router.get("/incoming", response_model=list[IncomingInviteOut])
+async def incoming_invites_endpoint(
+    user: RequiredUser, session: DbSession
+) -> list[IncomingInviteOut]:
+    """Pending invitations addressed to the current user's email (in-app banner)."""
+    from app.projects.invitations import list_invitations_for_email
+
+    pairs = await list_invitations_for_email(session, user.email)
+    return [IncomingInviteOut(token=inv.token, project_name=name) for inv, name in pairs]
+
+
+@invites_router.post("/{token}/accept", status_code=status.HTTP_204_NO_CONTENT)
+async def accept_invite_endpoint(token: str, user: RequiredUser, session: DbSession) -> Response:
+    """Accept an invitation by token (in-app). Email must match the invitation."""
+    from app.projects.invitations import InvitationError, accept_invitation
+
+    try:
+        await accept_invitation(session, token=token, user_id=user.id, user_email=user.email)
+    except InvitationError as e:
+        msg = str(e)
+        if "не найден" in msg:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, msg) from e
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, msg) from e
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @invites_router.delete("/{invitation_id}", status_code=status.HTTP_204_NO_CONTENT)
