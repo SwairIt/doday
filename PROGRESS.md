@@ -342,6 +342,19 @@ console errors** (было 2). Скрин `docs/screenshots/topbar-streak-fix-no
 
 ---
 
+## 2026-05-22 — Ralph-loop: бейдж комментариев 💬 N на хабах Команда/Назначено
+
+Бейдж «💬 N» был только в списке/доске проекта; добавил на кросс-проектные
+teams-хабы `/app/team` и `/app/assigned`. Без изменений схемы БД/эндпоинтов/
+шаблонов: `team_view` и `assigned_view` считают `comment_count_map`
+(`comment_counts_for`) и кладут в контекст; task_row уже рендерит чип gated через
+`comment_count_map is defined`. Тесты `tests/test_comment_badge_hubs.py` (3),
+`pytest -q` 746 passed. Playwright: коммент к задаче → `/app/team` показал «💬 1»,
+0 console errors. Скрин `docs/screenshots/comment-badge-team-view.png`. Деплой:
+prod `/version` sha=d389ae7 за ~35с, smoke 25/25 green. Commit `d389ae7`.
+
+---
+
 ## 2026-05-21 — Ralph-loop: поиск находит задачи команды в общих проектах
 
 Глобальный поиск искал задачи только созданные мной (`Task.user_id == user`) —
