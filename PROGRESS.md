@@ -4,6 +4,20 @@
 
 ---
 
+## 2026-05-21 — Ralph-loop: фикс console-ошибки чипа стрика в топбаре
+
+Чип стрика в `_partials/topbar.html` инициализировал `s: null` и фетчил
+`/api/stats/streak`; `x-show` скрывал элемент, но Alpine всё равно вычислял
+`:title` и `x-text="s.current"` при init → `Uncaught TypeError: Cannot read
+properties of null (reading 'current')` на ВСЕХ `/app/*` у нового юзера без
+streak. Фикс: дефолт `s: { current: 0, longest: 0, today_done: false }` вместо
+null, `x-show="s.current > 0"`. Поведение чипа не изменилось. Playwright-смоук
+залогиненным юзером без стрика: `/app/today` и `/app/assigned` теперь **0
+console errors** (было 2). Скрин `docs/screenshots/topbar-streak-fix-no-console-errors.png`.
+Найден в прошлой итерации при смоуке /app/assigned.
+
+---
+
 ## 2026-05-21 — Ralph-loop: вид «Назначено мне» (assigned to me)
 
 Аддитивная team-collab фича поверх δ. Новый сервис
