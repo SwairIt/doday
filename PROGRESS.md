@@ -521,6 +521,22 @@ trap f2025c3). Gated `assignee_map|length>1`. Данные (`data-assignee` на
 
 ---
 
+## 2026-05-22 — Ralph-loop: кнопка «Свернуть/развернуть все секции»
+
+На странице проекта секции сворачивались только поодиночке. Добавил тоггл в
+тулбар (виден только при наличии секций, `{% if section_groups %}`): по клику
+диспатчит `CustomEvent('doday-sections-toggle', {detail:{open}})`, подпись
+«Свернуть секции» ↔ «Развернуть секции». Каждая `<section>` слушает
+`@doday-sections-toggle.window="open = $event.detail.open"` и синхронно
+сворачивается/разворачивается. Чисто фронт — без бэкенда/эндпоинтов/схемы.
+Селекторы Alpine без вложенных двойных кавычек (профилактика x-data trap).
+Тест `tests/test_collapse_sections.py` (2), `pytest -q` 754 passed. Playwright:
+проект с 2 секциями → «Свернуть секции» → 0 видимых тел, обратно → 2 видимых, 0
+console errors. Скрин `docs/screenshots/collapse-sections.png`. Деплой: prod
+`/version` sha=3315fcd, smoke 25/25 green. Commit `3315fcd`.
+
+---
+
 ## 2026-05-21 — Ralph-loop: «Перенести в секцию →» в контекст-меню
 
 Дополнение к «Перенести в проект →»: быстрый перенос задачи между секциями
