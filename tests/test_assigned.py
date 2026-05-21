@@ -157,12 +157,33 @@ async def test_assignee_map_empty_for_unknown_project(db_session: AsyncSession) 
     assert await assignee_map_for_project(db_session, uuid4()) == {}
 
 
+async def test_count_for_filter_matches_list(db_session: AsyncSession) -> None:
+    from datetime import UTC, datetime
+
+    from app.filters.service import count_for_filter, list_for_filter
+
+    user = await _user(db_session, "filt@s.ru")
+    overdue = await create_task(db_session, user.id, title="старая")
+    overdue.due_at = datetime(2020, 1, 1, tzinfo=UTC)
+    await create_task(db_session, user.id, title="без даты")
+    await db_session.commit()
+
+    for slug in ("overdue", "no-date", "high-priority", "this-week"):
+        listed = await list_for_filter(db_session, user.id, slug)
+        counted = await count_for_filter(db_session, user.id, slug)
+        assert counted == len(listed), slug
+    assert await count_for_filter(db_session, user.id, "no-date") >= 1
+
+
 async def test_sidebar_counts_has_assigned_key(logged_in_client: AsyncClient) -> None:
     response = await logged_in_client.get("/api/projects/sidebar-counts")
     assert response.status_code == 200
     body = response.json()
     assert "assigned" in body
     assert isinstance(body["assigned"], int)
+    for key in ("no_date", "high_priority", "this_week"):
+        assert key in body
+        assert isinstance(body[key], int)
 
 
 async def test_sidebar_counts_anonymous_blocked(client: AsyncClient) -> None:

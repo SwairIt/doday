@@ -178,6 +178,12 @@ async def sidebar_counts_endpoint(user: RequiredUser, session: DbSession) -> dic
 
     assigned_count = await count_assigned_to_user(session, user.id)
 
+    from app.filters.service import count_for_filter
+
+    no_date_count = await count_for_filter(session, user.id, "no-date")
+    high_priority_count = await count_for_filter(session, user.id, "high-priority")
+    this_week_count = await count_for_filter(session, user.id, "this-week")
+
     return {
         "inbox": inbox_count,
         "today": today_count,
@@ -186,6 +192,9 @@ async def sidebar_counts_endpoint(user: RequiredUser, session: DbSession) -> dic
         "trash": trash_count,
         "archive": archive_count,
         "assigned": assigned_count,
+        "no_date": no_date_count,
+        "high_priority": high_priority_count,
+        "this_week": this_week_count,
     }
 
 

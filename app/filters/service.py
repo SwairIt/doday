@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Literal
 from uuid import UUID
 
-from sqlalchemy import or_, select
+from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.tasks.models import Task, TaskPriority
@@ -54,40 +54,47 @@ FILTERS: dict[str, FilterMeta] = {
 }
 
 
-async def list_for_filter(session: AsyncSession, user_id: UUID, slug: str) -> list[Task]:
+def _filter_conditions(user_id: UUID, slug: str) -> list[ColumnElement[bool]]:
+    """Where-conditions shared by list_for_filter and count_for_filter."""
     if slug not in FILTERS:
         raise KeyError(slug)
 
-    now = datetime.now(UTC)
-    today = now.date()
-
-    base = select(Task).where(
+    today = datetime.now(UTC).date()
+    conds: list[ColumnElement[bool]] = [
         Task.user_id == user_id,
         Task.is_completed.is_(False),
         Task.parent_task_id.is_(None),
-    )
+    ]
 
     if slug == "overdue":
         start_of_today = datetime(today.year, today.month, today.day, 0, 0, tzinfo=UTC)
-        stmt = base.where(Task.due_at.is_not(None), Task.due_at < start_of_today)
+        conds += [Task.due_at.is_not(None), Task.due_at < start_of_today]
     elif slug == "no-date":
-        stmt = base.where(Task.due_at.is_(None))
+        conds.append(Task.due_at.is_(None))
     elif slug == "high-priority":
-        stmt = base.where(or_(Task.priority == TaskPriority.P1, Task.priority == TaskPriority.P2))
+        conds.append(or_(Task.priority == TaskPriority.P1, Task.priority == TaskPriority.P2))
     elif slug == "this-week":
         # Monday this week 00:00 → next Monday 00:00
         monday = datetime(today.year, today.month, today.day, 0, 0, tzinfo=UTC) - timedelta(
             days=today.weekday()
         )
         next_monday = monday + timedelta(days=7)
-        stmt = base.where(
-            Task.due_at.is_not(None),
-            Task.due_at >= monday,
-            Task.due_at < next_monday,
-        )
-    else:  # pragma: no cover — guarded by 'slug not in FILTERS' above
-        raise KeyError(slug)
+        conds += [Task.due_at.is_not(None), Task.due_at >= monday, Task.due_at < next_monday]
 
-    stmt = stmt.order_by(Task.due_at.nulls_last(), Task.priority, Task.created_at)
+    return conds
+
+
+async def list_for_filter(session: AsyncSession, user_id: UUID, slug: str) -> list[Task]:
+    stmt = (
+        select(Task)
+        .where(*_filter_conditions(user_id, slug))
+        .order_by(Task.due_at.nulls_last(), Task.priority, Task.created_at)
+    )
     result = await session.execute(stmt)
     return list(result.scalars().all())
+
+
+async def count_for_filter(session: AsyncSession, user_id: UUID, slug: str) -> int:
+    """Number of open top-level tasks matching a saved filter (for sidebar badges)."""
+    stmt = select(func.count()).select_from(Task).where(*_filter_conditions(user_id, slug))
+    return int((await session.execute(stmt)).scalar_one())

@@ -80,15 +80,22 @@
       ('high-priority', 'Высокий приоритет','amber',  'M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9'),
       ('this-week',     'На этой неделе',   'violet', 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'),
     ] %}
+    {% set filter_count_keys = {'overdue': 'overdue', 'no-date': 'no_date', 'high-priority': 'high_priority', 'this-week': 'this_week'} %}
     {% for fkey, flabel, fcolor, ficon in filter_items %}
       {% set active = view == 'filter:' ~ fkey %}
+      {% set fcount_key = filter_count_keys.get(fkey) %}
       <a href="/app/filters/{{ fkey }}"
          class="flex items-center gap-3 px-3 py-2 rounded-lg transition
                 {% if active %}bg-{{ fcolor }}-500/15 text-{{ fcolor }}-400 font-semibold{% else %}hover:bg-[var(--surface)]{% endif %}">
         <svg class="w-4 h-4 shrink-0 text-{{ fcolor }}-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="{{ ficon }}"/>
         </svg>
-        <span>{{ flabel }}</span>
+        <span class="flex-1">{{ flabel }}</span>
+        {% if fcount_key %}
+          <span x-show="counts['{{ fcount_key }}'] > 0" x-cloak
+                class="text-[10px] tabular-nums px-1.5 py-0.5 rounded-md font-mono bg-{{ fcolor }}-500/15 text-{{ fcolor }}-400"
+                x-text="counts['{{ fcount_key }}']"></span>
+        {% endif %}
       </a>
     {% endfor %}
 

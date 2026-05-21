@@ -4,6 +4,21 @@
 
 ---
 
+## 2026-05-21 — Ralph-loop: бейджи-счётчики у фильтров в сайдбаре
+
+`app/filters/service.py`: вынес where-условия в `_filter_conditions`, добавил
+`count_for_filter(session, user_id, slug)` (общая логика с `list_for_filter`).
+`sidebar_counts_endpoint` отдаёт новые ключи `no_date/high_priority/this_week`
+(overdue уже был). В `_partials/sidebar.html` цикл фильтров получил бейдж
+`x-show counts[key]>0` цвета фильтра. Без изменений схемы БД. Тесты
+`tests/test_assigned.py` (19, +1): count_for_filter == len(list_for_filter) по
+всем slug, эндпоинт содержит новые ключи. mypy strict + ruff + lint_templates
+зелёные, Playwright: «Высокий приоритет · 2», «На этой неделе · 5», 0 console
+errors. Скрин `docs/screenshots/filter-badges.png`. Деплой подтверждён через
+/version.
+
+---
+
 ## 2026-05-21 — Ralph-loop: bulk «Назначить выбранные на меня»
 
 Замыкает набор assign-операций (одиночное — ctx-меню/детали). Ветка
