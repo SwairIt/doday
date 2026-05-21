@@ -342,6 +342,26 @@ console errors** (было 2). Скрин `docs/screenshots/topbar-streak-fix-no
 
 ---
 
+## 2026-05-21 — Ralph-loop: фильтр по исполнителю на доске проекта
+
+На странице проекта была группировка по исполнителю, но не было фильтра — нельзя
+сузить доску до задач одного человека. Добавил чипы «Все · Мои · Не назначено ·
+<участники>». Чисто клиентский фильтр поверх существующих `data-assignee` +
+`assigneeMap`, без бэкенда и схемы БД. В `project.html`: состояние
+`assigneeFilter` (персист localStorage), `myId='{{ current_user.id }}'`,
+`setAssigneeFilter`, `_passesAssignee`; интеграция — финальный `display`-проход в
+существующем `apply()` (прячет неподходящие строки + пустые группы/секции, при
+`all` секции восстанавливаются; snapshot/sort/group/drag не тронуты). Дропдаун
+gated `assignee_map|length > 1`. Тесты `tests/test_assignee_filter.py` (2),
+`pytest -q` 715 passed. **Урок:** двойные кавычки в селекторе внутри
+double-quoted `x-data` ломали парсинг → Alpine SyntaxError рушил весь x-data (24
+console errors в смоуке); заменил на `&quot;`. Рендер-тесты на httpx это не ловят
+— Playwright обязателен. Playwright: shared-проект 2 участника, Все=3/Мои=1/Не
+назначено=1, 0 console errors. Скрин `docs/screenshots/assignee-filter-mine.png`.
+Деплой: prod `/version` sha=f2025c3 за ~15с, smoke 24/24 green. Commit `f2025c3`.
+
+---
+
 ## 2026-05-21 — Ralph-loop: бейдж-счётчик комментариев 💬 N в строке задачи
 
 В shared-проектах обсуждение в комментариях, но в списке не было видно, у каких
