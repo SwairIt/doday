@@ -212,10 +212,10 @@
     function hide() { menu.style.display = 'none'; hideSubmenu(); activeTaskId = null; activeProjectId = null; }
 
     document.addEventListener('contextmenu', function(e) {
-      const wrap = e.target.closest('[id^="task-wrap-"]');
+      const wrap = e.target.closest('[id^="task-wrap-"], [id^="kcard-"]');
       if (!wrap) return;
       e.preventDefault();
-      activeTaskId = wrap.id.replace('task-wrap-', '');
+      activeTaskId = wrap.id.replace(/^(task-wrap-|kcard-)/, '');
       activeProjectId = wrap.dataset.project || null;
       // Reveal "Назначить на →" only for shared projects (>1 member).
       assignItem.style.display = 'none';
@@ -267,12 +267,20 @@
         return;
       }
       if (action === 'labels') {
-        if (window.htmx) htmx.ajax('GET', '/htmx/tasks/' + tid + '/labels-popover', {target: '#labels-slot-' + tid, swap: 'innerHTML'});
+        // List rows have an inline labels slot; kanban cards don't — open detail there.
+        if (!document.getElementById('labels-slot-' + tid)) {
+          if (window.htmx) htmx.ajax('GET', '/htmx/tasks/' + tid + '/detail', {target: '#task-detail-slot', swap: 'innerHTML'});
+        } else if (window.htmx) {
+          htmx.ajax('GET', '/htmx/tasks/' + tid + '/labels-popover', {target: '#labels-slot-' + tid, swap: 'innerHTML'});
+        }
         return;
       }
       if (action === 'comments') {
         const slot = document.getElementById('comments-slot-' + tid);
-        if (slot && slot.innerHTML.trim()) {
+        if (!slot) {
+          // kanban card — no inline comment slot; open the detail panel instead.
+          if (window.htmx) htmx.ajax('GET', '/htmx/tasks/' + tid + '/detail', {target: '#task-detail-slot', swap: 'innerHTML'});
+        } else if (slot.innerHTML.trim()) {
           slot.innerHTML = '';
         } else if (window.htmx) {
           htmx.ajax('GET', '/htmx/tasks/' + tid + '/comments', {target: '#comments-slot-' + tid, swap: 'innerHTML'});
@@ -323,6 +331,7 @@
         await fetch('/api/tasks/' + tid, {method: 'DELETE', credentials: 'include'});
         const wrap = document.getElementById('task-wrap-' + tid);
         if (wrap) wrap.remove();
+        else location.reload();  // kanban card (kcard-) — refresh the board
         return;
       }
     });
