@@ -475,10 +475,23 @@
       </form>
     </div>
 
-    {# Task metadata footer — created / completed dates. #}
-    <div class="px-5 py-3 border-t border-[var(--border)] text-[10px] text-[var(--text-muted)]">
-      Создано {{ task.created_at.strftime('%d.%m.%Y') }}
-      {% if task.completed_at %} · Завершено {{ task.completed_at.strftime('%d.%m.%Y') }}{% endif %}
+    {# Task metadata footer — creator (shared projects) + created / completed dates. #}
+    <div class="px-5 py-3 border-t border-[var(--border)] text-[10px] text-[var(--text-muted)] space-y-1">
+      {% if is_shared is defined and is_shared %}
+        <div class="flex items-center gap-1.5">
+          <span>Создал:</span>
+          {% if creator %}
+            <span class="w-4 h-4 rounded-full inline-flex items-center justify-center text-[8px] font-bold text-white bg-{{ creator.color }}-500 shrink-0">{{ creator.initial }}</span>
+            <span class="truncate">{{ creator.label }}</span>
+          {% else %}
+            <span class="italic">бывший участник</span>
+          {% endif %}
+        </div>
+      {% endif %}
+      <div>
+        Создано {{ task.created_at.strftime('%d.%m.%Y') }}
+        {% if task.completed_at %} · Завершено {{ task.completed_at.strftime('%d.%m.%Y') }}{% endif %}
+      </div>
     </div>
   </aside>
 </div>

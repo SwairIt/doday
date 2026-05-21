@@ -452,6 +452,7 @@ async def task_detail(
     """Full task panel: title + description + labels + subtasks + comments."""
     from app.comments.service import list_comments
     from app.labels.service import list_labels, list_task_labels
+    from app.projects.membership import assignee_map_for_project
     from app.projects.service import get_project
 
     try:
@@ -463,6 +464,11 @@ async def task_detail(
     attached = await list_task_labels(session, user.id, task_id)
     all_labels = await list_labels(session, user.id)
     comments = await list_comments(session, user.id, task_id)
+    # Creator display — only meaningful in shared projects (>1 member). The map
+    # already covers every member keyed by user id, so no extra query is needed.
+    assignee_map = await assignee_map_for_project(session, task.project_id)
+    is_shared = len(assignee_map) > 1
+    creator = assignee_map.get(task.user_id)
     return templates.TemplateResponse(
         request,
         "_partials/task_detail.html",
@@ -475,6 +481,8 @@ async def task_detail(
             "attached_label_ids": {lab.id for lab in attached},
             "comments": comments,
             "project_color_map": await _project_color_map(session, user.id),
+            "is_shared": is_shared,
+            "creator": creator,
         },
     )
 
