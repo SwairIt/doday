@@ -126,6 +126,13 @@
         await patchSelected({due_at: endOfWeek(), due_date_only: true});
         return;
       }
+      if (e.key === 'a') {
+        e.preventDefault();
+        const me = document.getElementById('task-ctx-menu') &&
+                   document.getElementById('task-ctx-menu').dataset.me;
+        if (me) await patchSelected({assigned_to: me});
+        return;
+      }
       if (e.key === 'Delete' || e.key === 'Backspace') {
         e.preventDefault();
         try {
