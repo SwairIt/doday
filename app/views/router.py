@@ -575,6 +575,42 @@ async def labels_view(request: Request, user: RequiredUser, session: DbSession) 
     )
 
 
+@router.get("/labels/{label_id}", response_class=HTMLResponse)
+async def label_tasks_view(
+    label_id: UUID, request: Request, user: RequiredUser, session: DbSession
+) -> HTMLResponse:
+    """Open tasks carrying a single label. Reuses the generic filter template."""
+    from app.labels.service import LabelNotFound, get_label, list_tasks_by_label
+
+    try:
+        label = await get_label(session, user.id, label_id)
+    except LabelNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "лейбл не найден") from e
+
+    tasks = await list_tasks_by_label(session, user.id, label_id)
+    projects = await list_projects(session, user.id)
+    project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
+    return templates.TemplateResponse(
+        request,
+        "app/filter.html",
+        {
+            "current_user": user,
+            "current_view": f"label:{label_id}",
+            "projects": projects,
+            "project_color_map": project_color_map,
+            "filter": {
+                "name": f"@{label.name}",
+                "color": label.color,
+                "icon_path": "M7 7h.01M3 5a2 2 0 012-2h5.586a1 1 0 01.707.293l8 "
+                "8a2 2 0 010 2.828l-5.586 5.586a2 2 0 01-2.828 0l-8-8A1 1 0 013 "
+                "10.586V5z",
+                "description": "Задачи с этим лейблом",
+            },
+            "tasks": tasks,
+        },
+    )
+
+
 @router.get("/done", response_class=HTMLResponse)
 async def done_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
     """History of completed tasks, grouped by completion date (newest first)."""

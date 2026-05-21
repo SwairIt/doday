@@ -61,7 +61,9 @@
                  maxlength="40"
                  class="text-sm font-medium bg-[var(--surface-2)] border border-[var(--accent)] rounded px-2 py-0.5 outline-none w-full">
         </div>
-        <span class="text-xs text-[var(--text-muted)] tabular-nums">{{ count }} {% if count == 1 %}задача{% elif 1 < count < 5 %}задачи{% else %}задач{% endif %}</span>
+        <a href="/app/labels/{{ lab.id }}"
+           class="text-xs text-[var(--text-muted)] tabular-nums hover:text-[var(--accent)] transition"
+           title="Открыть задачи с этим лейблом">{{ count }} {% if count == 1 %}задача{% elif 1 < count < 5 %}задачи{% else %}задач{% endif %}</a>
         <button type="button"
                 onclick="if(confirm('Удалить лейбл «{{ lab.name }}»? Связи с задачами тоже удалятся.')) fetch('/api/labels/{{ lab.id }}', {method:'DELETE', credentials:'include'}).then(()=>location.reload())"
                 class="px-3 py-1.5 rounded-lg text-sm bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition">

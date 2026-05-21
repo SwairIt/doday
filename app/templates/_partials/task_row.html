@@ -95,7 +95,9 @@
             hx-trigger="click"
             ondblclick="event.stopPropagation(); htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/edit', {target: '#task-{{ task.id }}', swap: 'outerHTML'});">{{ task.title }}</button>
     {% if task.labels %}
-      <span class="text-xs text-[var(--text-muted)] italic truncate ml-1 shrink-0 max-w-[8rem]">— {{ task.labels[0].name }}</span>
+      <a href="/app/labels/{{ task.labels[0].id }}"
+         class="text-xs text-[var(--text-muted)] italic truncate ml-1 shrink-0 max-w-[8rem] hover:text-[var(--accent)] hover:not-italic transition"
+         title="Все задачи с лейблом «{{ task.labels[0].name }}»">— {{ task.labels[0].name }}</a>
     {% endif %}
   </div>
 

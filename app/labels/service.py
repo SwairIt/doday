@@ -1,5 +1,6 @@
 """Label service — CRUD plus attach/detach to tasks."""
 
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import select
@@ -8,6 +9,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.labels.models import Label, task_labels
 from app.projects.service import slugify
 from app.tasks.service import get_task
+
+if TYPE_CHECKING:
+    from app.tasks.models import Task
 
 
 class LabelNotFound(Exception):
@@ -117,6 +121,29 @@ async def detach_label(session: AsyncSession, user_id: UUID, task_id: UUID, labe
         )
     )
     await session.commit()
+
+
+async def list_tasks_by_label(session: AsyncSession, user_id: UUID, label_id: UUID) -> list["Task"]:
+    """Open (non-completed, non-trashed) top-level tasks carrying this label.
+
+    Powers the /app/labels/{id} view. Labels eager-load via `lazy="selectin"`.
+    """
+    from app.tasks.models import Task
+
+    stmt = (
+        select(Task)
+        .join(task_labels, task_labels.c.task_id == Task.id)
+        .where(
+            task_labels.c.label_id == label_id,
+            Task.user_id == user_id,
+            Task.is_completed.is_(False),
+            Task.deleted_at.is_(None),
+            Task.parent_task_id.is_(None),
+        )
+        .order_by(Task.pinned_at.desc().nulls_last(), Task.position, Task.created_at)
+    )
+    result = await session.execute(stmt)
+    return list(result.scalars().all())
 
 
 async def list_task_labels(session: AsyncSession, user_id: UUID, task_id: UUID) -> list[Label]:

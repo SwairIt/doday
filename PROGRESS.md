@@ -4,6 +4,21 @@
 
 ---
 
+## 2026-05-21 — Ralph-loop: вид «задачи по лейблу» + кликабельные лейблы
+
+Новый `app.labels.service.list_tasks_by_label` (join task_labels, открытые
+top-level, не в корзине; labels eager via lazy=selectin). Роут
+`GET /app/labels/{label_id}` в views/router (auth, 404 на чужой лейбл),
+переиспользует `app/filter.html` с filter-dict (name=@лейбл, цвет лейбла,
+tag-иконка). Лейблы стали кликабельны: чип в `task_row.html` → `<a>` на вид
+лейбла, счётчик на `app/labels.html` → ссылка. Без изменений схемы БД. Тесты
+`tests/test_label_tasks.py` (3). mypy strict + ruff + lint_templates зелёные,
+Playwright: вид «@важное · найдено 1» + клик по чипу навигирует, 0 console
+errors. Скрин `docs/screenshots/label-tasks-view.png`. Деплой подтверждён через
+/version.
+
+---
+
 ## 2026-05-21 — Ralph-loop: переиспользуемые toast-уведомления (dodayToast)
 
 Новый партиал `_partials/toast.html` — singleton с глобальной
