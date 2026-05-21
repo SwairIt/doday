@@ -342,6 +342,22 @@ console errors** (было 2). Скрин `docs/screenshots/topbar-streak-fix-no
 
 ---
 
+## 2026-05-21 — Ralph-loop: инлайн-превью описания задачи (📝)
+
+У задач с описанием в строке появилась кнопка 📝, раскрывающая отрендеренный
+markdown инлайн (без detail-панели), как аккордеоны подзадач/комментов.
+Фронт-only: `descOpen` в `x-data`, текст описания в `<script
+type="application/json" id="desc-data-<id>">{{ ...|tojson }}</script>` (безопасно
+от XSS/поломки атрибута), слот `desc-slot-<id>`, рендер `window.dodayMd`
+(XSS-safe). Селекторы в `@click` одинарными кавычками — без Alpine quoting trap.
+Работает на всех вью с task_row. Бэкенд/схему не трогал. Тесты
+`tests/test_desc_preview.py` (2), `pytest -q` 731 passed. Playwright: `**Жирный**`
+→ `<strong>`, `код` → `<code>`, тоггл off, без описания кнопки нет, 0 console
+errors. Скрин `docs/screenshots/task-desc-preview.png`. Деплой: prod `/version`
+sha=bba8770 за ~60с, smoke 25/25 green. Commit `bba8770`.
+
+---
+
 ## 2026-05-21 — Ralph-loop: вид «Команда» (team workload)
 
 Кросс-проектный обзор всей команды: открытые задачи всех участников
