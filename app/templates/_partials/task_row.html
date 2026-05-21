@@ -10,7 +10,8 @@
      data-due="{{ task.due_at.isoformat() if task.due_at else '' }}"
      data-title="{{ task.title|lower }}"
      data-created="{{ task.created_at.isoformat() }}"
-     data-assignee="{{ task.assigned_to or '' }}">
+     data-assignee="{{ task.assigned_to or '' }}"
+     data-project="{{ task.project_id }}">
 <div
   id="task-{{ task.id }}"
   class="task-row group flex items-center gap-1.5 sm:gap-2 p-2.5 sm:p-3 rounded-xl border border-[var(--border)]

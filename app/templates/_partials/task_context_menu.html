@@ -12,6 +12,7 @@
   <button data-ctx="copy-link" class="ctx-item">🔗 Скопировать ссылку</button>
   <hr class="my-1 border-[var(--border)]">
   <button data-ctx="assign-me" class="ctx-item">🙋 Назначить на меня</button>
+  <button id="ctx-assign-member" data-ctx="assign-member" class="ctx-item" style="display: none;">👤 Назначить на →</button>
   <button data-ctx="unassign" class="ctx-item">🙅 Снять назначение</button>
   <hr class="my-1 border-[var(--border)]">
   <button data-ctx="prio-1" class="ctx-item">🔴 Приоритет P1</button>
@@ -39,6 +40,12 @@
   <div class="text-[10px] uppercase tracking-wider text-[var(--text-muted)] px-2 py-1">В какой проект?</div>
   <div id="task-ctx-move-list"></div>
 </div>
+<div id="task-ctx-assign-submenu"
+     style="display: none; position: fixed; z-index: 61;"
+     class="card p-1 shadow-glow text-sm min-w-[200px] max-h-[400px] overflow-y-auto">
+  <div class="text-[10px] uppercase tracking-wider text-[var(--text-muted)] px-2 py-1">Назначить на участника</div>
+  <div id="task-ctx-assign-list"></div>
+</div>
 
 <style>
   .ctx-item {
@@ -58,8 +65,13 @@
     if (!menu) return;
     const submenu = document.getElementById('task-ctx-move-submenu');
     const submenuList = document.getElementById('task-ctx-move-list');
+    const assignSubmenu = document.getElementById('task-ctx-assign-submenu');
+    const assignList = document.getElementById('task-ctx-assign-list');
+    const assignItem = document.getElementById('ctx-assign-member');
     let activeTaskId = null;
+    let activeProjectId = null;
     let projectsCache = null;
+    const membersCache = {};
     async function loadProjects() {
       if (projectsCache) return projectsCache;
       try {
@@ -68,7 +80,19 @@
       } catch(e) {}
       return projectsCache || [];
     }
-    function hideSubmenu() { submenu.style.display = 'none'; }
+    async function loadMembers(pid) {
+      if (!pid) return [];
+      if (membersCache[pid]) return membersCache[pid];
+      try {
+        const r = await fetch('/api/projects/' + pid + '/members', {credentials: 'include'});
+        if (r.ok) membersCache[pid] = await r.json();
+      } catch(e) {}
+      return membersCache[pid] || [];
+    }
+    function escapeHtml(s) {
+      return (s || '').replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+    }
+    function hideSubmenu() { submenu.style.display = 'none'; assignSubmenu.style.display = 'none'; }
     async function showSubmenu(x, y) {
       const projects = await loadProjects();
       submenuList.innerHTML = '';
@@ -100,6 +124,47 @@
           method: 'PATCH', credentials: 'include',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({project_id: targetProject}),
+        });
+        if (r.ok) location.reload();
+      } catch(e) {}
+    });
+
+    async function showAssignSubmenu(x, y) {
+      const members = await loadMembers(activeProjectId);
+      assignList.innerHTML = '';
+      const me = menu.dataset.me;
+      const wrap = activeTaskId ? document.getElementById('task-wrap-' + activeTaskId) : null;
+      const current = wrap ? (wrap.dataset.assignee || '') : '';
+      for (const m of members) {
+        const btn = document.createElement('button');
+        btn.className = 'ctx-item flex items-center gap-2';
+        btn.dataset.userId = m.user_id;
+        const isMe = m.user_id === me;
+        const isCurrent = m.user_id === current;
+        const label = escapeHtml(m.email) + (isMe ? ' (вы)' : '');
+        btn.innerHTML = '<span class="truncate">' + label + '</span>'
+          + (isCurrent ? '<span class="ml-auto text-[var(--accent)]">✓</span>' : '');
+        assignList.appendChild(btn);
+      }
+      assignSubmenu.style.display = 'block';
+      const rect = assignSubmenu.getBoundingClientRect();
+      const maxX = window.innerWidth - rect.width - 8;
+      const maxY = window.innerHeight - rect.height - 8;
+      assignSubmenu.style.left = Math.min(x, maxX) + 'px';
+      assignSubmenu.style.top = Math.min(y, maxY) + 'px';
+    }
+    assignSubmenu.addEventListener('click', async function(e) {
+      const btn = e.target.closest('[data-user-id]');
+      if (!btn || !activeTaskId) return;
+      const userId = btn.dataset.userId;
+      hideSubmenu();
+      const tid = activeTaskId;
+      activeTaskId = null;
+      try {
+        const r = await fetch('/api/tasks/' + tid, {
+          method: 'PATCH', credentials: 'include',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({assigned_to: userId}),
         });
         if (r.ok) location.reload();
       } catch(e) {}
@@ -144,17 +209,24 @@
       menu.style.left = Math.min(x, maxX) + 'px';
       menu.style.top = Math.min(y, maxY) + 'px';
     }
-    function hide() { menu.style.display = 'none'; hideSubmenu(); activeTaskId = null; }
+    function hide() { menu.style.display = 'none'; hideSubmenu(); activeTaskId = null; activeProjectId = null; }
 
     document.addEventListener('contextmenu', function(e) {
       const wrap = e.target.closest('[id^="task-wrap-"]');
       if (!wrap) return;
       e.preventDefault();
       activeTaskId = wrap.id.replace('task-wrap-', '');
+      activeProjectId = wrap.dataset.project || null;
+      // Reveal "Назначить на →" only for shared projects (>1 member).
+      assignItem.style.display = 'none';
+      const openedFor = activeTaskId;
+      loadMembers(activeProjectId).then(members => {
+        if (members.length > 1 && activeTaskId === openedFor) assignItem.style.display = 'block';
+      });
       showAt(e.clientX, e.clientY);
     });
     document.addEventListener('click', function(e) {
-      if (!menu.contains(e.target) && !submenu.contains(e.target)) hide();
+      if (!menu.contains(e.target) && !submenu.contains(e.target) && !assignSubmenu.contains(e.target)) hide();
     });
     document.addEventListener('keydown', function(e) { if (e.key === 'Escape') hide(); });
 
@@ -169,6 +241,13 @@
         const rect = menu.getBoundingClientRect();
         menu.style.display = 'none';
         showSubmenu(rect.right + 4, rect.top);
+        return;
+      }
+      if (action === 'assign-member') {
+        // Keep activeTaskId/activeProjectId; show the member submenu next to the menu.
+        const rect = menu.getBoundingClientRect();
+        menu.style.display = 'none';
+        showAssignSubmenu(rect.right + 4, rect.top);
         return;
       }
       hide();
