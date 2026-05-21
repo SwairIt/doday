@@ -4,6 +4,21 @@
 
 ---
 
+## 2026-05-21 — Ralph-loop: группировка задач по исполнителю (проект-вью)
+
+Расширил существующий Alpine-механизм `groupBy` в `app/templates/app/project.html`
+(было none/priority/date) вариантом `assignee`. `project_view` отдаёт
+`assignee_map_js` (строко-ключевой dict для JSON); в шаблоне он встроен через
+`<script type="application/json">` и читается `JSON.parse` в x-data (чтобы кавычки
+не ломали x-data-атрибут). `_groupKey/_groupLabel/_groupOrder` получили ветку
+assignee; пункт меню «По исполнителю». В `task_row.html` добавлен
+`data-assignee`. Без изменений схемы БД и бэкенда (assignee_map уже был).
+mypy strict + ruff + lint_templates зелёные, тесты 28 passed, Playwright:
+группы «🙋 …@example.com · 2» и «👤 Без исполнителя · 3», 0 console errors.
+Скрин `docs/screenshots/group-by-assignee.png`. Деплой подтверждён через /version.
+
+---
+
 ## 2026-05-21 — Ralph-loop: счётчик подзадач «X/Y» в строке задачи
 
 Новый `app.tasks.service.subtask_counts_for(session, user_id, parent_ids) ->

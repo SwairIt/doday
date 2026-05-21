@@ -310,6 +310,8 @@ async def project_view(
 
     active_ids = [t.id for tasks in by_section.values() for t in tasks]
     subtask_counts = await subtask_counts_for(session, user.id, active_ids)
+    # String-keyed copy for JSON embedding (UUID keys aren't JSON-serializable).
+    assignee_map_js = {str(uid): data for uid, data in assignee_map.items()}
 
     template_name = "app/kanban.html" if view == "kanban" else "app/project.html"
     return templates.TemplateResponse(
@@ -327,6 +329,7 @@ async def project_view(
             "completed": completed,
             "is_owner": is_proj_owner,
             "assignee_map": assignee_map,
+            "assignee_map_js": assignee_map_js,
             "subtask_counts": subtask_counts,
         },
     )
