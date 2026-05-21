@@ -342,6 +342,19 @@ console errors** (было 2). Скрин `docs/screenshots/topbar-streak-fix-no
 
 ---
 
+## 2026-05-22 — Ralph-loop: горячие клавиши g m / g e (Команда / Назначено мне)
+
+Goto-шорткаты покрывали ~12 вью, но не teams-хабы. Добавил `g m` → /app/team и
+`g e` → /app/assigned в `shortcuts.html` (g-ветка + overlay-справка). Фронт-only,
+без бэкенда/схемы. Тест `tests/test_goto_shortcuts.py`, `pytest -q` 747 passed.
+Playwright: g+m → Команда, g+e → Назначено мне, overlay показывает обе строки, 0
+console errors. Скрин `docs/screenshots/goto-shortcuts-overlay.png`. Деплой: prod
+`/version` sha=884d0ef за ~25с, smoke 25/25 green. Commit `884d0ef`. (Заметка по
+тестам шорткатов в Playwright — в worklog: blur активного инпута + диспатч обоих
+keydown подряд, т.к. pendingG живёт 1500мс.)
+
+---
+
 ## 2026-05-22 — Ralph-loop: бейдж комментариев 💬 N на хабах Команда/Назначено
 
 Бейдж «💬 N» был только в списке/доске проекта; добавил на кросс-проектные
