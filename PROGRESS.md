@@ -342,6 +342,20 @@ console errors** (было 2). Скрин `docs/screenshots/topbar-streak-fix-no
 
 ---
 
+## 2026-05-22 — Ralph-loop: кнопка «Восстановить всё» в корзине (bulk restore)
+
+Симметричный комплемент к «Очистить корзину»: массовое восстановление всех
+soft-deleted задач. Без изменений схемы БД: `restore_all_trashed` (UPDATE
+deleted_at=NULL, rowcount через cast CursorResult), `POST
+/api/tasks/trash/restore` → `{"restored": n}` (объявлен до `/{task_id}/restore`),
+кнопка «↩ Восстановить всё» в trash.html (без confirm). Тесты в
+`tests/test_trash_bin.py` (+3), `pytest -q` 750 passed. Playwright: 3 удалённые →
+«Восстановить всё» → корзина пуста, все вернулись, 0 console errors. Скрин
+`docs/screenshots/trash-restore-all.png`. Деплой: prod `/version` sha=f08cf89 за
+~25с, smoke 25/25 green. Commit `f08cf89`.
+
+---
+
 ## 2026-05-22 — Ralph-loop: горячие клавиши g m / g e (Команда / Назначено мне)
 
 Goto-шорткаты покрывали ~12 вью, но не teams-хабы. Добавил `g m` → /app/team и
