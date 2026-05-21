@@ -521,6 +521,25 @@ trap f2025c3). Gated `assignee_map|length>1`. Данные (`data-assignee` на
 
 ---
 
+## 2026-05-22 — Ralph-loop: автор комментария в блоке комментариев
+
+Под комментарием показывался только timestamp — в командном проекте не видно,
+кто написал. Добавил чип автора: круглый аватар-инициал с цветом из палитры +
+email, перед датой. Оба htmx-хендлера (`comments_block` GET, `comment_create`
+POST) теперь подтягивают `author_map = assignee_map_for_project(session,
+task.project_id)` и прокидывают в шаблон; `comments_block.html` рендерит чип под
+гейтом `{% if author_map is defined %}` с fallback на серый «?» для автора вне
+map. Без схемы (`Comment.user_id` уже был) и без новых эндпоинтов; CRUD/форма/
+edit/delete не тронуты. Урок: тело коммента рендерится через Alpine `x-text` из
+`{{ c.body|tojson|forceescape }}`, поэтому кириллица в HTML экранируется как
+`\uXXXX` — тесты ассертят по автору (литеральный текст), тело ASCII. Тесты
++2 в test_comments.py, `pytest -q` 756 passed. Playwright: создан коммент →
+виден аватар-инициал + email + дата, 0 console errors. Скрин
+`docs/screenshots/comment-author.png`. Деплой: prod `/version` sha=18ffb9c,
+smoke 25/25 green. Commit `18ffb9c`.
+
+---
+
 ## 2026-05-22 — Ralph-loop: кнопка «Свернуть/развернуть все секции»
 
 На странице проекта секции сворачивались только поодиночке. Добавил тоггл в
