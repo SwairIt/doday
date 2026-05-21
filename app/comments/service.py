@@ -2,7 +2,7 @@
 
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.comments.models import Comment
@@ -11,6 +11,24 @@ from app.tasks.service import get_task
 
 class CommentNotFound(Exception):
     """Comment does not exist or does not belong to the requesting user."""
+
+
+async def comment_counts_for(session: AsyncSession, task_ids: list[UUID]) -> dict[UUID, int]:
+    """For each given task id, return how many comments it has.
+
+    One grouped query (no N+1). Tasks with zero comments are simply absent from
+    the result — the template renders the 💬 badge only for tasks present here.
+    Mirrors `subtask_counts_for` so views can pass it the same way.
+    """
+    if not task_ids:
+        return {}
+    stmt = (
+        select(Comment.task_id, func.count())
+        .where(Comment.task_id.in_(task_ids))
+        .group_by(Comment.task_id)
+    )
+    rows = await session.execute(stmt)
+    return {task_id: int(total) for task_id, total in rows.all()}
 
 
 async def list_comments(session: AsyncSession, user_id: UUID, task_id: UUID) -> list[Comment]:

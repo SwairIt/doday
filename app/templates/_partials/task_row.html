@@ -59,6 +59,22 @@
           title="Подзадачи: {{ _sc[0] }} из {{ _sc[1] }} выполнено">{{ _sc[0] }}/{{ _sc[1] }}</span>
   {% endif %}
 
+  {# Comment-count badge "💬 N" — only on views that pass `comment_count_map`
+     (project/kanban). Hidden when the task has no comments. Click toggles the
+     inline comments accordion, reusing the existing comments-slot. #}
+  {% if comment_count_map is defined and comment_count_map.get(task.id) %}
+    {% set _cc = comment_count_map[task.id] %}
+    {# lint-ignore-next-line: small-text #}
+    <button type="button"
+            class="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--accent)] transition"
+            title="Комментариев: {{ _cc }}"
+            @click="
+              commentsOpen = !commentsOpen;
+              if (commentsOpen) htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/comments', { target: '#comments-slot-{{ task.id }}', swap: 'innerHTML' });
+              else document.getElementById('comments-slot-{{ task.id }}').innerHTML = '';
+            ">💬 {{ _cc }}</button>
+  {% endif %}
+
   {# Complete-toggle circle. #}
   <button
     type="button"
