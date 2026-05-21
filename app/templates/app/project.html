@@ -87,6 +87,8 @@
 {# Assignee data for client-side "group by assignee" — JSON in a script tag so
    the double-quotes don't clash with the x-data attribute. #}
 <script type="application/json" id="assignee-map-{{ project.id }}">{{ assignee_map_js|tojson }}</script>
+{# Labels present on this project's tasks — for the client-side label filter. #}
+<script type="application/json" id="label-map-{{ project.id }}">{{ project_labels|tojson }}</script>
 
 <div x-data="{
        sort: localStorage.getItem('doday-sort-{{ project.id }}') || 'manual',
@@ -94,6 +96,8 @@
        assigneeMap: JSON.parse((document.getElementById('assignee-map-{{ project.id }}') || {}).textContent || '{}'),
        showCompleted: localStorage.getItem('doday-show-completed-{{ project.id }}') !== '0',
        assigneeFilter: localStorage.getItem('doday-assignee-filter-{{ project.id }}') || 'all',
+       labelMap: JSON.parse((document.getElementById('label-map-{{ project.id }}') || {}).textContent || '{}'),
+       labelFilter: localStorage.getItem('doday-label-filter-{{ project.id }}') || 'all',
        myId: '{{ current_user.id }}',
        _snapshot: null,
        _restoreSnapshot() {
@@ -221,11 +225,17 @@
          if (f === '_none') return a === '';
          return a === f;
        },
+       _passesLabel(row) {
+         const f = this.labelFilter;
+         if (f === 'all') return true;
+         const ids = (row.dataset.labels || '').split(' ').filter(Boolean);
+         return ids.includes(f);
+       },
        _applyAssigneeFilter() {
          // Final display-only pass — never moves nodes, so snapshot/group logic
          // stays intact. Idempotent: apply() re-runs it in full each time.
          document.querySelectorAll('[id^=&quot;task-wrap-&quot;]').forEach(r => {
-           r.style.display = this._passesAssignee(r) ? '' : 'none';
+           r.style.display = (this._passesAssignee(r) && this._passesLabel(r)) ? '' : 'none';
          });
          if (this.groupBy !== 'none') {
            // Hide group-view headers whose group has no visible rows.
@@ -235,7 +245,7 @@
              h.style.display = visible ? '' : 'none';
              if (grp) grp.style.display = visible ? '' : 'none';
            });
-         } else if (this.assigneeFilter === 'all') {
+         } else if (this.assigneeFilter === 'all' && this.labelFilter === 'all') {
            // No filter → restore any sections we may have hidden earlier so
            // naturally-empty sections (with their inline add-form) stay visible.
            document.querySelectorAll('section[data-section-id]').forEach(sec => {
@@ -259,6 +269,11 @@
        setAssigneeFilter(v) {
          this.assigneeFilter = v;
          localStorage.setItem('doday-assignee-filter-{{ project.id }}', v);
+         this.apply();
+       },
+       setLabelFilter(v) {
+         this.labelFilter = v;
+         localStorage.setItem('doday-label-filter-{{ project.id }}', v);
          this.apply();
        },
        setSort(s) {
@@ -336,6 +351,31 @@
           {# lint-ignore-next-line: small-text #}
           <span class="w-5 h-5 rounded-full inline-flex items-center justify-center text-[10px] font-bold text-white bg-{{ a.color }}-500 shrink-0">{{ a.initial }}</span>
           <span class="truncate">{{ a.label }}</span>
+        </button>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+  {% if project_labels %}
+  <div x-data="{ open: false }" class="relative">
+    <button type="button" @click="open = !open"
+            :class="labelFilter !== 'all' ? 'bg-[var(--accent)]/15 text-[var(--accent)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'"
+            class="px-2.5 py-1 rounded-lg hover:bg-[var(--surface-2)] transition flex items-center gap-1.5">
+      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5a1.99 1.99 0 011.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z"/></svg>
+      <span><span class="hidden sm:inline">Лейбл: </span><span x-text="labelFilter === 'all' ? 'все' : (labelMap[labelFilter] ? labelMap[labelFilter].name : '?')"></span></span>
+    </button>
+    <div x-show="open" x-cloak @click.outside="open = false" x-transition
+         class="absolute top-full right-0 mt-1 z-30 card p-1 w-56 shadow-lg space-y-0.5 max-h-72 overflow-y-auto">
+      <button type="button" @click="open = false; setLabelFilter('all')"
+              :class="labelFilter === 'all' ? 'bg-[var(--accent)]/15 text-[var(--accent)]' : 'hover:bg-[var(--surface-2)]'"
+              class="w-full text-left text-sm px-3 py-1.5 rounded transition">Все</button>
+      <div class="my-1 border-t border-[var(--border)]"></div>
+      {% for lid, lab in project_labels.items() %}
+        <button type="button" @click="open = false; setLabelFilter('{{ lid }}')"
+                :class="labelFilter === '{{ lid }}' ? 'bg-[var(--accent)]/15 text-[var(--accent)]' : 'hover:bg-[var(--surface-2)]'"
+                class="w-full text-left text-sm px-3 py-1.5 rounded transition flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-{{ lab.color }}-500 shrink-0"></span>
+          <span class="truncate">{{ lab.name }}</span>
         </button>
       {% endfor %}
     </div>

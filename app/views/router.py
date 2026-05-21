@@ -319,6 +319,16 @@ async def project_view(
     # String-keyed copy for JSON embedding (UUID keys aren't JSON-serializable).
     assignee_map_js = {str(uid): data for uid, data in assignee_map.items()}
 
+    # Labels present on this project's tasks → client-side label filter chip.
+    # Str-keyed ordered dict so it serves both Jinja iteration and JSON embedding.
+    project_labels: dict[str, dict[str, str]] = {}
+    for t in tasks:
+        for lab in t.labels:
+            key = str(lab.id)
+            if key not in project_labels:
+                project_labels[key] = {"name": lab.name, "color": lab.color}
+    project_labels = dict(sorted(project_labels.items(), key=lambda kv: kv[1]["name"].lower()))
+
     template_name = "app/kanban.html" if view == "kanban" else "app/project.html"
     return templates.TemplateResponse(
         request,
@@ -336,6 +346,7 @@ async def project_view(
             "is_owner": is_proj_owner,
             "assignee_map": assignee_map,
             "assignee_map_js": assignee_map_js,
+            "project_labels": project_labels,
             "subtask_counts": subtask_counts,
             "comment_count_map": comment_count_map,
         },
