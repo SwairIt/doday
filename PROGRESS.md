@@ -342,6 +342,23 @@ console errors** (было 2). Скрин `docs/screenshots/topbar-streak-fix-no
 
 ---
 
+## 2026-05-21 — Ralph-loop: массовое «Перенести в секцию» в bulk-баре
+
+Дополнение к bulk «В проект»: дропдаун «Секция» раскладывает выделенные задачи по
+секциям проекта за раз. Без изменений схемы БД и эндпоинтов: ветка `set_section`
+в `bulk_action` (пусто → clear_section, иначе section_id; чужой проект/секция
+пропускаются), дропдаун в `bulk_bar.html` определяет общий проект выделения по
+`data-project`, грузит `/api/sections`. **Урок:** Alpine-генерируемые лениво
+`hx-post`-формы htmx не процессит → срабатывал нативный GET (`?ids=...`, задачи не
+двигались, Playwright поймал); переписал на ручной `fetch().then(reload)` как у
+date-пикера. Записал в память [[feedback_htmx_alpine_dynamic_forms]]. Тесты
+`tests/test_bulk_section.py` (3), `pytest -q` 734 passed. Playwright: 2 задачи →
+«Секция» → «В работе» → обе в section-контейнере, 0 console errors. Скрин
+`docs/screenshots/bulk-move-to-section.png`. Деплой: prod `/version` sha=0da0c3b
+за ~70с, smoke 25/25 green. Commit `0da0c3b`.
+
+---
+
 ## 2026-05-21 — Ralph-loop: инлайн-превью описания задачи (📝)
 
 У задач с описанием в строке появилась кнопка 📝, раскрывающая отрендеренный
