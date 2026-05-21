@@ -4,6 +4,21 @@
 
 ---
 
+## 2026-05-21 — Ralph-loop: метаданные задачи в task_detail (создано/завершено)
+
+В `_partials/task_detail.html` добавлен футер с `border-t`, мелким текстом:
+«Создано dd.mm.yyyy» + «· Завершено dd.mm.yyyy» (если `task.completed_at`).
+Серверный рендер из `task.created_at`/`completed_at`, без бэкенда и схемы БД.
+lint_templates 0 errors, тесты 19 passed, Playwright: панель показывает
+«Создано 21.05.2026», 0 console errors. Скрин
+`docs/screenshots/task-detail-meta.png`. Деплой подтверждён через /version.
+
+(Прошлая итерация: задача про markdown-описание оказалась дублем — `window.dodayMd`
+уже реализован в base.html; закрыта без коммита, зафиксирован урок проверять
+по доменным именам.)
+
+---
+
 ## 2026-05-21 — Ralph-loop: входящие приглашения (in-app баннер «Принять»)
 
 Раньше приглашение принималось только по email-ссылке `/invite/{token}`.

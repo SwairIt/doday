@@ -474,5 +474,11 @@
         <button type="submit" class="btn-primary px-3 py-2 text-sm shrink-0">Отправить</button>
       </form>
     </div>
+
+    {# Task metadata footer — created / completed dates. #}
+    <div class="px-5 py-3 border-t border-[var(--border)] text-[10px] text-[var(--text-muted)]">
+      Создано {{ task.created_at.strftime('%d.%m.%Y') }}
+      {% if task.completed_at %} · Завершено {{ task.completed_at.strftime('%d.%m.%Y') }}{% endif %}
+    </div>
   </aside>
 </div>
