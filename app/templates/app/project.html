@@ -93,6 +93,8 @@
        groupBy: localStorage.getItem('doday-group-{{ project.id }}') || 'none',
        assigneeMap: JSON.parse((document.getElementById('assignee-map-{{ project.id }}') || {}).textContent || '{}'),
        showCompleted: localStorage.getItem('doday-show-completed-{{ project.id }}') !== '0',
+       assigneeFilter: localStorage.getItem('doday-assignee-filter-{{ project.id }}') || 'all',
+       myId: '{{ current_user.id }}',
        _snapshot: null,
        _restoreSnapshot() {
          if (!this._snapshot) return;
@@ -209,6 +211,55 @@
          }
          var completed = document.getElementById('completed-block');
          if (completed) completed.style.display = this.showCompleted ? '' : 'none';
+         this._applyAssigneeFilter();
+       },
+       _passesAssignee(row) {
+         const f = this.assigneeFilter;
+         if (f === 'all') return true;
+         const a = row.dataset.assignee || '';
+         if (f === '_mine') return a === this.myId;
+         if (f === '_none') return a === '';
+         return a === f;
+       },
+       _applyAssigneeFilter() {
+         // Final display-only pass — never moves nodes, so snapshot/group logic
+         // stays intact. Idempotent: apply() re-runs it in full each time.
+         document.querySelectorAll('[id^=&quot;task-wrap-&quot;]').forEach(r => {
+           r.style.display = this._passesAssignee(r) ? '' : 'none';
+         });
+         if (this.groupBy !== 'none') {
+           // Hide group-view headers whose group has no visible rows.
+           document.querySelectorAll('#group-view > h3').forEach(h => {
+             const grp = h.nextElementSibling;
+             const visible = grp && Array.from(grp.children).some(c => c.style.display !== 'none');
+             h.style.display = visible ? '' : 'none';
+             if (grp) grp.style.display = visible ? '' : 'none';
+           });
+         } else if (this.assigneeFilter === 'all') {
+           // No filter → restore any sections we may have hidden earlier so
+           // naturally-empty sections (with their inline add-form) stay visible.
+           document.querySelectorAll('section[data-section-id]').forEach(sec => {
+             sec.style.removeProperty('display');
+           });
+           const nsAll = document.getElementById('no-section-block');
+           if (nsAll) nsAll.style.removeProperty('display');
+         } else {
+           // Filtering ungrouped: hide a section / the no-section block only when
+           // it has zero visible rows (so we don't show an empty filtered group).
+           const hideIfEmpty = (container) => {
+             if (!container) return;
+             const visible = Array.from(container.querySelectorAll('[id^=&quot;task-wrap-&quot;]'))
+               .some(r => r.style.display !== 'none');
+             container.style.display = visible ? '' : 'none';
+           };
+           document.querySelectorAll('section[data-section-id]').forEach(hideIfEmpty);
+           hideIfEmpty(document.getElementById('no-section-block'));
+         }
+       },
+       setAssigneeFilter(v) {
+         this.assigneeFilter = v;
+         localStorage.setItem('doday-assignee-filter-{{ project.id }}', v);
+         this.apply();
        },
        setSort(s) {
          this.sort = s;
@@ -261,6 +312,35 @@
       {% endfor %}
     </div>
   </div>
+  {% if assignee_map and assignee_map|length > 1 %}
+  <div x-data="{ open: false }" class="relative">
+    <button type="button" @click="open = !open"
+            :class="assigneeFilter !== 'all' ? 'bg-[var(--accent)]/15 text-[var(--accent)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'"
+            class="px-2.5 py-1 rounded-lg hover:bg-[var(--surface-2)] transition flex items-center gap-1.5">
+      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L14 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 018 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/></svg>
+      <span><span class="hidden sm:inline">Исполнитель: </span><span x-text="assigneeFilter === 'all' ? 'все' : assigneeFilter === '_mine' ? 'мои' : assigneeFilter === '_none' ? 'не назначено' : (assigneeMap[assigneeFilter] ? assigneeMap[assigneeFilter].label : '?')"></span></span>
+    </button>
+    <div x-show="open" x-cloak @click.outside="open = false" x-transition
+         class="absolute top-full right-0 mt-1 z-30 card p-1 w-56 shadow-lg space-y-0.5 max-h-72 overflow-y-auto">
+      {% set afilters = [('all', 'Все'), ('_mine', 'Мои'), ('_none', 'Не назначено')] %}
+      {% for key, label in afilters %}
+        <button type="button" @click="open = false; setAssigneeFilter('{{ key }}')"
+                :class="assigneeFilter === '{{ key }}' ? 'bg-[var(--accent)]/15 text-[var(--accent)]' : 'hover:bg-[var(--surface-2)]'"
+                class="w-full text-left text-sm px-3 py-1.5 rounded transition">{{ label }}</button>
+      {% endfor %}
+      <div class="my-1 border-t border-[var(--border)]"></div>
+      {% for uid, a in assignee_map.items() %}
+        <button type="button" @click="open = false; setAssigneeFilter('{{ uid }}')"
+                :class="assigneeFilter === '{{ uid }}' ? 'bg-[var(--accent)]/15 text-[var(--accent)]' : 'hover:bg-[var(--surface-2)]'"
+                class="w-full text-left text-sm px-3 py-1.5 rounded transition flex items-center gap-2">
+          {# lint-ignore-next-line: small-text #}
+          <span class="w-5 h-5 rounded-full inline-flex items-center justify-center text-[10px] font-bold text-white bg-{{ a.color }}-500 shrink-0">{{ a.initial }}</span>
+          <span class="truncate">{{ a.label }}</span>
+        </button>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
   <button type="button" @click="toggleCompleted()"
           :class="showCompleted ? 'bg-[var(--accent)]/15 text-[var(--accent)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'"
           class="px-2.5 py-1 rounded-lg hover:bg-[var(--surface-2)] transition flex items-center gap-1.5">
