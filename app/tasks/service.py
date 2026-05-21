@@ -4,7 +4,7 @@ from calendar import monthrange
 from datetime import UTC, date, datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import and_, delete, func, select
+from sqlalchemy import and_, case, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.projects.membership import is_member, member_project_ids
@@ -144,6 +144,36 @@ async def list_subtasks(session: AsyncSession, user_id: UUID, parent_id: UUID) -
     )
     result = await session.execute(stmt)
     return list(result.scalars().all())
+
+
+async def subtask_counts_for(
+    session: AsyncSession, user_id: UUID, parent_ids: list[UUID]
+) -> dict[UUID, tuple[int, int]]:
+    """For each given parent id, return (#completed, #total) of its subtasks.
+
+    One grouped query (no N+1). Trashed subtasks are excluded. Parents with no
+    subtasks are simply absent from the result. Powers the "X/Y" badge on a task
+    row — the template renders it only for parents present here.
+    """
+    if not parent_ids:
+        return {}
+    done_expr = func.sum(case((Task.is_completed.is_(True), 1), else_=0))
+    stmt = (
+        select(Task.parent_task_id, func.count(), done_expr)
+        .where(
+            Task.user_id == user_id,
+            Task.parent_task_id.in_(parent_ids),
+            Task.deleted_at.is_(None),
+        )
+        .group_by(Task.parent_task_id)
+    )
+    rows = await session.execute(stmt)
+    counts: dict[UUID, tuple[int, int]] = {}
+    for parent_id, total, done in rows.all():
+        if parent_id is None:
+            continue
+        counts[parent_id] = (int(done or 0), int(total))
+    return counts
 
 
 async def list_today(session: AsyncSession, user_id: UUID) -> list[Task]:

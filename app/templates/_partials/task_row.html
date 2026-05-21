@@ -50,6 +50,14 @@
     </svg>
   </button>
 
+  {# Subtask progress badge "X/Y" — only on views that pass `subtask_counts`
+     (project/kanban). Hidden when the task has no subtasks. #}
+  {% if subtask_counts is defined and task.id in subtask_counts and subtask_counts[task.id][1] > 0 %}
+    {% set _sc = subtask_counts[task.id] %}
+    <span class="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full font-semibold {% if _sc[0] == _sc[1] %}bg-emerald-500/15 text-emerald-400{% else %}bg-[var(--surface-2)] text-[var(--text-muted)]{% endif %}"
+          title="Подзадачи: {{ _sc[0] }} из {{ _sc[1] }} выполнено">{{ _sc[0] }}/{{ _sc[1] }}</span>
+  {% endif %}
+
   {# Complete-toggle circle. #}
   <button
     type="button"

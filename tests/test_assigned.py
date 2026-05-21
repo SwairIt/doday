@@ -90,6 +90,36 @@ async def test_count_assigned_excludes_non_member(db_session: AsyncSession) -> N
     assert await count_assigned_to_user(db_session, outsider.id) == 0
 
 
+async def test_subtask_counts_for(db_session: AsyncSession) -> None:
+    from app.tasks.service import complete_task, subtask_counts_for
+
+    user = await _user(db_session, "subs@s.ru")
+    parent = await create_task(db_session, user.id, title="Родитель")
+    s1 = await create_task(db_session, user.id, title="sub1", parent_task_id=parent.id)
+    await create_task(db_session, user.id, title="sub2", parent_task_id=parent.id)
+    await create_task(db_session, user.id, title="sub3", parent_task_id=parent.id)
+    await complete_task(db_session, user.id, s1.id)
+
+    counts = await subtask_counts_for(db_session, user.id, [parent.id])
+    assert counts[parent.id] == (1, 3)
+
+
+async def test_subtask_counts_absent_when_no_subtasks(db_session: AsyncSession) -> None:
+    from app.tasks.service import subtask_counts_for
+
+    user = await _user(db_session, "nosubs@s.ru")
+    lonely = await create_task(db_session, user.id, title="Без подзадач")
+    counts = await subtask_counts_for(db_session, user.id, [lonely.id])
+    assert lonely.id not in counts
+
+
+async def test_subtask_counts_empty_input(db_session: AsyncSession) -> None:
+    from app.tasks.service import subtask_counts_for
+
+    user = await _user(db_session, "emptysubs@s.ru")
+    assert await subtask_counts_for(db_session, user.id, []) == {}
+
+
 async def test_update_assigns_and_unassigns_self(db_session: AsyncSession) -> None:
     from app.tasks.models import Task
     from app.tasks.service import update_task

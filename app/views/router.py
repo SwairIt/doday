@@ -25,6 +25,7 @@ from app.tasks.service import (
     list_tasks,
     list_today,
     list_upcoming,
+    subtask_counts_for,
 )
 from app.views.template_filters import due_state
 
@@ -307,6 +308,9 @@ async def project_view(
     is_proj_owner = await is_owner(session, project.id, user.id)
     assignee_map = await assignee_map_for_project(session, project.id)
 
+    active_ids = [t.id for tasks in by_section.values() for t in tasks]
+    subtask_counts = await subtask_counts_for(session, user.id, active_ids)
+
     template_name = "app/kanban.html" if view == "kanban" else "app/project.html"
     return templates.TemplateResponse(
         request,
@@ -323,6 +327,7 @@ async def project_view(
             "completed": completed,
             "is_owner": is_proj_owner,
             "assignee_map": assignee_map,
+            "subtask_counts": subtask_counts,
         },
     )
 

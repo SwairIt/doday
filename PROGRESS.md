@@ -4,6 +4,21 @@
 
 ---
 
+## 2026-05-21 — Ralph-loop: счётчик подзадач «X/Y» в строке задачи
+
+Новый `app.tasks.service.subtask_counts_for(session, user_id, parent_ids) ->
+dict[UUID, tuple[done, total]]` — один group-by SELECT (case-sum), без N+1, без
+изменения схемы, корзина исключена. `project_view` собирает `subtask_counts` по
+активным родителям (из by_section.values) и кладёт в контекст. В
+`_partials/task_row.html` бейдж «{done}/{total}» рядом с кареткой (зелёный когда
+всё закрыто), в `_partials/kanban_card.html` — в полосе chips. Guard
+`subtask_counts is defined` → today/inbox/filter не затронуты. Тесты
+`tests/test_assigned.py` (16, +3). mypy strict + ruff + lint_templates зелёные,
+Playwright: бейдж «1/3» виден, 0 console errors. Скрин
+`docs/screenshots/subtask-count-badge.png`. Деплой подтверждён через /version.
+
+---
+
 ## 2026-05-21 — Ralph-loop: эндпоинт /version для проверки доставки деплоя
 
 Enabler для авто-проверки деплоя в лупе. `app/main.py::_read_git_sha()` читает
