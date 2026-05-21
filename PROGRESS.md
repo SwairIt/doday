@@ -342,6 +342,20 @@ console errors** (было 2). Скрин `docs/screenshots/topbar-streak-fix-no
 
 ---
 
+## 2026-05-21 — Ralph-loop: массовое «Снять назначение» в bulk-баре
+
+Обратное к «На меня»: bulk-бар умел массово назначать на себя, но не снимать. Без
+изменений схемы БД и эндпоинтов: новая ветка `unassign` в `bulk_action`
+(`update_task(assigned_to=None)` по выбранным, чужие/несуществующие
+пропускаются) + кнопка «Снять» в `bulk_bar.html` рядом с «На меня».
+`update_task` уже умел снимать назначение через sentinel `_SENTINEL`. Тест
+`test_bulk_unassign`, `pytest -q` 720 passed. Playwright: shared-проект, 3
+назначенные задачи → «Снять» → у всех `data-assignee` пуст, 0 console errors.
+Скрин `docs/screenshots/bulk-unassign-bar.png`. Деплой: prod `/version`
+sha=e005d3d за ~40с, smoke 24/24 green. Commit `e005d3d`.
+
+---
+
 ## 2026-05-21 — Ralph-loop: бейдж комментариев 💬 N на канбан-карточке
 
 Паритет с list-вью: на канбан-доске карточки теперь показывают «💬 N» (в списке
