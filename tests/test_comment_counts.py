@@ -70,3 +70,37 @@ async def test_no_comment_badge_when_no_comments(
     # The task renders, but no comment badge (its unique «Комментариев:» title).
     assert "Молчаливая задача" in body
     assert "Комментариев:" not in body
+
+
+async def test_comment_badge_on_kanban_card(
+    logged_in_client: AsyncClient, db_session: AsyncSession
+) -> None:
+    user = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    task = await create_task(db_session, user.id, title="Карточка с обсуждением")
+    await create_comment(db_session, user.id, task_id=task.id, body="вопрос на доске")
+
+    from app.projects.service import get_project
+
+    project = await get_project(db_session, user.id, task.project_id)
+    body = (await logged_in_client.get(f"/app/projects/{project.slug}?view=kanban")).text
+    # The kanban card shows the same 💬 N badge as the list row.
+    assert "Комментариев: 1" in body
+    assert "💬 1" in body
+
+
+async def test_no_comment_badge_on_kanban_when_none(
+    logged_in_client: AsyncClient, db_session: AsyncSession
+) -> None:
+    user = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    task = await create_task(db_session, user.id, title="Тихая карточка")
+
+    from app.projects.service import get_project
+
+    project = await get_project(db_session, user.id, task.project_id)
+    body = (await logged_in_client.get(f"/app/projects/{project.slug}?view=kanban")).text
+    assert "Тихая карточка" in body
+    assert "Комментариев:" not in body

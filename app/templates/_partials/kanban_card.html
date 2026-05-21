@@ -32,12 +32,18 @@
   </div>
 
   {% set _has_subs = subtask_counts is defined and task.id in subtask_counts and subtask_counts[task.id][1] > 0 %}
-  {% if task.due_at or task.priority.value != 'p4' or task.recurrence or (assignee_map is defined and task.assigned_to and task.assigned_to in assignee_map) or _has_subs %}
+  {% set _comments = comment_count_map.get(task.id) if comment_count_map is defined else None %}
+  {% if task.due_at or task.priority.value != 'p4' or task.recurrence or (assignee_map is defined and task.assigned_to and task.assigned_to in assignee_map) or _has_subs or _comments %}
     <div class="flex items-center gap-1.5 mt-2 flex-wrap">
       {% if _has_subs %}
         {% set _sc = subtask_counts[task.id] %}
         <span class="text-[10px] px-1.5 py-0.5 rounded-full font-semibold {% if _sc[0] == _sc[1] %}bg-emerald-500/15 text-emerald-400{% else %}bg-black/20 text-[var(--text-muted)]{% endif %}"
               title="Подзадачи: {{ _sc[0] }} из {{ _sc[1] }} выполнено">{{ _sc[0] }}/{{ _sc[1] }}</span>
+      {% endif %}
+      {% if _comments %}
+        {# lint-ignore-next-line: small-text #}
+        <span class="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-black/20 text-[var(--text-muted)]"
+              title="Комментариев: {{ _comments }}">💬 {{ _comments }}</span>
       {% endif %}
       {% if assignee_map is defined and task.assigned_to and task.assigned_to in assignee_map %}
         {% set _a = assignee_map[task.assigned_to] %}
