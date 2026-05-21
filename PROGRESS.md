@@ -521,6 +521,26 @@ trap f2025c3). Gated `assignee_map|length>1`. Данные (`data-assignee` на
 
 ---
 
+## 2026-05-22 — Ralph-loop: фильтр по лейблу на странице проекта
+
+В тулбаре проекта был фильтр по исполнителю, но не по лейблу. Добавил
+клиентский фильтр по лейблу по образцу assignee-фильтра: на обёртку задачи
+(`task_row`/`kanban_card`) — `data-labels` (пробел-разделённые id), в
+`project_view` собирается `project_labels` (str-keyed dict уникальных лейблов
+проекта из уже загруженных задач, `lazy="selectin"`, без доп. запросов),
+script-тег `label-map-{id}` + Alpine `labelFilter` (persist
+`doday-label-filter-{id}`) + `_passesLabel`, объединённый с assignee-фильтром в
+одном display-проходе. Chip+dropdown «Лейбл» только при `{% if project_labels
+%}`. Без схемы и новых эндпоинтов; сортировка/группа/assignee/секции не тронуты.
+Урок-тест: shared-сессия кэширует пустую labels-коллекцию задачи → `expire_all()`
+перед GET, id/slug захватить в локали до expire (иначе MissingGreenlet). Тесты
++2, `pytest -q` 758 passed. Playwright: выбор лейбла «work» → видна только
+рабочая задача, возврат «Все» → обе; 0 console errors. Скрин
+`docs/screenshots/label-filter.png`. Деплой: prod `/version` sha=0500401,
+smoke 25/25 green. Commit `0500401`.
+
+---
+
 ## 2026-05-22 — Ralph-loop: автор комментария в блоке комментариев
 
 Под комментарием показывался только timestamp — в командном проекте не видно,
