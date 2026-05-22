@@ -83,6 +83,17 @@ async def sync_now(session: AsyncSession, user_id: UUID, provider: Provider) -> 
         return SyncResult(ok=False, error="Интеграция выключена.")
     if not integ.auth_token:
         return _save_error(session, integ, "Не задан auth_token.")
+    if provider in ("school_mo", "mesh") and not integ.student_id:
+        # Pre-flight: the family-web API rejects requests without student_id
+        # with an opaque 400. Catch it here with a friendly message instead.
+        msg = (
+            "Не указан ID ученика (student_id). Зайди в Настройки → Школьный "
+            "дневник, заполни поле «ID ученика» (число из адресной строки "
+            "портала, например 560752) и пересохрани интеграцию."
+        )
+        integ.last_error = msg[:500]
+        await session.commit()
+        return SyncResult(ok=False, error=msg)
 
     try:
         if provider == "school_mo":

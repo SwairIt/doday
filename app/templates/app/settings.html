@@ -735,15 +735,17 @@
         </div>
       </div>
       <div>
-        <label class="block text-xs text-[var(--text-muted)] mb-1">
-          ID ученика <span class="text-[var(--text-muted)]/70">(student_id из адресной строки портала, напр. 560752)</span>
+        <label class="block text-xs mb-1">
+          <span class="text-[var(--text)]">ID ученика</span>
+          <span class="text-rose-400">*</span>
+          <span class="text-[var(--text-muted)]/70">— число из адресной строки портала (напр. <code>student_id=560752</code>)</span>
         </label>
-        <input x-model="studentId" type="text" inputmode="numeric" autocomplete="off"
+        <input x-model="studentId" type="text" inputmode="numeric" autocomplete="off" required
                placeholder="например 560752"
                class="w-full px-3 py-2 rounded-lg bg-[var(--surface-2)] border border-[var(--border)] text-sm font-mono">
       </div>
       <div class="flex items-center gap-3">
-        <button type="submit" :disabled="saving || token.length < 8" class="btn-primary px-4 py-2 text-sm">
+        <button type="submit" :disabled="saving || token.length < 8 || !studentId.trim()" class="btn-primary px-4 py-2 text-sm">
           <span x-text="saving ? 'Сохраняю…' : 'Сохранить'"></span>
         </button>
         <template x-if="ok"><span class="text-xs text-emerald-400" x-text="'✓ '+ok"></span></template>

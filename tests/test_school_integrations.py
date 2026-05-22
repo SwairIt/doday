@@ -81,7 +81,11 @@ async def test_sync_handles_unauthorized(
 
     await logged_in_client.post(
         "/api/school/integrations",
-        data={"provider": "school_mo", "auth_token": "stale-token-12345"},
+        data={
+            "provider": "school_mo",
+            "auth_token": "stale-token-12345",
+            "student_id": "560752",
+        },
     )
     response = await logged_in_client.post("/api/school/integrations/school_mo/sync")
     assert response.status_code == 200
@@ -137,7 +141,11 @@ async def test_sync_creates_tasks_from_payload(
 
     await logged_in_client.post(
         "/api/school/integrations",
-        data={"provider": "school_mo", "auth_token": "good-token-1234567"},
+        data={
+            "provider": "school_mo",
+            "auth_token": "good-token-1234567",
+            "student_id": "560752",
+        },
     )
     response = await logged_in_client.post("/api/school/integrations/school_mo/sync")
     assert response.status_code == 200
@@ -154,6 +162,22 @@ async def test_sync_creates_tasks_from_payload(
 async def test_sync_unknown_integration_404(logged_in_client: AsyncClient) -> None:
     response = await logged_in_client.post("/api/school/integrations/mesh/sync")
     assert response.status_code == 404
+
+
+async def test_sync_without_student_id_returns_friendly_error(
+    logged_in_client: AsyncClient,
+) -> None:
+    """Pre-flight: portal returns an opaque 400 if student_id is missing — we
+    catch this before hitting the portal and surface a clear instruction."""
+    await logged_in_client.post(
+        "/api/school/integrations",
+        data={"provider": "school_mo", "auth_token": "tok-1234567"},  # no student_id
+    )
+    response = await logged_in_client.post("/api/school/integrations/school_mo/sync")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ok"] is False
+    assert "student_id" in body["error"].lower() or "ученика" in body["error"]
 
 
 async def test_delete_integration(logged_in_client: AsyncClient) -> None:
