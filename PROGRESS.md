@@ -521,6 +521,20 @@ trap f2025c3). Gated `assignee_map|length>1`. Данные (`data-assignee` на
 
 ---
 
+## 2026-05-22 — Ralph-loop: команды-навигация в ⌘K-палитре (launcher)
+
+⌘K-палитра только искала. Превратил в launcher: в `search_palette.html` x-data
+получил `q`, массив `commands` (11 целей с эмодзи), геттер `matchedCommands`
+(live-фильтр), `go(url)`; инпут — `x-model="q"` рядом с htmx-поиском; блок
+«Перейти» с `x-for` над результатами. Пустой `q` → все команды; ввод фильтрует.
+Только шаблон, без схемы/эндпоинтов; htmx-поиск/⌘K/Escape не тронуты. Тест +1,
+`pytest -q` 777 passed. Playwright: open-search → 11 команд, ввод «ком» →
+остаётся «Команда», клик → `/app/team`, 0 console errors. Скрин
+`docs/screenshots/palette-commands.png`. Деплой: prod `/version` sha=84d3caf,
+smoke 25/25 green. Commit `84d3caf`.
+
+---
+
 ## 2026-05-22 — Ralph-loop: бейджи подзадач и комментариев на ежедневных вью
 
 Бейджи `X/Y` (подзадачи) и `💬 N` (комменты) были только на project/kanban. Добавил
