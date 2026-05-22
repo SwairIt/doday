@@ -521,6 +521,20 @@ trap f2025c3). Gated `assignee_map|length>1`. Данные (`data-assignee` на
 
 ---
 
+## 2026-05-22 — Ralph-loop: бейджи подзадач и комментариев на ежедневных вью
+
+Бейджи `X/Y` (подзадачи) и `💬 N` (комменты) были только на project/kanban. Добавил
+их на «Сегодня» и «Ближайшие» (прокинул `subtask_counts` + `comment_count_map` в
+`today_view`/`upcoming_view`), и добил недостающий `subtask_counts` в
+`assigned_view`/`team_view` — единообразие по всем кросс-проектным вью. Только
+`router.py` (контекст), шаблоны не тронуты — `task_row.html` рисует под гейтом
+`is defined`; хелперы одним запросом. Тесты +3, `pytest -q` 776 passed.
+Playwright: задача с 2 подзадачами+комментом на today → бейджи `0/2` + 💬, 0
+console errors. Скрин `docs/screenshots/today-badges.png`. Деплой: prod
+`/version` sha=ab5abcb, smoke 25/25 green. Commit `ab5abcb`.
+
+---
+
 ## 2026-05-22 — Ralph-loop: кнопка «Поделиться» в панели деталей
 
 Copy-link был только в контекст-меню. Добавил в шапку панели деталей кнопку
