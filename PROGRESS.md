@@ -521,6 +521,21 @@ trap f2025c3). Gated `assignee_map|length>1`. Данные (`data-assignee` на
 
 ---
 
+## 2026-05-22 — Ralph-loop: «Выделить всё» для массовых действий
+
+Массовые действия мощные, но не было способа выделить все задачи разом — только
+поштучно/shift-диапазонами. Добавил в store `selection` (`app_base.html`)
+`visibleIds()` (только видимые строки через `offsetParent !== null` — уважает
+фильтры/свёрнутые секции), `selectAll/allSelected/toggleAll`, и хоткей Ctrl/Cmd+A
+→ `toggleAll()` с гардом полей (в INPUT/TEXTAREA/SELECT/contentEditable — нативное
+выделение текста). В `bulk_bar.html` — кнопка «Выделить все видимые». Чистый
+фронт, без схемы/эндпоинтов. Тесты +2, `pytest -q` 760 passed. Playwright: 16
+задач → Ctrl+A выделяет все 16, повтор → 0, в поле Ctrl+A не срабатывает, кнопка
+работает; 0 console errors. Скрин `docs/screenshots/select-all.png`. Деплой:
+prod `/version` sha=824aaad, smoke 25/25 green. Commit `824aaad`.
+
+---
+
 ## 2026-05-22 — Ralph-loop: фильтр по лейблу на странице проекта
 
 В тулбаре проекта был фильтр по исполнителю, но не по лейблу. Добавил
