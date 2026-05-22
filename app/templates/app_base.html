@@ -31,9 +31,35 @@
       },
       clear() { this.ids = []; this.lastId = null; },
       count() { return this.ids.length; },
+      // Ids of every currently-visible task row. Hidden rows (filtered out,
+      // collapsed section, hidden-completed) have offsetParent === null, so
+      // "select all" respects the active filters/collapse state.
+      visibleIds() {
+        return Array.from(document.querySelectorAll('[id^="task-wrap-"]'))
+          .filter(el => el.offsetParent !== null)
+          .map(el => el.id.replace('task-wrap-', ''));
+      },
+      selectAll() {
+        this.ids = this.visibleIds();
+        this.lastId = this.ids.length ? this.ids[this.ids.length - 1] : null;
+      },
+      allSelected() {
+        const vis = this.visibleIds();
+        return vis.length > 0 && vis.every(id => this.ids.includes(id));
+      },
+      toggleAll() { if (this.allSelected()) this.clear(); else this.selectAll(); },
     });
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') Alpine.store('selection').clear();
+      // Ctrl/Cmd+A selects all visible tasks (toggle) — unless typing in a field,
+      // where it must keep the native "select all text" behaviour.
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
+        const t = e.target;
+        const tag = (t && t.tagName) || '';
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+        e.preventDefault();
+        Alpine.store('selection').toggleAll();
+      }
     });
   });
 </script>
