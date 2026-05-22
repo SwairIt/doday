@@ -610,17 +610,34 @@
           handle: '.task-row',
           ghostClass: 'opacity-30',
           chosenClass: 'ring-2',
-          onEnd: function() {
-            var projectId = el.dataset.projectId;
-            var ids = Array.from(el.querySelectorAll('[id^="task-wrap-"]'))
-              .map(function(d) { return d.id.replace('task-wrap-', ''); });
-            if (!ids.length || !projectId) return;
-            fetch('/api/projects/' + projectId + '/tasks/reorder', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ ids: ids }),
-              credentials: 'include',
-            });
+          group: 'tasks-{{ project.id }}',
+          onEnd: function(evt) {
+            var dest = evt.to;
+            var reorder = function() {
+              var projectId = dest.dataset.projectId;
+              var ids = Array.from(dest.querySelectorAll('[id^="task-wrap-"]'))
+                .map(function(d) { return d.id.replace('task-wrap-', ''); });
+              if (!ids.length || !projectId) return;
+              fetch('/api/projects/' + projectId + '/tasks/reorder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: ids }),
+                credentials: 'include',
+              });
+            };
+            // Moved to a different section → persist the section change first.
+            if (evt.to !== evt.from) {
+              var taskId = evt.item.id.replace('task-wrap-', '');
+              var newSec = dest.dataset.sectionId || null;
+              fetch('/api/tasks/' + taskId, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ section_id: newSec }),
+                credentials: 'include',
+              }).then(reorder).catch(reorder);
+            } else {
+              reorder();
+            }
           }
         });
       });
