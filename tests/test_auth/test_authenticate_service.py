@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.schemas import RegisterIn
 from app.auth.service import (
-    EmailNotVerified,
     InvalidCredentials,
     authenticate,
     register_user,
@@ -37,12 +36,14 @@ async def test_authenticate_unknown_email(db_session: AsyncSession) -> None:
         await authenticate(db_session, "nobody@school.ru", "anything")
 
 
-async def test_authenticate_unverified_email(db_session: AsyncSession) -> None:
+async def test_authenticate_unverified_email_allowed(db_session: AsyncSession) -> None:
+    # Soft verification: an unverified user can still authenticate.
     await register_user(
         db_session, RegisterIn(email="unverified@school.ru", password="strongpass123")
     )
-    with pytest.raises(EmailNotVerified):
-        await authenticate(db_session, "unverified@school.ru", "strongpass123")
+    user = await authenticate(db_session, "unverified@school.ru", "strongpass123")
+    assert user.email == "unverified@school.ru"
+    assert user.email_verified_at is None
 
 
 async def test_authenticate_lowercases_email(db_session: AsyncSession) -> None:

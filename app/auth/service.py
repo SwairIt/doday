@@ -24,10 +24,6 @@ class InvalidCredentials(Exception):
     """Wrong email or password during login."""
 
 
-class EmailNotVerified(Exception):
-    """Login attempted but the email hasn't been verified yet."""
-
-
 async def register_user(session: AsyncSession, payload: RegisterIn) -> User:
     existing = await session.execute(select(User).where(User.email == payload.email))
     if existing.scalar_one_or_none() is not None:
@@ -170,6 +166,6 @@ async def authenticate(session: AsyncSession, email: str, password: str) -> User
     user = result.scalar_one_or_none()
     if user is None or not verify_password(password, user.password_hash):
         raise InvalidCredentials()
-    if user.email_verified_at is None:
-        raise EmailNotVerified()
+    # Email verification is "soft": unverified users may sign in and use the app.
+    # Verification only gates email-dependent features (digest / password reset).
     return user

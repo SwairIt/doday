@@ -40,16 +40,18 @@ async def test_login_wrong_password(client: AsyncClient, db_session: AsyncSessio
     assert "неверный" in response.text.lower()
 
 
-async def test_login_unverified_blocked(client: AsyncClient, db_session: AsyncSession) -> None:
+async def test_login_unverified_allowed(client: AsyncClient, db_session: AsyncSession) -> None:
+    # Soft verification: an unverified user can sign in and use the app.
     await register_user(
         db_session, RegisterIn(email="unverified@school.ru", password="strongpass123")
     )
     response = await client.post(
         "/auth/login",
         data={"email": "unverified@school.ru", "password": "strongpass123"},
+        follow_redirects=False,
     )
-    assert response.status_code == 403
-    assert "подтверди" in response.text.lower()
+    assert response.status_code == 303
+    assert "session" in response.cookies
 
 
 async def test_logout_clears_session(client: AsyncClient, db_session: AsyncSession) -> None:

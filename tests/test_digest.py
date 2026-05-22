@@ -213,6 +213,22 @@ async def test_profile_toggle_morning_digest(logged_in_client: AsyncClient) -> N
     assert r.json() == {"enabled": False}
 
 
+async def test_morning_digest_requires_verified_email(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    # Soft verification: the user can log in unverified, but the email digest
+    # (which sends to their inbox) stays gated until the address is confirmed.
+    await register_user(
+        db_session, RegisterIn(email="unverif-digest@school.ru", password="strongpass123")
+    )
+    await client.post(
+        "/auth/login",
+        data={"email": "unverif-digest@school.ru", "password": "strongpass123"},
+    )
+    r = await client.post("/api/profile/morning-digest", data={"enabled": "true"})
+    assert r.status_code == 403
+
+
 # --- /api/digest endpoints ---
 
 

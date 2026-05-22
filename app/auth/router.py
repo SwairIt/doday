@@ -19,7 +19,6 @@ from app.auth.security import (
 )
 from app.auth.service import (
     EmailAlreadyExists,
-    EmailNotVerified,
     InvalidCredentials,
     TokenInvalid,
     authenticate,
@@ -176,13 +175,6 @@ async def login_submit(
             "auth/login.html",
             {"error": "Неверный email или пароль."},
             status_code=401,
-        )
-    except EmailNotVerified:
-        return templates.TemplateResponse(
-            request,
-            "auth/login.html",
-            {"error": "Сначала подтверди email — мы отправили тебе письмо."},
-            status_code=403,
         )
     reset(rl_key)
     request.session.clear()  # drop any pre-login session state (anti-fixation)

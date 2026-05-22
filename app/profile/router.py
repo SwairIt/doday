@@ -35,6 +35,12 @@ async def update_morning_digest(
     if new_value:
         # Allow turning OFF without check (e.g., trial expired user wants to disable).
         require_pro(user, "Утренний email-дайджест")
+        # Digest goes to email, so it needs a verified, deliverable address.
+        if user.email_verified_at is None:
+            raise HTTPException(
+                status.HTTP_403_FORBIDDEN,
+                "Сначала подтверди email — дайджест приходит на почту.",
+            )
     user.morning_digest_enabled = new_value
     await session.commit()
     return {"enabled": new_value}

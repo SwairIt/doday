@@ -37,17 +37,16 @@
             <a href="/auth/login" class="btn-primary px-4 py-2 text-sm">Войти</a>
           </div>
         {% else %}
-          <h1 class="text-3xl font-bold mb-3 relative">Проверь почту</h1>
+          <h1 class="text-3xl font-bold mb-3 relative">Аккаунт создан 🎉</h1>
           <p class="text-[var(--text-muted)] mb-2 relative leading-relaxed">
-            Мы отправили письмо со ссылкой для подтверждения.
+            Мы отправили письмо со ссылкой для подтверждения — кликни по ней, когда будет удобно.
           </p>
           <p class="text-[var(--text-muted)] text-sm relative">
-            Открой письмо и кликни по ссылке.<br>
-            Не пришло? Проверь спам или подожди пару минут.
+            Подтверждать прямо сейчас не обязательно — можешь войти и начать пользоваться.
           </p>
 
           <div class="mt-8 pt-6 border-t border-[var(--border)] relative">
-            <a href="/auth/login" class="text-[var(--accent)] hover:underline font-medium text-sm">← Вернуться ко входу</a>
+            <a href="/auth/login" class="btn-primary px-4 py-2 text-sm">Войти и начать</a>
           </div>
         {% endif %}
       </div>
