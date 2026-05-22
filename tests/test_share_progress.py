@@ -13,9 +13,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import User
+from app.auth.security import hash_password
 from app.share.service import (
     InvalidShareToken,
+    make_group_token,
     make_progress_token,
+    read_group_token,
     read_progress_token,
 )
 from app.tasks.service import create_task
@@ -66,3 +69,56 @@ async def test_share_link_endpoint_returns_url(logged_in_client: AsyncClient) ->
     resp = await logged_in_client.get("/api/profile/share-link")
     assert resp.status_code == 200
     assert "/share/progress/" in resp.json()["url"]
+
+
+# --- Group (class) progress link -------------------------------------------
+
+
+def test_group_token_roundtrip() -> None:
+    pid = uuid4()
+    assert read_group_token(make_group_token(pid)) == pid
+
+
+async def test_group_view_public_shows_members(
+    client: AsyncClient, logged_in_client: AsyncClient, db_session: AsyncSession
+) -> None:
+    from app.projects.membership import add_member
+    from app.projects.service import create_project
+
+    owner = await _owner(db_session)
+    project = await create_project(db_session, owner.id, name="Класс 9А")
+
+    student = User(email="student1@example.com", password_hash=hash_password("x" * 10))
+    db_session.add(student)
+    await db_session.commit()
+    await db_session.refresh(student)
+    await add_member(db_session, project.id, student.id)
+
+    task = await create_task(
+        db_session, owner.id, title="ДЗ параграф 5", project_id=project.id, due_at=datetime.now(UTC)
+    )
+    task.assigned_to = student.id
+    await db_session.commit()
+
+    resp = await client.get(f"/share/group/{make_group_token(project.id)}")
+    assert resp.status_code == 200
+    assert "Класс 9А" in resp.text
+    assert "student1@example.com" in resp.text
+
+
+async def test_group_view_bad_token_404(client: AsyncClient) -> None:
+    resp = await client.get("/share/group/garbage")
+    assert resp.status_code == 404
+
+
+async def test_group_share_link_requires_membership(
+    client: AsyncClient, logged_in_client: AsyncClient, db_session: AsyncSession
+) -> None:
+    from app.projects.service import create_project
+
+    owner = await _owner(db_session)
+    project = await create_project(db_session, owner.id, name="Группа")
+
+    resp = await logged_in_client.get(f"/api/projects/{project.id}/group-share-link")
+    assert resp.status_code == 200
+    assert "/share/group/" in resp.json()["url"]

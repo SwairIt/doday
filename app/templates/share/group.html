@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{{ project_name }} — прогресс группы — Doday{% endblock %}
+{% block seo_robots %}noindex, nofollow{% endblock %}
+{% block layout %}
+<div class="min-h-screen flex flex-col">
+  <header class="px-4 sm:px-6 py-4 border-b border-[var(--border)]">
+    <a href="/" class="inline-flex items-center gap-2.5 font-bold text-xl">
+      <span class="grad-bg w-9 h-9 rounded-xl flex items-center justify-center text-white font-extrabold shadow-glow">D</span>
+      <span class="grad-text">Doday</span>
+    </a>
+  </header>
+
+  <main class="flex-1 w-full max-w-2xl mx-auto px-4 sm:px-6 py-8">
+    <div class="mb-6">
+      <p class="text-sm text-[var(--text-muted)]">Прогресс группы</p>
+      <h1 class="text-2xl font-bold">{{ project_name }}</h1>
+      <p class="text-xs text-[var(--text-muted)] mt-1">Только просмотр · обновляется в реальном времени</p>
+    </div>
+
+    {% if rows %}
+    <div class="space-y-2">
+      {% for r in rows %}
+      <div class="card px-4 py-3 flex items-center gap-3">
+        <span class="w-9 h-9 rounded-full text-white bg-{{ r.color }}-500 flex items-center justify-center text-sm font-semibold shrink-0">{{ r.initial }}</span>
+        <span class="flex-1 min-w-0 truncate font-medium">{{ r.label }}</span>
+        <div class="flex items-center gap-3 text-sm shrink-0">
+          {% if r.overdue %}
+          <span class="text-rose-400" title="Просрочено">⏰ {{ r.overdue }}</span>
+          {% endif %}
+          <span class="text-[var(--text-muted)]" title="Осталось на сегодня">📋 {{ r.open }}</span>
+          <span class="text-emerald-400" title="Сделано сегодня">✓ {{ r.done_today }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-sm text-[var(--text-muted)]">В этой группе пока нет участников.</p>
+    {% endif %}
+
+    <footer class="mt-10 pt-6 border-t border-[var(--border)] text-center">
+      <p class="text-sm text-[var(--text-muted)]">Группа ведётся в <a href="/" class="grad-text font-semibold">Doday</a> — бесплатном планировщике задач для команд.</p>
+      <a href="/auth/register" class="btn-primary inline-block mt-3 px-5 py-2 text-sm">Завести свой Doday</a>
+    </footer>
+  </main>
+</div>
+{% endblock %}

@@ -1,10 +1,11 @@
-"""Public, read-only progress view. No auth — access is gated by a signed token.
+"""Public, read-only progress views. No auth — access is gated by a signed token.
 
-This router exposes exactly one GET endpoint and zero mutations, so it cannot
-affect any existing data or authorization path.
+This router exposes only GET endpoints and zero mutations, so it cannot affect
+any existing data or authorization path.
 """
 
 from datetime import UTC, datetime, timedelta
+from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import HTMLResponse
@@ -12,9 +13,12 @@ from sqlalchemy import func, select
 
 from app.auth.deps import DbSession
 from app.auth.models import User
+from app.projects.membership import assignee_map_for_project
+from app.projects.models import Project
 from app.share.service import (
     InvalidShareToken,
     display_name_from_email,
+    read_group_token,
     read_progress_token,
 )
 from app.tasks.models import Task
@@ -82,4 +86,72 @@ async def progress_view(request: Request, token: str, session: DbSession) -> HTM
             "done_week_count": done_week,
             "completed_today": completed_today,
         },
+    )
+
+
+@router.get("/group/{token}", response_class=HTMLResponse)
+async def group_view(request: Request, token: str, session: DbSession) -> HTMLResponse:
+    """Read-only per-member progress for one project (a class) for whoever holds the link."""
+    try:
+        project_id = read_group_token(token)
+    except InvalidShareToken as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Ссылка недействительна") from exc
+
+    project = (
+        await session.execute(select(Project).where(Project.id == project_id))
+    ).scalar_one_or_none()
+    if project is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Проект не найден")
+
+    members = await assignee_map_for_project(session, project_id)
+    today_date = datetime.now(UTC).date()
+
+    tasks = (
+        (
+            await session.execute(
+                select(Task).where(
+                    Task.project_id == project_id,
+                    Task.deleted_at.is_(None),
+                    Task.assigned_to.is_not(None),
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    stats: dict[UUID, dict[str, int]] = {
+        uid: {"open": 0, "overdue": 0, "done_today": 0} for uid in members
+    }
+    for t in tasks:
+        s = stats.get(t.assigned_to) if t.assigned_to else None
+        if s is None:
+            continue
+        if t.is_completed:
+            if t.completed_at and t.completed_at.date() == today_date:
+                s["done_today"] += 1
+        else:
+            s["open"] += 1
+            if t.due_at and t.due_at.date() < today_date:
+                s["overdue"] += 1
+
+    rows = sorted(
+        (
+            {
+                "initial": m["initial"],
+                "label": m["label"],
+                "color": m["color"],
+                "open": stats[uid]["open"],
+                "overdue": stats[uid]["overdue"],
+                "done_today": stats[uid]["done_today"],
+            }
+            for uid, m in members.items()
+        ),
+        key=lambda r: str(r["label"]),
+    )
+
+    return templates.TemplateResponse(
+        request,
+        "share/group.html",
+        {"project_name": project.name, "rows": rows},
     )

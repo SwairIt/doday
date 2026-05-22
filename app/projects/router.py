@@ -366,6 +366,22 @@ async def export_ics_endpoint(project_id: UUID, user: RequiredUser, session: DbS
     )
 
 
+@router.get("/{project_id}/group-share-link")
+async def group_share_link_endpoint(
+    project_id: UUID, user: RequiredUser, session: DbSession
+) -> dict[str, str]:
+    """Public read-only group-progress link for a project. Members only."""
+    from app.config import get_settings
+    from app.projects.membership import is_member
+    from app.share.service import make_group_token
+
+    if not await is_member(session, project_id, user.id):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "проект не найден")
+    token = make_group_token(project_id)
+    base = get_settings().app_base_url.rstrip("/")
+    return {"url": f"{base}/share/group/{token}"}
+
+
 @router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_endpoint(project_id: UUID, user: RequiredUser, session: DbSession) -> Response:
     try:

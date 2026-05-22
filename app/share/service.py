@@ -17,9 +17,13 @@ from itsdangerous import BadData, URLSafeTimedSerializer
 
 from app.config import get_settings
 
+# Share links are bearer tokens with no DB row to revoke, so cap their lifetime:
+# a leaked link stops working after this window instead of living forever.
+SHARE_TOKEN_MAX_AGE_SECONDS = 60 * 60 * 24 * 90  # 90 days
+
 
 class InvalidShareToken(Exception):
-    """Raised when a progress-share token is malformed or tampered with."""
+    """Raised when a progress-share token is malformed, tampered with, or expired."""
 
 
 def _serializer() -> URLSafeTimedSerializer:
@@ -33,7 +37,29 @@ def make_progress_token(user_id: UUID) -> str:
 
 def read_progress_token(token: str) -> UUID:
     try:
-        loaded = _serializer().loads(token)  # no max_age → link does not expire (v1)
+        loaded = _serializer().loads(token, max_age=SHARE_TOKEN_MAX_AGE_SECONDS)
+    except BadData as exc:
+        raise InvalidShareToken(str(exc)) from exc
+    if not isinstance(loaded, str):
+        raise InvalidShareToken("token payload is not a string")
+    try:
+        return UUID(loaded)
+    except ValueError as exc:
+        raise InvalidShareToken("token payload is not a uuid") from exc
+
+
+def _group_serializer() -> URLSafeTimedSerializer:
+    return URLSafeTimedSerializer(get_settings().app_secret_key, salt="group-progress")
+
+
+def make_group_token(project_id: UUID) -> str:
+    """Sign a project (class) id into a public read-only group-progress link."""
+    return _group_serializer().dumps(str(project_id))
+
+
+def read_group_token(token: str) -> UUID:
+    try:
+        loaded = _group_serializer().loads(token, max_age=SHARE_TOKEN_MAX_AGE_SECONDS)
     except BadData as exc:
         raise InvalidShareToken(str(exc)) from exc
     if not isinstance(loaded, str):
