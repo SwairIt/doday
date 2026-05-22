@@ -12,6 +12,7 @@
      data-created="{{ task.created_at.isoformat() }}"
      data-assignee="{{ task.assigned_to or '' }}"
      data-labels="{{ task.labels|map(attribute='id')|join(' ') }}"
+     data-title-text="{{ task.title }}"
      data-project="{{ task.project_id }}">
 <div
   id="task-{{ task.id }}"

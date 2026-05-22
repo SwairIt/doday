@@ -7,6 +7,7 @@
   data-project="{{ task.project_id }}"
   data-assignee="{{ task.assigned_to or '' }}"
   data-labels="{{ task.labels|map(attribute='id')|join(' ') }}"
+  data-title-text="{{ task.title }}"
   class="kanban-card group p-3 rounded-lg bg-[var(--surface-2)] border border-[var(--border)] hover:border-[var(--accent)] cursor-grab active:cursor-grabbing transition {% if task.is_completed %}opacity-60{% endif %}"
 >
   <div class="flex items-start gap-2">
