@@ -521,6 +521,21 @@ trap f2025c3). Gated `assignee_map|length>1`. Данные (`data-assignee` на
 
 ---
 
+## 2026-05-22 — Ralph-loop: фильтр по сроку на странице проекта
+
+Завершил тройку фильтров проекта (исполнитель/лейбл/срок). В `project.html`
+добавлен `dueFilter` (persist `doday-due-filter-{id}`), `_passesDue`
+(overdue/today/week/nodate/dated, нормализация даты как в `_groupKey`),
+`setDueFilter`, chip+dropdown «Срок». Общий display-проход теперь
+`_passesAssignee && _passesLabel && _passesDue` (AND); восстановление секций при
+всех фильтрах 'all'. Без схемы/эндпоинтов; `task_row` не тронут (`data-due` был).
+Тест +1, `pytest -q` 767 passed. Playwright: 3 задачи (сегодня/без даты/
+просрочено) → каждый фильтр показывает ровно свою, «Все» → все три; 0 console
+errors. Скрин `docs/screenshots/due-filter.png`. Деплой: prod `/version`
+sha=1e214ac, smoke 25/25 green. Commit `1e214ac`.
+
+---
+
 ## 2026-05-22 — Ralph-loop: «Скопировать выделенные» в bulk-баре
 
 Продолжение select-all: кнопка в bulk-баре кладёт выделенные задачи в буфер
