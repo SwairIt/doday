@@ -521,6 +521,21 @@ trap f2025c3). Gated `assignee_map|length>1`. Данные (`data-assignee` на
 
 ---
 
+## 2026-05-22 — Ralph-loop: «Скопировать выделенные» в bulk-баре
+
+Продолжение select-all: кнопка в bulk-баре кладёт выделенные задачи в буфер
+обмена markdown-чек-листом (`- [ ] Название`) — для стендапа/чата. На обёртку
+задачи/карточку добавлен `data-title-text` (точный регистр; `data-title` —
+нижний). В root x-data bulk-бара метод `copySelected()` (ids из store → titles
+из dataset → markdown → `navigator.clipboard.writeText`), кнопка с локальным
+`copied`-флагом → зелёная галочка «Скопировано ✓» на 1.5с. Чистый фронт, без
+схемы/эндпоинтов. Тесты +2, `pytest -q` 766 passed. Playwright: 16 задач, стаб
+clipboard, select-all → клик → 16 строк `- [ ]` с точными заголовками, 0 console
+errors. Скрин `docs/screenshots/copy-selected.png`. Деплой: prod `/version`
+sha=71249b2, smoke 25/25 green. Commit `71249b2`.
+
+---
+
 ## 2026-05-22 — Ralph-loop: аватар исполнителя в «Сегодня»/«Ближайшие»
 
 Аватар-исполнителя был только на странице проекта и в командном виде, а в
