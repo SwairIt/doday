@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from uuid import UUID
 
 from sqlalchemy import delete, func, select, update
@@ -62,6 +63,13 @@ async def list_members(session: AsyncSession, project_id: UUID) -> list[ProjectM
     return list(rows.scalars().all())
 
 
+def _avatar_data(user_id: UUID, email: str) -> dict[str, str]:
+    """Display data for one assignee avatar: stable colour from the user id."""
+    initial = email[0].upper() if email else "?"
+    color = _AVATAR_PALETTE[int(user_id.hex, 16) % len(_AVATAR_PALETTE)]
+    return {"initial": initial, "label": email, "color": color}
+
+
 async def assignee_map_for_project(
     session: AsyncSession, project_id: UUID
 ) -> dict[UUID, dict[str, str]]:
@@ -77,12 +85,27 @@ async def assignee_map_for_project(
         .join(ProjectMember, ProjectMember.user_id == User.id)
         .where(ProjectMember.project_id == project_id)
     )
-    result: dict[UUID, dict[str, str]] = {}
-    for user_id, email in rows.all():
-        initial = email[0].upper() if email else "?"
-        color = _AVATAR_PALETTE[int(user_id.hex, 16) % len(_AVATAR_PALETTE)]
-        result[user_id] = {"initial": initial, "label": email, "color": color}
-    return result
+    return {user_id: _avatar_data(user_id, email) for user_id, email in rows.all()}
+
+
+async def assignee_map_for_projects(
+    session: AsyncSession, project_ids: Iterable[UUID]
+) -> dict[UUID, dict[str, str]]:
+    """Merged assignee map across several projects (one query, deduped by user).
+
+    Used by cross-project views (Today / Upcoming) so a task from a shared
+    project still shows its assignee avatar. Empty input → empty map.
+    """
+    ids = list(project_ids)
+    if not ids:
+        return {}
+    rows = await session.execute(
+        select(User.id, User.email)
+        .join(ProjectMember, ProjectMember.user_id == User.id)
+        .where(ProjectMember.project_id.in_(ids))
+        .distinct()
+    )
+    return {user_id: _avatar_data(user_id, email) for user_id, email in rows.all()}
 
 
 async def add_member(

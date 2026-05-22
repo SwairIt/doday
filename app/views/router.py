@@ -98,6 +98,8 @@ async def today_view(request: Request, user: RequiredUser, session: DbSession) -
     from sqlalchemy import func
     from sqlalchemy import select as sa_select
 
+    from app.projects.membership import assignee_map_for_projects, shared_project_ids
+
     projects = await list_projects(session, user.id)
     project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
     project_name_map: dict[UUID, str] = {p.id: p.name for p in projects}
@@ -106,6 +108,12 @@ async def today_view(request: Request, user: RequiredUser, session: DbSession) -
     today_date = datetime.now(UTC).date()
     overdue = [t for t in tasks if t.due_at and t.due_at.date() < today_date]
     today = [t for t in tasks if t.due_at and t.due_at.date() >= today_date]
+
+    # Assignee avatars for tasks from shared (team) projects only — keeps the
+    # avatar off personal tasks (which would just show the viewer's own face).
+    shared_ids = set(await shared_project_ids(session, user.id))
+    shown_shared = {t.project_id for t in (*overdue, *today)} & shared_ids
+    assignee_map = await assignee_map_for_projects(session, shown_shared)
 
     done_today_count_row = await session.execute(
         sa_select(func.count())
@@ -147,6 +155,7 @@ async def today_view(request: Request, user: RequiredUser, session: DbSession) -
             "today_label": _today_label(today_date),
             "overdue": overdue,
             "today": today,
+            "assignee_map": assignee_map,
             "done_today_count": done_today_count,
             "done_week_count": done_week_count,
             "completed_today": completed_today,
@@ -865,12 +874,19 @@ async def schedule_view(request: Request, user: RequiredUser, session: DbSession
 
 @router.get("/upcoming", response_class=HTMLResponse)
 async def upcoming_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
+    from app.projects.membership import assignee_map_for_projects, shared_project_ids
+
     projects = await list_projects(session, user.id)
     project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
     project_name_map: dict[UUID, str] = {p.id: p.name for p in projects}
 
     tasks = await list_upcoming(session, user.id, days=7)
     today_date = datetime.now(UTC).date()
+
+    # Assignee avatars for shared-project tasks only (see today_view).
+    shared_ids = set(await shared_project_ids(session, user.id))
+    shown_shared = {t.project_id for t in tasks} & shared_ids
+    assignee_map = await assignee_map_for_projects(session, shown_shared)
 
     grouped: dict[date, list[Task]] = defaultdict(list)
     for t in tasks:
@@ -904,6 +920,7 @@ async def upcoming_view(request: Request, user: RequiredUser, session: DbSession
             "project_name_map": project_name_map,
             "days": days,
             "range_label": range_label,
+            "assignee_map": assignee_map,
         },
     )
 
