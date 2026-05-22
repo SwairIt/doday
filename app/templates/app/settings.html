@@ -615,13 +615,46 @@
       <a href="/help/school-integrations" class="text-[var(--accent)] hover:underline">Как достать токен →</a>
     </p>
 
-    {# Bookmarklet — easiest way to grab the token without DevTools.
-       User drags the link to bookmarks bar, opens school portal, clicks bookmark — gets sent back to Doday with token pre-filled. #}
+    {# Primary token-acquisition method: open portal's /v2/token/refresh page,
+       it renders the current aupd_token on screen, user copies + pastes.
+       Works everywhere (no HttpOnly-cookie worries). #}
+    <div class="rounded-xl border border-[var(--accent)]/50 bg-[var(--accent)]/10 p-4 mb-4">
+      <div class="flex items-start gap-3">
+        <span class="text-2xl shrink-0 leading-none mt-0.5">🔑</span>
+        <div class="flex-1 min-w-0">
+          <div class="text-sm font-semibold mb-1">Самый простой способ — ссылка-токен</div>
+          <p class="text-xs text-[var(--text-muted)] mb-3">
+            <strong>1.</strong> Войди в свой школьный портал →
+            <strong>2.</strong> Открой ссылку ниже →
+            <strong>3.</strong> Скопируй токен со страницы (начинается с <code>eyJhb…</code>) и вставь в форму ниже.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <a href="https://authedu.mosreg.ru/v2/token/refresh?roleId=1&amp;subsystem=2"
+               target="_blank" rel="noopener"
+               class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg grad-bg text-white text-xs font-semibold shadow-glow">
+              🎓 Школьный портал МО →
+            </a>
+            <a href="https://school.mos.ru/v2/token/refresh"
+               target="_blank" rel="noopener"
+               class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--surface-2)] border border-[var(--accent)]/40 text-xs font-semibold hover:bg-[var(--accent)]/10">
+              🏛 МЭШ (Москва) →
+            </a>
+          </div>
+          <p class="text-[11px] text-[var(--text-muted)] mt-2">
+            Токен живёт ~10 дней. Протух — открой ссылку снова и обнови в Doday.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    {# Bookmarklet — fully automatic alternative when cookies are JS-accessible.
+       User drags the link to bookmarks bar, opens school portal, clicks bookmark
+       — gets sent back to Doday with token + student_id pre-filled. #}
     <div class="rounded-xl border border-dashed border-[var(--accent)]/40 bg-[var(--accent)]/5 p-4 mb-4">
       <div class="flex items-start gap-3">
         <span class="text-2xl shrink-0 leading-none mt-0.5">🔖</span>
         <div class="flex-1 min-w-0">
-          <div class="text-sm font-semibold mb-1">Самый простой способ — кнопка-закладка</div>
+          <div class="text-sm font-semibold mb-1">Ещё короче — кнопка-закладка (если повезёт с cookie)</div>
           <p class="text-xs text-[var(--text-muted)] mb-3">
             <strong>1.</strong> Перетащи кнопку справа в панель закладок браузера →
             <strong>2.</strong> Открой школьный портал и войди в аккаунт →

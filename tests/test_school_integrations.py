@@ -228,6 +228,9 @@ async def test_profile_shows_school_section(logged_in_client: AsyncClient) -> No
     body = (await logged_in_client.get("/app/settings")).text
     assert "Школьный дневник" in body
     assert "/api/school/integrations" in body
+    # Primary token-acquisition method: portal's /v2/token/refresh pages.
+    assert "authedu.mosreg.ru/v2/token/refresh" in body
+    assert "school.mos.ru/v2/token/refresh" in body
 
 
 async def test_create_integration_stores_student_id(logged_in_client: AsyncClient) -> None:
