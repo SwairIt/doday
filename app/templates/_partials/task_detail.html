@@ -16,6 +16,11 @@
         <span class="truncate">{{ project.name }}</span>
       </a>
       <div class="flex items-center gap-1 shrink-0">
+        <button type="button" title="Скопировать ссылку на задачу" aria-label="Поделиться задачей"
+                @click="(async () => { const url = location.origin + location.pathname + '?task={{ task.id }}'; try { if (navigator.clipboard) await navigator.clipboard.writeText(url); window.dodayToast && window.dodayToast('Ссылка скопирована', {icon: '🔗'}); } catch (e) { window.dodayToast && window.dodayToast('Не удалось скопировать', {icon: '⚠'}); } })()"
+                class="p-1.5 rounded hover:bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--accent)] transition">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+        </button>
         <button type="button" title="Дублировать задачу" aria-label="Дублировать задачу"
                 @click="fetch('/api/tasks/{{ task.id }}/duplicate', {method:'POST', credentials:'include'}).then(r => { if(r.ok) location.reload(); })"
                 class="p-1.5 rounded hover:bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--accent)] transition">
