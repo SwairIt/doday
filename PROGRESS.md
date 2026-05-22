@@ -521,6 +521,22 @@ trap f2025c3). Gated `assignee_map|length>1`. Данные (`data-assignee` на
 
 ---
 
+## 2026-05-22 — Ralph-loop: вкладка «Активность» на странице проекта
+
+Глобальная `/app/activity` показывала активность только текущего юзера. Добавил
+пер-проектную ленту: ветка `view == "activity"` в `project_view` →
+`_project_activity_view` собирает created/completed задачи + комментарии по
+проекту за 30 дней (все участники), группирует по дням, у created/comment ставит
+`actor` из `assignee_map_for_project` (completed — без актора, поля completed_by
+нет, схему не трогаем). Новый шаблон `project_activity.html` (шапка + таб
+Список/Доска/Активность + лента с аватаром автора), третья вкладка в
+project/kanban. Без схемы/новых таблиц/эндпоинтов. Тесты +3, `pytest -q` 772
+passed. Playwright: 4 события (завершено без аватара, коммент+создал×2 с
+аватаром), 0 console errors. Скрин `docs/screenshots/project-activity.png`.
+Деплой: prod `/version` sha=677f7e3, smoke 25/25 green. Commit `677f7e3`.
+
+---
+
 ## 2026-05-22 — Ralph-loop: drag задач между секциями на list-виде
 
 На list-виде задачи таскались только внутри секции (изолированные Sortable без
