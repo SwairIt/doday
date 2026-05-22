@@ -521,6 +521,23 @@ trap f2025c3). Gated `assignee_map|length>1`. Данные (`data-assignee` на
 
 ---
 
+## 2026-05-22 — Ralph-loop: drag задач между секциями на list-виде
+
+На list-виде задачи таскались только внутри секции (изолированные Sortable без
+`group`); перенос — только через контекст-меню. Канбан cross-column умел давно.
+Добавил каждому `.sortable-tasks` `group: 'tasks-{project.id}'` и переписал
+`onEnd(evt)`: при `evt.to !== evt.from` → `PATCH /api/tasks/{id}
+{section_id: evt.to.dataset.sectionId || null}` + reorder целевого контейнера;
+внутри контейнера — прежний reorder. Используются существующие эндпоинты, без
+схемы. Тесты +2, `pytest -q` 768 passed (один flaky `test_subtasks…today` —
+полуночная гонка в самом тесте, в изоляции зелёный). Playwright: программный
+вызов реального onEnd → после reload сервер рендерит задачу во второй секции
+(PATCH сохранился), 0 console errors. Скрин
+`docs/screenshots/drag-between-sections.png`. Деплой: prod `/version`
+sha=fdd70bd, smoke 25/25 green. Commit `fdd70bd`.
+
+---
+
 ## 2026-05-22 — Ralph-loop: фильтр по сроку на странице проекта
 
 Завершил тройку фильтров проекта (исполнитель/лейбл/срок). В `project.html`
