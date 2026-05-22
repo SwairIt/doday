@@ -33,6 +33,7 @@ from app.projects.router import invites_router
 from app.projects.router import router as projects_router
 from app.school.router import router as school_router
 from app.sections.router import router as sections_router
+from app.share.router import router as share_router
 from app.stats.router import router as stats_router
 from app.taptower_proxy import router as taptower_router
 from app.tasks.router import reorder_router as tasks_reorder_router
@@ -129,6 +130,7 @@ app.include_router(views_router)
 app.include_router(htmx_router)
 app.include_router(profile_router)
 app.include_router(sections_router)
+app.include_router(share_router)
 app.include_router(backup_router)
 app.include_router(task_comments_router)
 app.include_router(comments_router)

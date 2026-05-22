@@ -59,6 +59,17 @@ async def remove_telegram_link(user: RequiredUser, session: DbSession) -> None:
     await unlink(session, user.id)
 
 
+@router.get("/share-link")
+async def get_share_link(user: RequiredUser) -> dict[str, str]:
+    """Return a public read-only progress link for the signed-in user (for parents)."""
+    from app.config import get_settings
+    from app.share.service import make_progress_token
+
+    token = make_progress_token(user.id)
+    base = get_settings().app_base_url.rstrip("/")
+    return {"url": f"{base}/share/progress/{token}"}
+
+
 @router.post("/password")
 async def change_password(
     user: RequiredUser,

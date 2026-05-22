@@ -31,6 +31,43 @@
     </div>
   </section>
 
+  <section class="card p-6"
+           x-data="{ link: '', copied: false, loading: false,
+             async generate() {
+               this.loading = true;
+               try {
+                 const r = await fetch('/api/profile/share-link', {credentials: 'include'});
+                 if (r.ok) { this.link = (await r.json()).url; }
+               } finally { this.loading = false; }
+             },
+             async copy() {
+               if (!this.link) return;
+               try { if (navigator.clipboard) await navigator.clipboard.writeText(this.link); } catch (e) {}
+               this.copied = true; setTimeout(() => this.copied = false, 1500);
+             } }">
+    <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">Поделиться прогрессом</h2>
+    <p class="text-sm text-[var(--text-muted)] mb-4">
+      Ссылка для родителя или преподавателя — они увидят твой прогресс на сегодня
+      без регистрации. Только просмотр, менять ничего не смогут.
+    </p>
+    <template x-if="!link">
+      <button type="button" @click="generate()" :disabled="loading"
+              class="btn-primary px-4 py-2 text-sm">
+        <span x-show="!loading">Создать ссылку</span>
+        <span x-show="loading" x-cloak>Создаю…</span>
+      </button>
+    </template>
+    <template x-if="link">
+      <div class="flex items-center gap-2">
+        <input type="text" readonly :value="link" @focus="$el.select()"
+               class="flex-1 bg-[var(--surface-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm outline-none">
+        <button type="button" @click="copy()"
+                class="btn-ghost px-3 py-2 text-sm shrink-0"
+                x-text="copied ? 'Скопировано!' : 'Копировать'"></button>
+      </div>
+    </template>
+  </section>
+
   <section class="card p-6">
     <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-4">Статистика</h2>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
