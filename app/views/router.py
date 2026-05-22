@@ -11,6 +11,7 @@ from fastapi.templating import Jinja2Templates
 from app.auth.deps import DbSession, RequiredUser
 from app.auth.models import User
 from app.comments.service import comment_counts_for
+from app.projects.models import Project
 from app.projects.service import (
     ProjectNotFound,
     get_project_by_slug,
@@ -305,6 +306,9 @@ async def project_view(
     except ProjectNotFound as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "проект не найден") from e
 
+    if view == "activity":
+        return await _project_activity_view(request, user, session, project)
+
     tasks = await list_tasks(session, user.id, project_id=project.id, include_completed=True)
     sections = await list_sections(session, user.id, project.id)
 
@@ -358,6 +362,139 @@ async def project_view(
             "project_labels": project_labels,
             "subtask_counts": subtask_counts,
             "comment_count_map": comment_count_map,
+        },
+    )
+
+
+async def _project_activity_view(
+    request: Request, user: User, session: DbSession, project: Project
+) -> HTMLResponse:
+    """Activity tab for a project — created/completed tasks + comments by ALL
+    members over the last 30 days, with the actor's avatar where attributable."""
+    from sqlalchemy import select as sa_select
+
+    from app.comments.models import Comment
+    from app.projects.membership import assignee_map_for_project
+
+    cutoff = datetime.now(UTC) - timedelta(days=30)
+    today_date = datetime.now(UTC).date()
+    yesterday = today_date - timedelta(days=1)
+
+    assignee_map = await assignee_map_for_project(session, project.id)
+
+    created_rows = (
+        (
+            await session.execute(
+                sa_select(Task).where(
+                    Task.project_id == project.id,
+                    Task.created_at >= cutoff,
+                    Task.deleted_at.is_(None),
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+    completed_rows = (
+        (
+            await session.execute(
+                sa_select(Task).where(
+                    Task.project_id == project.id,
+                    Task.is_completed.is_(True),
+                    Task.completed_at.is_not(None),
+                    Task.completed_at >= cutoff,
+                    Task.deleted_at.is_(None),
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+    comment_rows = (
+        (
+            await session.execute(
+                sa_select(Comment)
+                .join(Task, Comment.task_id == Task.id)
+                .where(Task.project_id == project.id, Comment.created_at >= cutoff)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    task_lookup: dict[UUID, Task] = {t.id: t for t in (*created_rows, *completed_rows)}
+
+    def _actor(uid: UUID) -> dict[str, str] | None:
+        return assignee_map.get(uid)
+
+    items: list[dict[str, object]] = []
+    for t in created_rows:
+        items.append(
+            {
+                "kind": "created",
+                "ts": t.created_at,
+                "title": t.title,
+                "task_id": t.id,
+                "extra": "",
+                "actor": _actor(t.user_id),
+            }
+        )
+    for t in completed_rows:
+        items.append(
+            {
+                "kind": "completed",
+                "ts": t.completed_at,
+                "title": t.title,
+                "task_id": t.id,
+                "extra": "",
+                "actor": None,
+            }
+        )
+    for c in comment_rows:
+        parent = task_lookup.get(c.task_id) or await session.get(Task, c.task_id)
+        if parent is None:
+            continue
+        snippet = c.body if len(c.body) <= 80 else c.body[:77] + "…"
+        items.append(
+            {
+                "kind": "commented",
+                "ts": c.created_at,
+                "title": parent.title,
+                "task_id": parent.id,
+                "extra": snippet,
+                "actor": _actor(c.user_id),
+            }
+        )
+
+    items.sort(key=lambda x: x["ts"], reverse=True)  # type: ignore[arg-type,return-value]
+
+    grouped: dict[date, list[dict[str, object]]] = defaultdict(list)
+    for it in items:
+        ts = it["ts"]
+        when = ts.date() if isinstance(ts, datetime) else today_date
+        grouped[when].append(it)
+
+    days = []
+    for d in sorted(grouped, reverse=True):
+        if d == today_date:
+            label = "Сегодня"
+        elif d == yesterday:
+            label = "Вчера"
+        else:
+            label = (
+                f"{_RU_WEEKDAYS[d.weekday()].capitalize()}, {d.day} {_RU_MONTHS_GEN[d.month - 1]}"
+            )
+        days.append({"date": d, "label": label, "events": grouped[d]})
+
+    return templates.TemplateResponse(
+        request,
+        "app/project_activity.html",
+        {
+            "current_user": user,
+            "current_view": "project",
+            "view_mode": "activity",
+            "project": project,
+            "days": days,
+            "total": len(items),
         },
     )
 
