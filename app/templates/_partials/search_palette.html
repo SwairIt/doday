@@ -2,7 +2,28 @@
 <div
   x-data="{
     open: false,
+    q: '',
+    commands: [
+      {label: 'Сегодня', url: '/app/today', icon: '📅'},
+      {label: 'Инбокс', url: '/app/inbox', icon: '📥'},
+      {label: 'Ближайшие', url: '/app/upcoming', icon: '🗓'},
+      {label: 'Календарь', url: '/app/calendar', icon: '📆'},
+      {label: 'Команда', url: '/app/team', icon: '👥'},
+      {label: 'Назначено мне', url: '/app/assigned', icon: '🙋'},
+      {label: 'Активность', url: '/app/activity', icon: '⚡'},
+      {label: 'Статистика', url: '/app/stats', icon: '📊'},
+      {label: 'Выполненные', url: '/app/done', icon: '✅'},
+      {label: 'Лейблы', url: '/app/labels', icon: '🏷'},
+      {label: 'Настройки', url: '/app/settings', icon: '⚙'}
+    ],
+    get matchedCommands() {
+      const term = this.q.trim().toLowerCase();
+      if (!term) return this.commands;
+      return this.commands.filter(c => c.label.toLowerCase().includes(term));
+    },
+    go(url) { this.open = false; window.location.href = url; },
     init() {
+      this.$watch('open', v => { if (v) this.q = ''; });
       document.addEventListener('open-search', () => this.open = true);
       window.addEventListener('keydown', (e) => {
         if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -37,6 +58,7 @@
         class="flex-1 bg-transparent border-none outline-none text-base"
         x-ref="input"
         x-show="open"
+        x-model="q"
         @keydown.escape="open = false"
         x-init="$watch('open', value => { if (value) $nextTick(() => $refs.input.focus()) })"
         hx-get="/htmx/search"
@@ -46,7 +68,20 @@
       >
       <kbd class="text-xs px-1.5 py-0.5 rounded bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text-muted)]">Esc</kbd>
     </div>
-    <div id="search-results" class="max-h-[60vh] overflow-y-auto">
+    {# Quick-navigation commands — palette doubles as a launcher. Filtered live by the query. #}
+    <template x-if="matchedCommands.length">
+      <div class="border-b border-[var(--border)] py-1.5">
+        <div class="px-4 py-1 text-[10px] uppercase tracking-wider font-semibold text-[var(--text-muted)]">Перейти</div>
+        <template x-for="c in matchedCommands" :key="c.url">
+          <button type="button" @click="go(c.url)"
+                  class="w-full flex items-center gap-3 px-4 py-2 text-left text-sm hover:bg-[var(--surface-2)] transition">
+            <span class="w-5 text-center" x-text="c.icon"></span>
+            <span x-text="c.label"></span>
+          </button>
+        </template>
+      </div>
+    </template>
+    <div id="search-results" class="max-h-[50vh] overflow-y-auto">
       <div class="px-4 py-8 text-center text-sm text-[var(--text-muted)]">
         Начни печатать чтобы найти что-то.
       </div>
