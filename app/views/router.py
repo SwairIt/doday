@@ -116,6 +116,11 @@ async def today_view(request: Request, user: RequiredUser, session: DbSession) -
     shown_shared = {t.project_id for t in (*overdue, *today)} & shared_ids
     assignee_map = await assignee_map_for_projects(session, shown_shared)
 
+    # Subtask-progress + comment badges (same as the project/kanban views).
+    shown_ids = [t.id for t in (*overdue, *today)]
+    subtask_counts = await subtask_counts_for(session, user.id, shown_ids)
+    comment_count_map = await comment_counts_for(session, shown_ids)
+
     done_today_count_row = await session.execute(
         sa_select(func.count())
         .select_from(Task)
@@ -157,6 +162,8 @@ async def today_view(request: Request, user: RequiredUser, session: DbSession) -
             "overdue": overdue,
             "today": today,
             "assignee_map": assignee_map,
+            "subtask_counts": subtask_counts,
+            "comment_count_map": comment_count_map,
             "done_today_count": done_today_count,
             "done_week_count": done_week_count,
             "completed_today": completed_today,
@@ -565,6 +572,7 @@ async def assigned_view(request: Request, user: RequiredUser, session: DbSession
     project_name_map: dict[UUID, str] = {p.id: p.name for p in projects}
     project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
     comment_count_map = await comment_counts_for(session, [t.id for t in tasks])
+    subtask_counts = await subtask_counts_for(session, user.id, [t.id for t in tasks])
 
     by_project: dict[UUID, list[Task]] = defaultdict(list)
     for t in tasks:
@@ -588,6 +596,7 @@ async def assigned_view(request: Request, user: RequiredUser, session: DbSession
             "projects": projects,
             "project_color_map": project_color_map,
             "comment_count_map": comment_count_map,
+            "subtask_counts": subtask_counts,
             "groups": groups,
             "total": len(tasks),
         },
@@ -614,6 +623,7 @@ async def team_view(request: Request, user: RequiredUser, session: DbSession) ->
     project_name_map: dict[UUID, str] = {p.id: p.name for p in projects}
     project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
     comment_count_map = await comment_counts_for(session, [t.id for t in tasks])
+    subtask_counts = await subtask_counts_for(session, user.id, [t.id for t in tasks])
 
     by_assignee: dict[UUID | None, list[Task]] = defaultdict(list)
     for t in tasks:
@@ -640,6 +650,7 @@ async def team_view(request: Request, user: RequiredUser, session: DbSession) ->
             "project_name_map": project_name_map,
             "assignee_map": assignee_map,
             "comment_count_map": comment_count_map,
+            "subtask_counts": subtask_counts,
             "groups": groups,
             "total": len(tasks),
         },
@@ -1025,6 +1036,11 @@ async def upcoming_view(request: Request, user: RequiredUser, session: DbSession
     shown_shared = {t.project_id for t in tasks} & shared_ids
     assignee_map = await assignee_map_for_projects(session, shown_shared)
 
+    # Subtask-progress + comment badges (same as the project/kanban views).
+    ids = [t.id for t in tasks]
+    subtask_counts = await subtask_counts_for(session, user.id, ids)
+    comment_count_map = await comment_counts_for(session, ids)
+
     grouped: dict[date, list[Task]] = defaultdict(list)
     for t in tasks:
         if t.due_at is not None:
@@ -1058,6 +1074,8 @@ async def upcoming_view(request: Request, user: RequiredUser, session: DbSession
             "days": days,
             "range_label": range_label,
             "assignee_map": assignee_map,
+            "subtask_counts": subtask_counts,
+            "comment_count_map": comment_count_map,
         },
     )
 
