@@ -19,6 +19,8 @@ class IntegrationIn(BaseModel):
 
     provider: Provider
     auth_token: str = Field(min_length=8, max_length=2048)
+    # Portal student id (digits). Not secret; selects which child's diary.
+    student_id: str | None = Field(default=None, max_length=32)
     target_project_id: UUID | None = None
     enabled: bool = True
 
@@ -29,6 +31,7 @@ class IntegrationOut(BaseModel):
     id: UUID
     provider: Provider
     enabled: bool
+    student_id: str | None
     target_project_id: UUID | None
     last_sync_at: datetime | None
     last_error: str | None

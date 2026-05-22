@@ -36,6 +36,9 @@ class SchoolIntegration(Base):
     )
     provider: Mapped[str] = mapped_column(String(20), nullable=False)
     auth_token: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    # Portal student id (e.g. authedu `student_id`/`Profile-Id`). Not a secret —
+    # selects which child's diary to pull. Required by the family-web API.
+    student_id: Mapped[str | None] = mapped_column(String(32), nullable=True)
     target_project_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("projects.id", ondelete="SET NULL"), nullable=True
     )

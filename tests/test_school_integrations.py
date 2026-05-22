@@ -228,3 +228,42 @@ async def test_profile_shows_school_section(logged_in_client: AsyncClient) -> No
     body = (await logged_in_client.get("/app/settings")).text
     assert "Школьный дневник" in body
     assert "/api/school/integrations" in body
+
+
+async def test_create_integration_stores_student_id(logged_in_client: AsyncClient) -> None:
+    response = await logged_in_client.post(
+        "/api/school/integrations",
+        data={
+            "provider": "school_mo",
+            "auth_token": "fake-token-1234567",
+            "student_id": "560752",
+        },
+    )
+    assert response.status_code == 200
+    assert response.json()["student_id"] == "560752"
+
+
+async def test_import_skips_not_assigned_and_empty(logged_in_client: AsyncClient) -> None:
+    """Real authedu shape: «не задано» / blank homework must not become tasks."""
+    await logged_in_client.post(
+        "/api/school/integrations",
+        data={"provider": "school_mo", "auth_token": "tok-1234567", "student_id": "560752"},
+    )
+    payload = {
+        "payload": [
+            {"subject_name": "Литература", "homework": "не задано", "date": "2026-12-25"},
+            {"subject_name": "Физика", "homework": "", "date": "2026-12-25"},
+            {
+                "subject_name": "Алгебра",
+                "homework": "§ 5, № 12",
+                "date": "2026-12-25",
+                "homework_id": 99,
+            },
+        ]
+    }
+    body = (
+        await logged_in_client.post("/api/school/integrations/school_mo/import", json=payload)
+    ).json()
+    assert body["ok"] is True
+    assert body["pulled"] == 1  # only Алгебра survives the «не задано» filter
+    assert body["created"] == 1

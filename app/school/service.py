@@ -50,12 +50,14 @@ async def upsert_integration(
             user_id=user_id,
             provider=payload.provider,
             auth_token=payload.auth_token,
+            student_id=payload.student_id,
             target_project_id=payload.target_project_id,
             enabled=payload.enabled,
         )
         session.add(existing)
     else:
         existing.auth_token = payload.auth_token
+        existing.student_id = payload.student_id
         existing.target_project_id = payload.target_project_id
         existing.enabled = payload.enabled
         existing.last_error = None
@@ -84,9 +86,9 @@ async def sync_now(session: AsyncSession, user_id: UUID, provider: Provider) -> 
 
     try:
         if provider == "school_mo":
-            payload = await _fetch_school_mo(integ.auth_token)
+            payload = await _fetch_school_mo(integ.auth_token, integ.student_id)
         elif provider == "mesh":
-            payload = await _fetch_mesh(integ.auth_token)
+            payload = await _fetch_mesh(integ.auth_token, integ.student_id)
         else:  # pragma: no cover — Literal["school_mo","mesh"] guards this
             return _save_error(session, integ, f"Неизвестный провайдер: {provider}")
     except _PortalError as e:
@@ -120,51 +122,65 @@ class _PortalError(Exception):
 _USER_AGENT = "Doday/0.1 (+self-hosted; contact via .env SMTP_FROM)"
 
 
-async def _fetch_school_mo(auth_token: str) -> list[dict[str, object]]:
-    """Pull homework from Школьный портал МО using `aupd_token` cookie.
+async def _fetch_school_mo(auth_token: str, student_id: str | None) -> list[dict[str, object]]:
+    """Pull homework from Школьный портал МО using `aupd_token` (Bearer).
 
-    Host is authedu.mosreg.ru (the auth+edu unified portal). Older docs may
-    say school.mosreg.ru — that hostname now redirects to authedu anyway.
+    Host is authedu.mosreg.ru. Verified endpoint+headers from a real browser
+    request: GET /api/family/web/v1/homeworks?from&to&student_id with the
+    familyweb subsystem headers below.
     """
     today = datetime.now(UTC).date()
     end = today + timedelta(days=21)
     return await _fetch_with_aupd_token(
         host="https://authedu.mosreg.ru",
         token=auth_token,
+        student_id=student_id,
         date_from=today.isoformat(),
         date_to=end.isoformat(),
     )
 
 
-async def _fetch_mesh(auth_token: str) -> list[dict[str, object]]:
-    """Pull homework from МЭШ (dnevnik.mos.ru) using `auth_token` cookie."""
+async def _fetch_mesh(auth_token: str, student_id: str | None) -> list[dict[str, object]]:
+    """Pull homework from МЭШ (dnevnik.mos.ru) — same family-web gateway."""
     today = datetime.now(UTC).date()
     end = today + timedelta(days=21)
     return await _fetch_with_aupd_token(
         host="https://dnevnik.mos.ru",
         token=auth_token,
+        student_id=student_id,
         date_from=today.isoformat(),
         date_to=end.isoformat(),
     )
 
 
 async def _fetch_with_aupd_token(
-    *, host: str, token: str, date_from: str, date_to: str
+    *, host: str, token: str, student_id: str | None, date_from: str, date_to: str
 ) -> list[dict[str, object]]:
-    """Hit the family-web homework endpoint. Surfaces HTTP details on failure."""
+    """Hit the family-web homework endpoint. Surfaces HTTP details on failure.
+
+    Auth + required headers replicate a real browser request to the mosreg/mos
+    family-web API (a Gravitee gateway): Bearer token + the `familyweb`
+    subsystem/role headers. `Profile-Id` and the `student_id` query select the
+    pupil and are required when set.
+    """
     headers = {
         "User-Agent": _USER_AGENT,
         "Accept": "application/json",
-        # Both portals serve their family API behind aupd_token cookie auth.
-        # Some endpoints additionally honour `Authorization: Bearer <token>`.
+        # The family API authorizes via Bearer; the cookie is a harmless extra.
         "Cookie": f"aupd_token={token}",
         "Authorization": f"Bearer {token}",
+        "X-mes-subsystem": "familyweb",
+        "Profile-Type": "student",
+        "X-Mes-RoleId": "1",
     }
-    # Try a couple of plausible path layouts in order. First match wins.
+    student_q = f"&student_id={student_id}" if student_id else ""
+    if student_id:
+        headers["Profile-Id"] = student_id
+    # Verified path first; keep fallbacks for portal-version drift. First match wins.
     candidate_paths = [
-        f"/api/family/web/v1/homeworks?from={date_from}&to={date_to}",
-        f"/api/family/v1/homeworks?from={date_from}&to={date_to}",
-        f"/api/v1/homeworks?from={date_from}&to={date_to}",
+        f"/api/family/web/v1/homeworks?from={date_from}&to={date_to}{student_q}",
+        f"/api/family/v1/homeworks?from={date_from}&to={date_to}{student_q}",
+        f"/api/v1/homeworks?from={date_from}&to={date_to}{student_q}",
     ]
     last_error: str | None = None
     async with httpx.AsyncClient(timeout=20.0, follow_redirects=True) as client:
@@ -177,11 +193,11 @@ async def _fetch_with_aupd_token(
                 continue
             if response.status_code == 401 or response.status_code == 403:
                 raise _PortalError(
-                    f"Портал ответил {response.status_code} — наш сервер не пускают. "
-                    "Возможные причины: (1) токен истёк (войди заново на портал и обнови по закладке), "
-                    "(2) портал блокирует запросы из-за рубежа (наш Yesbeat-сервер на Azure EU). "
-                    "Воркэраунд: используй кнопку «📋 Импорт JSON» — там копируешь ответ портала из своего браузера, "
-                    "и Doday создаёт задачи без обращения к API."
+                    f"Портал ответил {response.status_code}. Скорее всего, токен истёк — "
+                    "войди заново на портал и обнови aupd_token (он живёт ~10 дней). "
+                    "Проверь также, что указан верный student_id. "
+                    "Запасной вариант: кнопка «📋 Импорт JSON» — вставляешь ответ портала "
+                    "из своего браузера, и Doday создаёт задачи без обращения к API."
                 )
             if response.status_code == 404:
                 last_error = f"{url} → 404"
@@ -227,10 +243,13 @@ def _normalize_homework_payload(raw: object) -> list[dict[str, object]]:
             subject = subj_field.get("name") or ""
         else:
             subject = subj_field or it.get("subject_name") or ""
-        body = it.get("task") or it.get("description") or it.get("text") or it.get("homework") or ""
+        body = it.get("homework") or it.get("task") or it.get("description") or it.get("text") or ""
         deadline = it.get("deadline") or it.get("due_at") or it.get("date_to") or it.get("date")
-        external_id = str(it.get("id") or it.get("homework_id") or "")
-        if not body and not subject:
+        external_id = str(
+            it.get("id") or it.get("homework_id") or it.get("homework_entry_id") or ""
+        )
+        # «не задано» / blank = lesson happened but nothing was set — not a todo.
+        if str(body).strip().lower() in ("", "не задано", "не задано."):
             continue
         out.append(
             {

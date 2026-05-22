@@ -525,6 +525,7 @@
              integrations: [],
              provider: 'school_mo',
              token: '',
+             studentId: '',
              saving: false,
              syncing: null,
              err: null,
@@ -545,13 +546,16 @@
                const u = new URL(window.location.href);
                const tok = u.searchParams.get('school_token');
                const prov = u.searchParams.get('school_provider');
+               const sid = u.searchParams.get('school_student_id');
                if (!tok) return;
                if (prov === 'school_mo' || prov === 'mesh') this.provider = prov;
                this.token = tok;
+               if (sid) this.studentId = sid;
                this.autoFilled = true;
                // Strip params from URL (don't keep token in history) + auto-save
                u.searchParams.delete('school_token');
                u.searchParams.delete('school_provider');
+               u.searchParams.delete('school_student_id');
                window.history.replaceState({}, '', u.toString() + '#school');
                this.$nextTick(() => this.save());
              },
@@ -560,6 +564,7 @@
                const fd = new FormData();
                fd.append('provider', this.provider);
                fd.append('auth_token', this.token);
+               if (this.studentId) fd.append('student_id', this.studentId);
                try {
                  const r = await fetch('/api/school/integrations', {method:'POST', body: fd, credentials:'include'});
                  if (r.ok) { this.ok = 'Сохранено'; this.token = ''; await this.load(); }
@@ -624,7 +629,7 @@
           </p>
           <div class="flex items-center gap-2 flex-wrap">
             <a draggable="true"
-               href="javascript:(function(){var d=document,h=location.hostname,p=null;if(/mosreg/.test(h))p='school_mo';else if(/dnevnik\.mos/.test(h)||/mos\.ru/.test(h))p='mesh';else{alert('Открой школьный портал перед кликом по закладке (school.mosreg.ru или dnevnik.mos.ru)');return;}var t=null;d.cookie.split(';').forEach(function(c){var kv=c.trim().split('=');if(['auth_token','aupd_token'].indexOf(kv[0])!==-1)t=kv.slice(1).join('=');});if(!t)try{for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(/token/i.test(k)){var v=localStorage.getItem(k);if(v&&v.length>40&&!/\s/.test(v)){t=v;break;}}}}catch(e){}if(!t){alert('Не нашёл токен. Возможно портал хранит его в HttpOnly cookie. Тогда только через F12 — Application — Cookies.');return;}location.href='https://getdoday.ru/app/settings?school_provider='+p+'&school_token='+encodeURIComponent(t)+'#school';})();"
+               href="javascript:(function(){var d=document,h=location.hostname,p=null;if(/mosreg/.test(h))p='school_mo';else if(/dnevnik\.mos/.test(h)||/mos\.ru/.test(h))p='mesh';else{alert('Открой школьный портал перед кликом по закладке (school.mosreg.ru или dnevnik.mos.ru)');return;}var t=null;d.cookie.split(';').forEach(function(c){var kv=c.trim().split('=');if(['auth_token','aupd_token'].indexOf(kv[0])!==-1)t=kv.slice(1).join('=');});var sid='';d.cookie.split(';').forEach(function(c){var kv=c.trim().split('=');if(kv[0]==='active_student')sid=kv.slice(1).join('=');});if(!t)try{for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(/token/i.test(k)){var v=localStorage.getItem(k);if(v&&v.length>40&&!/\s/.test(v)){t=v;break;}}}}catch(e){}if(!t){alert('Не нашёл токен. Возможно портал хранит его в HttpOnly cookie. Тогда только через F12 — Application — Cookies.');return;}location.href='https://getdoday.ru/app/settings?school_provider='+p+'&school_token='+encodeURIComponent(t)+(sid?'&school_student_id='+encodeURIComponent(sid):'')+'#school';})();"
                onclick="event.preventDefault(); alert('☝ Перетащи эту кнопку в панель закладок (обычно сверху или Ctrl+Shift+B чтобы её показать), а потом нажимай её на странице школьного портала.');"
                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg grad-bg text-white text-xs font-semibold shadow-glow cursor-grab active:cursor-grabbing">
               📥 Получить токен Doday
@@ -695,6 +700,14 @@
                  placeholder="вставь сюда длинную строку из cookie"
                  class="w-full px-3 py-2 rounded-lg bg-[var(--surface-2)] border border-[var(--border)] text-sm font-mono">
         </div>
+      </div>
+      <div>
+        <label class="block text-xs text-[var(--text-muted)] mb-1">
+          ID ученика <span class="text-[var(--text-muted)]/70">(student_id из адресной строки портала, напр. 560752)</span>
+        </label>
+        <input x-model="studentId" type="text" inputmode="numeric" autocomplete="off"
+               placeholder="например 560752"
+               class="w-full px-3 py-2 rounded-lg bg-[var(--surface-2)] border border-[var(--border)] text-sm font-mono">
       </div>
       <div class="flex items-center gap-3">
         <button type="submit" :disabled="saving || token.length < 8" class="btn-primary px-4 py-2 text-sm">

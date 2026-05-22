@@ -40,6 +40,7 @@ async def upsert_endpoint(
     session: DbSession,
     provider: Annotated[str, Form()],
     auth_token: Annotated[str, Form()],
+    student_id: Annotated[str | None, Form()] = None,
     target_project_id: Annotated[str | None, Form()] = None,
     enabled: Annotated[bool, Form()] = True,
 ) -> IntegrationOut:
@@ -50,6 +51,7 @@ async def upsert_endpoint(
         payload = IntegrationIn(
             provider=provider,  # type: ignore[arg-type]
             auth_token=auth_token,
+            student_id=(student_id or None),
             target_project_id=target,
             enabled=enabled,
         )
