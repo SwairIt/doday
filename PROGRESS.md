@@ -701,6 +701,33 @@ smoke 25/25 green. Commit `18ffb9c`.
 
 ---
 
+## 2026-05-22 — Security-аудит (4 параллельных агента) + групповая ссылка прогресса
+
+**Аудит** всей поверхности: access-control, auth/сессии, XSS/инъекции, CSRF/конфиг.
+Фундамент крепкий — нет IDOR, SQLi, open-redirect, mass-assignment; секреты чисты.
+Исправил 9 находок (все аддитивно, без схемы): (1) **HIGH** stored-XSS в
+`dodayMd` — экранирование `"` (markdown-ссылки в описаниях/комментах могли
+вырваться из `href`); (2) **CRITICAL** нет CSRF → same-origin middleware в
+`main.py` (Origin/Referer vs Host, miniapp/taptower исключены); (3) `/docs`,
+`/redoc`, `/openapi` off в prod; (4) TTL 90д на share/group токены; (5) кап
+backup-импорта 5МБ+50k; (6) `max_length=5000` на reorder; (7) `session.clear()`
+перед логином (web+miniapp); (8) `hmac.compare_digest` для admin/cron токенов;
+(9) метка исполнителя `textContent` вместо `innerHTML`. `tests/test_security.py`
++5. Полный `pytest -q` = 792 passed. Прод 06598a1: smoke 25/25, /docs→404,
+cross-origin POST→403, same-origin/no-origin POST→401 (юзеров не сломал).
+Commits `132351f` (групповая ссылка) + `06598a1` (security).
+
+**НЕ чинил (осознанно):** free-upgrade `change_tier` (замок = касса ЮKassa,
+в очереди, ждёт самозанятость); email-верификация (политика — спросить юзера);
+rate-limit в памяти (нужен Redis); CSP (нужен nonce-рефактор).
+
+**Групповая ссылка прогресса** (Трек 2, чанк 2): публичный read-only
+`/share/group/{token}` — преподаватель/родитель видит прогресс всех участников
+класса (просрочено/осталось/сделано). Подписанный токен на project_id, ноль
+схемы. Встроено в модалку «Поделиться проектом».
+
+---
+
 ## 2026-05-22 — Монетизация: пивот на B2B + родительская панель (Трек 2, чанк 1)
 
 Интерактивная сессия (Ralph-цикл остановлен на итерации 97). Диагностировал
