@@ -98,6 +98,7 @@
        assigneeFilter: localStorage.getItem('doday-assignee-filter-{{ project.id }}') || 'all',
        labelMap: JSON.parse((document.getElementById('label-map-{{ project.id }}') || {}).textContent || '{}'),
        labelFilter: localStorage.getItem('doday-label-filter-{{ project.id }}') || 'all',
+       dueFilter: localStorage.getItem('doday-due-filter-{{ project.id }}') || 'all',
        myId: '{{ current_user.id }}',
        _snapshot: null,
        _restoreSnapshot() {
@@ -231,11 +232,27 @@
          const ids = (row.dataset.labels || '').split(' ').filter(Boolean);
          return ids.includes(f);
        },
+       _passesDue(row) {
+         const f = this.dueFilter;
+         if (f === 'all') return true;
+         const d = row.dataset.due ? row.dataset.due.slice(0, 10) : '';
+         if (f === 'nodate') return d === '';
+         if (f === 'dated') return d !== '';
+         if (d === '') return false;
+         const today = new Date().toISOString().slice(0, 10);
+         if (f === 'overdue') return d < today;
+         if (f === 'today') return d === today;
+         if (f === 'week') {
+           const w = new Date(); w.setDate(w.getDate() + 7);
+           return d <= w.toISOString().slice(0, 10);
+         }
+         return true;
+       },
        _applyAssigneeFilter() {
          // Final display-only pass — never moves nodes, so snapshot/group logic
          // stays intact. Idempotent: apply() re-runs it in full each time.
          document.querySelectorAll('[id^=&quot;task-wrap-&quot;]').forEach(r => {
-           r.style.display = (this._passesAssignee(r) && this._passesLabel(r)) ? '' : 'none';
+           r.style.display = (this._passesAssignee(r) && this._passesLabel(r) && this._passesDue(r)) ? '' : 'none';
          });
          if (this.groupBy !== 'none') {
            // Hide group-view headers whose group has no visible rows.
@@ -245,7 +262,7 @@
              h.style.display = visible ? '' : 'none';
              if (grp) grp.style.display = visible ? '' : 'none';
            });
-         } else if (this.assigneeFilter === 'all' && this.labelFilter === 'all') {
+         } else if (this.assigneeFilter === 'all' && this.labelFilter === 'all' && this.dueFilter === 'all') {
            // No filter → restore any sections we may have hidden earlier so
            // naturally-empty sections (with their inline add-form) stay visible.
            document.querySelectorAll('section[data-section-id]').forEach(sec => {
@@ -274,6 +291,11 @@
        setLabelFilter(v) {
          this.labelFilter = v;
          localStorage.setItem('doday-label-filter-{{ project.id }}', v);
+         this.apply();
+       },
+       setDueFilter(v) {
+         this.dueFilter = v;
+         localStorage.setItem('doday-due-filter-{{ project.id }}', v);
          this.apply();
        },
        setSort(s) {
@@ -381,6 +403,23 @@
     </div>
   </div>
   {% endif %}
+  <div x-data="{ open: false }" class="relative">
+    <button type="button" @click="open = !open"
+            :class="dueFilter !== 'all' ? 'bg-[var(--accent)]/15 text-[var(--accent)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'"
+            class="px-2.5 py-1 rounded-lg hover:bg-[var(--surface-2)] transition flex items-center gap-1.5">
+      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      <span><span class="hidden sm:inline">Срок: </span><span x-text="{all:'все',overdue:'просрочено',today:'сегодня',week:'неделя',nodate:'без даты',dated:'с датой'}[dueFilter]"></span></span>
+    </button>
+    <div x-show="open" x-cloak @click.outside="open = false" x-transition
+         class="absolute top-full right-0 mt-1 z-30 card p-1 w-52 shadow-lg space-y-0.5">
+      {% set dfilters = [('all', 'Все'), ('overdue', '⚠ Просрочено'), ('today', '📅 Сегодня'), ('week', '📆 Эта неделя'), ('nodate', '∅ Без даты'), ('dated', '🗓 С датой')] %}
+      {% for key, label in dfilters %}
+        <button type="button" @click="open = false; setDueFilter('{{ key }}')"
+                :class="dueFilter === '{{ key }}' ? 'bg-[var(--accent)]/15 text-[var(--accent)]' : 'hover:bg-[var(--surface-2)]'"
+                class="w-full text-left text-sm px-3 py-1.5 rounded transition">{{ label }}</button>
+      {% endfor %}
+    </div>
+  </div>
   <button type="button" @click="toggleCompleted()"
           :class="showCompleted ? 'bg-[var(--accent)]/15 text-[var(--accent)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'"
           class="px-2.5 py-1 rounded-lg hover:bg-[var(--surface-2)] transition flex items-center gap-1.5">
