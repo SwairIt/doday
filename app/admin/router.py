@@ -14,6 +14,7 @@ Token-secured (X-Admin-Token == settings.admin_token):
   authorised by header instead of cookie. So Claude can curl it.
 """
 
+import hmac
 from datetime import UTC, datetime, timedelta
 from typing import Annotated
 from uuid import UUID
@@ -148,7 +149,7 @@ async def admin_complaints_via_token(
             status.HTTP_503_SERVICE_UNAVAILABLE,
             "ADMIN_TOKEN не задан в окружении — endpoint отключён",
         )
-    if not x_admin_token or x_admin_token != settings.admin_token:
+    if not x_admin_token or not hmac.compare_digest(x_admin_token, settings.admin_token):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "invalid admin token")
     rows = await list_complaints(
         session,

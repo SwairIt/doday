@@ -110,6 +110,13 @@ async def import_user_data(
     if not isinstance(payload, dict) or payload.get("format_version") != EXPORT_FORMAT_VERSION:
         raise ImportError_(f"unsupported format_version (expected {EXPORT_FORMAT_VERSION})")
 
+    # Cap entities per collection so a crafted payload can't create unbounded rows.
+    max_per_collection = 50_000
+    for key in ("projects", "sections", "labels", "tasks"):
+        coll = payload.get(key, [])
+        if isinstance(coll, list) and len(coll) > max_per_collection:
+            raise ImportError_(f"too many {key} (max {max_per_collection})")
+
     project_id_map: dict[str, UUID] = {}
     section_id_map: dict[str, UUID] = {}
     task_id_map: dict[str, UUID] = {}

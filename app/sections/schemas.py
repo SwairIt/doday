@@ -28,4 +28,4 @@ class SectionOut(BaseModel):
 
 class SectionReorder(BaseModel):
     project_id: UUID
-    ids: list[UUID] = Field(min_length=1)
+    ids: list[UUID] = Field(min_length=1, max_length=5000)

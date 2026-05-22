@@ -7,6 +7,7 @@ Two endpoints:
   exposure noisy).
 """
 
+import hmac
 from typing import Annotated
 
 from fastapi import APIRouter, Header, HTTPException, status
@@ -41,6 +42,6 @@ async def cron_trigger(
             status.HTTP_503_SERVICE_UNAVAILABLE,
             "CRON_TOKEN не задан в окружении — endpoint отключён",
         )
-    if not x_cron_token or x_cron_token != settings.cron_token:
+    if not x_cron_token or not hmac.compare_digest(x_cron_token, settings.cron_token):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "invalid cron token")
     return await send_morning_digests_for_all_users(session)

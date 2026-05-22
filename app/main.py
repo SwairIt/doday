@@ -3,9 +3,10 @@
 import os
 import subprocess
 from collections.abc import Awaitable, Callable
+from urllib.parse import urlparse
 
 from fastapi import FastAPI, Request
-from fastapi.responses import PlainTextResponse, Response
+from fastapi.responses import JSONResponse, PlainTextResponse, Response
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -75,9 +76,16 @@ def _init_sentry() -> None:
 
 _init_sentry()
 
-app = FastAPI(title="SchoolTodo")
-
 _is_prod = _settings.app_env == "prod"
+
+# Hide the interactive API docs / OpenAPI schema in prod — no need to hand the
+# full internal route map (admin/billing/backup) to attackers for recon.
+app = FastAPI(
+    title="SchoolTodo",
+    docs_url=None if _is_prod else "/docs",
+    redoc_url=None if _is_prod else "/redoc",
+    openapi_url=None if _is_prod else "/openapi.json",
+)
 
 app.add_middleware(
     SessionMiddleware,
@@ -86,6 +94,36 @@ app.add_middleware(
     https_only=_is_prod,  # require Secure cookie in production (HTTPS-only)
     # httpOnly is True by default in Starlette's SessionMiddleware
 )
+
+# Paths with their own auth model (Telegram HMAC initData / token), loaded inside
+# Telegram's webview where Origin/Referer behaviour is unreliable — exempt from
+# the same-origin CSRF check below.
+_CSRF_EXEMPT_PREFIXES = ("/miniapp", "/taptower")
+_UNSAFE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+
+
+@app.middleware("http")
+async def _csrf_origin_check(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
+    """Same-origin CSRF defence for cookie-authed, state-changing requests.
+
+    We only block when the browser presents an Origin/Referer that does not match
+    the target Host. Server-to-server token APIs (cron/admin) send neither header,
+    so they pass through untouched.
+    """
+    if request.method in _UNSAFE_METHODS and not request.url.path.startswith(_CSRF_EXEMPT_PREFIXES):
+        origin = request.headers.get("origin")
+        source_host = urlparse(origin).netloc if origin else None
+        if source_host is None:
+            referer = request.headers.get("referer")
+            source_host = urlparse(referer).netloc if referer else None
+        if source_host is not None and source_host != request.headers.get("host", ""):
+            return JSONResponse(
+                {"detail": "Запрос с другого сайта заблокирован"},
+                status_code=403,
+            )
+    return await call_next(request)
 
 
 # Defence-in-depth: nginx adds these too, but if someone hits uvicorn directly

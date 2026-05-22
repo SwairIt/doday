@@ -185,6 +185,7 @@ async def login_submit(
             status_code=403,
         )
     reset(rl_key)
+    request.session.clear()  # drop any pre-login session state (anti-fixation)
     request.session["user_id"] = str(user.id)
     return RedirectResponse(url="/app/today?welcome=1", status_code=303)
 

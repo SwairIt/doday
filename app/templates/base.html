@@ -116,7 +116,9 @@
       // inline + fenced code, links, bullet lists, paragraphs).
       window.dodayMd = function(s) {
         if (!s) return '';
-        let h = String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        // Escape " as well as &<> — otherwise a markdown link URL like
+        // [x](https://e"onmouseover=alert(1) x=) breaks out of the href="" attribute (stored XSS).
+        let h = String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         h = h.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
         h = h.replace(/`([^`\n]+)`/g, '<code>$1</code>');
         h = h.replace(/^### (.+)$/gm, '<h3>$1</h3>');

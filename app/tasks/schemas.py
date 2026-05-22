@@ -59,7 +59,7 @@ class TaskOut(BaseModel):
 
 
 class TaskReorder(BaseModel):
-    ids: list[UUID] = Field(min_length=1)
+    ids: list[UUID] = Field(min_length=1, max_length=5000)
 
 
 class TaskBulkCreate(BaseModel):

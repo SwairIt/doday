@@ -34,6 +34,11 @@ async def import_endpoint(
 ) -> JSONResponse:
     """Import a JSON dump into the current user's account. Adds, never overwrites."""
     raw = await file.read()
+    max_bytes = 5 * 1024 * 1024  # 5 MB — generous for a personal backup, caps memory abuse
+    if len(raw) > max_bytes:
+        raise HTTPException(
+            status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "файл слишком большой (макс 5 МБ)"
+        )
     try:
         payload = json.loads(raw.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError) as e:

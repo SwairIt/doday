@@ -119,6 +119,7 @@ async def auth(
             status_code=status.HTTP_401_UNAUTHORIZED,
         )
 
+    request.session.clear()  # drop any pre-login session state (anti-fixation)
     request.session["user_id"] = str(link.user_id)
     return JSONResponse({"ok": True, "user_id": str(link.user_id)})
 

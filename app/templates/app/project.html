@@ -203,7 +203,14 @@
              if (!rows || !rows.length) continue;
              const header = document.createElement('h3');
              header.className = 'text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mt-6 mb-2 first:mt-0 flex items-center gap-2';
-             header.innerHTML = '<span>' + this._groupLabel(k) + '</span><span class=&quot;text-xs font-normal text-[var(--text-muted)]/70&quot;>· ' + rows.length + '</span>';
+             // textContent (not innerHTML) — the label can contain a user email; avoids XSS.
+             const lbl = document.createElement('span');
+             lbl.textContent = this._groupLabel(k);
+             const cnt = document.createElement('span');
+             cnt.className = 'text-xs font-normal text-[var(--text-muted)]/70';
+             cnt.textContent = '· ' + rows.length;
+             header.appendChild(lbl);
+             header.appendChild(cnt);
              gv.appendChild(header);
              const grp = document.createElement('div');
              grp.className = 'space-y-2 mb-2';
