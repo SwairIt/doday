@@ -701,6 +701,43 @@ smoke 25/25 green. Commit `18ffb9c`.
 
 ---
 
+## 2026-05-23 — Авто-синк школы на /today + 🔥-серия в шапке (полная автономия)
+
+Юзер ушёл спать с полным мандатом «сам принимай все решения». Сделал две вещи
+малого риска и большого мотивационного веса.
+
+**Авто-синк школьного дневника** на `/app/today`: FastAPI `BackgroundTasks`
+после ответа дёргает `lazy_sync_stale_integrations` — обновляет интеграции,
+у которых `last_sync_at` старше 30 мин. Pre-check `has_integration` гасит
+bg-задачу для 99% юзеров без школы. Helper ловит `BaseException` (на случай
+`CancelledError` при teardown тестового event loop). Поведение: открыл
+/today → если последняя синхронизация была давно → фоном тянется домашка,
+страница не ждёт.
+
+**🔥-серия (streak) в шапке /today**. `current_streak(session, user_id)` —
+новый публичный helper в `stats/service.py`, переиспользует
+`_completed_dates`+`_current_streak`. Шапка показывает «🔥 N дней» (clickable
+на /app/stats). Если серия > 0 но сегодня ничего не сделано — мягкий нудж
+«не сорви серию» под датой.
+
+Полный `pytest -q` = **796 passed** (auto-sync helper + streak helper не
+сломали ничего). Прод `eb40214`: smoke 25/25, `/app/today`→401 (auth-gate ок).
+
+**Лонг-список UX-полировки на завтра** в `docs/ux-audit-2026-05-23.md`:
+task-completion micro-animation, empty-state /app/projects, project-graph
+view («где графы?» юзер спрашивал — это требует cytoscape.js через CDN +
+визуализация parent_task_id дерева, без новой схемы), quick-add NLP полиш и
+другое. Память [[project_simplify_direction]] обновлена: 2026-05-23
+**частичный откат** «no gamification» — поверхностные мотивационные сигналы
+(streak, confetti, joyful interactions) приветствуются, тяжёлые удалённые
+модули (XP/levels/16-achievements/mood/habits) — нет.
+
+**Урок (память [[feedback_test_db_concurrency]]):** не запускать два pytest
+параллельно на `schooltodo_test` — `drop_all`/`create_all` дедлочатся,
+выглядит как «duplicate user @logged-in» в setup-ах. Лечится pg_terminate_backend.
+
+---
+
 ## 2026-05-23 — Доделал школьный парсер (Школьный портал МО, живой API)
 
 Реанимация витринной школьной фичи (см. [[project_pivot]]). До этого fetch
