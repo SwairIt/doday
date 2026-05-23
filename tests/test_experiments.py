@@ -178,6 +178,19 @@ async def test_task_detail_timer_block_gated(logged_in_client: AsyncClient) -> N
     assert "/api/time/tasks/" in on
 
 
+async def test_habit_quick_widget_on_today_gated(logged_in_client: AsyncClient) -> None:
+    """The habit quick-checkin widget appears on /today only with the habits experiment."""
+    off = (await logged_in_client.get("/app/today")).text
+    assert "Привычки сегодня" not in off
+
+    await logged_in_client.post("/api/profile/experiments/habits", data={"enabled": "true"})
+
+    on = (await logged_in_client.get("/app/today")).text
+    assert "Привычки сегодня" in on
+    # Widget consumes the existing /api/habits endpoint — must reference it.
+    assert "/api/habits" in on
+
+
 async def test_task_detail_timer_reflects_running_state(logged_in_client: AsyncClient) -> None:
     """When the user has the timer running on this task, panel renders «идёт сейчас…»."""
     await logged_in_client.post("/api/profile/experiments/time_tracking", data={"enabled": "true"})

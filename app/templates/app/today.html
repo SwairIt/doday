@@ -44,6 +44,10 @@
 {% include "_partials/countdown_pins.html" %}
 {% include "_partials/onboarding_card.html" %}
 {% include "_partials/daily_goal.html" %}
+{# 🧪 Experimental: habit quick-checkin widget (gated). #}
+{% if current_user and current_user.experiments and current_user.experiments.get('habits') %}
+  {% include "_partials/habit_widget.html" %}
+{% endif %}
 {# 🧪 Experimental: mood widget (gated). #}
 {% if current_user and current_user.experiments and current_user.experiments.get('mood') %}
   {% include "_partials/mood_widget.html" %}

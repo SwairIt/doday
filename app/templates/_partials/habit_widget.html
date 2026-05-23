@@ -1,0 +1,91 @@
+{#
+  🧪 Experimental: habit quick-checkin widget.
+  Renders only when current_user.experiments['habits'] is on. Shows up to 5
+  active habits with a one-tap «отметить сегодня» button — full management at
+  /app/habits. Designed to remove the friction of «зайти в /app/habits → найти
+  привычку → нажать» — most users only need the daily check.
+#}
+<div class="mb-6"
+     x-data="{
+       items: [],
+       loading: true,
+       err: null,
+       async load() {
+         this.loading = true; this.err = null;
+         try {
+           const r = await fetch('/api/habits', {credentials: 'include'});
+           if (r.ok) {
+             const data = await r.json();
+             // Active habits only, cap at 5 so the widget stays compact on mobile.
+             this.items = data.filter(h => !h.archived_at).slice(0, 5);
+           } else { this.err = 'Не удалось загрузить'; }
+         } catch (e) { this.err = String(e); } finally { this.loading = false; }
+       },
+       async toggle(item) {
+         const was = item.today_done;
+         try {
+           const r = await fetch('/api/habits/' + item.id + '/checkin', {
+             method: was ? 'DELETE' : 'POST',
+             credentials: 'include',
+           });
+           if (r.ok) {
+             const stats = await r.json();
+             item.today_done = stats.today_done;
+             item.current_streak = stats.current_streak;
+             item.longest_streak = stats.longest_streak;
+             if (window.dodayToast) {
+               window.dodayToast(
+                 was ? 'Снял отметку' : 'Готово · серия ' + stats.current_streak,
+                 {icon: item.emoji || '✓'}
+               );
+             }
+           }
+         } catch (e) {}
+       },
+     }"
+     x-init="load()">
+  <div class="card p-4">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)]">
+        🌱 Привычки сегодня
+      </h2>
+      <a href="/app/habits" class="text-xs text-[var(--accent)] hover:underline">Все →</a>
+    </div>
+    <template x-if="loading">
+      <p class="text-xs text-[var(--text-muted)] italic">Загружаю…</p>
+    </template>
+    <template x-if="err">
+      <p class="text-xs text-rose-400" x-text="'⚠ ' + err"></p>
+    </template>
+    <template x-if="!loading && !err && !items.length">
+      <p class="text-xs text-[var(--text-muted)] italic">
+        Ничего не настроено — добавь первую привычку на
+        <a href="/app/habits" class="text-[var(--accent)] hover:underline">/app/habits</a>.
+      </p>
+    </template>
+    <template x-if="!loading && items.length">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <template x-for="item in items" :key="item.id">
+          <button type="button" @click="toggle(item)"
+                  :class="item.today_done
+                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200'
+                    : 'bg-[var(--surface-2)] border-[var(--border)] hover:bg-[var(--surface)]'"
+                  class="flex items-center gap-2 text-left px-3 py-2 rounded-lg border transition">
+            <span class="text-xl shrink-0" x-text="item.emoji || '·'"></span>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-medium truncate" x-text="item.name"></div>
+              <div class="text-[10px] text-[var(--text-muted)]">
+                <span x-text="'🔥 ' + (item.current_streak || 0)"></span>
+                <span x-show="item.longest_streak > item.current_streak"
+                      class="ml-1.5"
+                      x-text="'· рекорд ' + item.longest_streak"></span>
+              </div>
+            </div>
+            <span class="text-base shrink-0"
+                  x-text="item.today_done ? '✓' : '○'"></span>
+          </button>
+        </template>
+      </div>
+    </template>
+  </div>
+</div>
