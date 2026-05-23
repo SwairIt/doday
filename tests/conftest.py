@@ -22,8 +22,12 @@ from app.admin import models as _admin_models  # noqa: F401
 from app.auth import models as _auth_models  # noqa: F401  register tables with Base.metadata
 from app.config import get_settings
 from app.db import Base, get_session
+from app.gamification import models as _gamification_models  # noqa: F401
+from app.habits import models as _habits_models  # noqa: F401
 from app.labels import models as _labels_models  # noqa: F401
+from app.links import models as _links_models  # noqa: F401
 from app.main import app
+from app.mood import models as _mood_models  # noqa: F401
 from app.pomodoro import models as _pomodoro_models  # noqa: F401
 from app.projects import models as _projects_models  # noqa: F401
 from app.reminders import models as _reminders_models  # noqa: F401
@@ -31,6 +35,7 @@ from app.school import models as _school_models  # noqa: F401
 from app.sections import models as _sections_models  # noqa: F401
 from app.tasks import models as _tasks_models  # noqa: F401
 from app.telegram import models as _telegram_models  # noqa: F401
+from app.time_tracking import models as _time_tracking_models  # noqa: F401
 from app.user_templates import models as _user_templates_models  # noqa: F401
 
 _settings = get_settings()
