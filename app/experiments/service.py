@@ -19,12 +19,18 @@ from app.auth.models import User
 
 @dataclass(frozen=True)
 class Experiment:
-    """Catalog entry — feature key + UI copy + readiness label."""
+    """Catalog entry — feature key + UI copy + readiness label.
+
+    `stage`:
+    - "stable" — production-ready, just hidden by default to keep UI focused.
+      Shown in /app/settings under «Функции» (no «🧪» badge).
+    - "beta"   — usable daily, may still ship breaking UI changes.
+    - "alpha"  — actively built, may break, no SLO. Shown under «Эксперименты».
+    """
 
     key: str
     title: str
     description: str
-    # "alpha" — actively built, may break · "beta" — stable enough for daily use.
     stage: str = "alpha"
 
 
@@ -32,13 +38,25 @@ class Experiment:
 # checks (`is_enabled(user, EXP.key.GRAPH)`).
 AVAILABLE: tuple[Experiment, ...] = (
     Experiment(
+        key="school",
+        title="Учёба — Школьный портал",
+        description=(
+            "Подключаешь школьный портал (Школьный портал МО или МЭШ) — домашка "
+            "автоматически синхронизируется в твои задачи. В сайдбаре появляется "
+            "отдельная вкладка «🎓 Учёба» со всем расписанием, домашкой и "
+            "интеграциями. Pull обновления раз в ~15 минут, когда заходишь на "
+            "«Сегодня»."
+        ),
+        stage="stable",
+    ),
+    Experiment(
         key="graph",
         title="Граф связей задач",
         description=(
             "Космический вид всех активных задач + двунаправленные ссылки между ними "
             "(как в Obsidian). Можно связать любые две задачи — даже из разных проектов."
         ),
-        stage="beta",
+        stage="stable",
     ),
     Experiment(
         key="calendar_feed",
@@ -49,7 +67,19 @@ AVAILABLE: tuple[Experiment, ...] = (
             "вставляешь в календарное приложение → все задачи с дедлайнами видны "
             "там же, где встречи. Обновляется автоматически каждые ~15 минут."
         ),
-        stage="beta",
+        stage="stable",
+    ),
+    Experiment(
+        key="user_templates",
+        title="Свои шаблоны проектов",
+        description=(
+            "Сохраняешь любой проект (со всеми секциями и активными задачами) "
+            "как переиспользуемый шаблон, а потом одним кликом разворачиваешь "
+            "его в новый проект. Полезно для типовых процессов: ремонт квартиры, "
+            "запуск рекламной кампании, чек-лист отпуска. В шапке проекта "
+            "появляется кнопка «Сохранить как шаблон», в настройках — список."
+        ),
+        stage="stable",
     ),
     Experiment(
         key="habits",
@@ -92,19 +122,13 @@ AVAILABLE: tuple[Experiment, ...] = (
         ),
         stage="alpha",
     ),
-    Experiment(
-        key="user_templates",
-        title="Свои шаблоны проектов",
-        description=(
-            "Сохраняешь любой проект (со всеми секциями и активными задачами) "
-            "как переиспользуемый шаблон, а потом одним кликом разворачиваешь "
-            "его в новый проект. Полезно для типовых процессов: ремонт квартиры, "
-            "запуск рекламной кампании, чек-лист отпуска. В контекст-меню "
-            "проекта появится действие «Сохранить как шаблон»."
-        ),
-        stage="alpha",
-    ),
 )
+
+
+# Convenience predicates for the settings UI: "stable" features go in one
+# section, alpha/beta in another. Mirror the order from AVAILABLE.
+STABLE_KEYS: tuple[str, ...] = tuple(e.key for e in AVAILABLE if e.stage == "stable")
+EXPERIMENTAL_KEYS: tuple[str, ...] = tuple(e.key for e in AVAILABLE if e.stage != "stable")
 
 
 # Convenience lookup map: key → Experiment.

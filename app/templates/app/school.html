@@ -1,0 +1,157 @@
+{% extends "app_base.html" %}
+{% block title %}Учёба — Doday{% endblock %}
+{% block view_title %}Учёба{% endblock %}
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-3xl md:text-4xl font-bold mb-1">🎓 Учёба</h1>
+  <p class="text-[var(--text-muted)] text-sm">
+    Хаб для всего, что связано с уроками: подключённые порталы, домашка на ближайшее, расписание.
+  </p>
+</div>
+
+{# ─── Integrations status ─── #}
+<section class="card p-5 mb-5">
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)]">
+      Подключённые порталы
+    </h2>
+    <a href="/app/settings#school" class="text-xs text-[var(--accent)] hover:underline">→ Настройки</a>
+  </div>
+  {% if integrations %}
+    <ul class="space-y-2">
+      {% for i in integrations %}
+        <li class="flex items-center gap-3 px-3 py-2 rounded-lg bg-[var(--surface-2)]"
+            x-data="{
+              syncing: false,
+              async sync() {
+                this.syncing = true;
+                try {
+                  const r = await fetch('/api/school/integrations/{{ i.provider }}/sync', {method: 'POST', credentials: 'include'});
+                  if (r.ok) {
+                    const d = await r.json();
+                    if (window.dodayToast) window.dodayToast('Синхронизация: +' + (d.imported_count || 0) + ' задач', {icon: '↻'});
+                    setTimeout(() => location.reload(), 600);
+                  } else {
+                    if (window.dodayToast) window.dodayToast('Не получилось — проверь токен в Настройках', {icon: '⚠'});
+                  }
+                } catch (e) {} finally { this.syncing = false; }
+              },
+            }">
+          <div class="w-2.5 h-2.5 rounded-full {% if i.enabled %}bg-emerald-400{% else %}bg-slate-500{% endif %} shrink-0" title="{% if i.enabled %}Активна{% else %}Выключена{% endif %}"></div>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-medium">
+              {% if i.provider == 'school_mo' %}Школьный портал МО{% elif i.provider == 'mesh' %}МЭШ{% else %}{{ i.provider }}{% endif %}
+            </div>
+            <div class="text-[10px] text-[var(--text-muted)]">
+              {% if i.last_sync_at %}
+                Последняя синхр.: {{ i.last_sync_at.strftime('%d.%m %H:%M') }}
+              {% else %}
+                Ещё не синхронизировал
+              {% endif %}
+            </div>
+          </div>
+          <button type="button" @click="sync()" :disabled="syncing"
+                  class="text-xs px-3 py-1 rounded-lg bg-[var(--accent)]/15 text-[var(--accent)] hover:bg-[var(--accent)]/25 transition shrink-0">
+            <span x-show="!syncing" x-cloak>↻ Синхр.</span>
+            <span x-show="syncing" x-cloak>Грузим…</span>
+          </button>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-sm text-[var(--text-muted)] italic">
+      Пока ни одного портала не подключено.
+      <a href="/app/settings#school" class="text-[var(--accent)] hover:underline">Подключить →</a>
+    </p>
+  {% endif %}
+  <p class="text-[10px] text-[var(--text-muted)] mt-3 italic">
+    Автоматическая синхронизация происходит когда ты заходишь на «Сегодня», если последняя синхр. была более 15 мин назад.
+  </p>
+</section>
+
+{# ─── Homework today ─── #}
+<section class="card p-5 mb-5">
+  <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-3">
+    Домашка
+  </h2>
+  {% if homework_today %}
+    <ul class="space-y-1.5">
+      {% for hw in homework_today %}
+        <li class="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-[var(--surface-2)] text-sm">
+          <span class="shrink-0">
+            {% if hw.priority == 'p1' %}<span class="text-rose-400">!</span>
+            {% elif hw.priority == 'p2' %}<span class="text-amber-400">!</span>
+            {% elif hw.priority == 'p3' %}<span class="text-sky-400">!</span>
+            {% else %}<span class="text-slate-500">·</span>{% endif %}
+          </span>
+          <span class="flex-1 min-w-0 truncate">{{ hw.title }}</span>
+          {% if hw.due_at %}
+            <span class="text-[10px] shrink-0 {% if hw.is_today %}text-emerald-400{% else %}text-[var(--text-muted)]{% endif %}">
+              {% if hw.is_today %}сегодня{% else %}{{ hw.due_at.strftime('%d.%m') }}{% endif %}
+            </span>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% elif integrations %}
+    <p class="text-sm text-[var(--text-muted)] italic">
+      Свежей домашки нет. Если есть на портале — нажми «↻ Синхр.» выше.
+    </p>
+  {% else %}
+    <p class="text-sm text-[var(--text-muted)] italic">
+      Сначала подключи школьный портал в <a href="/app/settings#school" class="text-[var(--accent)] hover:underline">Настройках</a>.
+    </p>
+  {% endif %}
+</section>
+
+{# ─── Schedule grid (compact) ─── #}
+<section class="card p-5">
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)]">
+      Расписание
+    </h2>
+    <a href="/app/schedule" class="text-xs text-[var(--accent)] hover:underline">→ Редактировать</a>
+  </div>
+  {% set has_any_slot = grid|length > 0 %}
+  {% if has_any_slot %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-xs">
+        <thead>
+          <tr>
+            <th class="text-left text-[var(--text-muted)] font-semibold pb-1"></th>
+            {% for wd in range(6) %}
+              <th class="text-center text-[var(--text-muted)] font-semibold pb-1 px-1">{{ weekdays_short[wd] }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for period in periods %}
+            <tr class="border-t border-[var(--border)]/50">
+              <td class="text-[var(--text-muted)] pr-1 py-1 text-center w-6">{{ period }}</td>
+              {% for wd in range(6) %}
+                {% set slot = grid.get((wd, period)) %}
+                <td class="py-1 px-1 text-center">
+                  {% if slot %}
+                    {% set subject = subjects|selectattr('code', 'equalto', slot['subject_code'])|first %}
+                    <span class="inline-block px-1 py-0.5 rounded text-[10px]"
+                          style="background-color: {{ subject.color if subject else '#475569' }}33; color: {{ subject.color if subject else '#94a3b8' }};"
+                          title="{{ slot.get('room', '') }} {{ slot.get('teacher', '') }}">
+                      {{ subject.emoji if subject else '·' }}
+                    </span>
+                  {% else %}
+                    <span class="text-[10px] text-[var(--text-muted)]/30">·</span>
+                  {% endif %}
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-sm text-[var(--text-muted)] italic">
+      Расписание не настроено. Заполни сетку на <a href="/app/schedule" class="text-[var(--accent)] hover:underline">/app/schedule</a>.
+    </p>
+  {% endif %}
+</section>
+{% endblock %}

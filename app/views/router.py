@@ -104,20 +104,22 @@ async def today_view(
     from sqlalchemy import func
     from sqlalchemy import select as sa_select
 
+    # Opportunistic background refresh: pulls fresh homework from connected
+    # school portals if last_sync_at is stale. Only schedule when the user
+    # actually has an integration AND opted into the school feature — most
+    # users don't, so we skip the bg work.
+    from app.experiments.service import is_enabled
     from app.projects.membership import assignee_map_for_projects, shared_project_ids
     from app.school.models import SchoolIntegration
     from app.school.service import lazy_sync_stale_integrations
     from app.stats.service import current_streak
 
-    # Opportunistic background refresh: pulls fresh homework from connected
-    # school portals if last_sync_at is stale. Only schedule when the user
-    # actually has an integration — most users don't, so we skip the bg work.
     has_integration = (
         await session.execute(
             sa_select(SchoolIntegration.id).where(SchoolIntegration.user_id == user.id).limit(1)
         )
     ).scalar_one_or_none() is not None
-    if has_integration:
+    if has_integration and is_enabled(user, "school"):
         background_tasks.add_task(lazy_sync_stale_integrations, user.id)
 
     streak_days = await current_streak(session, user.id)
@@ -1037,6 +1039,7 @@ async def settings_view(request: Request, user: RequiredUser, session: DbSession
         "labels": label_count_row.scalar_one(),
     }
 
+    from app.experiments.presets import PRESETS
     from app.experiments.service import AVAILABLE as EXPERIMENTS
 
     experiments_state = [
@@ -1048,6 +1051,18 @@ async def settings_view(request: Request, user: RequiredUser, session: DbSession
             "enabled": bool((user.experiments or {}).get(exp.key)),
         }
         for exp in EXPERIMENTS
+    ]
+    # Split for the template — «Функции» (stable) vs «Эксперименты» (alpha/beta).
+    features_state = [e for e in experiments_state if e["stage"] == "stable"]
+    experimental_state = [e for e in experiments_state if e["stage"] != "stable"]
+    presets_list = [
+        {
+            "key": p.key,
+            "title": p.title,
+            "description": p.description,
+            "enabled_keys": list(p.enabled_keys),
+        }
+        for p in PRESETS
     ]
     return templates.TemplateResponse(
         request,
@@ -1061,6 +1076,9 @@ async def settings_view(request: Request, user: RequiredUser, session: DbSession
             "is_pro": has_pro_features(user),
             "trial_days_left": trial_days_remaining(user),
             "experiments": experiments_state,
+            "features_state": features_state,
+            "experimental_state": experimental_state,
+            "presets_list": presets_list,
         },
     )
 
@@ -1118,6 +1136,89 @@ async def schedule_view(request: Request, user: RequiredUser, session: DbSession
             "weekdays_full": WEEKDAY_FULL_RU,
             "periods": list(range(1, 9)),
             "grid": grid,
+        },
+    )
+
+
+@router.get("/school", response_class=HTMLResponse, response_model=None)
+async def school_view(
+    request: Request, user: RequiredUser, session: DbSession
+) -> HTMLResponse | RedirectResponse:
+    """Aggregate «🎓 Учёба» hub — integrations + homework + schedule snapshot.
+
+    Gated by the `school` feature flag (stable). If off, redirect to settings
+    so user knows where to enable it."""
+    from sqlalchemy import select as sa_select
+
+    from app.experiments.service import is_enabled
+    from app.school.models import SchoolIntegration
+    from app.school.schedule_service import list_slots
+    from app.school.subjects import SUBJECTS, WEEKDAY_FULL_RU, WEEKDAY_SHORT_RU
+
+    if not is_enabled(user, "school"):
+        return RedirectResponse(url="/app/settings#features", status_code=303)
+
+    projects = await list_projects(session, user.id)
+    project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
+
+    integrations_rows = await session.execute(
+        sa_select(SchoolIntegration).where(SchoolIntegration.user_id == user.id)
+    )
+    integrations = list(integrations_rows.scalars().all())
+
+    slots = await list_slots(session, user.id)
+    grid: dict[tuple[int, int], dict[str, object]] = {}
+    for s in slots:
+        grid[(s.weekday, s.period)] = {
+            "subject_code": s.subject_code,
+            "room": s.room,
+            "teacher": s.teacher,
+        }
+
+    # School-tagged tasks: anything whose project is the user's «Школа»-named
+    # target project of any integration. Show top 12 active.
+    target_project_ids = {i.target_project_id for i in integrations if i.target_project_id}
+    homework_today: list[object] = []
+    if target_project_ids:
+        from app.tasks.models import Task
+
+        today_date = datetime.now(UTC).date()
+        hw_rows = await session.execute(
+            sa_select(Task)
+            .where(
+                Task.user_id == user.id,
+                Task.project_id.in_(target_project_ids),
+                Task.is_completed.is_(False),
+            )
+            .order_by(Task.due_at.is_(None), Task.due_at, Task.priority)
+            .limit(12)
+        )
+        for t in hw_rows.scalars().all():
+            homework_today.append(
+                {
+                    "id": t.id,
+                    "title": t.title,
+                    "due_at": t.due_at,
+                    "is_today": (t.due_at is not None and t.due_at.date() == today_date),
+                    "priority": t.priority.value,
+                }
+            )
+
+    return templates.TemplateResponse(
+        request,
+        "app/school.html",
+        {
+            "current_user": user,
+            "current_view": "school",
+            "projects": projects,
+            "project_color_map": project_color_map,
+            "integrations": integrations,
+            "subjects": SUBJECTS,
+            "weekdays_short": WEEKDAY_SHORT_RU,
+            "weekdays_full": WEEKDAY_FULL_RU,
+            "periods": list(range(1, 9)),
+            "grid": grid,
+            "homework_today": homework_today,
         },
     )
 

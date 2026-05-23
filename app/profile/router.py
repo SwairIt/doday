@@ -88,6 +88,31 @@ async def toggle_experiment(
     return {"enabled": on}
 
 
+@router.post("/experiments/preset/{preset_key}")
+async def apply_preset(
+    preset_key: str,
+    user: RequiredUser,
+    session: DbSession,
+) -> dict[str, object]:
+    """Apply a named preset: bulk-set every feature flag to match the bundle.
+
+    Picking «Школьник» turns ON exactly its keys and turns OFF every other
+    registered flag — explicit replacement, so users have a clean starting
+    state. After that they can still flip individual flags."""
+    from app.experiments.presets import expand_maximum_keys
+    from app.experiments.service import AVAILABLE
+
+    all_keys = tuple(e.key for e in AVAILABLE)
+    presets = expand_maximum_keys(all_keys)
+    if preset_key not in presets:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "неизвестный пресет")
+    target = presets[preset_key]
+    new_flags = {k: (k in set(target.enabled_keys)) for k in all_keys}
+    user.experiments = new_flags
+    await session.commit()
+    return {"preset": preset_key, "enabled": [k for k, v in new_flags.items() if v]}
+
+
 @router.get("/share-link")
 async def get_share_link(user: RequiredUser) -> dict[str, str]:
     """Return a public read-only progress link for the signed-in user (for parents)."""

@@ -39,6 +39,62 @@ async def test_settings_page_lists_experiments(logged_in_client: AsyncClient) ->
     assert "Граф связей задач" in body
 
 
+async def test_settings_splits_features_vs_experiments(
+    logged_in_client: AsyncClient,
+) -> None:
+    """Settings shows two sections: «Дополнительные функции» (stable) and «Эксперименты» (alpha/beta)."""
+    body = (await logged_in_client.get("/app/settings")).text
+    # Both section headers present.
+    assert "Дополнительные функции" in body
+    assert "Экспериментальные функции" in body
+    # Stable features land in Функции, alpha experiments in Эксперименты.
+    # Both sections list their entries; sanity-check at least one of each.
+    assert "Граф связей задач" in body  # stable
+    assert "Трекер привычек" in body  # alpha
+    # School (new stable feature) shows up too.
+    assert "Учёба — Школьный портал" in body
+
+
+async def test_preset_applies_bundle(logged_in_client: AsyncClient) -> None:
+    """POST /api/profile/experiments/preset/{key} flips every flag to match the preset."""
+    # Start by enabling everything to verify «минимум» reset really turns things off.
+    on_max = await logged_in_client.post("/api/profile/experiments/preset/maximum")
+    assert on_max.status_code == 200
+    body_max = on_max.json()
+    # «maximum» enables every registered experiment.
+    assert set(body_max["enabled"]) >= {
+        "graph",
+        "habits",
+        "mood",
+        "achievements",
+        "time_tracking",
+        "calendar_feed",
+        "user_templates",
+        "school",
+    }
+
+    # Switch to «минимум» — should be no enabled flags.
+    on_min = await logged_in_client.post("/api/profile/experiments/preset/minimum")
+    assert on_min.status_code == 200
+    assert on_min.json()["enabled"] == []
+
+    # «школьник» — habits + achievements + mood + school but not graph/time_tracking.
+    on_school = await logged_in_client.post("/api/profile/experiments/preset/schoolchild")
+    assert on_school.status_code == 200
+    enabled = set(on_school.json()["enabled"])
+    assert "habits" in enabled
+    assert "achievements" in enabled
+    assert "mood" in enabled
+    assert "school" in enabled
+    assert "graph" not in enabled
+    assert "time_tracking" not in enabled
+
+
+async def test_preset_unknown_key_422(logged_in_client: AsyncClient) -> None:
+    resp = await logged_in_client.post("/api/profile/experiments/preset/bogus")
+    assert resp.status_code == 422
+
+
 async def test_links_graph_api_returns_shape(logged_in_client: AsyncClient) -> None:
     """Even with zero tasks, /api/links/graph must return the {nodes, edges} shape."""
     resp = await logged_in_client.get("/api/links/graph")
@@ -176,6 +232,32 @@ async def test_task_detail_timer_block_gated(logged_in_client: AsyncClient) -> N
     assert "Трекер времени" in on
     # The Alpine helper hits the existing /api/time endpoints.
     assert "/api/time/tasks/" in on
+
+
+async def test_school_view_gated(logged_in_client: AsyncClient) -> None:
+    """/app/school redirects to settings unless the school feature is enabled."""
+    off = await logged_in_client.get("/app/school", follow_redirects=False)
+    assert off.status_code == 303
+    assert "/app/settings" in off.headers["location"]
+
+    on = await logged_in_client.post("/api/profile/experiments/school", data={"enabled": "true"})
+    assert on.json()["enabled"] is True
+
+    page = await logged_in_client.get("/app/school")
+    assert page.status_code == 200
+    assert "🎓 Учёба" in page.text or "Учёба" in page.text
+
+
+async def test_school_tab_in_sidebar_when_feature_on(logged_in_client: AsyncClient) -> None:
+    """The «🎓 Учёба» sidebar link appears only when the school feature is on."""
+    off = (await logged_in_client.get("/app/today")).text
+    assert "🎓 Учёба" not in off
+
+    await logged_in_client.post("/api/profile/experiments/school", data={"enabled": "true"})
+
+    on = (await logged_in_client.get("/app/today")).text
+    assert "🎓 Учёба" in on
+    assert "/app/school" in on
 
 
 async def test_habit_quick_widget_on_today_gated(logged_in_client: AsyncClient) -> None:
