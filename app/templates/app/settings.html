@@ -845,6 +845,62 @@
     </form>
   </section>
 
+  <section id="experiments" class="card p-6">
+    <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2 flex items-center gap-2">
+      <span>🧪 Экспериментальные функции</span>
+    </h2>
+    <p class="text-sm text-[var(--text-muted)] mb-4">
+      Фичи из старых версий Doday, которые мы постепенно возвращаем как опт-ин.
+      Включается флажком — выключается тем же флажком. Может сломаться, баги
+      присылай на <a href="mailto:doday.support@gmail.com" class="text-[var(--accent)] hover:underline">doday.support@gmail.com</a>.
+    </p>
+    {% if experiments %}
+      <div class="space-y-3">
+        {% for exp in experiments %}
+          <div class="flex items-start gap-4 p-3 rounded-xl bg-[var(--surface-2)]/40 border border-[var(--border)]"
+               x-data="{ enabled: {{ 'true' if exp.enabled else 'false' }}, saving: false,
+                 async toggle() {
+                   this.saving = true;
+                   const next = !this.enabled;
+                   const fd = new FormData();
+                   fd.append('enabled', next ? 'true' : 'false');
+                   try {
+                     const r = await fetch('/api/profile/experiments/{{ exp.key }}', {method: 'POST', body: fd, credentials: 'include'});
+                     if (r.ok) {
+                       this.enabled = next;
+                       // Reload so server-rendered nav/links re-evaluate (e.g. /app/graph link appears).
+                       setTimeout(() => location.reload(), 300);
+                     }
+                   } catch (e) {} finally { this.saving = false; }
+                 } }">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="font-medium">{{ exp.title }}</span>
+                {% if exp.stage == 'alpha' %}
+                  <span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300">alpha</span>
+                {% elif exp.stage == 'beta' %}
+                  <span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-300">beta</span>
+                {% endif %}
+              </div>
+              <p class="text-xs text-[var(--text-muted)] mt-1 leading-relaxed">{{ exp.description }}</p>
+              {% if exp.key == 'graph' and exp.enabled %}
+                <a href="/app/graph" class="inline-block mt-2 text-xs text-[var(--accent)] hover:underline">→ Открыть граф</a>
+              {% endif %}
+            </div>
+            <button type="button" @click="toggle()" :disabled="saving"
+                    :class="enabled ? 'bg-[var(--accent)]' : 'bg-[var(--surface)]'"
+                    class="relative shrink-0 inline-flex h-6 w-11 items-center rounded-full transition border border-[var(--border)]">
+              <span :class="enabled ? 'translate-x-5' : 'translate-x-0.5'"
+                    class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition"></span>
+            </button>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-sm text-[var(--text-muted)] italic">Пока ничего нет — но скоро что-нибудь принесём сюда.</p>
+    {% endif %}
+  </section>
+
   <section class="card p-6 border-rose-500/40">
     <h2 class="text-sm uppercase tracking-wider font-semibold text-rose-400 mb-2">Опасная зона</h2>
     <p class="text-sm text-[var(--text-muted)] mb-4">Удаление аккаунта необратимо. Все проекты, задачи и лейблы будут удалены вместе с ним.</p>

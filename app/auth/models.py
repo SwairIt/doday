@@ -4,6 +4,7 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 from sqlalchemy import Boolean, DateTime, String
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -46,6 +47,12 @@ class User(Base):
     # Set via SQL/migration, never via UI — no risk of self-promotion.
     is_admin: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default="false"
+    )
+    # Per-user opt-in flags for experimental features (revived/in-progress).
+    # Shape: {"graph": true, "habits": false, ...}. Defaults to empty dict so
+    # experimental features stay OFF unless the user enables them in settings.
+    experiments: Mapped[dict[str, bool]] = mapped_column(
+        JSONB, nullable=False, default=dict, server_default="{}"
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False

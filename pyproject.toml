@@ -78,9 +78,12 @@ ignore = [
 "app/auth/router.py" = ["RUF001"]               # intentional Cyrillic in user-facing error messages
 "app/auth/email.py" = ["RUF001"]                # intentional Cyrillic in branded HTML email body
 "app/profile/router.py" = ["RUF001"]            # intentional Cyrillic in user-facing error messages
-"app/links/service.py" = ["RUF001"]             # intentional Cyrillic in user-facing error messages
+# app/links/service.py is set just below with RUF001+RUF002 (revived 2026-05-23)
 "app/digest/service.py" = ["RUF001", "RUF002"]  # intentional Cyrillic in email body and docstring
 "app/digest/__init__.py" = ["RUF002"]            # intentional Cyrillic in module docstring
+"app/experiments/service.py" = ["RUF002"]        # intentional Greek α in docstring (phase α)
+"app/links/service.py" = ["RUF001", "RUF002"]    # restored module — intentional Cyrillic in errors/docstrings
+"app/links/router.py" = ["RUF001"]               # restored module — intentional Cyrillic in error messages
 "app/main.py" = ["RUF001", "RUF002"]             # intentional Cyrillic in CSRF message + docstrings
 "app/config.py" = ["RUF003"]                     # intentional Cyrillic in env-var comments
 "app/telegram/bot.py" = ["RUF001", "RUF002", "RUF003"]  # intentional Cyrillic in bot reply text

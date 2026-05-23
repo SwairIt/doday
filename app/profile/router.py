@@ -65,6 +65,29 @@ async def remove_telegram_link(user: RequiredUser, session: DbSession) -> None:
     await unlink(session, user.id)
 
 
+@router.post("/experiments/{key}")
+async def toggle_experiment(
+    key: str,
+    user: RequiredUser,
+    session: DbSession,
+    enabled: Annotated[str, Form()],
+) -> dict[str, bool]:
+    """Toggle an experimental feature flag for the signed-in user.
+
+    Unknown keys are rejected (422) so a typo in the UI doesn't silently store
+    a dead flag in the JSONB."""
+    from app.experiments.service import BY_KEY
+
+    if key not in BY_KEY:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "неизвестный эксперимент")
+    on = enabled.lower() in ("1", "true", "on", "yes")
+    flags = dict(user.experiments or {})
+    flags[key] = on
+    user.experiments = flags
+    await session.commit()
+    return {"enabled": on}
+
+
 @router.get("/share-link")
 async def get_share_link(user: RequiredUser) -> dict[str, str]:
     """Return a public read-only progress link for the signed-in user (for parents)."""

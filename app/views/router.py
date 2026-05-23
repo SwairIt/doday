@@ -193,6 +193,30 @@ async def today_view(
     )
 
 
+@router.get("/graph", response_class=HTMLResponse, response_model=None)
+async def graph_view(
+    request: Request, user: RequiredUser, session: DbSession
+) -> HTMLResponse | RedirectResponse:
+    """Experimental: cosmic force-directed graph of all active tasks + their
+    links + parent/child relationships. Gated by the per-user `graph`
+    experiment flag (see app/experiments/service.py)."""
+    from app.experiments.service import is_enabled
+
+    if not is_enabled(user, "graph"):
+        # Send the user to settings so they can opt in rather than just 404.
+        return RedirectResponse(url="/app/settings#experiments", status_code=303)
+    projects = await list_projects(session, user.id)
+    return templates.TemplateResponse(
+        request,
+        "app/graph.html",
+        {
+            "current_user": user,
+            "current_view": "graph",
+            "projects": projects,
+        },
+    )
+
+
 @router.get("/calendar", response_class=HTMLResponse)
 async def calendar_view(
     request: Request,
@@ -970,6 +994,18 @@ async def settings_view(request: Request, user: RequiredUser, session: DbSession
         "labels": label_count_row.scalar_one(),
     }
 
+    from app.experiments.service import AVAILABLE as EXPERIMENTS
+
+    experiments_state = [
+        {
+            "key": exp.key,
+            "title": exp.title,
+            "description": exp.description,
+            "stage": exp.stage,
+            "enabled": bool((user.experiments or {}).get(exp.key)),
+        }
+        for exp in EXPERIMENTS
+    ]
     return templates.TemplateResponse(
         request,
         "app/settings.html",
@@ -981,6 +1017,7 @@ async def settings_view(request: Request, user: RequiredUser, session: DbSession
             "stats": stats,
             "is_pro": has_pro_features(user),
             "trial_days_left": trial_days_remaining(user),
+            "experiments": experiments_state,
         },
     )
 

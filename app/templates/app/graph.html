@@ -1,0 +1,407 @@
+{% extends "app_base.html" %}
+{% block title %}Граф задач — Doday{% endblock %}
+{% block view_title %}Граф{% endblock %}
+{% block content %}
+<div class="mb-4 flex items-start justify-between gap-4 flex-wrap">
+  <div>
+    <h1 class="text-3xl md:text-4xl font-bold mb-1 grad-text">Граф задач</h1>
+    <p class="text-[var(--text-muted)] text-sm max-w-xl">
+      Все активные задачи как звёзды в космосе. Линии — связи и связки родитель→подзадача.
+      Тащи мышью, крути колесом, кликни звезду чтобы открыть.
+    </p>
+  </div>
+  <div class="flex items-center gap-2 text-xs flex-wrap">
+    <button id="graph-recenter" class="btn-ghost px-3 py-1.5 whitespace-nowrap">⌖ В центр</button>
+    <button id="graph-replay" class="btn-ghost px-3 py-1.5 whitespace-nowrap"><span class="hidden sm:inline">↻ Перезапустить физику</span><span class="sm:hidden">↻ Сброс</span></button>
+    <label class="flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
+      <input type="checkbox" id="graph-show-completed" class="accent-[var(--accent)]">
+      <span class="text-[var(--text-muted)]">Показать выполненные</span>
+    </label>
+  </div>
+</div>
+
+<div class="card relative overflow-hidden" style="height: calc(100vh - 200px); min-height: 500px;">
+  <canvas id="graph-canvas" class="absolute inset-0 w-full h-full"></canvas>
+  <div id="graph-tooltip"
+       class="pointer-events-none absolute z-10 hidden card px-3 py-2 text-xs shadow-glow max-w-xs">
+  </div>
+  <div id="graph-empty" class="absolute inset-0 hidden flex-col items-center justify-center text-center px-6 text-[var(--text-muted)] text-sm">
+    <div class="text-4xl mb-3 opacity-60">🌌</div>
+    <div>В графе пока пусто. Создай задачи и свяжи их через панель «Связи» в детальном виде.</div>
+  </div>
+  <div id="graph-legend" class="absolute bottom-3 left-3 z-10 card px-3 py-2 text-[10px] flex items-center gap-3 backdrop-blur-sm bg-[var(--surface)]/70">
+    <span class="flex items-center gap-1"><span class="inline-block w-3 h-0.5 bg-violet-400"></span>родитель→подзадача</span>
+    <span class="flex items-center gap-1"><span class="inline-block w-3 h-0.5 bg-amber-400" style="border-top: 1px dashed currentColor"></span>связь</span>
+  </div>
+  <div id="graph-stats" class="absolute top-3 right-3 z-10 card px-3 py-1.5 text-[10px] tabular-nums text-[var(--text-muted)] backdrop-blur-sm bg-[var(--surface)]/70">
+    <span id="graph-node-count">0</span> задач · <span id="graph-edge-count">0</span> связей
+  </div>
+</div>
+
+<script>
+(function() {
+  // ----- color palette: maps Tailwind project colors → hex -----
+  const COLORS = {
+    violet: '#a78bfa', purple: '#c084fc', fuchsia: '#e879f9', pink: '#f472b6',
+    rose: '#fb7185', red: '#f87171', orange: '#fb923c', amber: '#fbbf24',
+    yellow: '#facc15', lime: '#a3e635', green: '#4ade80', emerald: '#34d399',
+    teal: '#2dd4bf', cyan: '#22d3ee', sky: '#38bdf8', blue: '#60a5fa',
+    indigo: '#818cf8', slate: '#94a3b8', stone: '#a8a29e', zinc: '#a1a1aa',
+  };
+  const colorOf = (name) => COLORS[name] || COLORS.violet;
+
+  const canvas = document.getElementById('graph-canvas');
+  const ctx = canvas.getContext('2d');
+  const tooltip = document.getElementById('graph-tooltip');
+  const emptyEl = document.getElementById('graph-empty');
+  const nodeCountEl = document.getElementById('graph-node-count');
+  const edgeCountEl = document.getElementById('graph-edge-count');
+  const showCompletedEl = document.getElementById('graph-show-completed');
+
+  let nodes = [], edges = [], nodeMap = new Map();
+  let camera = { x: 0, y: 0, scale: 1 };
+  let dragNode = null;
+  let dragOffset = { x: 0, y: 0 };
+  let isPanning = false;
+  let panStart = { x: 0, y: 0 };
+  let hoverNode = null;
+  let raw = { nodes: [], edges: [] };
+
+  // ----- background twinkling stars (purely decorative, behind nodes) -----
+  const stars = [];
+  function regenStars(count) {
+    stars.length = 0;
+    for (let i = 0; i < count; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 1.4 + 0.2,
+        o: Math.random() * 0.6 + 0.2,
+        tw: Math.random() * Math.PI * 2,
+        sp: Math.random() * 0.02 + 0.005,
+      });
+    }
+  }
+
+  function fitCanvas() {
+    const r = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = r.width * dpr;
+    canvas.height = r.height * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    regenStars(Math.floor((r.width * r.height) / 6000));
+  }
+  window.addEventListener('resize', fitCanvas);
+  fitCanvas();
+
+  // ----- physics tunables -----
+  const REPULSION = 1800;
+  const SPRING_LEN = 110;
+  const SPRING_K = 0.012;
+  const CENTER_K = 0.0015;
+  const DAMPING = 0.86;
+  const MAX_VEL = 8;
+
+  function step() {
+    const r = canvas.getBoundingClientRect();
+    const cx = r.width / 2, cy = r.height / 2;
+
+    for (const n of nodes) {
+      let fx = 0, fy = 0;
+      for (const m of nodes) {
+        if (m === n) continue;
+        const dx = n.x - m.x, dy = n.y - m.y;
+        const d2 = dx * dx + dy * dy + 0.01;
+        const f = REPULSION / d2;
+        const d = Math.sqrt(d2);
+        fx += (dx / d) * f;
+        fy += (dy / d) * f;
+      }
+      // gentle pull to center
+      fx += (cx - n.x) * CENTER_K;
+      fy += (cy - n.y) * CENTER_K;
+      n.fx = fx; n.fy = fy;
+    }
+    for (const e of edges) {
+      const a = nodeMap.get(e.source), b = nodeMap.get(e.target);
+      if (!a || !b) continue;
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const d = Math.sqrt(dx * dx + dy * dy) || 0.01;
+      const targetLen = e.kind === 'parent' ? SPRING_LEN * 0.7 : SPRING_LEN;
+      const k = e.kind === 'parent' ? SPRING_K * 1.6 : SPRING_K;
+      const f = (d - targetLen) * k;
+      const ux = dx / d, uy = dy / d;
+      a.fx += ux * f; a.fy += uy * f;
+      b.fx -= ux * f; b.fy -= uy * f;
+    }
+    for (const n of nodes) {
+      if (n === dragNode) { n.vx = 0; n.vy = 0; continue; }
+      n.vx = (n.vx + n.fx) * DAMPING;
+      n.vy = (n.vy + n.fy) * DAMPING;
+      const v = Math.hypot(n.vx, n.vy);
+      if (v > MAX_VEL) { n.vx = (n.vx / v) * MAX_VEL; n.vy = (n.vy / v) * MAX_VEL; }
+      n.x += n.vx;
+      n.y += n.vy;
+    }
+  }
+
+  function draw() {
+    const r = canvas.getBoundingClientRect();
+    ctx.clearRect(0, 0, r.width, r.height);
+
+    // cosmic gradient background
+    const grad = ctx.createRadialGradient(r.width / 2, r.height / 2, 50, r.width / 2, r.height / 2, Math.max(r.width, r.height));
+    grad.addColorStop(0, 'rgba(124, 58, 237, 0.10)');
+    grad.addColorStop(0.5, 'rgba(15, 10, 30, 0.0)');
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0.0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, r.width, r.height);
+
+    // twinkling stars
+    for (const s of stars) {
+      s.tw += s.sp;
+      const a = (Math.sin(s.tw) * 0.3 + 0.7) * s.o;
+      ctx.fillStyle = 'rgba(255,255,255,' + a.toFixed(3) + ')';
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.save();
+    ctx.translate(camera.x, camera.y);
+    ctx.scale(camera.scale, camera.scale);
+
+    // edges
+    for (const e of edges) {
+      const a = nodeMap.get(e.source), b = nodeMap.get(e.target);
+      if (!a || !b) continue;
+      const isHovered = hoverNode && (a === hoverNode || b === hoverNode);
+      ctx.strokeStyle = e.kind === 'parent'
+        ? (isHovered ? 'rgba(167, 139, 250, 0.9)' : 'rgba(167, 139, 250, 0.45)')
+        : (isHovered ? 'rgba(251, 191, 36, 0.9)' : 'rgba(251, 191, 36, 0.45)');
+      ctx.lineWidth = isHovered ? 2 : 1.2;
+      if (e.kind === 'link') ctx.setLineDash([3, 3]); else ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // nodes
+    for (const n of nodes) {
+      const isHovered = n === hoverNode;
+      const isDragged = n === dragNode;
+      const baseColor = colorOf(n.project_color);
+      const r = Math.max(5, Math.min(14, 5 + (n.degree || 0) * 1.2));
+
+      // glow
+      const glow = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, r * 3);
+      glow.addColorStop(0, baseColor + 'cc');
+      glow.addColorStop(1, baseColor + '00');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, r * 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // body
+      ctx.fillStyle = n.is_completed ? '#475569' : baseColor;
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      // ring on hover/drag
+      if (isHovered || isDragged) {
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, r + 3, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // label only on hover or for big nodes
+      if (isHovered || (n.degree || 0) >= 3) {
+        ctx.fillStyle = isHovered ? '#ffffff' : 'rgba(226,232,240,0.85)';
+        ctx.font = (isHovered ? '600 ' : '500 ') + '11px Inter,system-ui,sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        const t = (n.title || '').slice(0, 28);
+        ctx.fillText(t, n.x, n.y + r + 4);
+      }
+    }
+    ctx.restore();
+  }
+
+  function loop() {
+    step();
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  function screenToWorld(p) {
+    return { x: (p.x - camera.x) / camera.scale, y: (p.y - camera.y) / camera.scale };
+  }
+
+  function nodeAt(sp) {
+    const p = screenToWorld(sp);
+    for (let i = nodes.length - 1; i >= 0; i--) {
+      const n = nodes[i];
+      const r = Math.max(5, Math.min(14, 5 + (n.degree || 0) * 1.2));
+      const dx = n.x - p.x, dy = n.y - p.y;
+      if (dx * dx + dy * dy <= (r + 4) * (r + 4)) return n;
+    }
+    return null;
+  }
+
+  function localPos(ev) {
+    const r = canvas.getBoundingClientRect();
+    return { x: ev.clientX - r.left, y: ev.clientY - r.top };
+  }
+
+  canvas.addEventListener('mousedown', (ev) => {
+    const sp = localPos(ev);
+    const hit = nodeAt(sp);
+    if (hit) {
+      dragNode = hit;
+      const w = screenToWorld(sp);
+      dragOffset.x = hit.x - w.x;
+      dragOffset.y = hit.y - w.y;
+    } else {
+      isPanning = true;
+      panStart = { x: sp.x - camera.x, y: sp.y - camera.y };
+    }
+  });
+  canvas.addEventListener('mousemove', (ev) => {
+    const sp = localPos(ev);
+    if (dragNode) {
+      const w = screenToWorld(sp);
+      dragNode.x = w.x + dragOffset.x;
+      dragNode.y = w.y + dragOffset.y;
+      dragNode.dragged = true;
+    } else if (isPanning) {
+      camera.x = sp.x - panStart.x;
+      camera.y = sp.y - panStart.y;
+    } else {
+      const hit = nodeAt(sp);
+      hoverNode = hit;
+      if (hit) {
+        canvas.style.cursor = 'pointer';
+        tooltip.style.display = 'block';
+        tooltip.style.left = (sp.x + 12) + 'px';
+        tooltip.style.top = (sp.y + 12) + 'px';
+        const safeTitle = (hit.title || '').replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+        const safeProj = (hit.project_name || '').replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+        tooltip.innerHTML = '<div class="font-semibold">' + safeTitle + '</div>'
+          + '<div class="text-[var(--text-muted)] text-[10px] mt-0.5">'
+          + '<span class="inline-block w-1.5 h-1.5 rounded-full mr-1" style="background:' + colorOf(hit.project_color) + '"></span>'
+          + safeProj + ' · клик — открыть, перетащи — двинуть</div>';
+      } else {
+        canvas.style.cursor = isPanning ? 'grabbing' : 'grab';
+        tooltip.style.display = 'none';
+      }
+    }
+  });
+  canvas.addEventListener('mouseup', (ev) => {
+    if (dragNode && !dragNode.dragged) {
+      // clean click → open task detail
+      htmx.ajax('GET', '/htmx/tasks/' + dragNode.id + '/detail', {target: '#task-detail-slot', swap: 'innerHTML'});
+    }
+    if (dragNode) dragNode.dragged = false;
+    dragNode = null;
+    isPanning = false;
+  });
+  canvas.addEventListener('mouseleave', () => { dragNode = null; isPanning = false; tooltip.style.display = 'none'; });
+  canvas.addEventListener('wheel', (ev) => {
+    ev.preventDefault();
+    const sp = localPos(ev);
+    const w = screenToWorld(sp);
+    const factor = ev.deltaY > 0 ? 0.92 : 1.08;
+    camera.scale = Math.max(0.2, Math.min(3, camera.scale * factor));
+    camera.x = sp.x - w.x * camera.scale;
+    camera.y = sp.y - w.y * camera.scale;
+  }, { passive: false });
+
+  function recenter() {
+    const r = canvas.getBoundingClientRect();
+    if (!nodes.length) return;
+    const xs = nodes.map(n => n.x), ys = nodes.map(n => n.y);
+    const minX = Math.min(...xs), maxX = Math.max(...xs);
+    const minY = Math.min(...ys), maxY = Math.max(...ys);
+    const w = maxX - minX || 1, h = maxY - minY || 1;
+    const padding = 60;
+    const sx = (r.width - padding * 2) / w;
+    const sy = (r.height - padding * 2) / h;
+    camera.scale = Math.max(0.4, Math.min(1.6, Math.min(sx, sy)));
+    camera.x = r.width / 2 - ((minX + maxX) / 2) * camera.scale;
+    camera.y = r.height / 2 - ((minY + maxY) / 2) * camera.scale;
+  }
+  document.getElementById('graph-recenter').addEventListener('click', recenter);
+  document.getElementById('graph-replay').addEventListener('click', () => { layoutFresh(); });
+
+  function layoutFresh() {
+    const r = canvas.getBoundingClientRect();
+    const cx = r.width / 2, cy = r.height / 2;
+    for (let i = 0; i < nodes.length; i++) {
+      const a = (i / nodes.length) * Math.PI * 2;
+      const rr = 80 + Math.random() * 200;
+      nodes[i].x = cx + Math.cos(a) * rr;
+      nodes[i].y = cy + Math.sin(a) * rr;
+      nodes[i].vx = 0;
+      nodes[i].vy = 0;
+    }
+  }
+
+  function rebuild() {
+    const showDone = showCompletedEl.checked;
+    const filtered = raw.nodes.filter(n => showDone || !n.is_completed);
+    const idSet = new Set(filtered.map(n => n.id));
+    const filteredEdges = raw.edges.filter(e => idSet.has(e.source) && idSet.has(e.target));
+    nodeCountEl.textContent = filtered.length;
+    edgeCountEl.textContent = filteredEdges.length;
+    if (!filtered.length) {
+      emptyEl.style.display = 'flex';
+    } else {
+      emptyEl.style.display = 'none';
+    }
+    // preserve existing positions
+    const oldPos = new Map(nodes.map(n => [n.id, {x: n.x, y: n.y}]));
+    nodes = filtered.map(n => Object.assign({
+      vx: 0, vy: 0, fx: 0, fy: 0,
+      x: oldPos.get(n.id)?.x,
+      y: oldPos.get(n.id)?.y,
+    }, n));
+    edges = filteredEdges;
+    nodeMap = new Map(nodes.map(n => [n.id, n]));
+    // degree count
+    for (const n of nodes) n.degree = 0;
+    for (const e of edges) {
+      const a = nodeMap.get(e.source); if (a) a.degree++;
+      const b = nodeMap.get(e.target); if (b) b.degree++;
+    }
+    // give new nodes a starting position
+    const r = canvas.getBoundingClientRect();
+    let unplaced = nodes.filter(n => n.x === undefined || n.y === undefined);
+    for (let i = 0; i < unplaced.length; i++) {
+      const a = (i / Math.max(1, unplaced.length)) * Math.PI * 2;
+      unplaced[i].x = r.width / 2 + Math.cos(a) * (80 + Math.random() * 200);
+      unplaced[i].y = r.height / 2 + Math.sin(a) * (80 + Math.random() * 200);
+    }
+    if (oldPos.size === 0) recenter();
+  }
+
+  showCompletedEl.addEventListener('change', rebuild);
+
+  fetch('/api/links/graph', {credentials: 'include'})
+    .then(r => r.json())
+    .then(data => {
+      raw = data;
+      rebuild();
+      requestAnimationFrame(loop);
+    })
+    .catch(() => {
+      emptyEl.style.display = 'flex';
+      emptyEl.textContent = '⚠ Не удалось загрузить граф';
+    });
+})();
+</script>
+{% endblock %}

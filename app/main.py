@@ -26,6 +26,8 @@ from app.digest.router import router as digest_router
 from app.help.router import router as help_router
 from app.labels.router import router as labels_router
 from app.labels.router import task_labels_router
+from app.links.router import graph_router
+from app.links.router import router as links_router
 from app.logging_setup import configure_logging
 from app.miniapp.router import router as miniapp_router
 from app.pages.router import router as pages_router
@@ -164,6 +166,8 @@ app.include_router(tasks_router)
 app.include_router(tasks_reorder_router)
 app.include_router(labels_router)
 app.include_router(task_labels_router)
+app.include_router(links_router)
+app.include_router(graph_router)
 app.include_router(views_router)
 app.include_router(htmx_router)
 app.include_router(profile_router)
