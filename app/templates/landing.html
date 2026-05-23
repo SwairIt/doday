@@ -811,58 +811,6 @@
     </section>
   </main>
 
-  <footer class="border-t border-[var(--border)] py-10 mt-auto">
-    <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-8 text-sm">
-      <div>
-        <a href="/" class="flex items-center gap-2 font-bold text-lg mb-3">
-          <span class="grad-bg w-8 h-8 rounded-lg flex items-center justify-center text-white font-extrabold">D</span>
-          <span class="grad-text">Doday</span>
-        </a>
-        <p class="text-[var(--text-muted)] text-xs leading-relaxed">
-          Тихий помощник для дел. Без рекламы и без давления.
-        </p>
-      </div>
-      <div>
-        <div class="text-xs uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-3">Продукт</div>
-        <ul class="space-y-2 text-[var(--text-muted)]">
-          <li><a href="#features" class="hover:text-[var(--text)]">Возможности</a></li>
-          <li><a href="#workflow" class="hover:text-[var(--text)]">Как работает</a></li>
-          <li><a href="#pricing" class="hover:text-[var(--text)]">Тарифы</a></li>
-          <li><a href="#faq" class="hover:text-[var(--text)]">FAQ</a></li>
-        </ul>
-      </div>
-      <div>
-        <div class="text-xs uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-3">Помощь</div>
-        <ul class="space-y-2 text-[var(--text-muted)]">
-          <li><a href="/help" class="hover:text-[var(--text)]">База знаний</a></li>
-          <li><a href="/changelog" class="hover:text-[var(--text)]">Changelog</a></li>
-          <li><a href="/roadmap" class="hover:text-[var(--text)]">Roadmap</a></li>
-          <li><a href="mailto:hello@doday.app" class="hover:text-[var(--text)]">hello@doday.app</a></li>
-          <li><a href="/privacy" class="hover:text-[var(--text)]">Политика</a></li>
-          {% if request.state.telegram_channel_url %}
-            <li>{% include "_partials/social_links.html" %}</li>
-          {% endif %}
-        </ul>
-      </div>
-      <div>
-        <div class="text-xs uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-3">Аккаунт</div>
-        <ul class="space-y-2 text-[var(--text-muted)]">
-          {% if user %}
-            <li>Вошёл как <strong class="text-[var(--text)]">{{ user.email }}</strong></li>
-            <li><a href="/app/today" class="hover:text-[var(--text)]">Открыть приложение</a></li>
-            <li><form method="post" action="/auth/logout" class="inline"><button class="hover:text-[var(--text)] underline">Выйти</button></form></li>
-          {% else %}
-            <li><a href="/auth/login" class="hover:text-[var(--text)]">Войти</a></li>
-            <li><a href="/auth/register" class="hover:text-[var(--text)]">Регистрация</a></li>
-          {% endif %}
-          <li><a href="https://github.com/SwairIt/SchoolProject" target="_blank" rel="noopener" class="hover:text-[var(--text)]">GitHub</a></li>
-        </ul>
-      </div>
-    </div>
-    <div class="max-w-7xl mx-auto px-6 mt-8 pt-6 border-t border-[var(--border)] text-xs text-[var(--text-muted)] flex flex-wrap justify-between gap-2">
-      <span>© 2026 Doday</span>
-      <span>Сделано с фиолетовой любовью к спискам</span>
-    </div>
-  </footer>
+  {% include "_partials/public_footer.html" %}
 </div>
 {% endblock %}

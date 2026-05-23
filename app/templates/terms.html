@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Условия использования (оферта) — Doday{% endblock %}
+{% block seo_description %}Публичная оферта на оказание услуг сервиса Doday — планировщика задач. Условия подписки, способы оплаты, возврат денег, контакты исполнителя.{% endblock %}
+{% block layout %}
+<div class="min-h-screen flex flex-col">
+  <header class="px-4 sm:px-6 py-4">
+    <a href="/" class="inline-flex items-center gap-2.5 font-bold text-xl">
+      <span class="grad-bg w-9 h-9 rounded-xl flex items-center justify-center text-white font-extrabold shadow-glow">D</span>
+      <span class="grad-text">Doday</span>
+    </a>
+  </header>
+
+  <main class="flex-1 max-w-3xl mx-auto px-4 sm:px-6 py-8">
+    <article class="prose prose-invert max-w-none">
+      <h1 class="text-3xl font-bold mb-2">Условия использования</h1>
+      <p class="text-[var(--text-muted)] mb-8">Публичная оферта на оказание услуг сервиса <strong>Doday</strong>. Действует с 23 мая 2026 г.</p>
+
+      <div class="space-y-8 text-[var(--text)]">
+
+        <section>
+          <h2 class="text-xl font-semibold mb-2">1. Стороны</h2>
+          <p class="text-[var(--text-muted)]">
+            <strong>Исполнитель:</strong> Боев Ярослав Дмитриевич, плательщик налога
+            на профессиональный доход (самозанятый), ИНН <span class="font-mono">550149009405</span>.
+          </p>
+          <p class="text-[var(--text-muted)] mt-1">
+            <strong>Заказчик:</strong> любое дееспособное физическое лицо или
+            законный представитель ребёнка, оформившее(ий) заказ услуги через сайт
+            <a href="https://getdoday.ru" class="text-[var(--accent)] hover:underline">getdoday.ru</a>.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-xl font-semibold mb-2">2. Предмет</h2>
+          <p class="text-[var(--text-muted)]">
+            Исполнитель предоставляет Заказчику доступ к функциям веб-сервиса
+            «Doday» — онлайн-планировщику задач — на условиях платной подписки
+            (тариф «Pro» / «Family») либо бесплатной версии с лимитами.
+            Актуальные тарифы публикуются на странице
+            <a href="/pricing" class="text-[var(--accent)] hover:underline">/pricing</a>.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-xl font-semibold mb-2">3. Стоимость и оплата</h2>
+          <ul class="list-disc pl-5 space-y-1 text-[var(--text-muted)]">
+            <li><strong>Тариф «Pro»</strong> — 199 ₽ в месяц или 1990 ₽ в год.</li>
+            <li><strong>Тариф «Family»</strong> — 299 ₽ в месяц или 2990 ₽ в год
+                (до 5 связанных аккаунтов).</li>
+            <li><strong>Тариф «Free»</strong> — без оплаты, с лимитами по числу
+                проектов и задач (см. <a href="/pricing" class="text-[var(--accent)] hover:underline">/pricing</a>).</li>
+          </ul>
+          <p class="text-[var(--text-muted)] mt-2">
+            Оплата принимается российскими банковскими картами и через СБП на сайте
+            getdoday.ru через платёжного партнёра (банк-эквайер). После успешного
+            платежа автоматически формируется фискальный чек самозанятого через
+            сервис ФНС «Мой налог» и направляется Заказчику по электронной почте,
+            указанной при оплате.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-xl font-semibold mb-2">4. Способ и срок «доставки» услуги</h2>
+          <p class="text-[var(--text-muted)]">
+            Услуга является <strong>цифровой</strong> и предоставляется
+            <strong>моментально</strong> после поступления оплаты: возможности
+            оплаченного тарифа активируются автоматически в личном кабинете
+            Заказчика по адресу <code>getdoday.ru/app/...</code>. Никакой физической
+            доставки не требуется.
+          </p>
+          <p class="text-[var(--text-muted)] mt-2">
+            Срок действия подписки — 30 дней (помесячная) или 365 дней (годовая)
+            с момента активации.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-xl font-semibold mb-2">5. Возврат денежных средств</h2>
+          <p class="text-[var(--text-muted)]">
+            Заказчик вправе отказаться от оплаченной подписки в течение <strong>14
+            дней</strong> с момента оплаты. В этом случае Исполнитель возвращает
+            уплаченную сумму на тот же счёт/карту, с которой производилась оплата,
+            в течение 10 рабочих дней, за вычетом пропорциональной стоимости
+            фактически использованных дней подписки.
+          </p>
+          <p class="text-[var(--text-muted)] mt-2">
+            Для возврата отправь письмо с темой «Возврат подписки» на адрес
+            <a href="mailto:bugdenes@gmail.com" class="text-[var(--accent)] hover:underline">bugdenes@gmail.com</a>
+            с указанием email аккаунта и приблизительной даты оплаты.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-xl font-semibold mb-2">6. Ответственность и форс-мажор</h2>
+          <p class="text-[var(--text-muted)]">
+            Исполнитель стремится поддерживать сервис в рабочем состоянии 24/7,
+            но не гарантирует абсолютную бесперебойность и не несёт ответственности
+            за простои, вызванные действиями третьих сторон (хостинг, провайдеры
+            связи), а также за форс-мажорные обстоятельства. В случае длительной
+            недоступности сервиса (более 24 часов подряд) оплаченная подписка
+            продлевается на эквивалентный срок бесплатно.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-xl font-semibold mb-2">7. Защита персональных данных</h2>
+          <p class="text-[var(--text-muted)]">
+            Условия обработки персональных данных описаны в
+            <a href="/privacy" class="text-[var(--accent)] hover:underline">Политике конфиденциальности</a>,
+            являющейся неотъемлемой частью настоящей оферты.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-xl font-semibold mb-2">8. Заключение договора</h2>
+          <p class="text-[var(--text-muted)]">
+            Настоящая оферта считается принятой (договор заключён) в момент
+            совершения Заказчиком оплаты подписки. Оплата подписки означает полное
+            и безоговорочное согласие Заказчика с условиями настоящей оферты.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-xl font-semibold mb-2">9. Контакты</h2>
+          <p class="text-[var(--text-muted)]">
+            Боев Ярослав Дмитриевич, самозанятый, ИНН <span class="font-mono">550149009405</span>.<br>
+            Адрес для связи: Московская обл., г. Королёв, мкр. Юбилейный, ул. М.К. Тихонравова, д. 40, кв. 5.<br>
+            Email: <a href="mailto:bugdenes@gmail.com" class="text-[var(--accent)] hover:underline">bugdenes@gmail.com</a>.
+          </p>
+        </section>
+
+      </div>
+
+      <div class="mt-8 text-sm text-[var(--text-muted)]">
+        <a href="/" class="text-[var(--accent)] hover:underline">← На главную</a>
+      </div>
+    </article>
+  </main>
+  {% include "_partials/public_footer.html" %}
+</div>
+{% endblock %}

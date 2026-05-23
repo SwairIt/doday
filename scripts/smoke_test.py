@@ -33,6 +33,7 @@ class Result:
 ENDPOINTS: list[Endpoint] = [
     Endpoint("/", 200, "landing"),
     Endpoint("/privacy", 200, "privacy"),
+    Endpoint("/terms", 200, "terms"),
     Endpoint("/pricing", 200, "pricing"),
     Endpoint("/changelog", 200, "changelog"),
     Endpoint("/roadmap", 200, "roadmap"),

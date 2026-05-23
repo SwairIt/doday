@@ -1,0 +1,49 @@
+{# Public-pages footer: brand + links + legal requisites.
+   Must appear on every public page so payment processors (ЮKassa etc.) can
+   see the executor's ИНН + status. #}
+<footer class="border-t border-[var(--border)] py-10 mt-auto">
+  <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-8 text-sm">
+    <div>
+      <a href="/" class="flex items-center gap-2 font-bold text-lg mb-3">
+        <span class="grad-bg w-8 h-8 rounded-lg flex items-center justify-center text-white font-extrabold">D</span>
+        <span class="grad-text">Doday</span>
+      </a>
+      <p class="text-[var(--text-muted)] text-xs leading-relaxed">
+        Тихий помощник для дел. Без рекламы и без давления.
+      </p>
+    </div>
+    <div>
+      <div class="text-xs uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-3">Продукт</div>
+      <ul class="space-y-2 text-[var(--text-muted)]">
+        <li><a href="/pricing" class="hover:text-[var(--text)]">Тарифы</a></li>
+        <li><a href="/changelog" class="hover:text-[var(--text)]">Changelog</a></li>
+        <li><a href="/roadmap" class="hover:text-[var(--text)]">Roadmap</a></li>
+        <li><a href="/help" class="hover:text-[var(--text)]">База знаний</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="text-xs uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-3">Документы</div>
+      <ul class="space-y-2 text-[var(--text-muted)]">
+        <li><a href="/terms" class="hover:text-[var(--text)]">Условия (оферта)</a></li>
+        <li><a href="/privacy" class="hover:text-[var(--text)]">Политика конфиденциальности</a></li>
+        <li><a href="mailto:bugdenes@gmail.com" class="hover:text-[var(--text)]">bugdenes@gmail.com</a></li>
+        {% if request.state.telegram_channel_url %}
+          <li>{% include "_partials/social_links.html" %}</li>
+        {% endif %}
+      </ul>
+    </div>
+    <div>
+      <div class="text-xs uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-3">Реквизиты</div>
+      <ul class="space-y-1 text-[var(--text-muted)] text-xs">
+        <li>Самозанятый</li>
+        <li>Боев Ярослав Дмитриевич</li>
+        <li>ИНН&nbsp;<span class="text-[var(--text)] font-mono">550149009405</span></li>
+        <li>Плательщик налога на профессиональный доход (НПД)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="max-w-7xl mx-auto px-6 mt-8 pt-6 border-t border-[var(--border)] text-xs text-[var(--text-muted)] flex flex-wrap justify-between gap-2">
+    <span>© 2026 Doday · Самозанятый Боев Я.&nbsp;Д., ИНН 550149009405</span>
+    <span>Сделано с фиолетовой любовью к спискам</span>
+  </div>
+</footer>

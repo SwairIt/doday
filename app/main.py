@@ -269,7 +269,7 @@ async def sitemap_xml() -> Response:
     from app.help.articles import ARTICLES
 
     base = _settings.app_base_url.rstrip("/")
-    static_paths = ["/", "/privacy", "/help"]
+    static_paths = ["/", "/privacy", "/terms", "/pricing", "/help"]
     article_paths = [f"/help/{a['slug']}" for a in ARTICLES]
     items = "".join(
         f"<url><loc>{base}{p}</loc><changefreq>weekly</changefreq>"
