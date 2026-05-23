@@ -886,6 +886,73 @@
               {% if exp.key == 'graph' and exp.enabled %}
                 <a href="/app/graph" class="inline-block mt-2 text-xs text-[var(--accent)] hover:underline">→ Открыть граф</a>
               {% endif %}
+              {% if exp.key == 'user_templates' and exp.enabled %}
+                <div class="mt-2"
+                     x-data="{
+                       items: [],
+                       loading: true,
+                       err: null,
+                       async load() {
+                         this.loading = true; this.err = null;
+                         try {
+                           const r = await fetch('/api/user-templates', {credentials: 'include'});
+                           if (r.ok) { this.items = await r.json(); }
+                           else this.err = 'Не удалось загрузить';
+                         } catch (e) { this.err = String(e); } finally { this.loading = false; }
+                       },
+                       async instantiate(item) {
+                         const name = window.prompt('Имя нового проекта:', item.name.replace(/^Шаблон:\s*/, ''));
+                         if (name === null) return;
+                         try {
+                           const r = await fetch('/api/user-templates/' + item.id + '/instantiate', {
+                             method: 'POST', credentials: 'include',
+                             headers: {'Content-Type': 'application/json'},
+                             body: JSON.stringify({name: name.trim() || null}),
+                           });
+                           if (r.ok) {
+                             const proj = await r.json();
+                             if (window.dodayToast) window.dodayToast('Проект создан · открываю', {icon: '📁'});
+                             setTimeout(() => location.href = '/app/projects/' + proj.slug, 500);
+                           } else { this.err = 'Не удалось развернуть'; }
+                         } catch (e) { this.err = String(e); }
+                       },
+                       async remove(item) {
+                         if (!window.confirm('Удалить шаблон «' + item.name + '»?')) return;
+                         try {
+                           const r = await fetch('/api/user-templates/' + item.id, {method: 'DELETE', credentials: 'include'});
+                           if (r.ok) {
+                             this.items = this.items.filter(t => t.id !== item.id);
+                             if (window.dodayToast) window.dodayToast('Шаблон удалён', {icon: '🗑'});
+                           }
+                         } catch (e) {}
+                       },
+                     }"
+                     x-init="load()">
+                  <template x-if="loading">
+                    <p class="text-xs text-[var(--text-muted)] italic">Загружаю…</p>
+                  </template>
+                  <template x-if="err">
+                    <p class="text-xs text-rose-400" x-text="'⚠ ' + err"></p>
+                  </template>
+                  <template x-if="!loading && !err && !items.length">
+                    <p class="text-xs text-[var(--text-muted)] italic">
+                      Нет сохранённых шаблонов. Открой любой проект и нажми «Сохранить как шаблон».
+                    </p>
+                  </template>
+                  <template x-if="items.length">
+                    <ul class="space-y-1.5">
+                      <template x-for="item in items" :key="item.id">
+                        <li class="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-[var(--surface-2)] text-sm group">
+                          <span class="w-2 h-2 rounded-full shrink-0" :class="'bg-' + (item.color || 'violet') + '-400'"></span>
+                          <span class="flex-1 min-w-0 truncate" x-text="item.name"></span>
+                          <button type="button" @click="instantiate(item)" class="text-xs text-[var(--accent)] hover:underline shrink-0">→ создать проект</button>
+                          <button type="button" @click="remove(item)" class="opacity-0 group-hover:opacity-100 text-xs text-rose-400 hover:underline shrink-0">×</button>
+                        </li>
+                      </template>
+                    </ul>
+                  </template>
+                </div>
+              {% endif %}
               {% if exp.key == 'calendar_feed' and exp.enabled %}
                 <div class="mt-2"
                      x-data="{ url: '', err: null, loading: false, copied: false,

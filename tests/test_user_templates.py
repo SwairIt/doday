@@ -97,6 +97,23 @@ async def test_instantiate_unknown_template_404(logged_in_client: AsyncClient) -
     assert response.status_code == 404
 
 
+async def test_settings_shows_template_list_when_experiment_on(
+    logged_in_client: AsyncClient,
+) -> None:
+    """When user_templates is on, /app/settings#experiments has a list/instantiate UI."""
+    # OFF → no list UI.
+    off = (await logged_in_client.get("/app/settings")).text
+    assert "Нет сохранённых шаблонов" not in off
+    assert "→ создать проект" not in off
+
+    await logged_in_client.post("/api/profile/experiments/user_templates", data={"enabled": "true"})
+
+    on = (await logged_in_client.get("/app/settings")).text
+    # Inline list with "create project" action + empty-state text both present.
+    assert "/api/user-templates" in on  # Alpine fetch target
+    assert "→ создать проект" in on or "создать проект" in on
+
+
 async def test_save_button_appears_only_when_experiment_enabled(
     logged_in_client: AsyncClient,
 ) -> None:
