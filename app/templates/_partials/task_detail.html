@@ -539,6 +539,92 @@
     </div>
     {% endif %}
 
+    {# 🧪 Experimental: per-task START/STOP timer. Hidden unless the user opted
+       into the "time_tracking" experiment. POSTs to /api/time/tasks/{id}/start
+       or /stop, reloads detail panel so total updates. #}
+    {% if time_tracking_enabled is defined and time_tracking_enabled %}
+    <div class="px-5 py-4 border-t border-[var(--border)]"
+         x-data="{
+           running: {{ 'true' if time_running else 'false' }},
+           startedAt: {{ (time_running_started_at|tojson) if time_running_started_at else 'null' }},
+           total: {{ time_total_seconds|int }},
+           now: Date.now(),
+           tickHandle: null,
+           saving: false,
+           err: null,
+           init() {
+             if (this.running) this.startTicking();
+           },
+           startTicking() {
+             this.tickHandle = setInterval(() => { this.now = Date.now(); }, 1000);
+           },
+           stopTicking() {
+             if (this.tickHandle) clearInterval(this.tickHandle);
+             this.tickHandle = null;
+           },
+           fmt(seconds) {
+             seconds = Math.max(0, Math.round(seconds));
+             const h = Math.floor(seconds / 3600);
+             const m = Math.floor((seconds % 3600) / 60);
+             const s = seconds % 60;
+             const pad = n => String(n).padStart(2, '0');
+             return h > 0 ? (h + ':' + pad(m) + ':' + pad(s)) : (m + ':' + pad(s));
+           },
+           get liveExtraSeconds() {
+             if (!this.running || !this.startedAt) return 0;
+             return (this.now - new Date(this.startedAt).getTime()) / 1000;
+           },
+           get displayTotal() {
+             return this.fmt(this.total + this.liveExtraSeconds);
+           },
+           async start() {
+             this.saving = true; this.err = null;
+             try {
+               const r = await fetch('/api/time/tasks/{{ task.id }}/start', {method: 'POST', credentials: 'include'});
+               if (r.ok) {
+                 const d = await r.json();
+                 this.startedAt = d.started_at;
+                 this.running = true;
+                 this.now = Date.now();
+                 this.startTicking();
+                 if (window.dodayToast) window.dodayToast('Таймер запущен', {icon: '▶'});
+               } else { this.err = 'Не удалось запустить'; }
+             } catch (e) { this.err = String(e); } finally { this.saving = false; }
+           },
+           async stop() {
+             this.saving = true; this.err = null;
+             try {
+               const r = await fetch('/api/time/tasks/{{ task.id }}/stop', {method: 'POST', credentials: 'include'});
+               if (r.ok) {
+                 const d = await r.json();
+                 this.total = d.task_total_seconds;
+                 this.running = false;
+                 this.startedAt = null;
+                 this.stopTicking();
+                 if (window.dodayToast) window.dodayToast('Таймер остановлен · +' + this.fmt(d.duration_seconds), {icon: '⏸'});
+               } else { this.err = 'Не удалось остановить'; }
+             } catch (e) { this.err = String(e); } finally { this.saving = false; }
+           },
+         }">
+      <div class="flex items-center justify-between mb-2">
+        <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider">⏱ Трекер времени</div>
+        <button type="button" @click="running ? stop() : start()" :disabled="saving"
+                :class="running ? 'bg-rose-500/15 text-rose-300 hover:bg-rose-500/25' : 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25'"
+                class="text-xs px-3 py-1 rounded-lg transition border border-[var(--border)]">
+          <span x-show="!running" x-cloak>▶ Старт</span>
+          <span x-show="running" x-cloak>⏸ Стоп</span>
+        </button>
+      </div>
+      <div class="flex items-baseline gap-3">
+        <span class="text-lg font-mono tabular-nums" x-text="displayTotal"></span>
+        <span class="text-[10px] text-[var(--text-muted)]" x-show="running" x-cloak>идёт сейчас…</span>
+      </div>
+      <template x-if="err">
+        <p class="text-xs text-rose-400 mt-1" x-text="'⚠ ' + err"></p>
+      </template>
+    </div>
+    {% endif %}
+
     <div class="px-5 py-4">
       <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider mb-2">Комментарии · {{ comments|length }}</div>
       <div class="space-y-2 mb-3">

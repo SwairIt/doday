@@ -481,6 +481,20 @@ async def task_detail(
     # the user has opted into the experiment.
     graph_enabled = is_enabled(user, "graph")
     task_links = await list_links_for_task(session, user.id, task_id) if graph_enabled else []
+    # Time-tracking experiment — render START/STOP timer + load existing total
+    # and current running state only when the user has opted in.
+    time_tracking_enabled = is_enabled(user, "time_tracking")
+    time_total_seconds = 0
+    time_running = False
+    time_running_started_at = None
+    if time_tracking_enabled:
+        from app.time_tracking.service import get_running_for_user, total_seconds_for_task
+
+        time_total_seconds = await total_seconds_for_task(session, user.id, task_id)
+        running = await get_running_for_user(session, user.id)
+        if running and running.task_id == task_id:
+            time_running = True
+            time_running_started_at = running.started_at.isoformat()
     return templates.TemplateResponse(
         request,
         "_partials/task_detail.html",
@@ -497,6 +511,10 @@ async def task_detail(
             "creator": creator,
             "graph_enabled": graph_enabled,
             "task_links": task_links,
+            "time_tracking_enabled": time_tracking_enabled,
+            "time_total_seconds": time_total_seconds,
+            "time_running": time_running,
+            "time_running_started_at": time_running_started_at,
         },
     )
 

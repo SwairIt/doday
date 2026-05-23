@@ -163,6 +163,34 @@ async def test_time_tracking_widget_appears_only_when_enabled(
     assert "doday-sprint" in body_on
 
 
+async def test_task_detail_timer_block_gated(logged_in_client: AsyncClient) -> None:
+    """⏱ Трекер времени block appears in task_detail only when time_tracking is on."""
+    t = (await logged_in_client.post("/api/tasks", json={"title": "tic-toc"})).json()
+
+    off = (await logged_in_client.get(f"/htmx/tasks/{t['id']}/detail")).text
+    assert "Трекер времени" not in off
+
+    await logged_in_client.post("/api/profile/experiments/time_tracking", data={"enabled": "true"})
+
+    on = (await logged_in_client.get(f"/htmx/tasks/{t['id']}/detail")).text
+    assert "Трекер времени" in on
+    # The Alpine helper hits the existing /api/time endpoints.
+    assert "/api/time/tasks/" in on
+
+
+async def test_task_detail_timer_reflects_running_state(logged_in_client: AsyncClient) -> None:
+    """When the user has the timer running on this task, panel renders «идёт сейчас…»."""
+    await logged_in_client.post("/api/profile/experiments/time_tracking", data={"enabled": "true"})
+    t = (await logged_in_client.post("/api/tasks", json={"title": "now"})).json()
+    # Start the timer through the API → reopen the panel → must say it is running.
+    started = await logged_in_client.post(f"/api/time/tasks/{t['id']}/start")
+    assert started.status_code == 200
+
+    panel = (await logged_in_client.get(f"/htmx/tasks/{t['id']}/detail")).text
+    assert "running: true" in panel  # x-data state seeded from server
+    assert "идёт сейчас" in panel
+
+
 async def test_ics_feed_serves_when_token_known(logged_in_client: AsyncClient) -> None:
     """The public-by-token .ics endpoint works regardless of the experiment flag —
     so a calendar subscription that was set up earlier doesn't break if the user
