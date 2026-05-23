@@ -50,6 +50,20 @@
         {% endif %}
       </div>
     {% endif %}
+    {% if current_user and current_user.experiments and current_user.experiments.get('user_templates') and not project.is_inbox %}
+      {# Сохранить как шаблон — экспериментальная фича: видна только когда юзер включил эксперимент. #}
+      <button type="button"
+              class="shrink-0 px-3 py-1.5 rounded-lg hover:bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--text)] transition flex items-center gap-1.5 text-sm border border-[var(--border)]"
+              title="Сохранить как переиспользуемый шаблон"
+              x-data="dodaySaveAsTemplate({{ (project.id|string)|tojson }}, {{ project.name|tojson }})"
+              @click="run()">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V5z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M14 3v5h5"/>
+        </svg>
+        <span class="hidden sm:inline">Сохранить как шаблон</span>
+      </button>
+    {% endif %}
     {% if is_owner %}
       <button type="button" @click="shareOpen = true"
               class="shrink-0 px-3 py-1.5 rounded-lg hover:bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--text)] transition flex items-center gap-1.5 text-sm border border-[var(--border)]">
@@ -84,6 +98,40 @@
 </div>
 
 {% include "_partials/quick_add.html" %}
+
+{% if current_user and current_user.experiments and current_user.experiments.get('user_templates') %}
+<script>
+  // Alpine-helper для кнопки «Сохранить как шаблон». Спрашивает имя через prompt,
+  // POST'ит в save-as-template, тостит результат. Намеренно простой — это
+  // experimental-фича, без модалки.
+  function dodaySaveAsTemplate(projectId, projectName) {
+    return {
+      run() {
+        const def = "Шаблон: " + (projectName || "проект");
+        const name = window.prompt("Имя шаблона:", def);
+        if (name === null) return;  // отмена
+        fetch("/api/projects/" + projectId + "/save-as-template", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({name: name.trim() || null}),
+        })
+          .then(r => r.ok ? r.json() : Promise.reject(r))
+          .then(() => {
+            if (window.dodayToast) {
+              window.dodayToast("Шаблон сохранён · смотри в настройках", {icon: "📦"});
+            }
+          })
+          .catch(err => {
+            if (window.dodayToast) {
+              window.dodayToast("Не получилось сохранить шаблон", {icon: "⚠"});
+            }
+            console.error("[save-as-template]", err);
+          });
+      },
+    };
+  }
+</script>
+{% endif %}
 
 {# Assignee data for client-side "group by assignee" — JSON in a script tag so
    the double-quotes don't clash with the x-data attribute. #}

@@ -51,6 +51,8 @@ from app.taptower_proxy import router as taptower_router
 from app.tasks.router import reorder_router as tasks_reorder_router
 from app.tasks.router import router as tasks_router
 from app.time_tracking.router import router as time_tracking_router
+from app.user_templates.router import router as user_templates_router
+from app.user_templates.router import save_router as user_templates_save_router
 from app.views.htmx import router as htmx_router
 from app.views.router import router as views_router
 
@@ -187,6 +189,8 @@ app.include_router(habits_router)
 app.include_router(mood_router)
 app.include_router(time_tracking_router)
 app.include_router(achievements_router)
+app.include_router(user_templates_router)
+app.include_router(user_templates_save_router)
 app.include_router(sections_router)
 app.include_router(share_router)
 app.include_router(backup_router)

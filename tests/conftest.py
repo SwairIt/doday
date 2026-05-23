@@ -31,6 +31,7 @@ from app.school import models as _school_models  # noqa: F401
 from app.sections import models as _sections_models  # noqa: F401
 from app.tasks import models as _tasks_models  # noqa: F401
 from app.telegram import models as _telegram_models  # noqa: F401
+from app.user_templates import models as _user_templates_models  # noqa: F401
 
 _settings = get_settings()
 
