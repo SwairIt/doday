@@ -44,6 +44,14 @@
 {% include "_partials/countdown_pins.html" %}
 {% include "_partials/onboarding_card.html" %}
 {% include "_partials/daily_goal.html" %}
+{# 🧪 Experimental: mood widget (gated). #}
+{% if current_user and current_user.experiments and current_user.experiments.get('mood') %}
+  {% include "_partials/mood_widget.html" %}
+{% endif %}
+{# 🧪 Experimental: sprint widget (time-tracking module). #}
+{% if current_user and current_user.experiments and current_user.experiments.get('time_tracking') %}
+  {% include "_partials/sprint_widget.html" %}
+{% endif %}
 {% include "_partials/quick_add.html" %}
 
 {% if not overdue and not today %}

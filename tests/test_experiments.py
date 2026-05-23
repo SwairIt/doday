@@ -114,6 +114,55 @@ async def test_habits_view_gated(logged_in_client: AsyncClient) -> None:
     assert resp2.status_code == 200
 
 
+async def test_mood_widget_appears_only_when_enabled(logged_in_client: AsyncClient) -> None:
+    """Mood widget renders on /today only after toggling the experiment on."""
+    body_off = (await logged_in_client.get("/app/today")).text
+    assert "/api/mood/today" not in body_off  # widget not yet there
+
+    await logged_in_client.post("/api/profile/experiments/mood", data={"enabled": "true"})
+
+    body_on = (await logged_in_client.get("/app/today")).text
+    assert "/api/mood/today" in body_on  # widget now embedded
+
+
+async def test_achievements_view_gated(logged_in_client: AsyncClient) -> None:
+    """/app/achievements returns 303 without the experiment, 200 with it."""
+    off = await logged_in_client.get("/app/achievements", follow_redirects=False)
+    assert off.status_code == 303
+
+    on = await logged_in_client.post(
+        "/api/profile/experiments/achievements", data={"enabled": "true"}
+    )
+    assert on.json()["enabled"] is True
+
+    page = await logged_in_client.get("/app/achievements")
+    assert page.status_code == 200
+    # Should reference the API the page fetches from.
+    assert "/api/achievements" in page.text
+
+
+async def test_achievements_api_returns_shape(logged_in_client: AsyncClient) -> None:
+    """Even with zero tasks, /api/achievements returns the dashboard shape."""
+    resp = await logged_in_client.get("/api/achievements")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert "items" in body and isinstance(body["items"], list)
+    assert body["items"], "achievements catalog must not be empty"
+
+
+async def test_time_tracking_widget_appears_only_when_enabled(
+    logged_in_client: AsyncClient,
+) -> None:
+    """Sprint widget partial appears on /today only after time_tracking is on."""
+    body_off = (await logged_in_client.get("/app/today")).text
+    assert "doday-sprint" not in body_off
+
+    await logged_in_client.post("/api/profile/experiments/time_tracking", data={"enabled": "true"})
+
+    body_on = (await logged_in_client.get("/app/today")).text
+    assert "doday-sprint" in body_on
+
+
 async def test_ics_feed_serves_when_token_known(logged_in_client: AsyncClient) -> None:
     """The public-by-token .ics endpoint works regardless of the experiment flag —
     so a calendar subscription that was set up earlier doesn't break if the user

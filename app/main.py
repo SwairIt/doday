@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse, PlainTextResponse, Response
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
+from app.achievements.router import router as achievements_router
 from app.admin.router import (
     admin_router,
     complaints_router,
@@ -37,6 +38,7 @@ from app.links.router import graph_router
 from app.links.router import router as links_router
 from app.logging_setup import configure_logging
 from app.miniapp.router import router as miniapp_router
+from app.mood.router import router as mood_router
 from app.pages.router import router as pages_router
 from app.profile.router import router as profile_router
 from app.projects.router import invites_router
@@ -48,6 +50,7 @@ from app.stats.router import router as stats_router
 from app.taptower_proxy import router as taptower_router
 from app.tasks.router import reorder_router as tasks_reorder_router
 from app.tasks.router import router as tasks_router
+from app.time_tracking.router import router as time_tracking_router
 from app.views.htmx import router as htmx_router
 from app.views.router import router as views_router
 
@@ -181,6 +184,9 @@ app.include_router(profile_router)
 app.include_router(calendar_feed_router)
 app.include_router(ical_token_router)
 app.include_router(habits_router)
+app.include_router(mood_router)
+app.include_router(time_tracking_router)
+app.include_router(achievements_router)
 app.include_router(sections_router)
 app.include_router(share_router)
 app.include_router(backup_router)

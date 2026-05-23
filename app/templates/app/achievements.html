@@ -1,0 +1,59 @@
+{% extends "app_base.html" %}
+{% block title %}Бейджи · Doday{% endblock %}
+{% block view_title %}🧪 Бейджи{% endblock %}
+{% block content %}
+<div class="mb-8">
+  <h1 class="text-3xl md:text-4xl font-bold mb-1 flex items-center gap-3 flex-wrap">
+    <span>🏅 Бейджи</span>
+    <span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300">alpha</span>
+  </h1>
+  <p class="text-[var(--text-muted)]">Закрываешь задачи — копится XP, открываются бейджи. <a href="/app/settings#experiments" class="text-[var(--accent)] hover:underline">Выключить эксперимент</a></p>
+</div>
+
+<div x-data="{
+  loading: true,
+  data: { unlocked: 0, total: 0, xp_total: 0, level: 1, items: [] },
+  async load() {
+    this.loading = true;
+    try {
+      const r = await fetch('/api/achievements', {credentials: 'include'});
+      if (r.ok) this.data = await r.json();
+    } catch (e) {} finally { this.loading = false; }
+  },
+  init() { this.load(); }
+}">
+  {# XP + Level header #}
+  <div class="card p-6 mb-6 flex items-center gap-6 flex-wrap">
+    <div class="text-center">
+      <div class="text-5xl font-bold grad-text" x-text="data.level"></div>
+      <div class="text-xs uppercase tracking-wider text-[var(--text-muted)] mt-1">уровень</div>
+    </div>
+    <div class="flex-1 min-w-[200px]">
+      <div class="text-sm text-[var(--text-muted)] mb-1">Опыт</div>
+      <div class="text-2xl font-bold grad-text"><span x-text="data.xp_total"></span> XP</div>
+    </div>
+    <div class="text-center">
+      <div class="text-2xl font-bold"><span x-text="data.unlocked"></span><span class="text-[var(--text-muted)]">/<span x-text="data.total"></span></span></div>
+      <div class="text-xs uppercase tracking-wider text-[var(--text-muted)] mt-1">открыто</div>
+    </div>
+  </div>
+
+  <template x-if="loading">
+    <p class="text-center text-[var(--text-muted)]">Загружаю…</p>
+  </template>
+
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+    <template x-for="a in data.items" :key="a.code">
+      <div class="card p-4 text-center transition"
+           :class="a.unlocked ? '' : 'opacity-40 grayscale'">
+        <div class="text-4xl mb-2" x-text="a.emoji"></div>
+        <div class="text-sm font-semibold" x-text="a.title"></div>
+        <div class="text-[11px] text-[var(--text-muted)] mt-1 leading-tight" x-text="a.description"></div>
+        <template x-if="a.unlocked">
+          <div class="mt-2 text-[10px] uppercase tracking-wider text-emerald-400">✓ открыто</div>
+        </template>
+      </div>
+    </template>
+  </div>
+</div>
+{% endblock %}

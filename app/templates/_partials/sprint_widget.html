@@ -1,0 +1,122 @@
+{# Sprint progress widget for company-audience users.
+   User picks start + end date and a goal label; widget shows day N of M,
+   linear progress bar and days-remaining. Stored in localStorage. #}
+<section
+  x-data="{
+    open: false,
+    cfg: null,
+    draftStart: '',
+    draftEnd: '',
+    draftGoal: '',
+    init() { this.load(); },
+    load() {
+      try { this.cfg = JSON.parse(localStorage.getItem('doday-sprint') || 'null'); }
+      catch(e) { this.cfg = null; }
+      if (this.cfg) {
+        this.draftStart = this.cfg.start; this.draftEnd = this.cfg.end; this.draftGoal = this.cfg.goal || '';
+      } else {
+        const today = new Date();
+        const friday = new Date(today);
+        friday.setDate(today.getDate() + ((5 - today.getDay() + 7) % 7 || 7) + 7);
+        this.draftStart = today.toISOString().slice(0, 10);
+        this.draftEnd = friday.toISOString().slice(0, 10);
+      }
+    },
+    save() {
+      if (!this.draftStart || !this.draftEnd) return;
+      this.cfg = { start: this.draftStart, end: this.draftEnd, goal: this.draftGoal.trim().slice(0, 80) };
+      try { localStorage.setItem('doday-sprint', JSON.stringify(this.cfg)); } catch(e){}
+      this.open = false;
+    },
+    clear() {
+      this.cfg = null;
+      try { localStorage.removeItem('doday-sprint'); } catch(e){}
+    },
+    metrics() {
+      if (!this.cfg) return null;
+      const start = new Date(this.cfg.start + 'T00:00:00');
+      const end = new Date(this.cfg.end + 'T23:59:59');
+      const now = new Date();
+      const totalDays = Math.max(1, Math.round((end - start) / (1000*60*60*24)));
+      const elapsedDays = Math.max(0, Math.min(totalDays, Math.round((now - start) / (1000*60*60*24))));
+      const remaining = Math.max(0, Math.round((end - now) / (1000*60*60*24)));
+      const pct = Math.min(100, Math.round(elapsedDays / totalDays * 100));
+      const finished = now > end;
+      return { totalDays, elapsedDays, remaining, pct, finished };
+    },
+    daysWord(n) {
+      const last = n % 10, last2 = n % 100;
+      if (last === 1 && last2 !== 11) return 'день';
+      if (last >= 2 && last <= 4 && (last2 < 10 || last2 >= 20)) return 'дня';
+      return 'дней';
+    },
+  }"
+  class="card p-5 mb-6"
+>
+  <template x-if="cfg">
+    <div>
+      <div class="flex items-start gap-3 mb-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-lg shrink-0">🚀</div>
+        <div class="flex-1 min-w-0">
+          <div class="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold">Спринт</div>
+          <div class="font-semibold truncate" x-text="cfg.goal || 'Без названия'"></div>
+        </div>
+        <button @click="open = !open" class="text-xs text-[var(--text-muted)] hover:text-[var(--accent)]">Изменить</button>
+      </div>
+      <template x-if="metrics()">
+        <div>
+          <div class="flex items-center justify-between text-xs text-[var(--text-muted)] mb-1">
+            <span>День <span class="text-[var(--text)] font-medium" x-text="metrics().elapsedDays + 1"></span> из <span class="text-[var(--text)] font-medium" x-text="metrics().totalDays + 1"></span></span>
+            <span x-text="metrics().pct + '%'"></span>
+          </div>
+          <div class="h-2 bg-[var(--surface-2)] rounded-full overflow-hidden mb-2">
+            <div class="h-full transition-all" :style="`width: ${metrics().pct}%; background: linear-gradient(90deg, #6366f1, #a855f7)`"></div>
+          </div>
+          <div class="text-xs text-[var(--text-muted)]">
+            <template x-if="!metrics().finished">
+              <span>Осталось <span class="text-[var(--text)] font-medium" x-text="metrics().remaining"></span> <span x-text="daysWord(metrics().remaining)"></span></span>
+            </template>
+            <template x-if="metrics().finished">
+              <span class="text-emerald-400 font-medium">Спринт завершён 🎉</span>
+            </template>
+          </div>
+        </div>
+      </template>
+    </div>
+  </template>
+  <template x-if="!cfg && !open">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-[var(--surface-2)] flex items-center justify-center text-lg shrink-0">🚀</div>
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-semibold">Запустить спринт</div>
+        <div class="text-xs text-[var(--text-muted)]">Прогресс-бар + дни до конца на /today.</div>
+      </div>
+      <button @click="open = true" class="btn-ghost px-3 py-1.5 text-xs">Настроить</button>
+    </div>
+  </template>
+
+  <div x-show="open" x-cloak x-transition class="space-y-3 mt-3">
+    <div>
+      <label class="block text-xs text-[var(--text-muted)] mb-1">Цель спринта (необязательно)</label>
+      <input x-model="draftGoal" type="text" maxlength="80" placeholder="Зарелизить v2.0"
+             class="w-full px-3 py-2 text-sm rounded-lg bg-[var(--surface-2)] border border-[var(--border)] outline-none focus:border-[var(--accent)]">
+    </div>
+    <div class="flex flex-wrap gap-3">
+      <div class="flex-1 min-w-[140px]">
+        <label class="block text-xs text-[var(--text-muted)] mb-1">Начало</label>
+        <input x-model="draftStart" type="date"
+               class="w-full px-3 py-1.5 text-sm rounded-lg bg-[var(--surface-2)] border border-[var(--border)] outline-none focus:border-[var(--accent)]">
+      </div>
+      <div class="flex-1 min-w-[140px]">
+        <label class="block text-xs text-[var(--text-muted)] mb-1">Конец</label>
+        <input x-model="draftEnd" type="date"
+               class="w-full px-3 py-1.5 text-sm rounded-lg bg-[var(--surface-2)] border border-[var(--border)] outline-none focus:border-[var(--accent)]">
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button @click="save()" :disabled="!draftStart || !draftEnd" class="btn-primary px-4 py-1.5 text-sm">Сохранить</button>
+      <button @click="open = false" class="btn-ghost px-3 py-1.5 text-sm">Отмена</button>
+      <button x-show="cfg" @click="clear()" class="ml-auto text-xs text-rose-400 hover:underline">Удалить</button>
+    </div>
+  </div>
+</section>

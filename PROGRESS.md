@@ -701,6 +701,63 @@ smoke 25/25 green. Commit `18ffb9c`.
 
 ---
 
+## 2026-05-24 — Воскресил mood + time-tracking + achievements (теперь 6 эксп.)
+
+Юзер снова сказал «работай долго, доделай всё, используй superpowers». Добил
+весь хвост удалённого в phase α по той же схеме revival'ов.
+
+### Mood (трекер настроения)
+- Миграция **0035** воссоздаёт `mood_entries` (1-в-1 со старой 0019).
+- Восстановлен модуль `app/mood/` + виджет `_partials/mood_widget.html`.
+- `/api/mood/today` + history. Widget включается на `/today` только если
+  `experiments.mood`.
+- Эксп `mood` (alpha) в `AVAILABLE`.
+
+### Time-tracking (трекер времени)
+- Миграция **0036** воссоздаёт `time_entries` (1-в-1 со старой 0018).
+- Восстановлен модуль `app/time_tracking/` + виджеты
+  `_partials/sprint_widget.html` и `school_streak.html` из истории.
+- API `/api/time/*` (start/stop/total).
+- Sprint widget включается на `/today` только если `experiments.time_tracking`.
+- Эксп `time_tracking` (alpha) в `AVAILABLE`.
+
+### Achievements / gamification (бейджи + XP)
+- Миграция **0037** воссоздаёт `user_progress` (XP/level) + `user_achievements`
+  (unlocked badges) — 1-в-1 со старыми 0024+0025.
+- Восстановлены оба модуля: `app/achievements/` (router + service с компьютом
+  unlocked) + `app/gamification/` (achievements catalog + daily challenges +
+  XP/level service).
+- Новая страница **`/app/achievements`** с гейтом — карточки бейджей, XP,
+  level, % unlocked. Использует существующий API `/api/achievements`.
+- Sidebar-link «🏅 Бейджи» (gated).
+- Эксп `achievements` (alpha) в `AVAILABLE`.
+
+### Лендинг — три новых строки в табличке
+- «Трекер настроения ✓ (эксп.)»
+- «Трекер времени ✓ (эксп.)»
+- «Бейджи / XP ✓ (эксп.)»
+
+### Тесты
+`tests/test_experiments.py` теперь **14 тестов** — каждый эксп. имеет тест на
+гейт + базовую операцию. Полный `pytest -q` зелёный.
+
+### Реестр экспериментов: 6 опт-инов
+1. graph (beta) — граф связей задач.
+2. calendar_feed (beta) — .ics-подписка.
+3. habits (alpha) — трекер привычек.
+4. mood (alpha) — трекер настроения.
+5. time_tracking (alpha) — таймер по задачам.
+6. achievements (alpha) — бейджи + XP/levels.
+
+### Долг (на потом)
+- Полноценный UI таймера на каждой задаче (сейчас только API + sprint виджет).
+- UI добавления привычек (если шаблон restored из истории — пройтись на свежий
+  глаз; возможна минорная доработка).
+- `user_templates` (тоже была удалена в phase α) — последняя крупная отстающая.
+- `company / standup` — не относится к школьному фокусу, оставляем.
+
+---
+
 ## 2026-05-23 — Доделал UI графа + воскресил .ics-фид и Привычки (3 экспа в реестре)
 
 Юзер сказал «работай долго, доделай всё, используй superpowers». Продолжил

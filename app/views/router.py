@@ -193,6 +193,26 @@ async def today_view(
     )
 
 
+@router.get("/achievements", response_class=HTMLResponse, response_model=None)
+async def achievements_view(
+    request: Request, user: RequiredUser, session: DbSession
+) -> HTMLResponse | RedirectResponse:
+    """Experimental: badges + XP/level wall. Gated by `achievements` flag."""
+    from app.experiments.service import is_enabled
+
+    if not is_enabled(user, "achievements"):
+        return RedirectResponse(url="/app/settings#experiments", status_code=303)
+    return templates.TemplateResponse(
+        request,
+        "app/achievements.html",
+        {
+            "current_user": user,
+            "current_view": "achievements",
+            "projects": await list_projects(session, user.id),
+        },
+    )
+
+
 @router.get("/habits", response_class=HTMLResponse, response_model=None)
 async def habits_view(
     request: Request, user: RequiredUser, session: DbSession
