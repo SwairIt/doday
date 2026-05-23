@@ -4,8 +4,22 @@
 {% block content %}
 <div class="mb-8 flex items-end justify-between gap-4">
   <div class="min-w-0">
-    <h1 class="text-3xl md:text-4xl font-bold mb-1">Сегодня</h1>
+    <h1 class="text-3xl md:text-4xl font-bold mb-1 flex items-center gap-3 flex-wrap">
+      <span>Сегодня</span>
+      {% if streak_days and streak_days > 0 %}
+        <a href="/app/stats"
+           title="Дней подряд с выполненной задачей — открыть статистику"
+           class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-300 text-base font-bold hover:bg-amber-500/25 transition shrink-0">
+          <span>🔥</span>
+          <span>{{ streak_days }}</span>
+          <span class="text-xs font-medium opacity-80">{% if streak_days == 1 %}день{% elif streak_days in (2,3,4) %}дня{% else %}дней{% endif %}</span>
+        </a>
+      {% endif %}
+    </h1>
     <p class="text-[var(--text-muted)]">{{ today_label }}</p>
+    {% if streak_days and streak_days > 0 and done_today_count == 0 %}
+      <p class="mt-2 text-sm text-amber-300">🔥 Серия из {{ streak_days }} {% if streak_days == 1 %}дня{% elif streak_days in (2,3,4) %}дней{% else %}дней{% endif %} ещё цела — сделай хоть одну задачу сегодня, чтобы не сорвать.</p>
+    {% endif %}
   </div>
   {% set total_today = (overdue|length) + (today|length) %}
   {% if total_today > 1 %}

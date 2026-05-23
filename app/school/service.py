@@ -6,11 +6,12 @@ Failures surface real HTTP details so the user can debug a stale token.
 """
 
 from datetime import UTC, datetime, timedelta
+from typing import cast
 from uuid import UUID
 
 import httpx
 import structlog
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.school.models import SchoolIntegration
@@ -365,3 +366,52 @@ async def _create_tasks_from_payload(
 
 def provider_label(provider: Provider) -> str:
     return PROVIDER_LABELS.get(provider, provider)
+
+
+# Opportunistic auto-refresh: when a user opens /app/today, kick off a sync
+# for any of their enabled, properly-configured integrations whose
+# `last_sync_at` is None or older than the threshold. Runs as a FastAPI
+# BackgroundTask (after the response is sent) so the page never waits.
+
+_LAZY_SYNC_STALE_MINUTES = 30
+
+
+async def lazy_sync_stale_integrations(user_id: UUID) -> None:
+    """Fire-and-forget refresh of stale school integrations. Must never raise:
+    this runs as a FastAPI BackgroundTask under /app/today and an exception
+    here would surface as a 500 *after* the response was already sent (and
+    in tests just corrupts unrelated state)."""
+    try:
+        from app.db import get_session_maker
+
+        threshold = datetime.now(UTC) - timedelta(minutes=_LAZY_SYNC_STALE_MINUTES)
+        async with get_session_maker()() as session:
+            rows = await session.execute(
+                select(SchoolIntegration).where(
+                    SchoolIntegration.user_id == user_id,
+                    SchoolIntegration.enabled.is_(True),
+                    SchoolIntegration.auth_token.is_not(None),
+                    SchoolIntegration.student_id.is_not(None),  # avoid pre-flight failure
+                    or_(
+                        SchoolIntegration.last_sync_at.is_(None),
+                        SchoolIntegration.last_sync_at < threshold,
+                    ),
+                )
+            )
+            for integ in rows.scalars().all():
+                try:
+                    await sync_now(session, user_id, cast(Provider, integ.provider))
+                except Exception as e:  # background task — must never propagate
+                    logger.warning(
+                        "lazy_school_sync_failed",
+                        provider=integ.provider,
+                        user_id=str(user_id),
+                        error=str(e),
+                    )
+    except BaseException as e:
+        # CancelledError (when the test loop tears down mid-task) is *not* a
+        # subclass of Exception in Python 3.8+, so we widen to BaseException
+        # and re-raise true interruptions.
+        logger.warning("lazy_school_sync_outer_failed", user_id=str(user_id), error=str(e))
+        if isinstance(e, KeyboardInterrupt | SystemExit):
+            raise

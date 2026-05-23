@@ -4,7 +4,7 @@ from collections import defaultdict
 from datetime import UTC, date, datetime, timedelta
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 
@@ -95,11 +95,32 @@ async def app_root() -> Response:
 
 
 @router.get("/today", response_class=HTMLResponse)
-async def today_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
+async def today_view(
+    request: Request,
+    user: RequiredUser,
+    session: DbSession,
+    background_tasks: BackgroundTasks,
+) -> HTMLResponse:
     from sqlalchemy import func
     from sqlalchemy import select as sa_select
 
     from app.projects.membership import assignee_map_for_projects, shared_project_ids
+    from app.school.models import SchoolIntegration
+    from app.school.service import lazy_sync_stale_integrations
+    from app.stats.service import current_streak
+
+    # Opportunistic background refresh: pulls fresh homework from connected
+    # school portals if last_sync_at is stale. Only schedule when the user
+    # actually has an integration — most users don't, so we skip the bg work.
+    has_integration = (
+        await session.execute(
+            sa_select(SchoolIntegration.id).where(SchoolIntegration.user_id == user.id).limit(1)
+        )
+    ).scalar_one_or_none() is not None
+    if has_integration:
+        background_tasks.add_task(lazy_sync_stale_integrations, user.id)
+
+    streak_days = await current_streak(session, user.id)
 
     projects = await list_projects(session, user.id)
     project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
@@ -166,6 +187,7 @@ async def today_view(request: Request, user: RequiredUser, session: DbSession) -
             "comment_count_map": comment_count_map,
             "done_today_count": done_today_count,
             "done_week_count": done_week_count,
+            "streak_days": streak_days,
             "completed_today": completed_today,
         },
     )

@@ -49,6 +49,17 @@ async def _completed_dates(session: AsyncSession, user_id: UUID) -> list[date]:
     return sorted({d if isinstance(d, date) else date.fromisoformat(str(d)) for d in days_raw})
 
 
+async def current_streak(session: AsyncSession, user_id: UUID) -> int:
+    """Public: how many days in a row the user has completed at least one task.
+
+    Cheap-enough for the /today header — one indexed query + a small Python loop.
+    Counts today if anything done today; otherwise counts the streak ending
+    yesterday (so opening the app fresh in the morning doesn't show 0)."""
+    today = datetime.now(UTC).date()
+    days = await _completed_dates(session, user_id)
+    return _current_streak(days, today)
+
+
 def _current_streak(days: list[date], today: date) -> int:
     """Consecutive completion days ending today (or yesterday — grace day)."""
     if not days:
