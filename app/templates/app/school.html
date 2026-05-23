@@ -29,10 +29,23 @@
                   const r = await fetch('/api/school/integrations/{{ i.provider }}/sync', {method: 'POST', credentials: 'include'});
                   if (r.ok) {
                     const d = await r.json();
-                    if (window.dodayToast) window.dodayToast('Синхронизация: +' + (d.imported_count || 0) + ' задач', {icon: '↻'});
-                    setTimeout(() => location.reload(), 600);
+                    // Server schema: {ok, pulled, created, error}. created — number
+                    // of NEW tasks (dedupe by external_id) added in this run.
+                    if (d.ok) {
+                      const created = d.created || 0;
+                      const pulled = d.pulled || 0;
+                      let msg;
+                      if (created > 0) msg = 'Загружено: +' + created + ' новых, ' + pulled + ' получено';
+                      else if (pulled > 0) msg = 'Получено ' + pulled + ' — всё уже синхронизировано';
+                      else msg = 'Портал не отдал домашку. Возможно нет уроков сегодня.';
+                      if (window.dodayToast) window.dodayToast(msg, {icon: '↻'});
+                      setTimeout(() => location.reload(), 800);
+                    } else {
+                      const errmsg = d.error || 'Не получилось — проверь токен в Настройках';
+                      if (window.dodayToast) window.dodayToast(errmsg, {icon: '⚠'});
+                    }
                   } else {
-                    if (window.dodayToast) window.dodayToast('Не получилось — проверь токен в Настройках', {icon: '⚠'});
+                    if (window.dodayToast) window.dodayToast('HTTP ' + r.status + ' — проверь токен в Настройках', {icon: '⚠'});
                   }
                 } catch (e) {} finally { this.syncing = false; }
               },
@@ -48,7 +61,15 @@
               {% else %}
                 Ещё не синхронизировал
               {% endif %}
+              {% if not i.target_project_id %}
+                · домашка попадёт в Inbox
+              {% endif %}
             </div>
+            {% if i.last_error %}
+              <div class="text-[10px] text-rose-400 mt-0.5 truncate" title="{{ i.last_error }}">
+                ⚠ {{ i.last_error }}
+              </div>
+            {% endif %}
           </div>
           <button type="button" @click="sync()" :disabled="syncing"
                   class="text-xs px-3 py-1 rounded-lg bg-[var(--accent)]/15 text-[var(--accent)] hover:bg-[var(--accent)]/25 transition shrink-0">

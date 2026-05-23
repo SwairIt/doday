@@ -1175,34 +1175,46 @@ async def school_view(
             "teacher": s.teacher,
         }
 
-    # School-tagged tasks: anything whose project is the user's «Школа»-named
-    # target project of any integration. Show top 12 active.
+    # School-tagged tasks: union of (a) target_project of each integration and
+    # (b) any task whose title starts with «📚» (the school-sync marker used
+    # by app.school.service._create_tasks_from_payload). The 📚 prefix is the
+    # canonical school-task marker, so the user sees their homework no matter
+    # which project the sync wrote into — including Inbox when target wasn't set.
+    from app.tasks.models import Task
+
     target_project_ids = {i.target_project_id for i in integrations if i.target_project_id}
     homework_today: list[object] = []
-    if target_project_ids:
-        from app.tasks.models import Task
+    today_date = datetime.now(UTC).date()
 
-        today_date = datetime.now(UTC).date()
-        hw_rows = await session.execute(
-            sa_select(Task)
-            .where(
-                Task.user_id == user.id,
-                Task.project_id.in_(target_project_ids),
-                Task.is_completed.is_(False),
-            )
-            .order_by(Task.due_at.is_(None), Task.due_at, Task.priority)
-            .limit(12)
+    # Build the WHERE: either project matches a target OR title starts with 📚.
+    from sqlalchemy import or_ as sa_or
+
+    project_clause = Task.project_id.in_(target_project_ids) if target_project_ids else None
+    title_clause = Task.title.startswith("📚")
+    where_clause = (
+        sa_or(project_clause, title_clause) if project_clause is not None else title_clause
+    )
+
+    hw_rows = await session.execute(
+        sa_select(Task)
+        .where(
+            Task.user_id == user.id,
+            Task.is_completed.is_(False),
+            where_clause,
         )
-        for t in hw_rows.scalars().all():
-            homework_today.append(
-                {
-                    "id": t.id,
-                    "title": t.title,
-                    "due_at": t.due_at,
-                    "is_today": (t.due_at is not None and t.due_at.date() == today_date),
-                    "priority": t.priority.value,
-                }
-            )
+        .order_by(Task.due_at.is_(None), Task.due_at, Task.priority)
+        .limit(12)
+    )
+    for t in hw_rows.scalars().all():
+        homework_today.append(
+            {
+                "id": t.id,
+                "title": t.title,
+                "due_at": t.due_at,
+                "is_today": (t.due_at is not None and t.due_at.date() == today_date),
+                "priority": t.priority.value,
+            }
+        )
 
     return templates.TemplateResponse(
         request,

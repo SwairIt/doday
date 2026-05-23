@@ -69,6 +69,21 @@ PRESETS: tuple[Preset, ...] = (
         ),
     ),
     Preset(
+        key="schoolchild_plus",
+        title="Школьник +",
+        description=(
+            "Всё из «Школьника» плюс встроенная игра Tap Tower для пятиминутных "
+            "отвлечений между уроками. Геймификация по полной."
+        ),
+        enabled_keys=(
+            "habits",
+            "achievements",
+            "mood",
+            "school",
+            "taptower",
+        ),
+    ),
+    Preset(
         key="maximum",
         title="Максимум",
         description=(

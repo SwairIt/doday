@@ -109,6 +109,7 @@
       or current_user.experiments.get('graph')
       or current_user.experiments.get('habits')
       or current_user.experiments.get('achievements')
+      or current_user.experiments.get('taptower')
     ) %}
     {% if has_any_feature %}
       <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider px-3 pt-5 pb-1">
@@ -166,6 +167,19 @@
           <span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 shrink-0">alpha</span>
         </a>
       {% endif %}
+      {% if current_user.experiments.get('taptower') %}
+        <a href="/taptower/" target="_blank"
+           class="flex items-center gap-3 px-3 py-2 rounded-lg transition hover:bg-[var(--surface)] text-[var(--text)]">
+          <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span class="flex-1">🎮 Игра</span>
+          <svg class="w-3 h-3 text-[var(--text-muted)] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+          </svg>
+        </a>
+      {% endif %}
     {% endif %}
 
     {% if favorites %}
@@ -211,21 +225,11 @@
 
     {% include "_partials/mini_calendar.html" %}
 
-    {% if current_user and current_user.is_admin %}
-      <div class="mt-4 pt-3 border-t border-[var(--border)]">
-        <div class="text-[10px] uppercase font-semibold text-rose-400/80 tracking-wider px-3 mb-1">Админ</div>
-        <a href="/app/root"
-           class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition
-                  {% if current_view == 'root' %}bg-rose-500/15 text-rose-400 font-semibold{% else %}text-[var(--text-muted)] hover:bg-[var(--surface)] hover:text-rose-400{% endif %}">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-          <span>Root</span>
-        </a>
-      </div>
-    {% endif %}
-
     {# Вторичная навигация — спрятана под «Ещё» чтобы sidebar был чище.
-       counts наследуется от <nav> x-data — отдельный fetch не нужен. #}
-    <div class="mt-2 px-3">
+       counts наследуется от <nav> x-data — отдельный fetch не нужен.
+       Стоит ПЕРЕД Админ-блоком, чтобы при раскрытии «Ещё» подпункты
+       не выглядели как admin sub-items. #}
+    <div class="mt-3 pt-3 px-3 border-t border-[var(--border)]">
       <details class="group/more">
         <summary class="flex items-center gap-2 py-1.5 text-sm text-[var(--text-muted)] cursor-pointer select-none list-none hover:text-[var(--text)]">
           <svg class="w-4 h-4 transition group-open/more:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -256,6 +260,20 @@
         </div>
       </details>
     </div>
+
+    {% if current_user and current_user.is_admin %}
+      {# Админ-блок последним — это редкий пункт. Отделён border-t чтобы не сливался
+         с Ещё (которое стоит выше). #}
+      <div class="mt-4 pt-3 px-3 border-t border-[var(--border)]">
+        <div class="text-[10px] uppercase font-semibold text-rose-400/80 tracking-wider mb-1">Админ</div>
+        <a href="/app/root"
+           class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition
+                  {% if current_view == 'root' %}bg-rose-500/15 text-rose-400 font-semibold{% else %}text-[var(--text-muted)] hover:bg-[var(--surface)] hover:text-rose-400{% endif %}">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          <span>Root</span>
+        </a>
+      </div>
+    {% endif %}
   </nav>
 
   <div class="p-3 border-t border-[var(--border)] flex items-center gap-2">

@@ -845,6 +845,49 @@
     </form>
   </section>
 
+  {# ─── Info: всегда-включённые фичи (читай-только список, чтобы юзер видел
+       что вообще есть). Не отключаемые — это core-функционал. ─── #}
+  <section id="builtins" class="card p-6">
+    <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">
+      📚 Что есть на сайте (всегда включено)
+    </h2>
+    <p class="text-sm text-[var(--text-muted)] mb-4">
+      Эти фичи — часть ядра, не отключаются. Перечислены, чтобы ты знал что доступно.
+    </p>
+    {% set builtins = [
+      ('🍅 Помодоро-таймер', 'В деталях любой задачи. 25 мин работы + 5 мин отдыха, счётчик сессий, browser-уведомления.', '/app/help/pomodoro-goal'),
+      ('📊 Статистика', 'Графики продуктивности за 30 дней + streak\'и + лучший день недели.', '/app/stats'),
+      ('📅 Календарь', 'Месячный календарь с задачами + неделя планирования.', '/app/calendar'),
+      ('📋 Канбан-доски', 'Каждый проект можно открыть в виде доски (?view=kanban).', '/app/help/kanban'),
+      ('👥 Команда / Назначено мне', 'Делишь проект с email-приглашением, назначаешь задачи участникам, видишь «свои» через /app/assigned.', '/app/team'),
+      ('🏷 Лейблы и фильтры', 'Кастомные лейблы (@дом, @срочно), быстрые фильтры (Просрочено, Без даты, Высокий приоритет, На этой неделе).', '/app/help/labels-filters'),
+      ('💬 Комментарии к задачам', 'Markdown-поддержка. Видны в панели деталей задачи.', '/app/help/subtasks-comments-recurrence'),
+      ('🔁 Повторяющиеся задачи', 'Recurrence ежедневно/еженедельно/ежемесячно/ежегодно.', '/app/help/subtasks-comments-recurrence'),
+      ('🔥 Стрики дней подряд', 'Чип в топбаре. Считает дни подряд с хотя бы одной выполненной задачей.', None),
+      ('⌘K Командная палитра', 'Хоткей Ctrl/⌘+K — поиск, быстрая навигация, действия.', '/app/help/shortcuts'),
+      ('📦 Bulk-действия', 'Выдели N задач — массово менять приоритет, дату, проект, лейблы; завершать/удалять.', '/app/help/bulk-add'),
+      ('📤 Импорт-экспорт', 'JSON-бэкап всего аккаунта, Markdown проекта, CSV для Excel.', '/app/help/import-export'),
+      ('🔗 Публичная ссылка на прогресс', 'Read-only ссылка для родителей/учителей. /api/profile/share-link.', None),
+      ('📱 Mini App (Telegram)', 'Мобильный режим под Telegram WebApp на /miniapp/.', None),
+      ('🎲 «Что дальше?»', 'Кнопка на «Сегодня» — случайная задача из списка.', None),
+      ('🌅 Утренний дайджест (Pro)', 'Email-сводка каждое утро с задачами на день.', '/app/help/quick-start'),
+      ('📌 Закрепления (countdown-пины)', 'Закрепи задачу с дедлайном — попадёт в виджет «До чего» на /today.', None),
+    ] %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      {% for title, desc, href in builtins %}
+        <div class="flex items-start gap-2 p-2 rounded-lg bg-[var(--surface-2)]/40 border border-[var(--border)]/50">
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-medium">{{ title }}</div>
+            <div class="text-[11px] text-[var(--text-muted)] leading-relaxed mt-0.5">{{ desc }}</div>
+            {% if href %}
+              <a href="{{ href }}" class="text-[11px] text-[var(--accent)] hover:underline mt-1 inline-block">→ Подробнее</a>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
   {# ─── Presets: bulk toggle by named bundle ─── #}
   {% if presets_list %}
   <section id="presets" class="card p-6">

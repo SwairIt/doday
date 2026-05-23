@@ -82,6 +82,16 @@ AVAILABLE: tuple[Experiment, ...] = (
         stage="stable",
     ),
     Experiment(
+        key="taptower",
+        title="🎮 Игра Tap Tower",
+        description=(
+            "Маленькая встроенная игра-кликер для отвлечься. Открывается на "
+            "/taptower/. В сайдбаре появится ссылка «Игра». Изначально была "
+            "сделана для Telegram-мини-апа, но работает и в браузере."
+        ),
+        stage="stable",
+    ),
+    Experiment(
         key="habits",
         title="Трекер привычек",
         description=(

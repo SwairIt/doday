@@ -72,11 +72,18 @@ async def test_preset_applies_bundle(logged_in_client: AsyncClient) -> None:
         "user_templates",
         "school",
     }
+    # Persistence check #1: after maximum, /app/graph (which is gated by `graph`
+    # flag) should now serve 200 instead of the 303 redirect.
+    g = await logged_in_client.get("/app/graph", follow_redirects=False)
+    assert g.status_code == 200, "after «maximum» preset, /app/graph must render"
 
     # Switch to «минимум» — should be no enabled flags.
     on_min = await logged_in_client.post("/api/profile/experiments/preset/minimum")
     assert on_min.status_code == 200
     assert on_min.json()["enabled"] == []
+    # Persistence check #2: after minimum, gated endpoints redirect again.
+    g2 = await logged_in_client.get("/app/graph", follow_redirects=False)
+    assert g2.status_code == 303, "after «minimum» preset, /app/graph must redirect"
 
     # «школьник» — habits + achievements + mood + school but not graph/time_tracking.
     on_school = await logged_in_client.post("/api/profile/experiments/preset/schoolchild")
@@ -88,11 +95,49 @@ async def test_preset_applies_bundle(logged_in_client: AsyncClient) -> None:
     assert "school" in enabled
     assert "graph" not in enabled
     assert "time_tracking" not in enabled
+    # Persistence check #3: subsequent /today shows the habit widget (server-
+    # rendered, requires user.experiments['habits'] in DB to evaluate true).
+    today_body = (await logged_in_client.get("/app/today")).text
+    assert "🌱 Привычки сегодня" in today_body, "habit widget should appear after school preset"
 
 
 async def test_preset_unknown_key_422(logged_in_client: AsyncClient) -> None:
     resp = await logged_in_client.post("/api/profile/experiments/preset/bogus")
     assert resp.status_code == 422
+
+
+async def test_taptower_game_sidebar_link_gated(logged_in_client: AsyncClient) -> None:
+    """The «🎮 Игра» sidebar link appears only when the taptower feature is on."""
+    off = (await logged_in_client.get("/app/today")).text
+    assert "🎮 Игра" not in off
+
+    await logged_in_client.post("/api/profile/experiments/taptower", data={"enabled": "true"})
+
+    on = (await logged_in_client.get("/app/today")).text
+    assert "🎮 Игра" in on
+    assert "/taptower/" in on
+
+
+async def test_schoolchild_plus_preset_includes_taptower(
+    logged_in_client: AsyncClient,
+) -> None:
+    """The «Школьник +» preset bundles the school-child set plus the game."""
+    resp = await logged_in_client.post("/api/profile/experiments/preset/schoolchild_plus")
+    assert resp.status_code == 200
+    enabled = set(resp.json()["enabled"])
+    assert "taptower" in enabled
+    assert "school" in enabled
+    assert "habits" in enabled
+
+
+async def test_settings_lists_builtin_features(logged_in_client: AsyncClient) -> None:
+    """Settings has a read-only «Что есть на сайте» section listing built-ins."""
+    body = (await logged_in_client.get("/app/settings")).text
+    assert "Что есть на сайте" in body
+    # Specific built-ins enumerated.
+    assert "Помодоро-таймер" in body
+    assert "Канбан-доски" in body
+    assert "Командная палитра" in body
 
 
 async def test_links_graph_api_returns_shape(logged_in_client: AsyncClient) -> None:
