@@ -140,6 +140,22 @@ async def test_settings_lists_builtin_features(logged_in_client: AsyncClient) ->
     assert "Командная палитра" in body
 
 
+async def test_preset_buttons_have_escaped_quotes(logged_in_client: AsyncClient) -> None:
+    """Regression: preset buttons used unescaped `tojson` inside a double-quoted
+    HTML attribute, breaking the @click parser in browsers (Alpine never wired
+    up, clicks did nothing). Forceescape converts " to &#34; so the attribute
+    survives parsing. httpx-only tests miss this because they don't parse HTML."""
+    body = (await logged_in_client.get("/app/settings")).text
+    # Broken pattern would be: @click="apply("minimum")"
+    # Fixed pattern: @click="apply(&#34;minimum&#34;)"
+    assert 'apply("minimum")' not in body, (
+        "Preset @click attribute has raw quotes — Alpine cannot parse, button does nothing"
+    )
+    assert "apply(&#34;minimum&#34;)" in body or "apply(&quot;minimum&quot;)" in body, (
+        "Preset @click attribute must have escaped quotes for browser to parse correctly"
+    )
+
+
 async def test_links_graph_api_returns_shape(logged_in_client: AsyncClient) -> None:
     """Even with zero tasks, /api/links/graph must return the {nodes, edges} shape."""
     resp = await logged_in_client.get("/api/links/graph")

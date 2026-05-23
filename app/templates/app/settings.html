@@ -915,9 +915,9 @@
            },
          }">
       {% for preset in presets_list %}
-        <button type="button" @click="apply({{ preset.key|tojson }})"
+        <button type="button" @click="apply({{ preset.key|tojson|forceescape }})"
                 :disabled="applying"
-                :class="applying === '{{ preset.key }}' ? 'opacity-60' : ''"
+                :class="applying === {{ preset.key|tojson|forceescape }} ? 'opacity-60' : ''"
                 class="text-left p-3 rounded-xl bg-[var(--surface-2)]/40 border border-[var(--border)] hover:border-[var(--accent)]/50 hover:bg-[var(--surface-2)] transition">
           <div class="font-medium mb-1">{{ preset.title }}</div>
           <div class="text-xs text-[var(--text-muted)] leading-relaxed">{{ preset.description }}</div>
