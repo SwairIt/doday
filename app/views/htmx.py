@@ -457,7 +457,9 @@ async def task_detail(
 ) -> Response:
     """Full task panel: title + description + labels + subtasks + comments."""
     from app.comments.service import list_comments
+    from app.experiments.service import is_enabled
     from app.labels.service import list_labels, list_task_labels
+    from app.links.service import list_links_for_task
     from app.projects.membership import assignee_map_for_project
     from app.projects.service import get_project
 
@@ -475,6 +477,10 @@ async def task_detail(
     assignee_map = await assignee_map_for_project(session, task.project_id)
     is_shared = len(assignee_map) > 1
     creator = assignee_map.get(task.user_id)
+    # Graph experiment — render the "Связи" panel + load existing links only if
+    # the user has opted into the experiment.
+    graph_enabled = is_enabled(user, "graph")
+    task_links = await list_links_for_task(session, user.id, task_id) if graph_enabled else []
     return templates.TemplateResponse(
         request,
         "_partials/task_detail.html",
@@ -489,6 +495,8 @@ async def task_detail(
             "project_color_map": await _project_color_map(session, user.id),
             "is_shared": is_shared,
             "creator": creator,
+            "graph_enabled": graph_enabled,
+            "task_links": task_links,
         },
     )
 

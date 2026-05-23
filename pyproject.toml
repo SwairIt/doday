@@ -81,7 +81,9 @@ ignore = [
 # app/links/service.py is set just below with RUF001+RUF002 (revived 2026-05-23)
 "app/digest/service.py" = ["RUF001", "RUF002"]  # intentional Cyrillic in email body and docstring
 "app/digest/__init__.py" = ["RUF002"]            # intentional Cyrillic in module docstring
-"app/experiments/service.py" = ["RUF002"]        # intentional Greek α in docstring (phase α)
+"app/experiments/service.py" = ["RUF001", "RUF002"]  # intentional Greek α / Cyrillic in user-facing UI copy
+"app/calendar_feed/service.py" = ["RUF001", "RUF002"]  # restored module — intentional Cyrillic in error/UI strings
+"app/calendar_feed/router.py" = ["RUF001"]       # restored module — intentional Cyrillic in error messages
 "app/links/service.py" = ["RUF001", "RUF002"]    # restored module — intentional Cyrillic in errors/docstrings
 "app/links/router.py" = ["RUF001"]               # restored module — intentional Cyrillic in error messages
 "app/main.py" = ["RUF001", "RUF002"]             # intentional Cyrillic in CSRF message + docstrings

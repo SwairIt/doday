@@ -886,6 +886,42 @@
               {% if exp.key == 'graph' and exp.enabled %}
                 <a href="/app/graph" class="inline-block mt-2 text-xs text-[var(--accent)] hover:underline">→ Открыть граф</a>
               {% endif %}
+              {% if exp.key == 'calendar_feed' and exp.enabled %}
+                <div class="mt-2"
+                     x-data="{ url: '', err: null, loading: false, copied: false,
+                       async fetchUrl() {
+                         this.loading = true; this.err = null;
+                         try {
+                           const r = await fetch('/api/profile/ical-token', {credentials: 'include'});
+                           if (r.ok) { const d = await r.json(); this.url = window.location.origin + d.url; }
+                           else this.err = 'Не удалось получить URL';
+                         } catch (e) { this.err = String(e); } finally { this.loading = false; }
+                       },
+                       async copy() { if (!this.url) return; try { await navigator.clipboard.writeText(this.url); this.copied = true; setTimeout(() => this.copied = false, 1500); } catch (e) {} },
+                     }">
+                  <template x-if="!url">
+                    <button type="button" @click="fetchUrl()" :disabled="loading"
+                            class="text-xs text-[var(--accent)] hover:underline">
+                      <span x-show="!loading">→ Получить URL подписки</span>
+                      <span x-show="loading" x-cloak>Создаю…</span>
+                    </button>
+                  </template>
+                  <template x-if="url">
+                    <div class="flex items-center gap-1.5">
+                      <input type="text" readonly :value="url" @focus="$el.select()"
+                             class="flex-1 min-w-0 text-[11px] font-mono bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-1 outline-none">
+                      <button type="button" @click="copy()" class="text-xs text-[var(--accent)] hover:underline shrink-0"
+                              x-text="copied ? 'Скопировано!' : 'Копировать'"></button>
+                    </div>
+                  </template>
+                  <template x-if="err">
+                    <p class="text-xs text-rose-400 mt-1" x-text="'⚠ ' + err"></p>
+                  </template>
+                  <p class="text-[10px] text-[var(--text-muted)] mt-1">
+                    Вставь URL в Apple/Google Calendar как «Подписку на календарь». Один раз — обновляется автоматически.
+                  </p>
+                </div>
+              {% endif %}
             </div>
             <button type="button" @click="toggle()" :disabled="saving"
                     :class="enabled ? 'bg-[var(--accent)]' : 'bg-[var(--surface)]'"

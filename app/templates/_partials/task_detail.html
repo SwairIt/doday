@@ -445,6 +445,100 @@
       </div>
     </div>
 
+    {# 🧪 Experimental: task↔task links. Hidden unless the user opted into the
+       "graph" experiment in /app/settings#experiments. #}
+    {% if graph_enabled is defined and graph_enabled %}
+    <div class="px-5 py-4 border-t border-[var(--border)]"
+         x-data="{
+           open: false,
+           q: '',
+           results: [],
+           searching: false,
+           saving: false,
+           err: null,
+           async search() {
+             const q = this.q.trim();
+             if (q.length < 2) { this.results = []; return; }
+             this.searching = true;
+             try {
+               const r = await fetch('/htmx/search?format=json&q=' + encodeURIComponent(q), {credentials: 'include'});
+               if (r.ok) {
+                 const data = await r.json();
+                 // Filter out the current task and cap at 8 results.
+                 this.results = (data.tasks || []).filter(t => t.id !== '{{ task.id }}').slice(0, 8);
+               }
+             } catch (e) {} finally { this.searching = false; }
+           },
+           async link(targetId, note) {
+             this.saving = true; this.err = null;
+             try {
+               const r = await fetch('/api/tasks/{{ task.id }}/links', {
+                 method: 'POST', credentials: 'include',
+                 headers: {'Content-Type': 'application/json'},
+                 body: JSON.stringify({target_task_id: targetId, note: note || null}),
+               });
+               if (r.ok) {
+                 // Reload detail panel to show the new link.
+                 htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/detail', {target: '#task-detail-slot', swap: 'innerHTML'});
+               } else {
+                 const d = await r.json().catch(() => ({}));
+                 this.err = d.detail || 'Не удалось связать';
+               }
+             } catch (e) { this.err = String(e); } finally { this.saving = false; }
+           },
+         }">
+      <div class="flex items-center justify-between mb-2">
+        <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider">🔗 Связи · {{ task_links|length }}</div>
+        <button type="button" @click="open = !open; if (open) $nextTick(() => $refs.linkInput && $refs.linkInput.focus())"
+                class="text-xs text-[var(--accent)] hover:underline"
+                x-text="open ? 'Закрыть' : '+ Связать с задачей'"></button>
+      </div>
+      {% if task_links %}
+        <div class="space-y-1.5 mb-2">
+          {% for link in task_links %}
+            <div class="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-[var(--surface-2)] text-sm group {% if link.is_completed %}opacity-60{% endif %}">
+              <span class="text-[var(--text-muted)] shrink-0" title="{{ 'исходящая' if link.direction == 'outgoing' else 'входящая' }}">{{ '→' if link.direction == 'outgoing' else '←' }}</span>
+              <span class="flex-1 min-w-0 truncate {% if link.is_completed %}line-through{% endif %}"
+                    title="{{ link.title }}">{{ link.title }}</span>
+              {% if link.project_name %}
+                <span class="text-[10px] text-[var(--text-muted)] shrink-0">{{ link.project_name }}</span>
+              {% endif %}
+              {% if link.note %}
+                <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 shrink-0">{{ link.note }}</span>
+              {% endif %}
+              <button type="button" title="Удалить связь"
+                      class="opacity-0 group-hover:opacity-100 text-[10px] text-rose-400 hover:underline shrink-0"
+                      hx-delete="/api/tasks/{{ task.id }}/links/{{ link.link_id }}"
+                      hx-confirm="Удалить связь?"
+                      hx-on::after-request="event.detail.successful && htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/detail', {target: '#task-detail-slot', swap: 'innerHTML'})">×</button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+      <div x-show="open" x-cloak x-transition class="space-y-2">
+        <input x-ref="linkInput" type="text" x-model="q" @input.debounce.250ms="search()"
+               placeholder="Название задачи, к которой связать…"
+               class="w-full bg-[var(--surface-2)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-sm outline-none focus:border-[var(--accent)] transition">
+        <template x-if="results.length">
+          <div class="max-h-48 overflow-y-auto space-y-1">
+            <template x-for="r in results" :key="r.id">
+              <button type="button" @click="link(r.id, null)" :disabled="saving"
+                      class="w-full text-left px-3 py-1.5 rounded-lg bg-[var(--surface-2)] hover:bg-[var(--accent)]/15 text-sm transition">
+                <span x-text="r.title"></span>
+              </button>
+            </template>
+          </div>
+        </template>
+        <template x-if="!searching && q.trim().length >= 2 && !results.length">
+          <p class="text-xs text-[var(--text-muted)] italic">Ничего не нашёл</p>
+        </template>
+        <template x-if="err">
+          <p class="text-xs text-rose-400" x-text="'⚠ ' + err"></p>
+        </template>
+      </div>
+    </div>
+    {% endif %}
+
     <div class="px-5 py-4">
       <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider mb-2">Комментарии · {{ comments|length }}</div>
       <div class="space-y-2 mb-3">

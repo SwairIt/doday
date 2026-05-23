@@ -20,9 +20,16 @@ from app.admin.router import (
 from app.auth.router import router as auth_router
 from app.backup.router import router as backup_router
 from app.billing.router import router as billing_router
+from app.calendar_feed.router import (
+    router as calendar_feed_router,
+)
+from app.calendar_feed.router import (
+    token_router as ical_token_router,
+)
 from app.comments.router import comments_router, task_comments_router
 from app.config import get_settings
 from app.digest.router import router as digest_router
+from app.habits.router import router as habits_router
 from app.help.router import router as help_router
 from app.labels.router import router as labels_router
 from app.labels.router import task_labels_router
@@ -171,6 +178,9 @@ app.include_router(graph_router)
 app.include_router(views_router)
 app.include_router(htmx_router)
 app.include_router(profile_router)
+app.include_router(calendar_feed_router)
+app.include_router(ical_token_router)
+app.include_router(habits_router)
 app.include_router(sections_router)
 app.include_router(share_router)
 app.include_router(backup_router)

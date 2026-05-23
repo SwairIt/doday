@@ -73,3 +73,61 @@ async def test_cant_link_task_to_itself(logged_in_client: AsyncClient) -> None:
         f"/api/tasks/{t['id']}/links", json={"target_task_id": t["id"]}
     )
     assert resp.status_code == 422
+
+
+# --- calendar_feed experiment ----------------------------------------------
+
+
+async def test_ical_token_gated_by_calendar_feed_experiment(
+    logged_in_client: AsyncClient,
+) -> None:
+    """Without the calendar_feed experiment, issuing an ical token is 403."""
+    resp = await logged_in_client.get("/api/profile/ical-token")
+    assert resp.status_code == 403
+
+
+async def test_ical_token_issued_after_enabling_experiment(
+    logged_in_client: AsyncClient,
+) -> None:
+    on = await logged_in_client.post(
+        "/api/profile/experiments/calendar_feed", data={"enabled": "true"}
+    )
+    assert on.json()["enabled"] is True
+
+    resp = await logged_in_client.get("/api/profile/ical-token")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert "token" in body and len(body["token"]) >= 24
+    assert body["url"].endswith(".ics")
+
+
+async def test_habits_view_gated(logged_in_client: AsyncClient) -> None:
+    """Without the habits experiment, /app/habits redirects to settings."""
+    resp = await logged_in_client.get("/app/habits", follow_redirects=False)
+    assert resp.status_code == 303
+    assert "/app/settings" in resp.headers["location"]
+
+    on = await logged_in_client.post("/api/profile/experiments/habits", data={"enabled": "true"})
+    assert on.json()["enabled"] is True
+
+    resp2 = await logged_in_client.get("/app/habits")
+    assert resp2.status_code == 200
+
+
+async def test_ics_feed_serves_when_token_known(logged_in_client: AsyncClient) -> None:
+    """The public-by-token .ics endpoint works regardless of the experiment flag —
+    so a calendar subscription that was set up earlier doesn't break if the user
+    toggles the experiment off."""
+    await logged_in_client.post("/api/profile/experiments/calendar_feed", data={"enabled": "true"})
+    token = (await logged_in_client.get("/api/profile/ical-token")).json()["token"]
+    # Use the unauthenticated client (no cookies) to confirm public-by-token.
+    from httpx import ASGITransport
+    from httpx import AsyncClient as PlainClient
+
+    from app.main import app
+
+    async with PlainClient(transport=ASGITransport(app=app), base_url="http://test") as plain:
+        resp = await plain.get(f"/api/calendar/feed/{token}.ics")
+    assert resp.status_code == 200
+    assert resp.headers["content-type"].startswith("text/calendar")
+    assert "BEGIN:VCALENDAR" in resp.text

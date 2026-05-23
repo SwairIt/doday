@@ -193,6 +193,29 @@ async def today_view(
     )
 
 
+@router.get("/habits", response_class=HTMLResponse, response_model=None)
+async def habits_view(
+    request: Request, user: RequiredUser, session: DbSession
+) -> HTMLResponse | RedirectResponse:
+    """Experimental: simple daily habit tracker. Gated by `habits` experiment flag."""
+    from app.experiments.service import is_enabled
+
+    if not is_enabled(user, "habits"):
+        return RedirectResponse(url="/app/settings#experiments", status_code=303)
+    projects = await list_projects(session, user.id)
+    project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
+    return templates.TemplateResponse(
+        request,
+        "app/habits.html",
+        {
+            "current_user": user,
+            "current_view": "habits",
+            "projects": projects,
+            "project_color_map": project_color_map,
+        },
+    )
+
+
 @router.get("/graph", response_class=HTMLResponse, response_model=None)
 async def graph_view(
     request: Request, user: RequiredUser, session: DbSession

@@ -701,6 +701,71 @@ smoke 25/25 green. Commit `18ffb9c`.
 
 ---
 
+## 2026-05-23 — Доделал UI графа + воскресил .ics-фид и Привычки (3 экспа в реестре)
+
+Юзер сказал «работай долго, доделай всё, используй superpowers». Продолжил
+revival по той же экспериментальной инфре — три experiments теперь в реестре,
+все опт-ин через Настройки.
+
+### Доделанное по графу
+- **UI «🔗 Связать с задачей»** в task-detail: Alpine-поиск через
+  `/htmx/search?format=json` (использует уже существующий поиск), POST на
+  `/api/tasks/{id}/links`, авто-reload панели после создания. Удаление связи
+  кнопкой ×. Видно только когда эксп. `graph` включён.
+- **Sidebar-link «🧪 Граф»** — рендерится в подменю «Ещё», только когда
+  `current_user.experiments.get('graph')`.
+
+### Воскрешение .ics calendar feed (`calendar_feed`)
+- Восстановлен модуль `app/calendar_feed/` из git-history (`f1fe6537^`).
+- Колонка `users.ical_token` уже была от миграции 0014 — миграция не нужна.
+- Эндпоинты: `/api/calendar/all.ics` (cookie-auth), `/api/calendar/feed/{token}.ics`
+  (публичный по signed-token — Apple/Google Calendar подписываются),
+  `GET /api/profile/ical-token` + rotate.
+- Гейт `_require_calendar_feed_experiment` на ical-token issuance/rotate (само
+  потребление по токену — без гейта, чтобы старые подписки не ломались).
+- В Settings UI добавлен inline-Alpine блок: получить URL подписки → копировать.
+
+### Воскрешение Привычек (`habits`)
+- Миграция **0034**: воссоздаёт `habits` + `habit_checkins` по схеме старой 0015.
+- Восстановлен модуль `app/habits/` (model+router+schemas+service) из истории
+  + шаблон `app/templates/app/habits.html` (150 строк).
+- `/app/habits` роут с гейтом `is_enabled(user, 'habits')`.
+- Sidebar-link «🧪 Привычки» с alpha-badge.
+
+### Лендинг — таблица теперь правда вернулась
+Добавил обратно строки «Трекер привычек ✓ (эксп.)» и «Календарь-фид (.ics) ✓
+(эксп.)». «Граф связей задач» снова «✓ (эксп.)». Никакого вранья.
+
+### Тесты + качество
+- `tests/test_experiments.py` теперь 10 тестов: токгл, гейтинг /graph, /habits,
+  /ical-token, public .ics token feed, link create end-to-end, no-self-link,
+  settings рендер.
+- Полный `pytest -q` зелёный (806+ tests).
+- Per-file ignores в pyproject для греч.α / кириллицы в восстановленных модулях.
+
+### Деплой
+- Миграции 0034 на проде через alembic upgrade head.
+- Smoke зелёный.
+
+### Долг на следующие итерации
+- **Achievements** (badges + progress page) — следующее revival по той же
+  схеме (миграции 0024+0025 в истории, app/achievements/ + app/gamification/
+  тоже восстановимы). Это была более крупная фича — отложил на отдельную
+  сессию.
+- **Mood log** (миграция 0019), **time-tracking** (0018) — мелкие, можно
+  пачкой в один заход следующий раз.
+- **Полноценное Pomodoro UI** на десктопе (миниапп его уже умеет).
+
+### Паттерн revival'ов (для будущего меня)
+1. Найти удаление в git: `git log --all --format="%H %s" | grep cleanup-α`.
+2. `PARENT=<del>^; git show $PARENT:app/<feature>/...` → восстановить файлы.
+3. Новая alembic-миграция, схема 1-в-1 со старой.
+4. `Experiment(...)` в `AVAILABLE` в `app/experiments/service.py`.
+5. Если есть view: `is_enabled(user, key)` гейт в роуте + sidebar-link.
+6. Тест в `test_experiments.py` — гейт + базовая операция.
+
+---
+
 ## 2026-05-23 — Честность лендинга + воскрешение графа задач как «эксп-функция»
 
 Юзер увидел, что в табличке сравнения на лендинге заявлены фичи, которых нет
