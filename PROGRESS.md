@@ -701,6 +701,69 @@ smoke 25/25 green. Commit `18ffb9c`.
 
 ---
 
+## 2026-05-24 — Доделал revival-батч (user_templates + timer UI + habit widget + help)
+
+Юзер: «работай долго». Закрыл хвост revival'ов и допилил UX для уже
+воскрешённых эксп-функций, чтобы они были не только в API, но и в живом
+интерфейсе.
+
+### user_templates (7-й эксперимент)
+- Миграция **0038** пересоздаёт `user_templates` (1-в-1 с 0008).
+- Восстановлен `app/user_templates/{models,router,service}.py` из истории.
+- Снял `require_pro` гейт с save-as-template — теперь это эксперимент,
+  доступен всем без Pro-tier.
+- `Experiment(key='user_templates', stage='alpha')` в реестре.
+- В `app/templates/app/project.html` кнопка «📁 Сохранить как шаблон»
+  под guard'ом `current_user.experiments.get('user_templates')`. Alpine
+  helper `dodaySaveAsTemplate` — prompt → POST → toast.
+- Лендинг: feature-card описание сделан честным («Сохранение своих
+  шаблонов — экспериментально»), в comparison-table добавлена строка.
+- Тесты `tests/test_user_templates.py` восстановлены, button-тест
+  переписан под experimental-pattern (off→hidden, on→visible).
+- Commit `d95683b`.
+
+### Per-task ▶/⏸ таймер в task_detail
+- `app/views/htmx.py::task_detail`: добавил `time_tracking_enabled` +
+  server-preload `total_seconds_for_task` и `running` state.
+- `app/templates/_partials/task_detail.html`: новый блок между
+  «🔗 Связи» и «Комментарии» под guard'ом. Alpine x-data с
+  live-tick (setInterval раз в секунду), MM:SS / H:MM:SS, тосты.
+- +2 теста в `test_experiments.py` (visibility + running-state).
+- Commit `341b133`.
+
+### Habit quick-checkin виджет на /today
+- `app/templates/_partials/habit_widget.html`: новый компонент. Grid
+  1/2 колонки, fetch `/api/habits` → топ-5 активных. Чекин/унчекин
+  через POST/DELETE `/api/habits/{id}/checkin`, обновляет state +
+  тостит. Стрики и рекорды видны в каждой карточке.
+- Подключён в `today.html` под guard'ом `experiments.habits` —
+  рядом с уже существующими mood и sprint widgets.
+- +1 тест в `test_experiments.py` (off→hidden, on→visible).
+- Commit `ec86b7d`.
+
+### Help articles (6 новых статей про эксперименты)
+- `app/help/articles.py`: +6 ARTICLES.append блоков. Слаги:
+  calendar-feed, habits, mood, time-tracking, achievements,
+  user-templates. У каждой статьи структура: что это, зачем, как
+  включить, что попадает / что не попадает в данные, нюансы.
+- В реестре статей было 19, стало 25.
+- Commit `234abde`.
+
+### Итог revival-batch'а (накопительно за 2026-05-23 + 2026-05-24)
+- 7 эксп-функций в реестре: graph, calendar_feed, habits, mood,
+  time_tracking, achievements, user_templates.
+- 7 миграций 0032-0038 (флаги + по таблице на эксп).
+- Все API доступны без gate'а, UI gated через
+  `current_user.experiments.get('<key>')`.
+- 17 тестов в `test_experiments.py` + 7 в `test_user_templates.py`.
+- 6 справочных статей.
+
+Стратегия: ничего не удаляется обратно из репозитория, всё
+живёт за тумблером. Юзер, который не хочет графов / привычек /
+бейджей / шаблонов — не увидит их.
+
+---
+
 ## 2026-05-24 — Воскресил mood + time-tracking + achievements (теперь 6 эксп.)
 
 Юзер снова сказал «работай долго, доделай всё, используй superpowers». Добил
