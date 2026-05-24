@@ -33,6 +33,11 @@ async def _make_user(
     user = await register_user(db_session, RegisterIn(email=email, password="strongpass123"))
     user.email_verified_at = datetime.now(UTC)
     user.tier = tier
+    # Paid Pro/Family users need pro_until in the future — effective_tier() now
+    # requires both `tier in (pro, team, family)` AND `pro_until > now()` to
+    # return the paid tier (was just `tier in (...)` before the Stars rollout).
+    if tier in ("pro", "team", "family"):
+        user.pro_until = datetime.now(UTC) + timedelta(days=30)
     if trial_active:
         user.trial_ends_at = datetime.now(UTC) + timedelta(days=10)
     else:
