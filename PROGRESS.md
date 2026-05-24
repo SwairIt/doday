@@ -4,6 +4,21 @@
 
 ---
 
+## 2026-05-24 — Беллстрой ТВ → бесконечная аркада с brainrot-врагами (6b1e7da)
+
+По запросу юзера: «нельзя прыгать / маленькая локация / быстро прошёл / текстурки покрасивее / чтобы можно было умереть и мемно». Развалил `game.js` на 4 модуля и дописал HUD:
+
+- **`modules/world.js`** — карта 120×120 (была ~30×30), небо ShaderMaterial с градиентом фиолет→розовый→оранж, солнце с glow на горизонте, 30 procedural-зданий с неон-полосами по верху, point-light внутри каждого 4-го для атмосферы; пол — checkerboard + светящиеся розовые линии.
+- **`modules/player.js`** — `createPlayer()` с гравитацией (-25), `jump()` (vy=9), HP=3, invincibility 1.2 сек (мигание через `mesh.visible`), `reset()` для restart; модель Беллстроя сохранена.
+- **`modules/enemies.js`** — `Enemy` класс с AI chase + bob, 5 procedural-моделей: Tralalero (акула в 3 синих Nike), Bombardiro (крокодил-самолёт с пропеллером и бомбой), Tung Tung Sahur (деревянный с битой), Brr Brr Patapim (обезьяна-куст), Lirili Larila (кактус-слон с часами); скорости 2.5–4.5 м/с. `checkCollision()` различает stomp (игрок сверху + падает) и side-hit.
+- **`modules/pickups.js`** — 17 мемов, infinite respawn после сбора всех (раньше — финальный экран после 17).
+- **`game.js`** orchestrator — волновой спавн (25 сек, `2 + 0.7·wave` врагов до 20), camera-shake при ударе, stomp даёт `+50·wave` очков и отскок вверх, game-over overlay с лучшим Score/Волной из `localStorage`, restart по `R` или кнопке.
+- **HTML/CSS** — новые HUD-элементы `#wave/#hp/#collected/#jump-btn/#wave-banner/#gameover-overlay`; jump-button (88px) виден только на `pointer: coarse`; game-over — gradient-card с stats и крупной восстанавливающей кнопкой; wave-banner с pop-in анимацией.
+
+`pytest -q` зелёный 868/868. Прод-смоук 26/26. `/game` + все 4 модуля отдают 200. HTML на проде содержит все 6 новых id'шников. Commit `6b1e7da`, деплой подтверждён через `/version`.
+
+---
+
 ## 2026-05-21 — Ralph-loop: имя проекта в строке задачи (кросс-проектные виды)
 
 `today/upcoming/filter/label/done` views теперь отдают `project_name_map`
