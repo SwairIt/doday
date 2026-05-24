@@ -1,52 +1,128 @@
-# Secrets — NEVER commit
+# ── Secrets / credentials — NEVER commit ──────────────────────────────────
 .env
 .env.local
 .env.*.local
+.env.production
+.env.development
+.env.staging
 *.pem
 *.key
+*.crt
+*.p12
+secrets/
+local_secrets/
+.credentials
+.secrets
 
-# Python
+# ── Python ────────────────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
+*$py.class
 *.egg-info/
+*.egg
+.eggs/
 .venv/
 venv/
+env/
 .pytest_cache/
 .ruff_cache/
+.mypy_cache/
 .coverage
+.coverage.*
+coverage.xml
 htmlcov/
+.tox/
+.nox/
+.pytype/
+.pyre/
+dist/
+build/
 
-# DBs
+# ── Databases / data ──────────────────────────────────────────────────────
 *.db
 *.sqlite
+*.sqlite3
+*.dump
+backup-*.sql
 
-# IDE
+# ── IDE / editor ──────────────────────────────────────────────────────────
 .idea/
 .vscode/
 *.swp
+*.swo
+*.bak
+*.orig
+.history/
+.cursor/
 
-# OS
+# ── OS junk ───────────────────────────────────────────────────────────────
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# Logs and runtime artifacts
+# ── Logs and runtime artifacts ────────────────────────────────────────────
 *.log
 .uvicorn.err
 .uvicorn.log
+.uvicorn.pid
 .smtp.err
 .smtp.log
 .aiosmtpd.err
 .aiosmtpd.log
 .pytest_full*.log
+.smoke-output*
+*.pid
+*.sock
+
+# ── Claude / loop / temp artifacts ────────────────────────────────────────
 .claude/
-
-# Node (если будем добавлять Tailwind build)
-node_modules/
-
-# Temp diagnostic scripts (SSH/debug)
-.tmp_*
-
-# /loop runtime artifacts
 .loop_*
 .playwright-mcp/
-.uvicorn.pid
+
+# ── Temp diagnostic scripts (SSH/debug) ───────────────────────────────────
+.tmp_*
+
+# ── Node (if Tailwind build ever added) ───────────────────────────────────
+node_modules/
+package-lock.json
+
+# ── Dev / debug screenshots ───────────────────────────────────────────────
+# Root-level images — historically these were design-audit screenshots,
+# competitor landings, dev-iteration snapshots. None of them belong in the
+# repo. If you need a screenshot for README/docs, put it in docs/screenshots/
+# with a meaningful name (e.g. landing-hero.png, miniapp-today.png).
+/*.png
+/*.jpg
+/*.jpeg
+/*.gif
+/*.webp
+/*.bmp
+
+# Debug screenshots from automated UI checks — they get regenerated every
+# session and have zero value for repo visitors. If you need a screenshot in
+# README/docs, force-add it: `git add -f docs/screenshots/landing-hero.png`.
+docs/screenshots/*.png
+docs/screenshots/*.jpg
+docs/screenshots/*.gif
+docs/screenshots/*.webp
+docs/screenshots/_debug/
+docs/screenshots/audit-*
+
+# ── Sentry / metrics ──────────────────────────────────────────────────────
+.sentryclirc
+
+# ── Local override files / ad-hoc scripts ─────────────────────────────────
+local.py
+override.py
+scratch/
+playground/
+
+# ── macOS / Windows artifacts ─────────────────────────────────────────────
+*.icloud
+$RECYCLE.BIN/
+System Volume Information/

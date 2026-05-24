@@ -13,8 +13,6 @@ Web · Telegram Mini App · Bot · all sharing one backend.
 
 **[Live → getdoday.ru](https://getdoday.ru)** · **[Bot → @DodayTaskBot](https://t.me/DodayTaskBot)** · **[Pricing](https://getdoday.ru/pricing)** · **[Roadmap](https://getdoday.ru/roadmap)**
 
-![Doday screenshot](docs/screenshots/landing-hero.png)
-
 </div>
 
 ---
