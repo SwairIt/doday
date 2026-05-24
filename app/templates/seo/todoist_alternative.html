@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}Бесплатная альтернатива Todoist на русском — Doday{% endblock %}
+{% block seo_description %}Doday — бесплатная альтернатива Todoist: безлимит задач и проектов, помодоро встроен, канбан-доски, теги, фильтры, Telegram Mini App, утренний email-дайджест. Без подписки за основные функции. Open source. Хостинг в РФ.{% endblock %}
+{% block seo_keywords %}альтернатива todoist, бесплатный todoist аналог, todoist на русском, замена todoist, бесплатный планировщик, todoist без подписки, todo с помодоро, doday vs todoist{% endblock %}
+{% block og_title %}Doday — бесплатная альтернатива Todoist{% endblock %}
+{% block og_url %}https://getdoday.ru/todoist-alternative{% endblock %}
+
+{% block ld_json %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Чем Doday отличается от Todoist?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Doday включает помодоро, канбан и расписание в Free-тарифе. У Todoist эти фичи только в Pro за 500₽/мес. Также Doday open source и хостит в РФ."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Можно ли импортировать задачи из Todoist?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Прямого импорта пока нет. Используйте CSV-экспорт из Todoist и bulk-paste в Doday — это рабочий workaround на пару минут."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Doday работает на телефоне?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Да. Веб-версия адаптивна, есть PWA (установка как нативное приложение) и Telegram Mini App."
+      }
+    }
+  ]
+}
+</script>
+{% endblock %}
+
+{% block layout %}
+<main class="min-h-screen bg-[var(--bg)] text-[var(--text)]">
+  <section class="container mx-auto px-4 py-16 max-w-4xl">
+    <div class="text-center mb-12">
+      <span class="inline-block px-3 py-1 rounded-full bg-fuchsia-500/15 text-fuchsia-300 text-xs uppercase tracking-wider font-semibold mb-4">
+        Альтернатива Todoist
+      </span>
+      <h1 class="text-4xl md:text-6xl font-extrabold mb-4 leading-tight">
+        Бесплатная альтернатива Todoist.<br/>
+        <span class="grad-text">На русском. С хостингом в РФ.</span>
+      </h1>
+      <p class="text-lg text-[var(--text-muted)] max-w-2xl mx-auto">
+        То же что Todoist, но помодоро, канбан-доски, расписание и графы задач — в Free-тарифе.
+        Подписка нужна только за премиум-темы и email-дайджест.
+      </p>
+      <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="/auth/register" class="btn-primary px-6 py-3 text-base">Попробовать бесплатно</a>
+        <a href="/pricing" class="btn-ghost px-6 py-3 text-base">Тарифы</a>
+      </div>
+    </div>
+
+    <h2 class="text-2xl md:text-3xl font-bold mb-6 mt-16">Сравнение Doday и Todoist</h2>
+    <div class="card p-2 overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-[var(--border)]">
+            <th class="text-left py-3 px-4">Фича</th>
+            <th class="text-center py-3 px-4">Doday Free</th>
+            <th class="text-center py-3 px-4">Todoist Free</th>
+            <th class="text-center py-3 px-4">Todoist Pro</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% set rows = [
+            ('Активных проектов', '10', '5', '∞'),
+            ('Активных задач', '500', '300 на проект', '∞'),
+            ('Подзадачи без лимита', '✓', '✓', '✓'),
+            ('Помодоро-таймер встроен', '✓', '✗', '— только сторонний'),
+            ('Канбан-доски', '✓', '✗', '✓'),
+            ('Стрики дней подряд', '✓', '✗', '✗'),
+            ('Расписание уроков/смен', '✓ (опц.)', '✗', '✗'),
+            ('Markdown в задачах', '✓', '✗', '✓'),
+            ('Telegram Mini App', '✓', '✗', '✗'),
+            ('Утренний email-дайджест', '— Pro', '✗', '✓'),
+            ('Граф связей задач', '✓ (опц.)', '✗', '✗'),
+            ('Реклама', 'никогда', 'никогда', 'никогда'),
+            ('Open source', '✓ MIT', '✗', '✗'),
+            ('Хостинг данных', 'РФ', 'США', 'США'),
+            ('Цена', '0₽ навсегда', '0₽', '~500₽/мес'),
+          ] %}
+          {% for label, doday, free, pro in rows %}
+            <tr class="border-b border-[var(--border)]/30">
+              <td class="py-2 px-4">{{ label }}</td>
+              <td class="py-2 px-4 text-center text-emerald-400">{{ doday }}</td>
+              <td class="py-2 px-4 text-center text-[var(--text-muted)]">{{ free }}</td>
+              <td class="py-2 px-4 text-center text-[var(--text-muted)]">{{ pro }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="text-2xl md:text-3xl font-bold mb-6 mt-16">Почему стоит попробовать</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {% set reasons = [
+        ('Помодоро и канбан — бесплатно', 'У Todoist это Pro-функции (или вообще нет). В Doday — встроены в Free.'),
+        ('Без VPN', 'Todoist часто медленный из России. Doday хостится в Москве — быстрый ping.'),
+        ('Quick-add на русском', 'Пишешь «Сделать отчёт завтра в 14:00 !!! @работа #офис» — Doday поймёт дату, время, приоритет, лейбл и проект из одной строки.'),
+        ('Mini App в Telegram', 'Открой бота @DodayBot → нажми «Doday» в меню. Полный todo прямо внутри Telegram.'),
+        ('Read-only ссылка прогресса', 'Можешь скинуть кому-то «вот мой прогресс» — он откроет в браузере без регистрации.'),
+        ('Не закроется внезапно', 'Open source, MIT-лицензия. Если завтра я закрою сервис — клонируешь репо и поднимаешь у себя за 10 минут.'),
+      ] %}
+      {% for title, desc in reasons %}
+        <div class="card p-5">
+          <div class="font-semibold mb-2">✓ {{ title }}</div>
+          <p class="text-sm text-[var(--text-muted)] leading-relaxed">{{ desc }}</p>
+        </div>
+      {% endfor %}
+    </div>
+
+    <h2 class="text-2xl md:text-3xl font-bold mb-6 mt-16">Частые вопросы</h2>
+    <div class="space-y-3">
+      <details class="card p-4 cursor-pointer">
+        <summary class="font-semibold">Как перенести задачи из Todoist?</summary>
+        <p class="mt-3 text-sm text-[var(--text-muted)]">
+          Прямого импорта пока нет (на roadmap). Workaround: в Todoist → Настройки → Экспорт → CSV.
+          Из CSV копируешь столбец с задачами → в Doday в Inbox → Quick-add → Bulk-paste (Ctrl+V).
+          Распарсит до 200 строк за раз на Pro, 50 на Free. Даты и приоритеты тоже улавливает.
+        </p>
+      </details>
+      <details class="card p-4 cursor-pointer">
+        <summary class="font-semibold">Доступен ли API для интеграций?</summary>
+        <p class="mt-3 text-sm text-[var(--text-muted)]">
+          Да — REST API на FastAPI с автогенерируемой OpenAPI-схемой на <code>/docs</code>.
+          Можешь писать свой скрипт-импорт, синхронизатор с другими сервисами, бот-помощник.
+          Авторизация по cookie или token-based для CI.
+        </p>
+      </details>
+      <details class="card p-4 cursor-pointer">
+        <summary class="font-semibold">Кто за этим стоит?</summary>
+        <p class="mt-3 text-sm text-[var(--text-muted)]">
+          Один разработчик (мне 16). Doday — не корпоративный продукт, а инди.
+          Это значит: быстрые фичи, ответ на письма от автора лично, и нет давления
+          «inсreаse MRR на 20% за квартал» которое порождает дарк-паттерны.
+        </p>
+      </details>
+      <details class="card p-4 cursor-pointer">
+        <summary class="font-semibold">Что если завтра ты закроешь сервис?</summary>
+        <p class="mt-3 text-sm text-[var(--text-muted)]">
+          У всех есть JSON-бэкап аккаунта одним кликом (Настройки → Резервная копия).
+          Плюс репозиторий open source — поднять Doday у себя на VPS можно за час
+          (FastAPI + PostgreSQL, инструкция в README). Завязка на меня минимальная.
+        </p>
+      </details>
+    </div>
+
+    <div class="card p-8 mt-12 text-center bg-gradient-to-br from-fuchsia-500/10 to-violet-500/10 border-fuchsia-500/20">
+      <h2 class="text-2xl md:text-3xl font-bold mb-3">Попробуй прямо сейчас</h2>
+      <p class="text-lg text-[var(--text-muted)] mb-4">
+        Регистрация занимает 30 секунд. 14 дней trial с Pro-функциями, потом —
+        Free-тариф навсегда. Карту вводить не надо.
+      </p>
+      <a href="/auth/register" class="btn-primary px-6 py-3 text-base inline-block">Создать аккаунт</a>
+    </div>
+  </section>
+  {% include "_partials/site_footer.html" ignore missing %}
+</main>
+{% endblock %}

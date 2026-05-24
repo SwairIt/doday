@@ -276,6 +276,15 @@
     {% endif %}
   </nav>
 
+  {# Invite-friends affordance — самый недооценённый growth-канал.
+     Размещён прямо над профилем, чтобы было заметно но не агрессивно. #}
+  <button type="button" @click="window.dodayInviteFriends()"
+          class="mx-3 mb-2 mt-1 px-3 py-2 rounded-lg bg-gradient-to-r from-violet-500/15 to-fuchsia-500/15 border border-[var(--border)] hover:border-[var(--accent)]/50 text-sm text-left transition flex items-center gap-2">
+    <span class="text-base shrink-0">📨</span>
+    <span class="flex-1">Позвать друга</span>
+    <span class="text-[10px] text-[var(--text-muted)] shrink-0">+</span>
+  </button>
+
   <div class="p-3 border-t border-[var(--border)] flex items-center gap-2">
     <a href="/app/settings"
        class="flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-[var(--surface)] transition flex-1 min-w-0">

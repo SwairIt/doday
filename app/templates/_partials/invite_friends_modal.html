@@ -1,0 +1,158 @@
+{#
+  «Пригласить друга в Doday» — global growth-share component.
+
+  Exposes window.dodayInviteFriends() — any button calls it to open the modal.
+  Inside: Web Share API (mobile native), Telegram / VK / WhatsApp deeplinks,
+  copy-link. URL carries ?r={short_user_id} for attribution (anonymous; no
+  rewards / referral payouts yet, just a way to count which channels work).
+
+  Included once in app_base.html so the modal markup is on every authed page.
+#}
+<div x-data="dodayInviteState()"
+     x-on:open-invite-friends.window="open = true"
+     x-show="open" x-cloak
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+     @click.self="open = false"
+     @keydown.escape.window="open = false">
+  <div class="card max-w-md w-full p-6 shadow-2xl">
+    <div class="flex items-start justify-between mb-3">
+      <div>
+        <h2 class="text-xl font-bold mb-1">Пригласить друга в Doday</h2>
+        <p class="text-xs text-[var(--text-muted)]">Чем больше людей пользуется — тем быстрее я добавляю фичи. Спасибо что делишься!</p>
+      </div>
+      <button type="button" @click="open = false"
+              class="text-[var(--text-muted)] hover:text-[var(--text)] text-2xl leading-none -mt-1">×</button>
+    </div>
+
+    {# Editable message — пользователь может изменить текст перед шарингом. #}
+    <label class="block text-[10px] uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-1">
+      Сообщение
+    </label>
+    <textarea x-model="message" rows="3"
+              class="w-full text-sm bg-[var(--surface-2)] border border-[var(--border)] rounded-lg px-3 py-2 outline-none focus:border-[var(--accent)] transition resize-none mb-3"></textarea>
+
+    {# Share targets — каждая кнопка опционально включает текст и url. #}
+    <div class="grid grid-cols-2 gap-2 mb-3">
+      <button type="button" @click="shareNative()" x-show="canNativeShare" x-cloak
+              class="flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--surface-2)] hover:bg-[var(--surface)] text-sm transition col-span-2">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+        </svg>
+        <span class="flex-1 text-left">Поделиться через...</span>
+        <span class="text-[10px] text-[var(--text-muted)]">системный диалог</span>
+      </button>
+
+      <a :href="telegramShareUrl" target="_blank" rel="noopener"
+         class="flex items-center gap-2 px-3 py-2 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 text-sm transition">
+        <span class="text-base">✈</span>
+        <span>Telegram</span>
+      </a>
+
+      <a :href="vkShareUrl" target="_blank" rel="noopener"
+         class="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 text-sm transition">
+        <span class="text-base">VK</span>
+        <span>ВКонтакте</span>
+      </a>
+
+      <a :href="whatsappShareUrl" target="_blank" rel="noopener"
+         class="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 text-sm transition">
+        <span class="text-base">💬</span>
+        <span>WhatsApp</span>
+      </a>
+
+      <a :href="emailShareUrl"
+         class="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-sm transition">
+        <span class="text-base">✉</span>
+        <span>Email</span>
+      </a>
+    </div>
+
+    {# Copy-link block — fallback для всего. #}
+    <div class="flex items-center gap-2 p-2 rounded-lg bg-[var(--surface-2)] border border-[var(--border)]">
+      <input type="text" readonly :value="shareUrl" @focus="$el.select()"
+             class="flex-1 min-w-0 text-[11px] font-mono bg-transparent outline-none text-[var(--text-muted)]">
+      <button type="button" @click="copyLink()"
+              class="text-xs px-2 py-1 rounded bg-[var(--accent)]/15 text-[var(--accent)] hover:bg-[var(--accent)]/25 transition shrink-0"
+              x-text="copied ? '✓ Скопировано' : 'Копировать'"></button>
+    </div>
+
+    <p class="text-[10px] text-[var(--text-muted)] mt-3 leading-relaxed">
+      Ссылка ведёт на главную страницу Doday. Параметр <code>?r=…</code> анонимный — он нужен только чтобы я понял какой канал
+      работает лучше (Telegram vs VK vs email). Никакой реферальной программы или вознаграждений у меня сейчас нет.
+    </p>
+  </div>
+</div>
+
+<script>
+  (function () {
+    // Global trigger — any onclick handler can do window.dodayInviteFriends().
+    window.dodayInviteFriends = function () {
+      window.dispatchEvent(new CustomEvent('open-invite-friends'));
+    };
+  })();
+
+  function dodayInviteState() {
+    // Short referral id from current user id — first 8 hex chars.
+    // {{ current_user.id }} renders as the UUID string; we slice in JS.
+    const rawUid = {{ (current_user.id|string)|tojson|forceescape if current_user else '""'|safe }};
+    const ref = rawUid ? rawUid.replace(/-/g, '').slice(0, 8) : '';
+    const base = window.location.origin;
+    const shareUrl = ref ? base + '/?r=' + ref : base + '/';
+    const defaultMessage = (
+      "Я нашёл прикольный бесплатный todo на русском — Doday. Помодоро встроен, " +
+      "канбан, расписание, всё без подписки. Открытый код. Попробуй: " + shareUrl
+    );
+    return {
+      open: false,
+      copied: false,
+      message: defaultMessage,
+      shareUrl: shareUrl,
+      get canNativeShare() {
+        return typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+      },
+      // Pre-built deeplinks for each channel. Telegram and VK accept ?text= as
+      // a separate field; WhatsApp expects everything in one text param.
+      get telegramShareUrl() {
+        return 'https://t.me/share/url?url=' + encodeURIComponent(this.shareUrl) +
+               '&text=' + encodeURIComponent(this.message.replace(this.shareUrl, '').trim());
+      },
+      get vkShareUrl() {
+        return 'https://vk.com/share.php?url=' + encodeURIComponent(this.shareUrl) +
+               '&title=' + encodeURIComponent('Doday — бесплатный todo на русском') +
+               '&description=' + encodeURIComponent(this.message.replace(this.shareUrl, '').trim());
+      },
+      get whatsappShareUrl() {
+        return 'https://api.whatsapp.com/send?text=' + encodeURIComponent(this.message);
+      },
+      get emailShareUrl() {
+        return 'mailto:?subject=' + encodeURIComponent('Попробуй Doday — бесплатный todo') +
+               '&body=' + encodeURIComponent(this.message);
+      },
+      async shareNative() {
+        if (!this.canNativeShare) return;
+        try {
+          await navigator.share({
+            title: 'Doday',
+            text: this.message.replace(this.shareUrl, '').trim(),
+            url: this.shareUrl,
+          });
+        } catch (e) { /* user cancelled — silent */ }
+      },
+      async copyLink() {
+        try {
+          await navigator.clipboard.writeText(this.shareUrl);
+          this.copied = true;
+          setTimeout(() => this.copied = false, 1500);
+        } catch (e) {
+          // Older browsers — fallback to manual select.
+          const i = document.createElement('input');
+          i.value = this.shareUrl;
+          document.body.appendChild(i);
+          i.select();
+          try { document.execCommand('copy'); this.copied = true; setTimeout(() => this.copied = false, 1500); } catch (_) {}
+          document.body.removeChild(i);
+        }
+      },
+    };
+  }
+</script>

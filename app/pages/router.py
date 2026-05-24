@@ -27,6 +27,34 @@ async def landing(request: Request, user: CurrentUser) -> Response:
     )
 
 
+@router.get("/for-students", response_class=HTMLResponse)
+async def for_students(request: Request, user: CurrentUser) -> HTMLResponse:
+    """SEO landing — explicit student/учёба intent.
+
+    Indexed in sitemap, linked from internal nav. Targets queries:
+    «планировщик для школьников», «todo для студентов», «расписание уроков онлайн»,
+    «помодоро для школьников»."""
+    return templates.TemplateResponse(request, "seo/for_students.html", {"user": user})
+
+
+@router.get("/for-teachers", response_class=HTMLResponse)
+async def for_teachers(request: Request, user: CurrentUser) -> HTMLResponse:
+    """SEO landing — teacher / репетитор intent.
+
+    Targets: «планировщик для учителей», «дедлайны для учеников»,
+    «прогресс ученика онлайн», «doday для учителя»."""
+    return templates.TemplateResponse(request, "seo/for_teachers.html", {"user": user})
+
+
+@router.get("/todoist-alternative", response_class=HTMLResponse)
+async def todoist_alternative(request: Request, user: CurrentUser) -> HTMLResponse:
+    """SEO landing — competitor-comparison intent.
+
+    Targets: «альтернатива todoist», «todoist на русском», «бесплатный todoist»,
+    «замена todoist». Includes FAQ schema for Google rich results."""
+    return templates.TemplateResponse(request, "seo/todoist_alternative.html", {"user": user})
+
+
 @router.get("/privacy", response_class=HTMLResponse)
 async def privacy(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(request, "privacy.html", {})

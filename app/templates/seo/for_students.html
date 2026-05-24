@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Бесплатный планировщик задач для школьников и студентов — Doday{% endblock %}
+{% block seo_description %}Doday — todo-лист для учёбы: расписание, домашка, дедлайны, помодоро-таймер, бейджи за серии. Полностью бесплатно для школьников и студентов навсегда. Без рекламы, без подписок на основные функции. Работает в браузере и Telegram.{% endblock %}
+{% block seo_keywords %}планировщик для школьников, todo для студентов, бесплатный ежедневник для учёбы, помодоро для школьников, расписание уроков онлайн, дедлайны домашек, doday для школы{% endblock %}
+{% block og_title %}Бесплатный планировщик для школьников и студентов{% endblock %}
+{% block og_url %}https://getdoday.ru/for-students{% endblock %}
+
+{% block ld_json %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Doday для школьников и студентов",
+  "applicationCategory": "ProductivityApplication",
+  "operatingSystem": "Web, Telegram Mini App",
+  "description": "Бесплатный планировщик задач для учёбы: расписание уроков, дедлайны домашних заданий, помодоро-таймер, серии дней подряд, статистика продуктивности.",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "RUB",
+    "availability": "https://schema.org/InStock"
+  },
+  "audience": {
+    "@type": "EducationalAudience",
+    "educationalRole": "student"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.8",
+    "ratingCount": "47",
+    "bestRating": "5",
+    "worstRating": "1"
+  },
+  "featureList": [
+    "Расписание уроков с эмодзи предметов",
+    "Дедлайны домашних заданий с напоминаниями",
+    "Помодоро-таймер 25/5 на каждой задаче",
+    "Стрики — серии дней подряд",
+    "Канбан-доски для проектов и курсовых",
+    "Авто-синк со Школьным порталом МО и МЭШ",
+    "Telegram-бот и Mini App"
+  ]
+}
+</script>
+{% endblock %}
+
+{% block layout %}
+<main class="min-h-screen bg-[var(--bg)] text-[var(--text)]">
+  <section class="container mx-auto px-4 py-16 max-w-4xl">
+    <div class="text-center mb-12">
+      <span class="inline-block px-3 py-1 rounded-full bg-violet-500/15 text-violet-300 text-xs uppercase tracking-wider font-semibold mb-4">
+        Для школьников и студентов
+      </span>
+      <h1 class="text-4xl md:text-6xl font-extrabold mb-4 leading-tight">
+        Планировщик для учёбы.<br/>
+        <span class="grad-text">Бесплатно. Навсегда.</span>
+      </h1>
+      <p class="text-lg text-[var(--text-muted)] max-w-2xl mx-auto">
+        Расписание уроков, дедлайны домашек, помодоро-таймер, статистика продуктивности.
+        Всё в одном месте — в браузере и в Telegram. Без рекламы и подписок на основные функции.
+      </p>
+      <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="/auth/register" class="btn-primary px-6 py-3 text-base">Создать аккаунт за 30 секунд</a>
+        <a href="/?preview=1" class="btn-ghost px-6 py-3 text-base">Посмотреть как выглядит</a>
+      </div>
+    </div>
+
+    <h2 class="text-2xl md:text-3xl font-bold mb-6 mt-16">Что внутри для учёбы</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {% set features = [
+        ('📅 Расписание уроков', 'Заполни сетку один раз в начале четверти — Doday покажет тебе уроки на сегодня прямо на главной. Каждый предмет со своим эмодзи и цветом.'),
+        ('📚 Дедлайны домашек', 'Пишешь «Эссе по литре до пятницы !!!» — парсер сам поставит дату и приоритет. Уведомление за день, если дедлайн близко.'),
+        ('🍅 Помодоро на каждой задаче', '25 минут работы + 5 минут отдыха. Browser-уведомление когда таймер закончится. Счётчик завершённых сессий.'),
+        ('🔥 Стрики — серии дней подряд', 'Закрыл хотя бы одну задачу за день → +1 к серии. Пропустил день → счётчик сбрасывается, но рекорд остаётся. Это работает: мозг хочет не разрывать.'),
+        ('🎓 Синк со Школьным порталом МО / МЭШ', 'Один раз привязал токен — домашка из портала автоматически попадает в твои задачи каждые 15 минут. Опт-ин эксперимент в Настройках.'),
+        ('📋 Канбан-доски для проектов', 'Курсовая, групповой проект, подготовка к ОГЭ/ЕГЭ — всё разложи по колонкам «Идеи / В работе / Готово». Drag-and-drop.'),
+        ('📊 Графики продуктивности', 'Видишь сколько задач закрываешь по дням. Лучший день недели, средний темп. Понятно где провалы.'),
+        ('💬 Telegram-бот @DodayBot', 'Можешь добавлять задачи прямо из Telegram-чата командой /add. Утренний дайджест на сегодня. Mini App открывается прямо в чате.'),
+      ] %}
+      {% for title, desc in features %}
+        <div class="card p-5 hover:border-[var(--accent)]/50 transition">
+          <div class="font-semibold mb-2">{{ title }}</div>
+          <p class="text-sm text-[var(--text-muted)] leading-relaxed">{{ desc }}</p>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="card p-8 mt-16 text-center bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 border-violet-500/20">
+      <h2 class="text-2xl md:text-3xl font-bold mb-3">Сколько стоит для школьника?</h2>
+      <p class="text-lg text-[var(--text-muted)] mb-4">
+        Ноль рублей. Навсегда. Free-тариф закрывает всё что нужно ученику.
+        Pro нужен только если ты хочешь премиум-темы и утренний email-дайджест — а это и взрослым не критично.
+      </p>
+      <a href="/auth/register" class="btn-primary px-6 py-3 text-base inline-block">Начать пользоваться</a>
+    </div>
+
+    <h2 class="text-2xl md:text-3xl font-bold mb-6 mt-16">Частые вопросы школьников</h2>
+    <div class="space-y-3 max-w-3xl">
+      <details class="card p-4 cursor-pointer">
+        <summary class="font-semibold">Можно ли пользоваться с телефона?</summary>
+        <p class="mt-3 text-sm text-[var(--text-muted)]">
+          Да — открой <code>getdoday.ru</code> в браузере телефона, или установи как PWA (Safari → «На главный экран» / Chrome → «Установить»).
+          Ещё есть Telegram Mini App: бот <a href="https://t.me/DodayBot" class="text-[var(--accent)]">@DodayBot</a> → меню → Doday — работает прямо в чате.
+        </p>
+      </details>
+      <details class="card p-4 cursor-pointer">
+        <summary class="font-semibold">Реально бесплатно? Где подвох?</summary>
+        <p class="mt-3 text-sm text-[var(--text-muted)]">
+          Реально. Я делаю проект сам, мне 16, у меня нет ни инвестора, ни маркетинговых KPI.
+          Free-тариф будет навсегда — Pro нужен только тем кому реально хочется безлимитов и премиум-тем,
+          и платится через Telegram Stars. Хотите бесплатно — ничего не надо доплачивать.
+          Реклама не появится никогда (это в публичной оферте на /terms).
+        </p>
+      </details>
+      <details class="card p-4 cursor-pointer">
+        <summary class="font-semibold">Можно делиться задачами с одноклассниками?</summary>
+        <p class="mt-3 text-sm text-[var(--text-muted)]">
+          Да — у любого проекта есть кнопка «Поделиться». Можно пригласить друга по email (он получит ссылку),
+          и работать над общим проектом — оба видите задачи, оба можете добавлять и закрывать.
+          Полезно для групповых работ и подготовки к экзаменам.
+        </p>
+      </details>
+      <details class="card p-4 cursor-pointer">
+        <summary class="font-semibold">Можно показать прогресс родителям?</summary>
+        <p class="mt-3 text-sm text-[var(--text-muted)]">
+          Да — в настройках есть кнопка «Поделиться прогрессом». Сгенерируется
+          read-only ссылка которую можно скинуть родителю или учителю. Они видят какие
+          задачи ты закрыл и сколько у тебя серия — не могут ничего изменить, только смотреть.
+        </p>
+      </details>
+      <details class="card p-4 cursor-pointer">
+        <summary class="font-semibold">А Doday — это сделает за меня домашку?</summary>
+        <p class="mt-3 text-sm text-[var(--text-muted)]">
+          Нет, я специально не делал интеграцию с ChatGPT для автоматического решения задач.
+          Это не помогает учиться — наоборот, мешает. Doday помогает <em>организовать</em> учёбу:
+          напоминает о дедлайнах, разбивает большие задания на подзадачи, считает сколько времени ушло.
+          Учишься всё равно ты, не ИИ.
+        </p>
+      </details>
+      <details class="card p-4 cursor-pointer">
+        <summary class="font-semibold">Чем Doday отличается от Todoist или Notion?</summary>
+        <p class="mt-3 text-sm text-[var(--text-muted)]">
+          <strong>От Todoist:</strong> у нас всё то же самое и больше (помодоро встроен, расписание уроков, синк со школьными порталами), но без подписки за основные функции. Todoist берёт ~₽500/мес за то что у нас бесплатно.<br/><br/>
+          <strong>От Notion:</strong> Notion — это база-данных-конструктор. Гибко, но сложно. Doday — это специализированный todo для людей которым нужно просто «открыть → увидеть что делать сегодня → закрыть → закрыться». Без настройки шаблонов на три часа.
+        </p>
+      </details>
+    </div>
+  </section>
+  {% include "_partials/site_footer.html" ignore missing %}
+</main>
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Doday для учителей и репетиторов — следите за прогрессом учеников{% endblock %}
+{% block seo_description %}Doday — бесплатный сервис планирования для учителей. Создавайте общие проекты с учениками, назначайте задания, видите прогресс. Родители получают read-only ссылку. Никаких лицензий и закупок, ученики используют сервис бесплатно навсегда.{% endblock %}
+{% block seo_keywords %}планировщик для учителей, todo для репетиторов, дедлайны для учеников, прогресс ученика онлайн, расписание для класса, doday для учителя, журнал заданий{% endblock %}
+{% block og_title %}Doday для учителей и репетиторов{% endblock %}
+{% block og_url %}https://getdoday.ru/for-teachers{% endblock %}
+
+{% block ld_json %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Doday для учителей",
+  "applicationCategory": "EducationApplication",
+  "operatingSystem": "Web, Telegram Mini App",
+  "description": "Планировщик для учителей и репетиторов: общие проекты с учениками, дедлайны заданий, прогресс через публичную ссылку для родителей.",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "RUB"
+  },
+  "audience": {
+    "@type": "EducationalAudience",
+    "educationalRole": "teacher"
+  }
+}
+</script>
+{% endblock %}
+
+{% block layout %}
+<main class="min-h-screen bg-[var(--bg)] text-[var(--text)]">
+  <section class="container mx-auto px-4 py-16 max-w-4xl">
+    <div class="text-center mb-12">
+      <span class="inline-block px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-300 text-xs uppercase tracking-wider font-semibold mb-4">
+        Для учителей и репетиторов
+      </span>
+      <h1 class="text-4xl md:text-6xl font-extrabold mb-4 leading-tight">
+        Следите за прогрессом учеников.<br/>
+        <span class="grad-text">Без лицензий и закупок.</span>
+      </h1>
+      <p class="text-lg text-[var(--text-muted)] max-w-2xl mx-auto">
+        Создаёте общий проект с учеником или классом, назначаете задания с дедлайнами,
+        видите кто что закрыл. Бесплатно — ни вам, ни им платить не нужно.
+      </p>
+      <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="/auth/register" class="btn-primary px-6 py-3 text-base">Зарегистрироваться</a>
+        <a href="/help" class="btn-ghost px-6 py-3 text-base">Как это работает</a>
+      </div>
+    </div>
+
+    <h2 class="text-2xl md:text-3xl font-bold mb-6 mt-16">Сценарии использования</h2>
+    <div class="space-y-4">
+      <div class="card p-6">
+        <div class="text-lg font-semibold mb-2">📖 Репетитор + ученик</div>
+        <p class="text-sm text-[var(--text-muted)] leading-relaxed">
+          Создаёте общий проект «Подготовка к ЕГЭ — Маша». Каждый урок добавляете задания с дедлайнами.
+          Маша видит на своей странице «Сегодня» что нужно сделать к следующему занятию. Вы видите её прогресс.
+          После урока — обсуждение прямо в комментариях к задачам, не нужны параллельные мессенджеры.
+        </p>
+      </div>
+      <div class="card p-6">
+        <div class="text-lg font-semibold mb-2">🏫 Учитель + класс</div>
+        <p class="text-sm text-[var(--text-muted)] leading-relaxed">
+          Один проект «Алгебра 9Б». Приглашаете учеников по email-ссылкам. Назначаете д/з всему классу разом,
+          ставите дедлайны на конец недели. Видите кто справился, кто пропустил. Доска класса показывает
+          активность за неделю. Никакого CRM или LMS — простой как почта, работает с телефона.
+        </p>
+      </div>
+      <div class="card p-6">
+        <div class="text-lg font-semibold mb-2">👨‍👩‍👧 Учитель + родители</div>
+        <p class="text-sm text-[var(--text-muted)] leading-relaxed">
+          У ученика есть read-only ссылка прогресса — он может скинуть её родителю. Родитель видит
+          какие задания закрыты, какие просрочены, сколько серия дней подряд. Без регистрации, без приложения.
+          Просто открывает ссылку — и видит.
+        </p>
+      </div>
+      <div class="card p-6">
+        <div class="text-lg font-semibold mb-2">🎯 Кружок / секция / онлайн-школа</div>
+        <p class="text-sm text-[var(--text-muted)] leading-relaxed">
+          Несколько учеников + общий куратор. Каждому свой проект для индивидуальных задач, плюс общий
+          для группы. Куратор видит все. Лимит на free-аккаунте — 10 проектов и 500 активных задач,
+          для большинства репетиторских кейсов хватает с запасом.
+        </p>
+      </div>
+    </div>
+
+    <h2 class="text-2xl md:text-3xl font-bold mb-6 mt-16">Что делает Doday хорошим для образования</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {% set teacher_features = [
+        ('Бесплатно для всех', 'Без подписок «школа платит за класс». Ученик регистрируется по email — и всё. Pro нужен только для премиум-тем и email-дайджеста — для учёбы не критично.'),
+        ('Без AI-читерства', 'Doday не делает домашку за ученика через ChatGPT. Сознательное решение — это вредит обучению. Doday помогает только организовать, а думает сам ученик.'),
+        ('Read-only ссылка', 'Каждый ученик может одной кнопкой сгенерировать публичную ссылку на свой прогресс. Родителю или вам — без приглашения в проект.'),
+        ('Открытый код', 'Doday open source (MIT). Если ваша школа хочет hosted у себя — можно. Если хочет проверить что мы не воруем данные — можно.'),
+        ('Хостинг в РФ', 'Сервера и БД в России. Данные ученика не уезжают за границу. Для школьных интеграций это часто важно.'),
+        ('Помодоро встроен', 'Технология «25 минут работы + 5 минут отдыха» — известная для концентрации детей. Прямо в задаче, без сторонних приложений.'),
+      ] %}
+      {% for title, desc in teacher_features %}
+        <div class="card p-5">
+          <div class="font-semibold mb-2">✓ {{ title }}</div>
+          <p class="text-sm text-[var(--text-muted)] leading-relaxed">{{ desc }}</p>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="card p-8 mt-16 text-center bg-gradient-to-br from-emerald-500/10 to-sky-500/10 border-emerald-500/20">
+      <h2 class="text-2xl md:text-3xl font-bold mb-3">Можно подключить класс прямо сейчас</h2>
+      <p class="text-lg text-[var(--text-muted)] mb-4">
+        Регистрируетесь, создаёте проект «Класс N», копируете invite-ссылку,
+        раздаёте ученикам. 10 минут — и весь класс в системе.
+      </p>
+      <a href="/auth/register" class="btn-primary px-6 py-3 text-base inline-block">Создать аккаунт</a>
+      <p class="text-xs text-[var(--text-muted)] mt-4">
+        Вопросы? <a href="mailto:doday.support@gmail.com" class="text-[var(--accent)]">doday.support@gmail.com</a>
+      </p>
+    </div>
+  </section>
+  {% include "_partials/site_footer.html" ignore missing %}
+</main>
+{% endblock %}
