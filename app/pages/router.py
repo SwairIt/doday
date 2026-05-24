@@ -55,6 +55,27 @@ async def todoist_alternative(request: Request, user: CurrentUser) -> HTMLRespon
     return templates.TemplateResponse(request, "seo/todoist_alternative.html", {"user": user})
 
 
+@router.get("/marketing-preview/{slug}/raw", include_in_schema=False)
+async def marketing_preview_raw(slug: str) -> Response:
+    """Serve the raw .md file as plain text — browser renders it as a text page,
+    user does Ctrl+A → Ctrl+C → pastes into platforms that understand markdown
+    natively (Indie Hackers, Dev.to, GitHub issues, HackerNews comments, etc.)."""
+    import pathlib
+
+    from fastapi import HTTPException, status
+
+    allowed = {"vc-ru-post", "reddit-sideproject-post"}
+    if slug not in allowed:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "not found")
+    path = pathlib.Path("docs/marketing") / f"{slug}.md"
+    if not path.is_file():
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "file missing")
+    return Response(
+        content=path.read_text(encoding="utf-8"),
+        media_type="text/plain; charset=utf-8",
+    )
+
+
 @router.get("/marketing-preview/{slug}", response_class=HTMLResponse, include_in_schema=False)
 async def marketing_preview(slug: str) -> HTMLResponse:
     """Serve pre-rendered .html previews of marketing posts (VC.ru, Reddit)
