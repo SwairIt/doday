@@ -1064,6 +1064,13 @@ async def settings_view(request: Request, user: RequiredUser, session: DbSession
         }
         for p in PRESETS
     ]
+    # Beta flag — when true, all Pro features are free for everyone, so the
+    # settings billing card must show only the founder offer + an explanation
+    # that monthly/annual subs are pointless during beta.
+    from app.config import get_settings as _get_settings_for_beta
+
+    beta_active = _get_settings_for_beta().beta_free_for_all
+
     return templates.TemplateResponse(
         request,
         "app/settings.html",
@@ -1079,6 +1086,7 @@ async def settings_view(request: Request, user: RequiredUser, session: DbSession
             "features_state": features_state,
             "experimental_state": experimental_state,
             "presets_list": presets_list,
+            "beta_free_for_all": beta_active,
         },
     )
 

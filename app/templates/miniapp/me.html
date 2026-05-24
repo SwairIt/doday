@@ -287,7 +287,23 @@
 <section class="mb-5" id="upgrade-card">
   <div class="card-mini p-4 border border-[var(--accent)]/30 bg-gradient-to-br from-[var(--accent)]/10 to-fuchsia-500/10"
        x-data="dodayStarsBuy()" x-init="init()">
-    {% if effective_tier_now == 'pro' or effective_tier_now == 'family' %}
+
+    {% if beta_free_for_all %}
+      {# Beta-режим: Pro для всех бесплатно. Показываем только founder offer
+         с явным объяснением что покупать не обязательно. #}
+      <div class="flex items-center gap-2 mb-2">
+        <span class="text-base">✨</span>
+        <h3 class="text-sm font-semibold">Сейчас всё бесплатно — мы в бета-режиме</h3>
+      </div>
+      <p class="text-xs text-[var(--text-muted)] mb-3 leading-relaxed">
+        Все Pro-функции (безлимит, премиум-темы, эксп-функции, Telegram-бот) доступны тебе бесплатно — оплата ещё не введена.
+        Когда вернём платный режим, ранние юзеры останутся на Free со всеми ограничениями Free, как и обещали.
+      </p>
+      <p class="text-xs text-[var(--text-muted)] mb-3 leading-relaxed">
+        А если хочешь зафиксировать <strong>Pro навсегда</strong> ДО возврата к платному режиму — есть founder-оффер
+        ниже за {{ '12500 ⭐' }}. Это не обязательно. Если ты этого не сделаешь, после возврата платного — будешь на Free, но всё что создал, останется.
+      </p>
+    {% elif effective_tier_now == 'pro' or effective_tier_now == 'family' %}
       <div class="flex items-center gap-2 mb-2">
         <span class="text-base">⭐</span>
         <h3 class="text-sm font-semibold">У тебя {{ 'Pro' if effective_tier_now == 'pro' else 'Family' }}</h3>

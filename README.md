@@ -19,7 +19,7 @@ Web · Telegram Mini App · Bot · all sharing one backend.
 
 ## What it is
 
-Doday is a Russian-language todo + team-collaboration app, built by a 16-year-old solo developer ([@SwairIt](https://github.com/SwairIt)) in pair-programming with [Claude Code](https://claude.com/claude-code). It started in May 2026 as a "todo for Russian schoolers" and grew into a focused alternative to Todoist with a Telegram-native surface.
+Doday is a Russian-language todo + team-collaboration app, built by a 15-year-old solo developer ([@SwairIt](https://github.com/SwairIt)) in pair-programming with [Claude Code](https://claude.com/claude-code). It started on May 2nd, 2026 as a "todo for Russian schoolers" and grew into a focused alternative to Todoist with a Telegram-native surface — three weeks of intense daily coding by the time Stars payments shipped.
 
 **Three surfaces, one codebase:**
 
@@ -224,7 +224,7 @@ Open an issue first for anything bigger than a bugfix — happy to discuss scope
 
 ## Author
 
-[@SwairIt](https://github.com/SwairIt) · 16 · solo dev · pair-programs with Claude Code · always curious.
+[@SwairIt](https://github.com/SwairIt) · 15 · solo dev · pair-programs with Claude Code · always curious.
 
 Reach me: [doday.support@gmail.com](mailto:doday.support@gmail.com)
 

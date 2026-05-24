@@ -1739,8 +1739,18 @@ async def me(request: Request, user: CurrentUser, session: DbSession) -> Respons
     proj_max = max((p["count"] for p in by_project), default=0)
 
     # Pro tier + buyable products for the «Upgrade» card on me-page.
+    #
+    # When BETA_FREE_FOR_ALL is on, we only show the "Pro Forever" founder
+    # offer — buying a 1-month or 12-month sub when everything is already
+    # free is confusing. The founder offer is the only thing that makes
+    # sense during beta: lock the price BEFORE we return to paid mode.
     from app.billing.products import PRODUCTS
     from app.billing.service import effective_tier
+    from app.config import get_settings
+
+    settings = get_settings()
+    beta_active = settings.beta_free_for_all
+    visible_products = [p for p in PRODUCTS if (not beta_active) or p.code == "pro_forever"]
 
     ctx = _ctx(request, user)
     ctx.update(
@@ -1762,6 +1772,7 @@ async def me(request: Request, user: CurrentUser, session: DbSession) -> Respons
         by_project_max=proj_max,
         effective_tier_now=effective_tier(user),
         pro_until=user.pro_until,
+        beta_free_for_all=beta_active,
         products=[
             {
                 "code": p.code,
@@ -1771,7 +1782,7 @@ async def me(request: Request, user: CurrentUser, session: DbSession) -> Respons
                 "duration_months": p.duration_months,
                 "grants_tier": p.grants_tier,
             }
-            for p in PRODUCTS
+            for p in visible_products
         ],
     )
     return templates.TemplateResponse(request, "miniapp/me.html", ctx)

@@ -85,7 +85,17 @@ async def me_endpoint(user: RequiredUser) -> TierMeOut:
 
 @router.get("/products", response_model=list[ProductOut])
 async def list_products_endpoint(_: RequiredUser) -> list[ProductOut]:
-    """Public catalog of buyable products — Mini App / pricing page consume this."""
+    """Public catalog of buyable products — Mini App / pricing page consume this.
+
+    During beta (`BETA_FREE_FOR_ALL=true`), the API returns ONLY the lifetime
+    founder offer. Monthly / annual subs are confusing when everything is
+    already free — anyone considering payment in beta is buying the
+    «lock-in before paid mode returns» founder deal.
+    """
+    from app.config import get_settings
+
+    beta = get_settings().beta_free_for_all
+    products_visible = [p for p in PRODUCTS if p.code == "pro_forever"] if beta else list(PRODUCTS)
     return [
         ProductOut(
             code=p.code,
@@ -95,7 +105,7 @@ async def list_products_endpoint(_: RequiredUser) -> list[ProductOut]:
             duration_months=p.duration_months,
             stars_amount=p.stars_amount,
         )
-        for p in PRODUCTS
+        for p in products_visible
     ]
 
 

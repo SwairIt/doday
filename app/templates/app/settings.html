@@ -36,7 +36,22 @@
     <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">
       ⭐ Подписка
     </h2>
-    {% if is_pro %}
+    {% if beta_free_for_all %}
+      <div class="rounded-lg p-3 mb-4 bg-emerald-500/10 border border-emerald-500/30 text-sm">
+        <div class="font-medium mb-1">✨ Сейчас всё бесплатно — мы в бета-режиме</div>
+        <p class="text-xs text-[var(--text-muted)] leading-relaxed">
+          Все Pro-функции (безлимит проектов и задач, премиум-темы, эксп-функции,
+          Telegram-бот, утренний email-дайджест) доступны тебе бесплатно. Оплата
+          ещё не введена. Когда вернём платный режим, ранние юзеры останутся на
+          Free, но всё что создал — останется при тебе.
+        </p>
+        <p class="text-xs text-[var(--text-muted)] leading-relaxed mt-2">
+          Внизу есть <strong>один</strong> founder-оффер — Pro навсегда. Это не
+          обязательно. Это для тех, кто хочет зафиксировать Pro до возврата к
+          платному режиму. Если этого не сделать — после возврата платного будешь на Free.
+        </p>
+      </div>
+    {% elif is_pro %}
       <p class="text-sm mb-4">
         У тебя <strong>{{ 'Family' if current_user.tier == 'family' else 'Pro' }}</strong>.
         {% if current_user.pro_until and current_user.pro_until.year < 2099 %}

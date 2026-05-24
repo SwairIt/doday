@@ -1,4 +1,4 @@
-# I'm 16 and I built a todo app with Telegram Stars payments — only legal way for me to monetize before turning 18
+# I'm 15 and I built a todo app with Telegram Stars payments — only legal way for me to monetize before turning 18
 
 ---
 
@@ -6,7 +6,7 @@ Hey r/SideProject,
 
 So this is a weird story and I wanted to share it. Stick with me, the payment-processor part is genuinely funny.
 
-I'm 16, live in Russia, and over the past 6 months I built **Doday** — a todo app that runs as a web app, a Telegram Mini App, and a Telegram bot, all sharing one backend. Basically a Todoist alternative with Pomodoro built in, kanban boards, school portal sync (for Russian students — this is the moat tbh), and team collaboration.
+I'm 15, live in Russia, and over the past **three weeks of intense solo coding** I built **Doday** — a todo app that runs as a web app, a Telegram Mini App, and a Telegram bot, all sharing one backend. Basically a Todoist alternative with Pomodoro built in, kanban boards, school portal sync (for Russian students — this is the moat tbh), and team collaboration.
 
 You can try it here: **[getdoday.ru](https://getdoday.ru)** · code: **[github.com/SwairIt/doday](https://github.com/SwairIt/doday)** · bot: **[@DodayTaskBot](https://t.me/DodayTaskBot)**
 
@@ -14,7 +14,7 @@ I want to talk about the monetization part because I think it might be useful fo
 
 ## The problem
 
-I'd been building Doday since May. By the time I wanted to add paid plans, the app already had 500+ users (mostly friends and people from my school plus a few random folks). I was running on `BETA_FREE_FOR_ALL=true` env flag, meaning everyone got Pro features for free. This was sustainable for a while but I wanted to actually validate that people would pay for the thing.
+I'd been building Doday since May 2nd. By the time I wanted to add paid plans, the app already had a small group of users (mostly friends and people from my school plus a few random folks). I was running on `BETA_FREE_FOR_ALL=true` env flag, meaning everyone got Pro features for free. This was sustainable for the launch period but I wanted to actually validate that people would pay for the thing.
 
 Plan was simple: register a Russian payment processor (YooKassa, formerly Yandex Kassa — pretty much the local Stripe equivalent), implement their checkout, done.
 
@@ -30,7 +30,7 @@ OK, **T-Bank acquiring** (another major Russian processor). Sign-up flow gets to
 
 OK, **register under a parent's name**. Now the money legally belongs to them. If there's a dispute with a customer, my parent has to argue it. The tax office considers the income theirs. If they decide they don't want to be involved tomorrow, I lose my entire payment infrastructure overnight. Not happening.
 
-OK, **wait until 18**. That's 18 more months. I can't justify investing that much more time into a product without seeing some financial validation.
+OK, **wait until 18**. That's three more years. I can't justify investing that much more time into a product without seeing some financial validation.
 
 I was honestly about to give up on monetization. Then I remembered Telegram Stars existed.
 
@@ -40,7 +40,7 @@ If you don't know — Telegram has its own in-app currency called Stars (currenc
 
 Key thing: **`@BotFather` is available from age 13**. No documents. No tax IDs. No banks. Your contract is with Telegram, not with a bank.
 
-For me at 16, this is the only legitimate payment path that exists.
+For me at 15, this is the only legitimate payment path that exists.
 
 I sat down and wrote it.
 
@@ -61,6 +61,12 @@ The Mini App UI uses `Telegram.WebApp.openInvoice(url, callback)` for in-app pay
 
 I also closed a security hole I'd been sitting on — `POST /api/billing/change-tier` used to let any authenticated user upgrade themselves to Pro for free by POSTing `{"tier": "pro"}`. Closed it the same day I shipped Stars: upgrades now require 402 Payment Required, only downgrade to free is self-service.
 
+## Important caveat about monetization right now
+
+I just shipped Stars, but **the service is currently in beta and Pro features are free for everyone**. Nobody is paying anything yet, and I'm not pushing it. When I exit beta, I'll switch on paid mode, and existing users (anyone registered before that flip) will stay free with whatever they've already created. In the Mini App there's a founder-style **"Pro Forever" offer for 12500 ⭐** — for people who want to lock in Pro before the paid mode returns. Not mandatory. If you don't buy it, you'll be on Free after the flip.
+
+So monetization is wired up but optional-by-design. It'll go live for real when the product stabilizes and starts growing.
+
 ## The stack (in case you care)
 
 - FastAPI 0.115 + async SQLAlchemy 2.0 + Pydantic v2
@@ -77,7 +83,7 @@ I wrote Doday in pair with Claude Code (Anthropic's AI coding assistant). I'm no
 
 The reason the codebase doesn't smell like AI slop is the rails: `mypy --strict` fails the build on type errors, every behavior change ships with a test, the Jinja linter catches bad Alpine patterns Claude tends to generate. With those guardrails, an AI assistant is just a fast pair-programmer.
 
-Whether you consider that "real" coding depends on your definition. I think it does. I wouldn't have shipped this much in 6 months alone, but I also wouldn't have shipped it well without the taste for architecture and review.
+Whether you consider that "real" coding depends on your definition. I think it does. I wouldn't have shipped this much in three weeks alone, but I also wouldn't have shipped it well without the taste for architecture and review.
 
 ## Honest stats
 
@@ -86,8 +92,8 @@ Whether you consider that "real" coding depends on your definition. I think it d
 - Tests: 850
 - ~20k lines of Python
 - Active users: small, mostly from my school + friends-of-friends. I haven't really tried marketing yet — this Reddit post is one of the first attempts.
-- Paying users: 0 — Stars literally went live yesterday
-- Revenue so far: $0 (haven't asked anyone to pay yet)
+- Paying users: 0 — beta mode, Pro is free for everyone, lifetime offer is optional
+- Revenue so far: $0
 - Roadmap: parent dashboard for Family tier, public API tokens, native iOS via Capacitor wrapping the Mini App
 
 ## What I'm asking
@@ -100,8 +106,7 @@ If you've shipped your own Stars integration — there's one part I'm uncertain 
 
 And if you star the repo — it genuinely helps. I'm not running this for fun, I'd love to make a living from it eventually.
 
-Cheers from a 16-year-old in Russia,
-Yaroslav
+Cheers from a 15-year-old in Russia.
 
 ---
 

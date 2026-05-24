@@ -141,10 +141,16 @@ async def _reply(update: Update, text: str, *, markdown: bool = False) -> None:
 async def _get_user_or_prompt(update: Update, session: AsyncSession) -> User | None:
     """Find linked user by chat_id. If not linked — prompt to /start <token>.
 
-    Также проверяет что юзер на Pro-тарифе. Если trial кончился — добрая
-    подсказка вместо тихого молчания."""
-    from app.billing.service import has_pro_features
+    Раньше тут стояла жёсткая `has_pro_features` проверка — бот считался
+    Pro-only фичей. Это противоречило public messaging «в бета-режиме
+    всё бесплатно для всех», поэтому юзеры с истёкшим trial писали боту
+    и получали «бот доступен в Pro» — выглядело как сломанный бот.
 
+    Теперь бот доступен ВСЕМ привязанным юзерам. Если в будущем появится
+    Pro-only специфичная команда (например /digest-config), её можно
+    залочить отдельной проверкой внутри handler'а — а базовые /add /today
+    /upcoming /done /unlink работают всегда.
+    """
     chat = update.effective_chat
     if chat is None:
         return None
@@ -155,14 +161,6 @@ async def _get_user_or_prompt(update: Update, session: AsyncSession) -> User | N
             "Чат не привязан к аккаунту Doday.\n\n"
             "Открой Doday → Профиль → Telegram → нажми «Подключить» — "
             "получишь ссылку которая привяжет нас.",
-        )
-        return None
-    if not has_pro_features(user):
-        await _reply(
-            update,
-            "Telegram-бот доступен в Pro-подписке. Trial закончился, и сейчас "
-            "у тебя Free-тариф. Подключи Pro → бот снова заработает: "
-            "https://getdoday.ru/pricing",
         )
         return None
     return user
