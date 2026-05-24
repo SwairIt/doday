@@ -701,6 +701,78 @@ smoke 25/25 green. Commit `18ffb9c`.
 
 ---
 
+## 2026-05-24 — Telegram Stars (XTR) — единственный legal путь монетизации
+
+Юзер 16 лет, ЮKassa требует 18+. Госуслуги (детская учётка), ручная анкета,
+любой банк-эквайер — всё блокируется на проверке возраста по паспорту/счёту.
+Открыть ИП тоже нельзя. Через родителя — пока не вариант. Stars работают с
+13 лет (договор с Telegram), есть Mini App + бот-инфраструктура — всё
+готово к интеграции.
+
+**Schema (migration 0039):**
+- `users.pro_until` (timestamp) — когда платная Pro истекает.
+- `star_payments` — log платежей с UNIQUE на `telegram_payment_charge_id`
+  (идемпотентность для re-delivered webhooks через IntegrityError).
+
+**Каталог продуктов** (`app/billing/products.py`) — единственный source of
+truth для цен: pro_1m=250⭐, pro_12m=2500⭐ (скидка 17%), pro_forever=12500⭐,
+family_1m=500⭐, family_12m=5000⭐.
+
+**Core service** (`app/billing/stars.py`):
+- HMAC-SHA256 signed payloads `v1:{product}:{user_hex}:{nonce}:{sig}` —
+  защищает от подмены product в URL. ≤80 байт, влезает в Telegram-лимит 128.
+- `create_invoice_link(user, product)` → t.me-deeplink через Bot API.
+- `validate_pre_checkout` — verify signature + amount mismatch (defence-in-depth).
+- `apply_successful_payment` — idempotent, продлевает pro_until от
+  `max(now, current)` + 30×months; lifetime → 2099 sentinel.
+- `refund_payment` — refundStarPayment Bot API + откат pro_until.
+
+**Bot handlers** (`app/telegram/bot.py`):
+- `PreCheckoutQueryHandler` отвечает в 10 сек ok/error до списания.
+- `MessageHandler(filters.SUCCESSFUL_PAYMENT)` → apply + благодарность.
+
+**HTTP endpoints:**
+- `POST /api/billing/stars/invoice`, `GET /api/billing/stars/payments`,
+  `GET /api/billing/products`, `GET /api/billing/me` теперь с `pro_until`.
+- **SECURITY FIX**: `POST /api/billing/change-tier` upgrades теперь 402.
+  Раньше любой залогиненный юзер мог POST'нуть {tier:pro} и стать Pro
+  бесплатно — это был gap из аудита 2026-05-22. Закрыли вместе с
+  появлением платной альтернативы.
+- Admin: `GET /api/admin/billing/payments` + `POST .../{id}/refund`.
+
+**effective_tier** теперь учитывает pro_until: lapsed → free автоматически
+без cron-задачи, lazy eval на каждом запросе.
+
+**UI:**
+- `/miniapp/me` — карточка «⭐ Купить Pro» с 5 продуктами →
+  `Telegram.WebApp.openInvoice(url, callback)`.
+- `/app/settings` — карточка «⭐ Подписка» в верху с текущим сроком +
+  кнопками покупки (window.open для десктопа).
+- `/pricing` — кнопки Pro/Family теперь активные с реальными ⭐ ценами
+  (вместо «Скоро — настраиваем ЮKassa»).
+- Help-статья `stars-payments` с полной инструкцией.
+
+**Тесты** (`tests/test_stars_payments.py`, 24 теста):
+- HMAC sign/verify, tampered payload отвергается (product, user_id, malformed)
+- Payload ≤128 байт
+- Pre-checkout amount mismatch отвергается
+- apply_successful_payment idempotent (same charge_id → один row, не двойной
+  extend)
+- Renewal extends from existing pro_until, lifetime → year 2099
+- effective_tier: expired→free, active→pro/family
+- /api/billing/products listing
+- change_tier upgrade → 402, downgrade → 200
+- Catalog internal consistency (codes unique, year cheaper per-month)
+
+Существующие тесты адаптированы — `_make_user` в test_tier_enforcement
+выставляет `pro_until` при tier=pro/team/family, иначе эффективный тариф
+теперь падает обратно на free.
+
+Commits: `f3175ae` (infra + UI + security fix) → `fe041d0` (pricing + help) →
+`766bb84` (test fix). Prod на `766bb84`, smoke 26/26 ✓, full suite 858/858 ✓.
+
+---
+
 ## 2026-05-24 — Разделил «Функции» / «Эксперименты» + пресеты + «🎓 Учёба» + фикс сайдбара
 
 Юзер: «Я попробовал повключать разные экспериментальные функции, но почему то
