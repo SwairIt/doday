@@ -6,7 +6,8 @@ from collections.abc import Awaitable, Callable
 from urllib.parse import urlparse
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse, PlainTextResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -206,6 +207,19 @@ app.include_router(admin_router)
 app.include_router(admin_token_router)
 app.include_router(miniapp_router)
 app.include_router(taptower_router)
+
+
+# Static assets for the Three.js meme-game at /game.
+# Mount FIRST (before catch-all middleware) so /static/game/* paths are served
+# directly from disk without going through view-routing.
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+
+@app.get("/game", include_in_schema=False)
+async def meme_game_root() -> FileResponse:
+    """Serve the meme-game entry HTML. Three.js loads via CDN — nothing else
+    needs to be bundled or built. Models and sounds live in /static/game/."""
+    return FileResponse("app/static/game/index.html")
 
 
 _templates_404 = Jinja2Templates(directory="app/templates")
