@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="theme-color" content="#0d0820">
   <meta name="robots" content="index,follow">
-  <title>Беллстрой ТВ — мем-игра от Doday</title>
-  <meta name="description" content="Беллстрой ТВ — мем-кликер про кокос воды, sixsevenseven и стримерскую жизнь. Сделано Doday.">
-  <meta property="og:title" content="Беллстрой ТВ — мем-игра">
-  <meta property="og:description" content="Тапай Беллстроя. Лови кокосы. Открой 67. Мем-игра от Doday.">
+  <title>Беллстрой ТВ — мем-аркада от Doday</title>
+  <meta name="description" content="Беллстрой ТВ — бесконечная мем-аркада с тралалело тралала и бомбордило крокодило. Собирай мемы, топчи врагов, доживи до волны 99. От Doday.">
+  <meta property="og:title" content="Беллстрой ТВ — мем-аркада">
+  <meta property="og:description" content="Беллстрой против Italian brainrot. Тралалело, Бомбордило, Sahur. Sixsevenseven.">
   <meta property="og:url" content="https://getdoday.ru/game">
   <meta property="og:image" content="https://getdoday.ru/og.svg">
   <meta property="og:type" content="website">
@@ -43,21 +43,32 @@
           <span id="score">0</span>
         </div>
         <div class="score-row">
+          <span class="score-mini-label">Волна</span>
+          <span id="wave">0</span>
+        </div>
+        <div class="score-row">
           <span class="score-mini-label">Мемов</span>
-          <span id="collected">0 / 17</span>
+          <span id="collected">0</span>
+        </div>
+        <div class="score-row hp-row">
+          <span class="score-mini-label">HP</span>
+          <span id="hp">❤️❤️❤️</span>
         </div>
       </div>
     </div>
 
     <div id="hint" class="hint">
-      <span class="desktop-hint">WASD — ходить · мышь — камера</span>
-      <span class="mobile-hint">Левая половина — джойстик · правая — камера</span>
+      <span class="desktop-hint">WASD — ходить · Space — прыжок · мышь — камера · R — рестарт</span>
+      <span class="mobile-hint">Слева — джойстик · справа — камера · 🔼 — прыжок</span>
     </div>
 
     <!-- Виртуальный джойстик (только mobile, активируется по touch) -->
     <div id="virtual-joystick" class="joystick">
       <div id="joystick-knob" class="joystick-knob"></div>
     </div>
+
+    <!-- Jump button (mobile) -->
+    <button id="jump-btn" class="jump-btn" aria-label="Прыжок">🔼</button>
 
     <button id="share-btn" class="float-btn">
       <span>📤</span> Поделиться рекордом
@@ -70,7 +81,10 @@
     </div>
   </div>
 
-  <!-- Achievement popup — slides in from top-right when unlocked. -->
+  <!-- Wave banner — flashes when new wave spawns -->
+  <div id="wave-banner" class="wave-banner">🌊 Волна 1</div>
+
+  <!-- Achievement / pickup / kill popup — slides in from top-right when unlocked. -->
   <div id="ach-popup" class="ach-popup">
     <div class="ach-emoji" id="ach-emoji">🏆</div>
     <div class="ach-text">
@@ -79,11 +93,44 @@
     </div>
   </div>
 
-  <!-- "67" easter-egg fullscreen overlay — fires when score hits 67. -->
+  <!-- "67" easter-egg fullscreen overlay — fires when 6-7 is collected. -->
   <div id="mem-overlay" class="mem-overlay">
     <div class="mem-text">67</div>
     <div class="mem-sub">SIX SEVEN 🤘</div>
     <button id="mem-close" class="mem-close">Продолжить →</button>
+  </div>
+
+  <!-- Game over modal -->
+  <div id="gameover-overlay" class="gameover-overlay">
+    <div class="gameover-card">
+      <div class="gameover-title">💀 КОНЕЦ ИГРЫ</div>
+      <div class="gameover-sub">Тебя поймали Italian brainrot</div>
+      <div class="gameover-stats">
+        <div class="gameover-stat">
+          <span class="gameover-stat-label">Score</span>
+          <span class="gameover-stat-value gradient-amber" id="gameover-score">0</span>
+        </div>
+        <div class="gameover-stat">
+          <span class="gameover-stat-label">Волна</span>
+          <span class="gameover-stat-value" id="gameover-wave">0</span>
+        </div>
+        <div class="gameover-stat">
+          <span class="gameover-stat-label">Мемов собрано</span>
+          <span class="gameover-stat-value" id="gameover-collected">0</span>
+        </div>
+        <div class="gameover-divider"></div>
+        <div class="gameover-stat best">
+          <span class="gameover-stat-label">🏆 Лучший Score</span>
+          <span class="gameover-stat-value gradient-amber" id="gameover-best-score">0</span>
+        </div>
+        <div class="gameover-stat best">
+          <span class="gameover-stat-label">🌊 Лучшая Волна</span>
+          <span class="gameover-stat-value" id="gameover-best-wave">0</span>
+        </div>
+      </div>
+      <button id="restart-btn" class="restart-btn">▶ Заново (R)</button>
+      <a href="/" class="gameover-back">← На Doday</a>
+    </div>
   </div>
 
   <script type="module" src="/static/game/game.js"></script>
