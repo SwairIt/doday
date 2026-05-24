@@ -115,3 +115,43 @@ async def test_invite_modal_includes_share_targets(logged_in_client: AsyncClient
     assert "vk.com/share.php" in body
     assert "api.whatsapp.com/send" in body
     assert "mailto:" in body
+
+
+async def test_invite_modal_script_has_no_jinja_escaping_left(
+    logged_in_client: AsyncClient,
+) -> None:
+    """Regression: I once put `|tojson|forceescape` inside a <script> tag,
+    which leaves literal `&#34;` in JS source → SyntaxError → Alpine never
+    initializes → empty textarea + invisible copy button.
+
+    The fix moved the user-id to `data-user-id` attribute and reads it from
+    the DOM. This test guards that fix: the dodayInviteState function body
+    must not contain any HTML-escaped quote (`&#34;` or `&quot;`).
+
+    We scope to the invite-modal block to avoid false positives from other
+    scripts (the markdown renderer legitimately has `&quot;` in its source —
+    it's the function that escapes HTML)."""
+    body = (await logged_in_client.get("/app/today")).text
+    # Slice from `window.dodayInviteState` to the next closing `};` of the
+    # IIFE — that's the invite-modal-specific JS we care about.
+    start = body.find("window.dodayInviteState")
+    assert start != -1, "invite-modal JS not found in /app/today response"
+    snippet = body[start : start + 5000]  # generous window covering the IIFE
+    assert "&#34;" not in snippet, "HTML-escaped quote in invite-modal JS — JS will crash"
+    assert "&quot;" not in snippet, "HTML-escaped quote in invite-modal JS — JS will crash"
+
+
+async def test_invite_modal_has_server_rendered_fallbacks(logged_in_client: AsyncClient) -> None:
+    """If Alpine fails to initialize the modal, server-rendered fallbacks
+    must still show a non-empty message and a visible copy button.
+
+    The textarea has plain inner text (rendered without x-text), the input
+    has a real `value=...` attribute, and the copy button has a default
+    text node inside the x-text span."""
+    body = (await logged_in_client.get("/app/today")).text
+    # Server-rendered textarea content as fallback.
+    assert "бесплатный todo на русском" in body
+    # Server-rendered button text as fallback (inside the x-text span).
+    assert "Копировать" in body
+    # data-user-id attribute presence — JS reads from here.
+    assert "data-user-id=" in body

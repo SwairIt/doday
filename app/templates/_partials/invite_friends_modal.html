@@ -7,14 +7,27 @@
   rewards / referral payouts yet, just a way to count which channels work).
 
   Included once in app_base.html so the modal markup is on every authed page.
+
+  WARNING — Jinja escape rules differ between HTML attributes and <script> bodies:
+  - Inside `attr="..."`: use `|tojson|forceescape` so " becomes &#34; (browser decodes on parse).
+  - Inside `<script>...</script>`: use plain `|tojson` ONLY. forceescape would
+    leave literal `&#34;` in JS source → SyntaxError → Alpine never initializes.
+    The bug used to look like an empty textarea + missing copy button (because
+    x-text never ran). Don't add forceescape inside <script>.
 #}
+
+{# Pre-render the current-user id once in HTML; embed via data-* to keep <script> Python-free. #}
+{% set _doday_invite_uid = (current_user.id|string) if current_user else '' %}
+
 <div x-data="dodayInviteState()"
      x-on:open-invite-friends.window="open = true"
      x-show="open" x-cloak
+     data-user-id="{{ _doday_invite_uid }}"
      class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
      @click.self="open = false"
      @keydown.escape.window="open = false">
-  <div class="card max-w-md w-full p-6 shadow-2xl">
+  <div class="card max-w-md w-full p-6 shadow-2xl"
+       data-user-id="{{ _doday_invite_uid }}">
     <div class="flex items-start justify-between mb-3">
       <div>
         <h2 class="text-xl font-bold mb-1">Пригласить друга в Doday</h2>
@@ -24,12 +37,13 @@
               class="text-[var(--text-muted)] hover:text-[var(--text)] text-2xl leading-none -mt-1">×</button>
     </div>
 
-    {# Editable message — пользователь может изменить текст перед шарингом. #}
+    {# Editable message — двусторонняя привязка через x-model. Server-rendered
+       <textarea>{{ default }}</textarea> работает как fallback, если JS сдохнет. #}
     <label class="block text-[10px] uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-1">
       Сообщение
     </label>
     <textarea x-model="message" rows="3"
-              class="w-full text-sm bg-[var(--surface-2)] border border-[var(--border)] rounded-lg px-3 py-2 outline-none focus:border-[var(--accent)] transition resize-none mb-3"></textarea>
+              class="w-full text-sm bg-[var(--surface-2)] border border-[var(--border)] rounded-lg px-3 py-2 outline-none focus:border-[var(--accent)] transition resize-none mb-3">Я нашёл прикольный бесплатный todo на русском — Doday. Помодоро встроен, канбан, расписание, всё без подписки. Открытый код. Попробуй.</textarea>
 
     {# Share targets — каждая кнопка опционально включает текст и url. #}
     <div class="grid grid-cols-2 gap-2 mb-3">
@@ -67,13 +81,19 @@
       </a>
     </div>
 
-    {# Copy-link block — fallback для всего. #}
+    {# Copy-link block — серверный fallback в value="..." гарантирует видимую
+       ссылку даже если Alpine не запустился. Кнопка с явным текстом по
+       умолчанию (не зависит от x-text). #}
     <div class="flex items-center gap-2 p-2 rounded-lg bg-[var(--surface-2)] border border-[var(--border)]">
-      <input type="text" readonly :value="shareUrl" @focus="$el.select()"
+      <input type="text" readonly :value="shareUrl"
+             value="{{ '/?r=' ~ (_doday_invite_uid|replace('-','') if _doday_invite_uid else '') }}"
+             @focus="$el.select()"
              class="flex-1 min-w-0 text-[11px] font-mono bg-transparent outline-none text-[var(--text-muted)]">
       <button type="button" @click="copyLink()"
-              class="text-xs px-2 py-1 rounded bg-[var(--accent)]/15 text-[var(--accent)] hover:bg-[var(--accent)]/25 transition shrink-0"
-              x-text="copied ? '✓ Скопировано' : 'Копировать'"></button>
+              class="text-xs px-3 py-1 rounded bg-[var(--accent)]/15 text-[var(--accent)] hover:bg-[var(--accent)]/25 transition shrink-0 whitespace-nowrap"
+              :class="copied ? 'bg-emerald-500/20 text-emerald-300' : ''">
+        <span x-text="copied ? '✓ Скопировано' : 'Копировать'">Копировать</span>
+      </button>
     </div>
 
     <p class="text-[10px] text-[var(--text-muted)] mt-3 leading-relaxed">
@@ -89,70 +109,76 @@
     window.dodayInviteFriends = function () {
       window.dispatchEvent(new CustomEvent('open-invite-friends'));
     };
-  })();
 
-  function dodayInviteState() {
-    // Short referral id from current user id — first 8 hex chars.
-    // {{ current_user.id }} renders as the UUID string; we slice in JS.
-    const rawUid = {{ (current_user.id|string)|tojson|forceescape if current_user else '""'|safe }};
-    const ref = rawUid ? rawUid.replace(/-/g, '').slice(0, 8) : '';
-    const base = window.location.origin;
-    const shareUrl = ref ? base + '/?r=' + ref : base + '/';
-    const defaultMessage = (
-      "Я нашёл прикольный бесплатный todo на русском — Doday. Помодоро встроен, " +
-      "канбан, расписание, всё без подписки. Открытый код. Попробуй: " + shareUrl
-    );
-    return {
-      open: false,
-      copied: false,
-      message: defaultMessage,
-      shareUrl: shareUrl,
-      get canNativeShare() {
-        return typeof navigator !== 'undefined' && typeof navigator.share === 'function';
-      },
-      // Pre-built deeplinks for each channel. Telegram and VK accept ?text= as
-      // a separate field; WhatsApp expects everything in one text param.
-      get telegramShareUrl() {
-        return 'https://t.me/share/url?url=' + encodeURIComponent(this.shareUrl) +
-               '&text=' + encodeURIComponent(this.message.replace(this.shareUrl, '').trim());
-      },
-      get vkShareUrl() {
-        return 'https://vk.com/share.php?url=' + encodeURIComponent(this.shareUrl) +
-               '&title=' + encodeURIComponent('Doday — бесплатный todo на русском') +
-               '&description=' + encodeURIComponent(this.message.replace(this.shareUrl, '').trim());
-      },
-      get whatsappShareUrl() {
-        return 'https://api.whatsapp.com/send?text=' + encodeURIComponent(this.message);
-      },
-      get emailShareUrl() {
-        return 'mailto:?subject=' + encodeURIComponent('Попробуй Doday — бесплатный todo') +
-               '&body=' + encodeURIComponent(this.message);
-      },
-      async shareNative() {
-        if (!this.canNativeShare) return;
-        try {
-          await navigator.share({
-            title: 'Doday',
-            text: this.message.replace(this.shareUrl, '').trim(),
-            url: this.shareUrl,
-          });
-        } catch (e) { /* user cancelled — silent */ }
-      },
-      async copyLink() {
-        try {
-          await navigator.clipboard.writeText(this.shareUrl);
-          this.copied = true;
-          setTimeout(() => this.copied = false, 1500);
-        } catch (e) {
-          // Older browsers — fallback to manual select.
-          const i = document.createElement('input');
-          i.value = this.shareUrl;
-          document.body.appendChild(i);
-          i.select();
-          try { document.execCommand('copy'); this.copied = true; setTimeout(() => this.copied = false, 1500); } catch (_) {}
-          document.body.removeChild(i);
-        }
-      },
+    // Read user-id from the DOM (server-rendered into data-user-id) rather
+    // than inlining Jinja into the JS source — avoids the |forceescape vs
+    // <script> mismatch that left this modal broken in production.
+    function readUserId() {
+      var el = document.querySelector('[data-user-id]');
+      return el ? (el.getAttribute('data-user-id') || '') : '';
+    }
+
+    window.dodayInviteState = function () {
+      var rawUid = readUserId();
+      var ref = rawUid ? rawUid.replace(/-/g, '').slice(0, 8) : '';
+      var base = window.location.origin;
+      var shareUrl = ref ? base + '/?r=' + ref : base + '/';
+      var defaultMessage = (
+        'Я нашёл прикольный бесплатный todo на русском — Doday. Помодоро встроен, ' +
+        'канбан, расписание, всё без подписки. Открытый код. Попробуй: ' + shareUrl
+      );
+      return {
+        open: false,
+        copied: false,
+        message: defaultMessage,
+        shareUrl: shareUrl,
+        get canNativeShare() {
+          return typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+        },
+        // Pre-built deeplinks for each channel. Telegram and VK accept ?text= as
+        // a separate field; WhatsApp expects everything in one text param.
+        get telegramShareUrl() {
+          return 'https://t.me/share/url?url=' + encodeURIComponent(this.shareUrl) +
+                 '&text=' + encodeURIComponent(this.message.replace(this.shareUrl, '').trim());
+        },
+        get vkShareUrl() {
+          return 'https://vk.com/share.php?url=' + encodeURIComponent(this.shareUrl) +
+                 '&title=' + encodeURIComponent('Doday — бесплатный todo на русском') +
+                 '&description=' + encodeURIComponent(this.message.replace(this.shareUrl, '').trim());
+        },
+        get whatsappShareUrl() {
+          return 'https://api.whatsapp.com/send?text=' + encodeURIComponent(this.message);
+        },
+        get emailShareUrl() {
+          return 'mailto:?subject=' + encodeURIComponent('Попробуй Doday — бесплатный todo') +
+                 '&body=' + encodeURIComponent(this.message);
+        },
+        async shareNative() {
+          if (!this.canNativeShare) return;
+          try {
+            await navigator.share({
+              title: 'Doday',
+              text: this.message.replace(this.shareUrl, '').trim(),
+              url: this.shareUrl,
+            });
+          } catch (e) { /* user cancelled — silent */ }
+        },
+        async copyLink() {
+          try {
+            await navigator.clipboard.writeText(this.shareUrl);
+            this.copied = true;
+            setTimeout(() => this.copied = false, 1500);
+          } catch (e) {
+            // Older browsers — fallback to manual select.
+            var i = document.createElement('input');
+            i.value = this.shareUrl;
+            document.body.appendChild(i);
+            i.select();
+            try { document.execCommand('copy'); this.copied = true; setTimeout(() => this.copied = false, 1500); } catch (_) {}
+            document.body.removeChild(i);
+          }
+        },
+      };
     };
-  }
+  })();
 </script>
