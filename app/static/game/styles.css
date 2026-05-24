@@ -66,28 +66,81 @@ body {
 .brand-text { font-size: 0.85em; opacity: 0.9; }
 
 #score-block {
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.55);
   border: 1px solid rgba(255,255,255,0.15);
   border-radius: 12px;
-  padding: 0.4em 1em;
-  text-align: center;
+  padding: 0.5em 0.9em;
+  text-align: right;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.1em;
+  min-width: 120px;
 }
-.score-label {
-  font-size: 0.7em;
+.score-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.6em;
+  font-variant-numeric: tabular-nums;
+}
+.score-mini-label {
+  font-size: 0.65em;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  opacity: 0.6;
+  letter-spacing: 0.08em;
+  opacity: 0.55;
 }
 #score {
-  font-size: 1.6em;
+  font-size: 1.3em;
   font-weight: 800;
-  font-variant-numeric: tabular-nums;
   background: linear-gradient(90deg, #fbbf24, #f97316);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+#collected {
+  font-size: 1em;
+  font-weight: 700;
+  color: #d946ef;
+}
+
+/* Виртуальный джойстик — показывается только когда touch активен */
+.joystick {
+  position: fixed;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  border: 2px solid rgba(255,255,255,0.3);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 12;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.joystick.active { opacity: 1; }
+.joystick-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 50px;
+  height: 50px;
+  margin-left: -25px;
+  margin-top: -25px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #d946ef, #7c3aed);
+  box-shadow: 0 4px 12px rgba(217, 70, 239, 0.5);
+}
+
+/* Desktop / mobile hint switching */
+.desktop-hint { display: inline; }
+.mobile-hint { display: none; }
+@media (pointer: coarse) {
+  .desktop-hint { display: none; }
+  .mobile-hint { display: inline; }
 }
 
 /* Bottom hint — fades out after first interaction */

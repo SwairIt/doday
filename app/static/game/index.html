@@ -38,12 +38,26 @@
         <span class="brand-text">Беллстрой ТВ</span>
       </a>
       <div id="score-block">
-        <div class="score-label">Кокосов</div>
-        <div id="score">0</div>
+        <div class="score-row">
+          <span class="score-mini-label">Score</span>
+          <span id="score">0</span>
+        </div>
+        <div class="score-row">
+          <span class="score-mini-label">Мемов</span>
+          <span id="collected">0 / 17</span>
+        </div>
       </div>
     </div>
 
-    <div id="hint" class="hint">Тапай Беллстроя! Лови кокосы сверху!</div>
+    <div id="hint" class="hint">
+      <span class="desktop-hint">WASD — ходить · мышь — камера</span>
+      <span class="mobile-hint">Левая половина — джойстик · правая — камера</span>
+    </div>
+
+    <!-- Виртуальный джойстик (только mobile, активируется по touch) -->
+    <div id="virtual-joystick" class="joystick">
+      <div id="joystick-knob" class="joystick-knob"></div>
+    </div>
 
     <button id="share-btn" class="float-btn">
       <span>📤</span> Поделиться рекордом
