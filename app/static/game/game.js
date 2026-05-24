@@ -101,71 +101,215 @@ scene.add(ring);
 // ─── Character (procedural placeholder — заменится на .glb от Tripo3D) ─
 
 function makeProceduralCharacter() {
-  // Группа из 4 частей: body, head, наушники, рот
+  // Беллстрой — stylized мем-стример. Атрибуты, узнаваемые как «жанр»:
+  // блонд-волосы, кепка задом-наперёд, чёрная футболка, лёгкая ухмылка.
+  // Никакого конкретного сходства — generic-vibe пародия.
   const group = new THREE.Group();
 
-  // Body — пурпурный капсуло-куб
-  const bodyGeom = new THREE.CylinderGeometry(0.5, 0.7, 1.4, 16);
+  // ─── Тело: чёрная футболка ───────────────────────────────────────
+  const bodyGeom = new THREE.CylinderGeometry(0.55, 0.65, 1.3, 16);
   const bodyMat = new THREE.MeshStandardMaterial({
-    color: 0xa855f7,
-    metalness: 0.2,
-    roughness: 0.4,
+    color: 0x0d0d0d,
+    metalness: 0.1,
+    roughness: 0.85,
   });
   const body = new THREE.Mesh(bodyGeom, bodyMat);
-  body.position.y = 0.7;
+  body.position.y = 0.65;
   body.castShadow = true;
   group.add(body);
 
-  // Head — sphere с лёгкой деформацией
-  const headGeom = new THREE.SphereGeometry(0.55, 32, 32);
-  const headMat = new THREE.MeshStandardMaterial({
-    color: 0xfbbf24,
-    metalness: 0.1,
-    roughness: 0.7,
+  // Принт на футболке — белый «B» (chest emblem)
+  const emblemCanvas = document.createElement('canvas');
+  emblemCanvas.width = 128;
+  emblemCanvas.height = 128;
+  const ctx = emblemCanvas.getContext('2d');
+  ctx.fillStyle = 'rgba(0,0,0,0)';
+  ctx.fillRect(0, 0, 128, 128);
+  ctx.font = 'bold 80px sans-serif';
+  ctx.fillStyle = 'white';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Б', 64, 64);
+  const emblemTex = new THREE.CanvasTexture(emblemCanvas);
+  const emblem = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.4, 0.4),
+    new THREE.MeshStandardMaterial({ map: emblemTex, transparent: true })
+  );
+  emblem.position.set(0, 0.8, 0.66);
+  group.add(emblem);
+
+  // ─── Шея ─────────────────────────────────────────────────────────
+  const neckGeom = new THREE.CylinderGeometry(0.18, 0.22, 0.2, 12);
+  const skinMat = new THREE.MeshStandardMaterial({
+    color: 0xffd4a8,
+    metalness: 0.0,
+    roughness: 0.6,
   });
-  const head = new THREE.Mesh(headGeom, headMat);
-  head.position.y = 1.95;
+  const neck = new THREE.Mesh(neckGeom, skinMat);
+  neck.position.y = 1.4;
+  neck.castShadow = true;
+  group.add(neck);
+
+  // ─── Голова: лицо ────────────────────────────────────────────────
+  const headGeom = new THREE.SphereGeometry(0.45, 32, 32);
+  const head = new THREE.Mesh(headGeom, skinMat);
+  head.position.y = 1.85;
   head.castShadow = true;
+  // Слегка сплющим голову для cartoon-эффекта
+  head.scale.y = 1.05;
   group.add(head);
 
-  // Глаза — два мелких шарика
-  const eyeMat = new THREE.MeshStandardMaterial({ color: 0x0d0820 });
-  const eyeGeom = new THREE.SphereGeometry(0.08, 16, 16);
-  const eyeL = new THREE.Mesh(eyeGeom, eyeMat);
-  eyeL.position.set(-0.18, 2.05, 0.5);
-  group.add(eyeL);
-  const eyeR = eyeL.clone();
-  eyeR.position.x = 0.18;
-  group.add(eyeR);
-
-  // Наушники — torus сверху
-  const headphoneGeom = new THREE.TorusGeometry(0.6, 0.08, 12, 32, Math.PI);
-  const headphoneMat = new THREE.MeshStandardMaterial({
-    color: 0x1a0f3d,
-    metalness: 0.8,
-    roughness: 0.2,
+  // ─── Блонд-волосы по бокам (выглядывают из-под кепки) ────────────
+  const hairMat = new THREE.MeshStandardMaterial({
+    color: 0xead49a,
+    metalness: 0.0,
+    roughness: 0.85,
   });
-  const headphones = new THREE.Mesh(headphoneGeom, headphoneMat);
-  headphones.position.y = 2.05;
-  headphones.rotation.z = Math.PI / 2;
-  headphones.rotation.x = Math.PI / 2;
-  group.add(headphones);
+  // Чёлка — несколько hair-tufts из-под козырька
+  for (let i = -2; i <= 2; i++) {
+    const tuftGeom = new THREE.ConeGeometry(0.06, 0.18, 6);
+    const tuft = new THREE.Mesh(tuftGeom, hairMat);
+    tuft.position.set(i * 0.08, 2.05, 0.4);
+    tuft.rotation.x = -Math.PI / 6;
+    tuft.rotation.z = i * 0.1;
+    group.add(tuft);
+  }
+  // Боковые волосы за ушами
+  const sideHairGeom = new THREE.SphereGeometry(0.12, 12, 12);
+  const sideHairL = new THREE.Mesh(sideHairGeom, hairMat);
+  sideHairL.position.set(-0.42, 1.75, 0.1);
+  sideHairL.scale.set(0.5, 1, 0.7);
+  group.add(sideHairL);
+  const sideHairR = sideHairL.clone();
+  sideHairR.position.x = 0.42;
+  group.add(sideHairR);
 
-  // Микрофон — маленький cylinder перед лицом
-  const micGeom = new THREE.CylinderGeometry(0.05, 0.05, 0.3, 8);
-  const micMat = new THREE.MeshStandardMaterial({
-    color: 0xef4444,
-    metalness: 0.6,
-    roughness: 0.3,
+  // ─── Глаза (мелкие, прищур) ──────────────────────────────────────
+  const eyeWhite = new THREE.MeshStandardMaterial({ color: 0xffffff });
+  const eyePupil = new THREE.MeshStandardMaterial({ color: 0x1a4080 });
+
+  for (const xSign of [-1, 1]) {
+    const whiteGeom = new THREE.SphereGeometry(0.07, 16, 16);
+    const white = new THREE.Mesh(whiteGeom, eyeWhite);
+    white.position.set(0.16 * xSign, 1.92, 0.4);
+    white.scale.y = 0.6; // прищур
+    group.add(white);
+
+    const pupilGeom = new THREE.SphereGeometry(0.035, 12, 12);
+    const pupil = new THREE.Mesh(pupilGeom, eyePupil);
+    pupil.position.set(0.16 * xSign, 1.92, 0.45);
+    group.add(pupil);
+  }
+
+  // ─── Брови (наклонены чтоб была ухмылка-attitude) ────────────────
+  const browMat = new THREE.MeshStandardMaterial({ color: 0xc8a070 });
+  for (const xSign of [-1, 1]) {
+    const browGeom = new THREE.BoxGeometry(0.12, 0.025, 0.025);
+    const brow = new THREE.Mesh(browGeom, browMat);
+    brow.position.set(0.17 * xSign, 2.01, 0.42);
+    brow.rotation.z = -xSign * 0.15;
+    group.add(brow);
+  }
+
+  // ─── Ухмылка ─────────────────────────────────────────────────────
+  // Простая дуга — линия mesh из BoxGeometry в полусогнутом виде
+  const smileMat = new THREE.MeshStandardMaterial({ color: 0x802020 });
+  const smileGeom = new THREE.TorusGeometry(0.12, 0.018, 8, 16, Math.PI * 0.7);
+  const smile = new THREE.Mesh(smileGeom, smileMat);
+  smile.position.set(0.02, 1.74, 0.43);
+  smile.rotation.z = -0.25;
+  smile.rotation.x = Math.PI;
+  group.add(smile);
+
+  // ─── Кепка задом-наперёд: купол + сзади-козырёк ──────────────────
+  const capMat = new THREE.MeshStandardMaterial({
+    color: 0x141414,
+    metalness: 0.2,
+    roughness: 0.7,
   });
-  const mic = new THREE.Mesh(micGeom, micMat);
-  mic.position.set(0.35, 1.9, 0.5);
-  mic.rotation.z = Math.PI / 4;
-  group.add(mic);
 
-  // Useful tag for ray-casting
+  // Купол кепки — полусфера сверху головы
+  const capCrownGeom = new THREE.SphereGeometry(
+    0.5,
+    32,
+    32,
+    0,
+    Math.PI * 2,
+    0,
+    Math.PI / 2
+  );
+  const capCrown = new THREE.Mesh(capCrownGeom, capMat);
+  capCrown.position.y = 2.1;
+  capCrown.castShadow = true;
+  group.add(capCrown);
+
+  // Полоска вокруг (snapback band)
+  const bandGeom = new THREE.CylinderGeometry(0.5, 0.5, 0.08, 32, 1, true);
+  const band = new THREE.Mesh(bandGeom, capMat);
+  band.position.y = 2.08;
+  group.add(band);
+
+  // Козырёк ЗАДОМ-наперёд (значит торчит на спине, не на лице)
+  const visorGeom = new THREE.BoxGeometry(0.5, 0.04, 0.35);
+  const visor = new THREE.Mesh(visorGeom, capMat);
+  visor.position.set(0, 2.05, -0.45);
+  visor.rotation.x = -0.12;
+  visor.castShadow = true;
+  group.add(visor);
+
+  // Белый «logo-patch» на лбу — типичный snapback sticker
+  const logoCanvas = document.createElement('canvas');
+  logoCanvas.width = 64;
+  logoCanvas.height = 32;
+  const lctx = logoCanvas.getContext('2d');
+  lctx.fillStyle = 'white';
+  lctx.fillRect(0, 0, 64, 32);
+  lctx.fillStyle = '#0d0d0d';
+  lctx.font = 'bold 16px sans-serif';
+  lctx.textAlign = 'center';
+  lctx.textBaseline = 'middle';
+  lctx.fillText('БЕЛЛ', 32, 16);
+  const logoTex = new THREE.CanvasTexture(logoCanvas);
+  const logoPatch = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.28, 0.12),
+    new THREE.MeshStandardMaterial({ map: logoTex })
+  );
+  logoPatch.position.set(0, 2.18, -0.32);
+  logoPatch.rotation.x = -0.1;
+  logoPatch.rotation.y = Math.PI; // обратной стороной — задом-наперёд
+  group.add(logoPatch);
+
+  // ─── Уши ─────────────────────────────────────────────────────────
+  const earGeom = new THREE.SphereGeometry(0.08, 12, 12);
+  for (const xSign of [-1, 1]) {
+    const ear = new THREE.Mesh(earGeom, skinMat);
+    ear.position.set(0.42 * xSign, 1.85, 0);
+    ear.scale.set(0.6, 1, 0.4);
+    group.add(ear);
+  }
+
+  // ─── Руки — palki вдоль тела ─────────────────────────────────────
+  const armGeom = new THREE.CylinderGeometry(0.12, 0.1, 0.9, 12);
+  for (const xSign of [-1, 1]) {
+    const arm = new THREE.Mesh(armGeom, bodyMat);
+    arm.position.set(0.58 * xSign, 0.9, 0);
+    arm.rotation.z = -xSign * 0.15;
+    arm.castShadow = true;
+    group.add(arm);
+
+    // Кисть руки
+    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 12), skinMat);
+    hand.position.set(0.7 * xSign, 0.4, 0);
+    group.add(hand);
+  }
+
+  // ─── Tag for ray-casting ─────────────────────────────────────────
   group.userData = { type: 'character', clickable: true };
-  body.userData = head.userData = { ...group.userData };
+  group.traverse((n) => {
+    if (n.isMesh) {
+      n.userData = { type: 'character', clickable: true };
+    }
+  });
   return group;
 }
 
@@ -355,11 +499,11 @@ function updateScore() {
 }
 
 const ACHIEVEMENTS = [
-  { score: 10, emoji: '🥥', title: 'Десяточка', desc: '10 кокосов? Только начало' },
+  { score: 10, emoji: '🥥', title: 'Кокос воды', desc: 'Беллстрой одобрил твой стрим' },
   { score: 67, emoji: '🤘', title: 'SIX SEVEN', desc: 'Ты в моменте, бро' },
   { score: 100, emoji: '💯', title: 'Сотка', desc: 'Серьёзный кокосер' },
   { score: 250, emoji: '🔥', title: 'В моменте', desc: 'Стримерский флоу' },
-  { score: 500, emoji: '👑', title: 'Кокос-король', desc: 'А Doday уже открывал?' },
+  { score: 500, emoji: '👑', title: 'Король стрима', desc: 'А Doday уже открывал?' },
 ];
 
 function checkAchievements() {
@@ -399,10 +543,10 @@ document.getElementById('mem-close').addEventListener('click', () => {
 
 document.getElementById('share-btn').addEventListener('click', async () => {
   const text =
-    `Я набил ${state.score} кокосов в Doday Games. Sixsevenseven 🤘 ` +
+    `Я набил ${state.score} кокосов в Беллстрой ТВ. Sixsevenseven 🤘 ` +
     `Попробуй: https://getdoday.ru/game`;
   const shareData = {
-    title: 'Кокос Воды',
+    title: 'Беллстрой ТВ',
     text,
     url: 'https://getdoday.ru/game',
   };
