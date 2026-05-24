@@ -2,40 +2,56 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<title>vc-ru-post</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>VC.ru — готовый пост</title>
 <style>
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 760px; margin: 2em auto; padding: 0 1em; line-height: 1.6; color: #222; }
-  h1 { font-size: 1.8em; border-bottom: 2px solid #eee; padding-bottom: 0.3em; }
-  h2 { font-size: 1.4em; margin-top: 1.8em; border-bottom: 1px solid #eee; padding-bottom: 0.2em; }
-  h3 { font-size: 1.15em; }
-  code { background: #f4f4f4; padding: 0.15em 0.4em; border-radius: 3px; font-size: 0.92em; }
-  pre { background: #f4f4f4; padding: 1em; overflow-x: auto; border-radius: 4px; }
-  blockquote { border-left: 4px solid #ccc; padding-left: 1em; color: #555; margin-left: 0; }
-  table { border-collapse: collapse; width: 100%; }
-  th, td { border: 1px solid #ddd; padding: 0.5em 0.8em; text-align: left; }
-  th { background: #f4f4f4; }
-  a { color: #0066cc; }
-  ul, ol { padding-left: 1.4em; }
-  li { margin: 0.25em 0; }
-  hr { border: none; border-top: 1px solid #ddd; margin: 2em 0; }
-  .instructions { background: #fffbea; border-left: 4px solid #f59e0b; padding: 1em 1.2em; margin: 1em 0 2em; border-radius: 4px; }
-  .instructions h3 { margin-top: 0; color: #92400e; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 760px; margin: 0 auto; padding: 1em; line-height: 1.6; color: #222; background: #fafafa; }
+  .toolbar { position: sticky; top: 0; z-index: 10; background: #fafafa; padding: 1em 0; border-bottom: 1px solid #ddd; margin-bottom: 1em; display: flex; gap: 0.6em; align-items: center; flex-wrap: wrap; }
+  .toolbar button { padding: 0.6em 1.2em; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; font-size: 0.95em; transition: all 0.15s; }
+  .btn-primary { background: #1a73e8; color: white; }
+  .btn-primary:hover { background: #1557b0; }
+  .btn-primary.ok { background: #16a34a; }
+  .btn-secondary { background: #eee; color: #333; }
+  .btn-secondary:hover { background: #ddd; }
+  .hint { font-size: 0.85em; color: #666; }
+  .instructions { background: #fffbea; border-left: 4px solid #f59e0b; padding: 1em 1.2em; margin: 1em 0 2em; border-radius: 4px; font-size: 0.92em; }
+  .instructions h3 { margin-top: 0; color: #92400e; font-size: 1.1em; }
+  .instructions ol { padding-left: 1.4em; margin: 0.5em 0; }
+  .article { background: white; padding: 2em; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+  .article h1 { font-size: 1.8em; border-bottom: 2px solid #eee; padding-bottom: 0.3em; margin-top: 0; }
+  .article h2 { font-size: 1.4em; margin-top: 1.8em; border-bottom: 1px solid #eee; padding-bottom: 0.2em; }
+  .article h3 { font-size: 1.15em; }
+  .article code { background: #f4f4f4; padding: 0.15em 0.4em; border-radius: 3px; font-size: 0.92em; }
+  .article pre { background: #f4f4f4; padding: 1em; overflow-x: auto; border-radius: 4px; }
+  .article blockquote { border-left: 4px solid #ccc; padding-left: 1em; color: #555; margin-left: 0; }
+  .article table { border-collapse: collapse; width: 100%; }
+  .article th, .article td { border: 1px solid #ddd; padding: 0.5em 0.8em; text-align: left; }
+  .article th { background: #f4f4f4; }
+  .article a { color: #0066cc; }
+  .article ul, .article ol { padding-left: 1.4em; }
+  .article li { margin: 0.25em 0; }
+  .article hr { border: none; border-top: 1px solid #ddd; margin: 2em 0; }
 </style>
 </head>
 <body>
 
-<div class="instructions">
-<h3>Как использовать этот файл</h3>
-<ol>
-<li>Открой этот файл в браузере (не в Cursor) — двойной клик на <code>vc-ru-post.html</code> в проводнике.</li>
-<li>В браузере выдели весь текст: <code>Ctrl+A</code>.</li>
-<li>Скопируй: <code>Ctrl+C</code>.</li>
-<li>Открой редактор VC.ru / Reddit. Если жёлтый блок-инструкция попал в выделение, удали его в редакторе.</li>
-<li>Вставь: <code>Ctrl+V</code>. VC.ru / Reddit понимают HTML-clipboard, заголовки/жирный/списки сохранятся.</li>
-</ol>
-<p><strong>Не нужно</strong> копировать сырой <code>.md</code> файл — VC.ru не понимает Markdown-синтаксис (звёздочки, решётки).</p>
+<div class="toolbar">
+  <button id="copy-btn" class="btn-primary" onclick="copyPost()">📋 Скопировать пост</button>
+  <span class="hint">→ Вставь Ctrl+V в редактор VC.ru</span>
 </div>
 
+<div class="instructions">
+<h3>Как опубликовать</h3>
+<ol>
+<li>Жми синюю кнопку <strong>«📋 Скопировать пост»</strong> сверху.</li>
+<li>Открой редактор VC.ru, удали старый текст если есть, нажми <code>Ctrl+V</code>.</li>
+<li>Заголовки/жирный/списки сохранятся — редактор понимает HTML clipboard.</li>
+<li>Если что-то выглядит не так — выдели и нажми H2 / B / список в панели редактора вручную.</li>
+</ol>
+</div>
+
+<article class="article" id="article">
 <h1>Мне 15, я за три недели нон-стоп написал свой todoist на FastAPI. ЮKassa отказала из-за возраста — пришлось переделать на Telegram Stars</h1>
 <p><strong>TL;DR</strong>: 2 мая открыл новую папку, набрал <code>uv init</code>, и три недели подряд писал собственный todo-сервис. Сейчас он живой, на проде (<code>getdoday.ru</code>), 850+ тестов, 39 миграций, ~20к строк Python. Хотел подключить ЮKassa — отказ из-за возраста. Пришлось делать оплату через Telegram Stars. Получилось даже лучше. Open source, MIT, <a href="https://github.com/SwairIt/doday">код тут</a>.</p>
 <hr />
@@ -141,4 +157,39 @@
 <p>И если кто-то из вас тоже подросток который пытается монетизировать свой проект — пиши, расскажу детали Stars-интеграции (или просто посмотри в <code>app/billing/stars.py</code>). Это не rocket science, но первые два часа документация Telegram кажется написанной криптовалютчиками.</p>
 <p>Кому интересен сам Doday — <code>getdoday.ru</code>, <code>@DodayTaskBot</code>, <a href="https://github.com/SwairIt/doday">код на GitHub</a>. Если поставишь ⭐ на репозиторий — спасибо, это правда мотивирует. Если найдёшь баг — пиши issue. Если хочешь Pro бесплатно навсегда сейчас — просто зарегистрируйся, ты сразу попадаешь в эту группу.</p>
 <p>Спасибо что почитал. Если есть вопросы — отвечу в комментах. Реально каждый.</p>
+</article>
+
+<script>
+async function copyPost() {
+  const article = document.getElementById("article");
+  const html = article.innerHTML;
+  const text = article.innerText;
+  const btn = document.getElementById("copy-btn");
+  try {
+    // Modern API — puts both HTML and plain text in clipboard.
+    if (navigator.clipboard && window.ClipboardItem) {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          "text/html": new Blob([html], { type: "text/html" }),
+          "text/plain": new Blob([text], { type: "text/plain" }),
+        })
+      ]);
+    } else {
+      // Fallback — select-and-execCommand (older browsers).
+      const range = document.createRange();
+      range.selectNode(article);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      document.execCommand("copy");
+      sel.removeAllRanges();
+    }
+    btn.textContent = "✓ Скопировано! Вставь в редактор";
+    btn.classList.add("ok");
+    setTimeout(() => { btn.textContent = "📋 Скопировать пост"; btn.classList.remove("ok"); }, 3000);
+  } catch (e) {
+    alert("Не получилось скопировать автоматически. Выдели текст ниже сам через Ctrl+A и скопируй Ctrl+C. Ошибка: " + e.message);
+  }
+}
+</script>
 </body></html>

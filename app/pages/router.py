@@ -55,6 +55,35 @@ async def todoist_alternative(request: Request, user: CurrentUser) -> HTMLRespon
     return templates.TemplateResponse(request, "seo/todoist_alternative.html", {"user": user})
 
 
+@router.get("/marketing-preview/{slug}", response_class=HTMLResponse, include_in_schema=False)
+async def marketing_preview(slug: str) -> HTMLResponse:
+    """Serve pre-rendered .html previews of marketing posts (VC.ru, Reddit)
+    so the author can open them in a browser and use the «Copy post» button.
+
+    Why a route and not a static file: opening a local .html in Cursor opens
+    it in the editor (shows raw HTML source), not in a browser. Serving via
+    URL forces the user's browser to render → ClipboardItem API works → one
+    click copies HTML to clipboard for paste into VC.ru / Reddit editors.
+
+    Pages are robots-noindex inside the HTML itself — they're not for
+    discovery, they're a tool for the author.
+    """
+    import pathlib
+
+    from fastapi import HTTPException, status
+
+    # Hard-coded allowlist — only these two filenames map to a route. Anything
+    # else returns 404 (defence-in-depth against path traversal even though
+    # the slug is constrained to a small set).
+    allowed = {"vc-ru-post", "reddit-sideproject-post"}
+    if slug not in allowed:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "preview not found")
+    path = pathlib.Path("docs/marketing") / f"{slug}.html"
+    if not path.is_file():
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "preview file missing")
+    return HTMLResponse(path.read_text(encoding="utf-8"))
+
+
 @router.get("/privacy", response_class=HTMLResponse)
 async def privacy(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(request, "privacy.html", {})
