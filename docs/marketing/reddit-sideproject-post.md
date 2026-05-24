@@ -8,7 +8,7 @@ So this is a weird story and I wanted to share it. Stick with me, the payment-pr
 
 I'm 15, live in Russia, and over the past **three weeks of intense solo coding** I built **Doday** — a todo app that runs as a web app, a Telegram Mini App, and a Telegram bot, all sharing one backend. Basically a Todoist alternative with Pomodoro built in, kanban boards, school portal sync (for Russian students — this is the moat tbh), and team collaboration.
 
-You can try it here: **[getdoday.ru](https://getdoday.ru)** · code: **[github.com/SwairIt/doday](https://github.com/SwairIt/doday)** · bot: **[@DodayTaskBot](https://t.me/DodayTaskBot)**
+You can try it here: **[getdoday.ru](https://getdoday.ru)** · code: **[github.com/SwairIt/doday](https://github.com/SwairIt/doday)** · bot: **[DodayTaskBot on Telegram](https://t.me/DodayTaskBot)**
 
 I want to talk about the monetization part because I think it might be useful for other minors who are trying to ship products.
 
@@ -38,7 +38,7 @@ I was honestly about to give up on monetization. Then I remembered Telegram Star
 
 If you don't know — Telegram has its own in-app currency called Stars (currency code `XTR` in their Bot API). Users buy them through the Telegram client (Apple/Google in-app purchase). Bots can accept payments in Stars via `createInvoiceLink`. Developers get ~70% of Stars value, withdraw through TON crypto or via Fragment.
 
-Key thing: **`@BotFather` is available from age 13**. No documents. No tax IDs. No banks. Your contract is with Telegram, not with a bank.
+Key thing: **BotFather (Telegram's bot-management bot) is available from age 13**. No documents. No tax IDs. No banks. Your contract is with Telegram, not with a bank.
 
 For me at 15, this is the only legitimate payment path that exists.
 
