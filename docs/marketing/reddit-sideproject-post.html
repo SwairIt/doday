@@ -25,6 +25,18 @@
   .article h1 { font-size: 1.8em; border-bottom: 2px solid #eee; padding-bottom: 0.3em; margin-top: 0; }
   .article h2 { font-size: 1.4em; margin-top: 1.8em; border-bottom: 1px solid #eee; padding-bottom: 0.2em; }
   .article h3 { font-size: 1.15em; }
+  .section-card { background: white; border-radius: 8px; padding: 1em 1.5em; margin-bottom: 1em; box-shadow: 0 1px 4px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; }
+  .section-header { display: flex; align-items: center; gap: 0.75em; padding-bottom: 0.6em; border-bottom: 1px solid #eee; margin-bottom: 1em; flex-wrap: wrap; }
+  .section-num { display: inline-flex; align-items: center; justify-content: center; width: 1.8em; height: 1.8em; background: #2563eb; color: white; border-radius: 50%; font-weight: 700; font-size: 0.85em; flex-shrink: 0; }
+  .section-title { flex: 1; font-weight: 600; min-width: 0; }
+  .btn-copy-section { padding: 0.5em 1em; border-radius: 6px; border: 1px solid #2563eb; background: white; color: #2563eb; cursor: pointer; font-weight: 600; font-size: 0.88em; transition: all 0.15s; flex-shrink: 0; }
+  .btn-copy-section:hover { background: #2563eb; color: white; }
+  .btn-copy-section.ok { background: #16a34a; color: white; border-color: #16a34a; }
+  .section-body { font-size: 0.95em; line-height: 1.6; color: #444; }
+  .section-body h2 { font-size: 1.3em; margin: 0 0 0.5em 0; color: #1e293b; }
+  .section-body p { margin: 0.5em 0; }
+  .section-body code { background: #f4f4f4; padding: 0.1em 0.3em; border-radius: 3px; }
+  .section-body a { color: #2563eb; }
   .article code { background: #f4f4f4; padding: 0.15em 0.4em; border-radius: 3px; font-size: 0.92em; }
   .article pre { background: #f4f4f4; padding: 1em; overflow-x: auto; border-radius: 4px; }
   .article blockquote { border-left: 4px solid #ccc; padding-left: 1em; color: #555; margin-left: 0; }
@@ -71,7 +83,294 @@
 <p style="margin: 0.6em 0 0 0; font-size: 0.85em; color: #666;">Галочки сохранятся пока ты не закроешь страницу. Клики на этой странице ничего не делают с самим постом — это просто блокнот для тебя.</p>
 </div>
 
-<article class="article" id="article">
+<div style="background: #eff6ff; border-left: 4px solid #2563eb; padding: 1em 1.2em; margin: 1em 0 2em; border-radius: 4px; font-size: 0.92em;">
+<h3 style="margin-top: 0; color: #1e40af; font-size: 1.05em;">🔥 Если ОДНА большая вставка не работает (VC.ru ругается «слишком много текста»)</h3>
+<p>Копируй по <strong>СЕКЦИЯМ</strong> ниже. Каждая секция = заголовок H2 + параграфы под ним. Жми «📋 Скопировать секцию», вставляй в редактор Reddit, после вставки выдели первую строку (заголовок) и нажми H2 в их панели. Повтори для каждой из 10 секций.</p>
+</div>
+
+<div id="sections-list">
+<div class="section-card">
+  <div class="section-header">
+    <span class="section-num">1</span>
+    <span class="section-title">Введение (TL;DR + первые параграфы)</span>
+    <button class="btn-copy-section" onclick="copySection('sec-0', this)">📋 Скопировать секцию</button>
+  </div>
+  <div class="section-body" id="sec-0"><h1>I'm 15 and I built a todo app with Telegram Stars payments — only legal way for me to monetize before turning 18</h1>
+<hr />
+<p>Hey r/SideProject,</p>
+<p>So this is a weird story and I wanted to share it. Stick with me, the payment-processor part is genuinely funny.</p>
+<p>I'm 15, live in Russia, and over the past <strong>three weeks of intense solo coding</strong> I built <strong>Doday</strong> — a todo app that runs as a web app, a Telegram Mini App, and a Telegram bot, all sharing one backend. Basically a Todoist alternative with Pomodoro built in, kanban boards, school portal sync (for Russian students — this is the moat tbh), and team collaboration.</p>
+<p>You can try it here: <strong><a href="https://getdoday.ru">getdoday.ru</a></strong> · code: <strong><a href="https://github.com/SwairIt/doday">github.com/SwairIt/doday</a></strong> · bot: <strong><a href="https://t.me/DodayTaskBot">@DodayTaskBot</a></strong></p>
+<p>I want to talk about the monetization part because I think it might be useful for other minors who are trying to ship products.</p></div>
+</div>
+<div class="section-card">
+  <div class="section-header">
+    <span class="section-num">2</span>
+    <span class="section-title">The problem</span>
+    <button class="btn-copy-section" onclick="copySection('sec-1', this)">📋 Скопировать секцию</button>
+  </div>
+  <div class="section-body" id="sec-1"><h2>The problem</h2><p>I'd been building Doday since May 2nd. By the time I wanted to add paid plans, the app already had a small group of users (mostly friends and people from my school plus a few random folks). I was running on <code>BETA_FREE_FOR_ALL=true</code> env flag, meaning everyone got Pro features for free. This was sustainable for the launch period but I wanted to actually validate that people would pay for the thing.</p>
+<p>Plan was simple: register a Russian payment processor (YooKassa, formerly Yandex Kassa — pretty much the local Stripe equivalent), implement their checkout, done.</p>
+<p>I'm registered as "self-employed" (самозанятый — a tax regime in Russia available from 14 with parental consent), so I have a tax ID and a real bank account. I figured this was enough.</p></div>
+</div>
+<div class="section-card">
+  <div class="section-header">
+    <span class="section-num">3</span>
+    <span class="section-title">Three rejections in two days</span>
+    <button class="btn-copy-section" onclick="copySection('sec-2', this)">📋 Скопировать секцию</button>
+  </div>
+  <div class="section-body" id="sec-2"><h2>Three rejections in two days</h2><p><strong>YooKassa</strong> — login via gov-ID (Госуслуги, our equivalent of e-gov / single sign-on for government services). Instant rejection: <em>"Users with a child account on Госуслуги cannot sign in."</em> My Госуслуги account is <strong>fully verified</strong> — I pay taxes through it, do everything an adult does. But YooKassa checks date of birth and if you're under 18, no appeal. Hard wall.</p>
+<p>OK, <strong>manual entry</strong>. I open the manual form — they want a scanned color passport upload. Their OCR reads the date of birth and rejects it. I tried with strategically blurred dates — got "could not verify identity" after an hour. Same wall.</p>
+<p>OK, <strong>T-Bank acquiring</strong> (another major Russian processor). Sign-up flow gets to "you need to be a registered IP (individual entrepreneur) or LLC". Self-employed is allowed but only from 18+. To register as IP you also need to be 18 (16 with parental consent and notarized statement, but banks don't accept these for acquiring).</p>
+<p>OK, <strong>register under a parent's name</strong>. Now the money legally belongs to them. If there's a dispute with a customer, my parent has to argue it. The tax office considers the income theirs. If they decide they don't want to be involved tomorrow, I lose my entire payment infrastructure overnight. Not happening.</p>
+<p>OK, <strong>wait until 18</strong>. That's three more years. I can't justify investing that much more time into a product without seeing some financial validation.</p>
+<p>I was honestly about to give up on monetization. Then I remembered Telegram Stars existed.</p></div>
+</div>
+<div class="section-card">
+  <div class="section-header">
+    <span class="section-num">4</span>
+    <span class="section-title">Telegram Stars (XTR)</span>
+    <button class="btn-copy-section" onclick="copySection('sec-3', this)">📋 Скопировать секцию</button>
+  </div>
+  <div class="section-body" id="sec-3"><h2>Telegram Stars (XTR)</h2><p>If you don't know — Telegram has its own in-app currency called Stars (currency code <code>XTR</code> in their Bot API). Users buy them through the Telegram client (Apple/Google in-app purchase). Bots can accept payments in Stars via <code>createInvoiceLink</code>. Developers get ~70% of Stars value, withdraw through TON crypto or via Fragment.</p>
+<p>Key thing: <strong><code>@BotFather</code> is available from age 13</strong>. No documents. No tax IDs. No banks. Your contract is with Telegram, not with a bank.</p>
+<p>For me at 15, this is the only legitimate payment path that exists.</p>
+<p>I sat down and wrote it.</p></div>
+</div>
+<div class="section-card">
+  <div class="section-header">
+    <span class="section-num">5</span>
+    <span class="section-title">What I built (technical)</span>
+    <button class="btn-copy-section" onclick="copySection('sec-4', this)">📋 Скопировать секцию</button>
+  </div>
+  <div class="section-body" id="sec-4"><h2>What I built (technical)</h2><ul>
+<li><strong>Schema migration</strong> (<code>alembic 0039</code>): <code>users.pro_until</code> (timestamp), <code>star_payments</code> table with <code>UNIQUE(telegram_payment_charge_id)</code> for idempotency</li>
+<li><strong>Product catalog</strong> (<code>app/billing/products.py</code>) — single source of truth for pricing. Pro 1m = 250⭐, Pro 12m = 2500⭐, Pro Lifetime = 12500⭐. Edit this file, that's it.</li>
+<li><strong>HMAC-signed invoice payloads</strong> — <code>v1:{product}:{user_id_hex}:{nonce}:{sig}</code>. Without this, anyone could intercept the invoice URL and swap the product code to "pro_forever" before paying. With it, the signature breaks and Bot API rejects. Payload ≤80 bytes (Telegram cap is 128).</li>
+<li><strong>Idempotent payment application</strong> — Telegram retries webhook on failure. I insert into <code>star_payments</code> with <code>UNIQUE</code> on charge_id; second insert raises <code>IntegrityError</code> → I catch and return existing row. No double-credit ever.</li>
+<li><strong><code>effective_tier()</code> honors <code>pro_until</code></strong> — paid users with expired <code>pro_until</code> auto-revert to free with zero cron jobs. Lazy eval on every request. Lifetime purchases set <code>pro_until</code> to year 2099 as a sentinel.</li>
+<li><strong>Renewal extends from existing <code>pro_until</code></strong> — buying Pro 1 month when you still have 10 days left doesn't reset to 30 days. It extends to <code>current_pro_until + 30 days</code>. (Todoist does this wrong, FYI.)</li>
+<li><strong>Refund flow</strong> — admin endpoint calls <code>refundStarPayment</code> Bot API + rolls back <code>pro_until</code>. Telegram allows refunds within 21 days.</li>
+<li><strong>Bot handlers</strong> — <code>PreCheckoutQueryHandler</code> (must answer in 10 sec, verifies signature + amount), <code>MessageHandler(filters.SUCCESSFUL_PAYMENT)</code> (calls apply_successful_payment).</li>
+</ul>
+<p>Tests: 24 unit tests covering signing, tampering rejection, amount mismatch, idempotency, renewal math, lifetime sentinel, expired→free fallback.</p>
+<p>The Mini App UI uses <code>Telegram.WebApp.openInvoice(url, callback)</code> for in-app payment. The web UI opens the invoice URL in a new tab as a fallback for desktop.</p>
+<p>I also closed a security hole I'd been sitting on — <code>POST /api/billing/change-tier</code> used to let any authenticated user upgrade themselves to Pro for free by POSTing <code>{"tier": "pro"}</code>. Closed it the same day I shipped Stars: upgrades now require 402 Payment Required, only downgrade to free is self-service.</p></div>
+</div>
+<div class="section-card">
+  <div class="section-header">
+    <span class="section-num">6</span>
+    <span class="section-title">Important caveat about monetization right now</span>
+    <button class="btn-copy-section" onclick="copySection('sec-5', this)">📋 Скопировать секцию</button>
+  </div>
+  <div class="section-body" id="sec-5"><h2>Important caveat about monetization right now</h2><p>I just shipped Stars, but <strong>the service is currently in beta and Pro features are free for everyone</strong>. Nobody is paying anything yet, and I'm not pushing it. When I exit beta, I'll switch on paid mode, and existing users (anyone registered before that flip) will stay free with whatever they've already created. In the Mini App there's a founder-style <strong>"Pro Forever" offer for 12500 ⭐</strong> — for people who want to lock in Pro before the paid mode returns. Not mandatory. If you don't buy it, you'll be on Free after the flip.</p>
+<p>So monetization is wired up but optional-by-design. It'll go live for real when the product stabilizes and starts growing.</p></div>
+</div>
+<div class="section-card">
+  <div class="section-header">
+    <span class="section-num">7</span>
+    <span class="section-title">The stack (in case you care)</span>
+    <button class="btn-copy-section" onclick="copySection('sec-6', this)">📋 Скопировать секцию</button>
+  </div>
+  <div class="section-body" id="sec-6"><h2>The stack (in case you care)</h2><ul>
+<li>FastAPI 0.115 + async SQLAlchemy 2.0 + Pydantic v2</li>
+<li>PostgreSQL 16 (asyncpg)</li>
+<li>Jinja2 + HTMX + Alpine.js + Tailwind via CDN — no React, no build step</li>
+<li>python-telegram-bot v21 for the bot worker</li>
+<li><code>mypy --strict</code> enforced via pre-commit on every commit</li>
+<li>~20k lines of Python, 850+ pytest tests, 39 Alembic migrations</li>
+<li>One-line deploy: <code>git push</code> → cron-poll on prod VPS pulls every minute, applies migrations, restarts uvicorn. Live in ~60 seconds.</li>
+</ul></div>
+</div>
+<div class="section-card">
+  <div class="section-header">
+    <span class="section-num">8</span>
+    <span class="section-title">About using Claude Code</span>
+    <button class="btn-copy-section" onclick="copySection('sec-7', this)">📋 Скопировать секцию</button>
+  </div>
+  <div class="section-body" id="sec-7"><h2>About using Claude Code</h2><p>I wrote Doday in pair with Claude Code (Anthropic's AI coding assistant). I'm not hiding it — the architecture decisions are mine but Claude was a fast typist with good memory of the codebase. Every commit was reviewed before push. Lines I didn't understand got rewritten until I could explain them out loud.</p>
+<p>The reason the codebase doesn't smell like AI slop is the rails: <code>mypy --strict</code> fails the build on type errors, every behavior change ships with a test, the Jinja linter catches bad Alpine patterns Claude tends to generate. With those guardrails, an AI assistant is just a fast pair-programmer.</p>
+<p>Whether you consider that "real" coding depends on your definition. I think it does. I wouldn't have shipped this much in three weeks alone, but I also wouldn't have shipped it well without the taste for architecture and review.</p></div>
+</div>
+<div class="section-card">
+  <div class="section-header">
+    <span class="section-num">9</span>
+    <span class="section-title">Honest stats</span>
+    <button class="btn-copy-section" onclick="copySection('sec-8', this)">📋 Скопировать секцию</button>
+  </div>
+  <div class="section-body" id="sec-8"><h2>Honest stats</h2><ul>
+<li>First commit: May 2nd, 2026</li>
+<li>Total commits: 511</li>
+<li>Tests: 850</li>
+<li>~20k lines of Python</li>
+<li>Active users: small, mostly from my school + friends-of-friends. I haven't really tried marketing yet — this Reddit post is one of the first attempts.</li>
+<li>Paying users: 0 — beta mode, Pro is free for everyone, lifetime offer is optional</li>
+<li>Revenue so far: $0</li>
+<li>Roadmap: parent dashboard for Family tier, public API tokens, native iOS via Capacitor wrapping the Mini App</li>
+</ul></div>
+</div>
+<div class="section-card">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <span class="section-title">What I'm asking</span>
+    <button class="btn-copy-section" onclick="copySection('sec-9', this)">📋 Скопировать секцию</button>
+  </div>
+  <div class="section-body" id="sec-9"><h2>What I'm asking</h2><p>If you got curious, the live demo is at <a href="https://getdoday.ru">getdoday.ru</a> — UI is Russian but English-readers can navigate with browser translation. The codebase on <a href="https://github.com/SwairIt/doday">github.com/SwairIt/doday</a> is more interesting if you want to see how all the pieces fit (Mini App auth, Stars payment flow, team sharing, opt-in feature flags).</p>
+<p>If you have feedback on the architecture, the payment flow, or you've also dealt with the "underage and trying to ship a SaaS" problem — I'd love to hear it.</p>
+<p>If you've shipped your own Stars integration — there's one part I'm uncertain about: I'm currently keeping <code>provider_payment_charge_id</code> as nullable because I'm not sure when Telegram actually populates it. Anyone know?</p>
+<p>And if you star the repo — it genuinely helps. I'm not running this for fun, I'd love to make a living from it eventually.</p>
+<p>Cheers from a 15-year-old in Russia.</p>
+<hr />
+<p><strong>Edit:</strong> if you're wondering why a Russian teenager is posting on Reddit — Doday is open source MIT and I want it to grow beyond Russian users. The codebase is English (docstrings, variable names, commit messages aside — those are Russian past-tense), so contributions are welcome. The Telegram Stars integration in particular is generic — works for anyone selling anything to anyone with Telegram.</p></div>
+</div>
+
+</div>
+
+<details style="margin-top: 2em; background: white; padding: 1em 1.5em; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+<summary style="cursor: pointer; font-weight: 600; color: #1a73e8;">Запасной запасной вариант: plain text с маркерами заголовков</summary>
+<p style="margin: 1em 0 0.6em 0; font-size: 0.92em; color: #555;">
+Если совсем ничего не работает — выдели текст ниже (клик в поле → Ctrl+A → Ctrl+C) и вставь в редактор Reddit.
+Заголовки помечены ▶ <code>═══ H2: ... ═══</code> ◀ — найди каждый в редакторе, выдели, нажми H2, удали маркеры.
+</p>
+<textarea readonly id="plain-textarea" style="width: 100%; height: 400px; font-family: 'SF Mono', Consolas, monospace; font-size: 0.85em; padding: 1em; border: 1px solid #ddd; border-radius: 4px; resize: vertical; line-height: 1.5;" onclick="this.select()">I'M 15 AND I BUILT A TODO APP WITH TELEGRAM STARS PAYMENTS — ONLY LEGAL WAY FOR ME TO MONETIZE BEFORE TURNING 18
+
+
+---
+
+Hey r/SideProject,
+
+So this is a weird story and I wanted to share it. Stick with me, the payment-processor part is genuinely funny.
+
+I'm 15, live in Russia, and over the past three weeks of intense solo coding I built Doday — a todo app that runs as a web app, a Telegram Mini App, and a Telegram bot, all sharing one backend. Basically a Todoist alternative with Pomodoro built in, kanban boards, school portal sync (for Russian students — this is the moat tbh), and team collaboration.
+
+You can try it here: getdoday.ru (https://getdoday.ru) · code: github.com/SwairIt/doday (https://github.com/SwairIt/doday) · bot: @DodayTaskBot (https://t.me/DodayTaskBot)
+
+I want to talk about the monetization part because I think it might be useful for other minors who are trying to ship products.
+
+
+═══ H2: The problem ═══
+
+
+I'd been building Doday since May 2nd. By the time I wanted to add paid plans, the app already had a small group of users (mostly friends and people from my school plus a few random folks). I was running on BETA_FREE_FOR_ALL=true env flag, meaning everyone got Pro features for free. This was sustainable for the launch period but I wanted to actually validate that people would pay for the thing.
+
+Plan was simple: register a Russian payment processor (YooKassa, formerly Yandex Kassa — pretty much the local Stripe equivalent), implement their checkout, done.
+
+I'm registered as "self-employed" (самозанятый — a tax regime in Russia available from 14 with parental consent), so I have a tax ID and a real bank account. I figured this was enough.
+
+
+═══ H2: Three rejections in two days ═══
+
+
+YooKassa — login via gov-ID (Госуслуги, our equivalent of e-gov / single sign-on for government services). Instant rejection: "Users with a child account on Госуслуги cannot sign in." My Госуслуги account is fully verified — I pay taxes through it, do everything an adult does. But YooKassa checks date of birth and if you're under 18, no appeal. Hard wall.
+
+OK, manual entry. I open the manual form — they want a scanned color passport upload. Their OCR reads the date of birth and rejects it. I tried with strategically blurred dates — got "could not verify identity" after an hour. Same wall.
+
+OK, T-Bank acquiring (another major Russian processor). Sign-up flow gets to "you need to be a registered IP (individual entrepreneur) or LLC". Self-employed is allowed but only from 18+. To register as IP you also need to be 18 (16 with parental consent and notarized statement, but banks don't accept these for acquiring).
+
+OK, register under a parent's name. Now the money legally belongs to them. If there's a dispute with a customer, my parent has to argue it. The tax office considers the income theirs. If they decide they don't want to be involved tomorrow, I lose my entire payment infrastructure overnight. Not happening.
+
+OK, wait until 18. That's three more years. I can't justify investing that much more time into a product without seeing some financial validation.
+
+I was honestly about to give up on monetization. Then I remembered Telegram Stars existed.
+
+
+═══ H2: Telegram Stars (XTR) ═══
+
+
+If you don't know — Telegram has its own in-app currency called Stars (currency code XTR in their Bot API). Users buy them through the Telegram client (Apple/Google in-app purchase). Bots can accept payments in Stars via createInvoiceLink. Developers get ~70% of Stars value, withdraw through TON crypto or via Fragment.
+
+Key thing: @BotFather is available from age 13. No documents. No tax IDs. No banks. Your contract is with Telegram, not with a bank.
+
+For me at 15, this is the only legitimate payment path that exists.
+
+I sat down and wrote it.
+
+
+═══ H2: What I built (technical) ═══
+
+
+• Schema migration (alembic 0039): users.pro_until (timestamp), star_payments table with UNIQUE(telegram_payment_charge_id) for idempotency
+• Product catalog (app/billing/products.py) — single source of truth for pricing. Pro 1m = 250⭐, Pro 12m = 2500⭐, Pro Lifetime = 12500⭐. Edit this file, that's it.
+• HMAC-signed invoice payloads — v1:{product}:{user_id_hex}:{nonce}:{sig}. Without this, anyone could intercept the invoice URL and swap the product code to "pro_forever" before paying. With it, the signature breaks and Bot API rejects. Payload ≤80 bytes (Telegram cap is 128).
+• Idempotent payment application — Telegram retries webhook on failure. I insert into star_payments with UNIQUE on charge_id; second insert raises IntegrityError → I catch and return existing row. No double-credit ever.
+• effective_tier() honors pro_until — paid users with expired pro_until auto-revert to free with zero cron jobs. Lazy eval on every request. Lifetime purchases set pro_until to year 2099 as a sentinel.
+• Renewal extends from existing pro_until — buying Pro 1 month when you still have 10 days left doesn't reset to 30 days. It extends to current_pro_until + 30 days. (Todoist does this wrong, FYI.)
+• Refund flow — admin endpoint calls refundStarPayment Bot API + rolls back pro_until. Telegram allows refunds within 21 days.
+• Bot handlers — PreCheckoutQueryHandler (must answer in 10 sec, verifies signature + amount), MessageHandler(filters.SUCCESSFUL_PAYMENT) (calls apply_successful_payment).
+
+Tests: 24 unit tests covering signing, tampering rejection, amount mismatch, idempotency, renewal math, lifetime sentinel, expired→free fallback.
+
+The Mini App UI uses Telegram.WebApp.openInvoice(url, callback) for in-app payment. The web UI opens the invoice URL in a new tab as a fallback for desktop.
+
+I also closed a security hole I'd been sitting on — POST /api/billing/change-tier used to let any authenticated user upgrade themselves to Pro for free by POSTing {"tier": "pro"}. Closed it the same day I shipped Stars: upgrades now require 402 Payment Required, only downgrade to free is self-service.
+
+
+═══ H2: Important caveat about monetization right now ═══
+
+
+I just shipped Stars, but the service is currently in beta and Pro features are free for everyone. Nobody is paying anything yet, and I'm not pushing it. When I exit beta, I'll switch on paid mode, and existing users (anyone registered before that flip) will stay free with whatever they've already created. In the Mini App there's a founder-style "Pro Forever" offer for 12500 ⭐ — for people who want to lock in Pro before the paid mode returns. Not mandatory. If you don't buy it, you'll be on Free after the flip.
+
+So monetization is wired up but optional-by-design. It'll go live for real when the product stabilizes and starts growing.
+
+
+═══ H2: The stack (in case you care) ═══
+
+
+• FastAPI 0.115 + async SQLAlchemy 2.0 + Pydantic v2
+• PostgreSQL 16 (asyncpg)
+• Jinja2 + HTMX + Alpine.js + Tailwind via CDN — no React, no build step
+• python-telegram-bot v21 for the bot worker
+• mypy --strict enforced via pre-commit on every commit
+• ~20k lines of Python, 850+ pytest tests, 39 Alembic migrations
+• One-line deploy: git push → cron-poll on prod VPS pulls every minute, applies migrations, restarts uvicorn. Live in ~60 seconds.
+
+
+═══ H2: About using Claude Code ═══
+
+
+I wrote Doday in pair with Claude Code (Anthropic's AI coding assistant). I'm not hiding it — the architecture decisions are mine but Claude was a fast typist with good memory of the codebase. Every commit was reviewed before push. Lines I didn't understand got rewritten until I could explain them out loud.
+
+The reason the codebase doesn't smell like AI slop is the rails: mypy --strict fails the build on type errors, every behavior change ships with a test, the Jinja linter catches bad Alpine patterns Claude tends to generate. With those guardrails, an AI assistant is just a fast pair-programmer.
+
+Whether you consider that "real" coding depends on your definition. I think it does. I wouldn't have shipped this much in three weeks alone, but I also wouldn't have shipped it well without the taste for architecture and review.
+
+
+═══ H2: Honest stats ═══
+
+
+• First commit: May 2nd, 2026
+• Total commits: 511
+• Tests: 850
+• ~20k lines of Python
+• Active users: small, mostly from my school + friends-of-friends. I haven't really tried marketing yet — this Reddit post is one of the first attempts.
+• Paying users: 0 — beta mode, Pro is free for everyone, lifetime offer is optional
+• Revenue so far: $0
+• Roadmap: parent dashboard for Family tier, public API tokens, native iOS via Capacitor wrapping the Mini App
+
+
+═══ H2: What I'm asking ═══
+
+
+If you got curious, the live demo is at getdoday.ru (https://getdoday.ru) — UI is Russian but English-readers can navigate with browser translation. The codebase on github.com/SwairIt/doday (https://github.com/SwairIt/doday) is more interesting if you want to see how all the pieces fit (Mini App auth, Stars payment flow, team sharing, opt-in feature flags).
+
+If you have feedback on the architecture, the payment flow, or you've also dealt with the "underage and trying to ship a SaaS" problem — I'd love to hear it.
+
+If you've shipped your own Stars integration — there's one part I'm uncertain about: I'm currently keeping provider_payment_charge_id as nullable because I'm not sure when Telegram actually populates it. Anyone know?
+
+And if you star the repo — it genuinely helps. I'm not running this for fun, I'd love to make a living from it eventually.
+
+Cheers from a 15-year-old in Russia.
+
+---
+
+Edit: if you're wondering why a Russian teenager is posting on Reddit — Doday is open source MIT and I want it to grow beyond Russian users. The codebase is English (docstrings, variable names, commit messages aside — those are Russian past-tense), so contributions are welcome. The Telegram Stars integration in particular is generic — works for anyone selling anything to anyone with Telegram.
+</textarea>
+<button onclick="copyPlainText()" style="margin-top: 0.6em; padding: 0.5em 1em; border-radius: 4px; border: 1px solid #1a73e8; background: white; color: #1a73e8; cursor: pointer; font-weight: 600;">📋 Скопировать plain text</button>
+</details>
+
+<details style="margin-top: 1em; background: white; padding: 1em 1.5em; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+<summary style="cursor: pointer; font-weight: 600; color: #666;">Предпросмотр всего поста как одной статьи</summary>
+<article class="article" id="article" style="margin-top: 1em;">
 <h1>I'm 15 and I built a todo app with Telegram Stars payments — only legal way for me to monetize before turning 18</h1>
 <hr />
 <p>Hey r/SideProject,</p>
@@ -146,6 +445,7 @@
 <hr />
 <p><strong>Edit:</strong> if you're wondering why a Russian teenager is posting on Reddit — Doday is open source MIT and I want it to grow beyond Russian users. The codebase is English (docstrings, variable names, commit messages aside — those are Russian past-tense), so contributions are welcome. The Telegram Stars integration in particular is generic — works for anyone selling anything to anyone with Telegram.</p>
 </article>
+</details>
 
 <script>
 async function copyPost() {
@@ -175,6 +475,52 @@ async function copyPost() {
     setTimeout(() => { btn.textContent = "📋 Скопировать пост"; btn.classList.remove("ok"); }, 3000);
   } catch (e) {
     alert("Не получилось скопировать автоматически. Выдели текст в белом блоке через Ctrl+A и скопируй Ctrl+C. Ошибка: " + e.message);
+  }
+}
+
+async function copySection(sectionId, btn) {
+  const el = document.getElementById(sectionId);
+  if (!el) return;
+  const html = el.innerHTML;
+  const text = el.innerText;
+  try {
+    if (navigator.clipboard && window.ClipboardItem) {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          "text/html": new Blob([html], { type: "text/html" }),
+          "text/plain": new Blob([text], { type: "text/plain" }),
+        })
+      ]);
+    } else {
+      const range = document.createRange();
+      range.selectNode(el);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      document.execCommand("copy");
+      sel.removeAllRanges();
+    }
+    const origText = btn.textContent;
+    btn.textContent = "✓ Готово";
+    btn.classList.add("ok");
+    setTimeout(() => { btn.textContent = origText; btn.classList.remove("ok"); }, 2500);
+  } catch (e) {
+    alert("Не получилось. Выдели текст руками через Ctrl+A в блоке выше. Ошибка: " + e.message);
+  }
+}
+
+async function copyPlainText() {
+  const ta = document.getElementById("plain-textarea");
+  ta.select();
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(ta.value);
+    } else {
+      document.execCommand("copy");
+    }
+    alert("Plain text скопирован в буфер. Вставь в редактор Reddit.");
+  } catch (e) {
+    alert("Не получилось. Ошибка: " + e.message);
   }
 }
 </script>
