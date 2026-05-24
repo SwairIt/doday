@@ -115,17 +115,28 @@ def is_trial_active(user: User) -> bool:
 
 
 def effective_tier(user: User) -> str:
-    """During trial, free users get pro features; paid tiers stay as-is.
+    """Resolve what the user can use, considering trial + paid + beta override.
 
-    Beta-flag override: если settings.beta_free_for_all=True — все юзеры
-    получают Pro. Используется в pre-launch периоде (Habr-launch grandfather
-    promise: «ранним юзерам Pro останется навсегда»).
+    Order of precedence:
+    1. Beta override (settings.beta_free_for_all) → everyone gets pro.
+    2. Paid subscription via Stars → user.tier ('pro'|'family') while
+       user.pro_until is in the future.
+    3. Trial period → 'pro' if trial_ends_at is in the future.
+    4. Otherwise 'free'.
+
+    Why we don't use user.tier directly: a user who paid for Pro 1 month and
+    didn't renew should automatically lapse back to free without an admin
+    flipping the column. Storing the expiry separately gives us a deterministic
+    answer on every request without needing a cron job.
     """
     from app.config import get_settings
 
     if get_settings().beta_free_for_all:
         return "pro"
-    if user.tier in ("pro", "team"):
+    # Paid subscription — user.tier set to pro/family on purchase, pro_until
+    # tracks expiry. Once pro_until lapses, fall through to trial/free.
+    now = datetime.now(UTC)
+    if user.tier in ("pro", "team", "family") and user.pro_until and user.pro_until > now:
         return user.tier
     if is_trial_active(user):
         return "pro"

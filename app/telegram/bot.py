@@ -29,7 +29,14 @@ from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from telegram import Update
 from telegram.constants import ParseMode
-from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    ContextTypes,
+    MessageHandler,
+    PreCheckoutQueryHandler,
+    filters,
+)
 
 # SQLAlchemy mapper-warmup: relationship строки вроде `order_by="Label.name"`
 # eval'ятся лениво и требуют чтобы все классы были загружены в registry до
@@ -391,6 +398,79 @@ async def cmd_app(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
     )
 
 
+async def on_pre_checkout_query(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
+    """Telegram waits up to 10s for our ok/error answer before charging.
+
+    We verify the signed payload + amount sanity; on mismatch, answer with a
+    user-facing reason so Telegram cancels the purchase before deducting Stars.
+    """
+    from app.billing.stars import validate_pre_checkout
+
+    query = update.pre_checkout_query
+    if query is None:
+        return
+    ok, reason, _product = validate_pre_checkout(query.invoice_payload, query.total_amount)
+    try:
+        if ok:
+            await query.answer(ok=True)
+        else:
+            await query.answer(ok=False, error_message=reason or "Платёж отклонён")
+    except Exception as e:
+        logger.error("pre_checkout answer failed: %s", e)
+
+
+async def on_successful_payment(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
+    """SuccessfulPayment update → credit user (idempotent), thank them, log."""
+    from app.billing.stars import apply_successful_payment
+
+    if update.message is None or update.message.successful_payment is None:
+        return
+    sp = update.message.successful_payment
+    sm = _get_sessionmaker()
+    async with sm() as session:
+        try:
+            payment = await apply_successful_payment(
+                session,
+                telegram_payment_charge_id=sp.telegram_payment_charge_id,
+                provider_payment_charge_id=sp.provider_payment_charge_id,
+                payload=sp.invoice_payload,
+                stars_amount=sp.total_amount,
+            )
+            await session.commit()
+        except Exception as e:
+            await session.rollback()
+            logger.exception("apply_successful_payment failed: %s", e)
+            await _reply(
+                update,
+                "⚠ Платёж получен, но не смог обновить тариф автоматически. "
+                "Напиши на doday.support@gmail.com — выручим вручную.",
+            )
+            return
+    if payment is None:
+        await _reply(
+            update,
+            "⚠ Платёж получен, но я не смог распознать счёт. "
+            "Это значит данные были изменены посередине — напиши в поддержку.",
+        )
+        return
+    from app.billing.products import get_product
+
+    product = get_product(payment.product_code)
+    msg_lines = [
+        "✅ *Платёж принят*",
+        "",
+        f"Тариф: *{product.title if product else payment.product_code}*",
+        f"Списано: *{payment.stars_amount} ⭐*",
+    ]
+    if product and product.duration_months is None:
+        msg_lines.append("Подписка: *навсегда*")
+    elif product and product.duration_months:
+        msg_lines.append(f"Подписка: на *{product.duration_months} мес*")
+    msg_lines.append("")
+    msg_lines.append("Открой Doday — все Pro-функции уже доступны.")
+    await _reply(update, "\n".join(msg_lines), markdown=True)
+
+
 async def on_unknown_text(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
     """Любой текст без / — короткая подсказка."""
     if update.message is None or update.message.text is None:
@@ -532,6 +612,9 @@ def build_app() -> Application[Any, Any, Any, Any, Any, Any]:
     application.add_handler(CommandHandler("upcoming", cmd_upcoming))
     application.add_handler(CommandHandler("done", cmd_done))
     application.add_handler(CommandHandler("unlink", cmd_unlink))
+    # Stars payment flow — handlers MUST run before the catch-all text handler.
+    application.add_handler(PreCheckoutQueryHandler(on_pre_checkout_query))
+    application.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, on_successful_payment))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_unknown_text))
 
     # ε N3+N4: JobQueue cron-tasks для reminders + morning digest.

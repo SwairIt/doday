@@ -283,6 +283,116 @@
   </a>
 </section>
 
+{# ─── Pro / Upgrade card ─── #}
+<section class="mb-5" id="upgrade-card">
+  <div class="card-mini p-4 border border-[var(--accent)]/30 bg-gradient-to-br from-[var(--accent)]/10 to-fuchsia-500/10"
+       x-data="dodayStarsBuy()" x-init="init()">
+    {% if effective_tier_now == 'pro' or effective_tier_now == 'family' %}
+      <div class="flex items-center gap-2 mb-2">
+        <span class="text-base">⭐</span>
+        <h3 class="text-sm font-semibold">У тебя {{ 'Pro' if effective_tier_now == 'pro' else 'Family' }}</h3>
+      </div>
+      {% if pro_until and pro_until.year < 2099 %}
+        <p class="text-xs text-[var(--text-muted)] mb-3">
+          Действует до <strong>{{ pro_until.strftime('%d.%m.%Y') }}</strong>.
+          После этой даты автоматически вернёшься на Free, если не продлишь.
+        </p>
+      {% elif pro_until %}
+        <p class="text-xs text-[var(--text-muted)] mb-3">
+          Подписка <strong>навсегда</strong> ✨ — спасибо что веришь в проект.
+        </p>
+      {% else %}
+        <p class="text-xs text-[var(--text-muted)] mb-3">
+          Trial-период — Pro-функции доступны временно.
+          Купи подписку чтобы зафиксировать их.
+        </p>
+      {% endif %}
+    {% else %}
+      <div class="flex items-center gap-2 mb-2">
+        <span class="text-base">⭐</span>
+        <h3 class="text-sm font-semibold">Купить Pro за Telegram Stars</h3>
+      </div>
+      <p class="text-xs text-[var(--text-muted)] mb-3">
+        Безлимит проектов и задач, премиум-темы, утренний дайджест, Telegram-бот,
+        графы, привычки и остальные эксп-функции. Платишь — Stars-ы списываются
+        мгновенно, тариф активируется сразу.
+      </p>
+    {% endif %}
+
+    <div class="space-y-2">
+      {% for product in products %}
+        <button type="button" @click="buy({{ product.code|tojson|forceescape }})"
+                :disabled="busy"
+                :class="busy === {{ product.code|tojson|forceescape }} ? 'opacity-60' : ''"
+                class="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-[var(--surface)] hover:bg-[var(--surface-2)] active:scale-95 transition text-left">
+          <div class="min-w-0 flex-1">
+            <div class="text-sm font-medium truncate">{{ product.title }}</div>
+            <div class="text-[10px] text-[var(--text-muted)] truncate">{{ product.description }}</div>
+          </div>
+          <div class="shrink-0 text-right">
+            <div class="text-sm font-bold text-amber-400">{{ product.stars_amount }} ⭐</div>
+          </div>
+        </button>
+      {% endfor %}
+    </div>
+    <template x-if="err">
+      <p class="text-xs text-rose-400 mt-2" x-text="'⚠ ' + err"></p>
+    </template>
+    <p class="text-[10px] text-[var(--text-muted)] mt-3">
+      Платежи обрабатывает Telegram. Возврат возможен в течение 21 дня —
+      напиши в <a href="mailto:doday.support@gmail.com" class="text-[var(--accent)]">поддержку</a>.
+    </p>
+  </div>
+</section>
+<script>
+  function dodayStarsBuy() {
+    return {
+      busy: null,
+      err: null,
+      init() {
+        // No-op for now; reserved for future polling of payment status.
+      },
+      async buy(code) {
+        this.busy = code; this.err = null;
+        try {
+          const resp = await fetch('/api/billing/stars/invoice', {
+            method: 'POST', credentials: 'include',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({product_code: code}),
+          });
+          if (!resp.ok) {
+            const d = await resp.json().catch(() => ({}));
+            this.err = d.detail || ('HTTP ' + resp.status);
+            return;
+          }
+          const data = await resp.json();
+          // Telegram Mini App: openInvoice gives in-app payment sheet + callback.
+          if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openInvoice) {
+            window.Telegram.WebApp.openInvoice(data.invoice_url, (status) => {
+              this.busy = null;
+              if (status === 'paid') {
+                // Wait a beat for the bot to process SuccessfulPayment, then reload.
+                setTimeout(() => location.reload(), 1500);
+              } else if (status === 'failed') {
+                this.err = 'Платёж не прошёл. Попробуй ещё раз.';
+              } else if (status === 'cancelled') {
+                // user closed dialog — silent no-op
+              }
+            });
+          } else {
+            // Plain browser fallback — open invoice in new tab.
+            window.open(data.invoice_url, '_blank');
+            this.busy = null;
+          }
+        } catch (e) {
+          this.err = String(e);
+          this.busy = null;
+        }
+      },
+    };
+  }
+</script>
+
 <div class="text-center text-[10px] text-[var(--text-muted)] mt-6 mb-2">
   Doday Mini App · бета
 </div>

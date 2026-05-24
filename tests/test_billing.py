@@ -20,11 +20,12 @@ async def test_billing_me_returns_trial(logged_in_client: AsyncClient) -> None:
     assert body["limits"]["max_active_projects"] is None  # pro = unlimited
 
 
-async def test_change_tier_to_pro(logged_in_client: AsyncClient) -> None:
+async def test_change_tier_to_pro_blocked(logged_in_client: AsyncClient) -> None:
+    """Self-upgrade was the unfixed security gap from 2026-05-22 audit. Now blocked:
+    upgrades must go through app/billing/stars.py with real Stars payment."""
     response = await logged_in_client.post("/api/billing/change-tier", json={"tier": "pro"})
-    assert response.status_code == 200
-    assert response.json()["tier"] == "pro"
-    assert response.json()["effective_tier"] == "pro"
+    assert response.status_code == 402
+    assert "stars/invoice" in response.json()["detail"]
 
 
 async def test_tier_catalog_listed(logged_in_client: AsyncClient) -> None:
@@ -79,7 +80,17 @@ async def test_pro_tier_has_no_project_limit(
     logged_in_client: AsyncClient, db_session: AsyncSession
 ) -> None:
     await _expire_trial(db_session)
-    await logged_in_client.post("/api/billing/change-tier", json={"tier": "pro"})
+    # Simulate a paid Pro subscription directly via DB (the upgrade endpoint
+    # now requires a real Stars payment, which we don't replay in this test).
+    from datetime import timedelta
+
+    await db_session.execute(
+        update(User).values(
+            tier="pro",
+            pro_until=datetime.now(UTC) + timedelta(days=30),
+        )
+    )
+    await db_session.commit()
 
     for i in range(8):
         r = await logged_in_client.post("/api/projects", json={"name": f"Many{i}"})

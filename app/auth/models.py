@@ -54,6 +54,11 @@ class User(Base):
     experiments: Mapped[dict[str, bool]] = mapped_column(
         JSONB, nullable=False, default=dict, server_default="{}"
     )
+    # When the user's paid Pro subscription expires (NULL = no paid sub, ever
+    # or already lapsed long ago). effective_tier() returns "pro" while this
+    # is in the future; otherwise falls back to trial / free. Payment via
+    # Telegram Stars extends this — see app/billing/stars.py.
+    pro_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False
     )

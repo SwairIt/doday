@@ -1738,6 +1738,10 @@ async def me(request: Request, user: CurrentUser, session: DbSession) -> Respons
     ]
     proj_max = max((p["count"] for p in by_project), default=0)
 
+    # Pro tier + buyable products for the «Upgrade» card on me-page.
+    from app.billing.products import PRODUCTS
+    from app.billing.service import effective_tier
+
     ctx = _ctx(request, user)
     ctx.update(
         current_streak=core["current_streak"],
@@ -1756,6 +1760,19 @@ async def me(request: Request, user: CurrentUser, session: DbSession) -> Respons
         by_priority_total=pri_total,
         by_project=by_project,
         by_project_max=proj_max,
+        effective_tier_now=effective_tier(user),
+        pro_until=user.pro_until,
+        products=[
+            {
+                "code": p.code,
+                "title": p.title,
+                "description": p.description,
+                "stars_amount": p.stars_amount,
+                "duration_months": p.duration_months,
+                "grants_tier": p.grants_tier,
+            }
+            for p in PRODUCTS
+        ],
     )
     return templates.TemplateResponse(request, "miniapp/me.html", ctx)
 

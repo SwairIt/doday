@@ -23,10 +23,13 @@ async def test_cross_origin_via_referer_blocked(logged_in_client: AsyncClient) -
 
 
 async def test_same_origin_post_allowed(logged_in_client: AsyncClient) -> None:
-    """Same-origin Origin (matching the test Host 'test') passes through."""
+    """Same-origin Origin (matching the test Host 'test') passes CSRF check.
+
+    Use a safe endpoint (downgrade to free) — upgrade-to-pro is now 402 Payment
+    Required by design (security fix shipped with Telegram Stars 2026-05-24)."""
     resp = await logged_in_client.post(
         "/api/billing/change-tier",
-        json={"tier": "pro"},
+        json={"tier": "free"},
         headers={"origin": "http://test"},
     )
     assert resp.status_code == 200

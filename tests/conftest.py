@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import (
 
 from app.admin import models as _admin_models  # noqa: F401
 from app.auth import models as _auth_models  # noqa: F401  register tables with Base.metadata
+from app.billing import models as _billing_models  # noqa: F401
 from app.config import get_settings
 from app.db import Base, get_session
 from app.gamification import models as _gamification_models  # noqa: F401

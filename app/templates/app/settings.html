@@ -31,6 +31,104 @@
     </div>
   </section>
 
+  {# ─── Subscription / Stars purchase card ─── #}
+  <section class="card p-6" x-data="dodayStarsBuyDesktop()" x-init="init()">
+    <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">
+      ⭐ Подписка
+    </h2>
+    {% if is_pro %}
+      <p class="text-sm mb-4">
+        У тебя <strong>{{ 'Family' if current_user.tier == 'family' else 'Pro' }}</strong>.
+        {% if current_user.pro_until and current_user.pro_until.year < 2099 %}
+          Действует до <strong>{{ current_user.pro_until.strftime('%d.%m.%Y') }}</strong> —
+          после этой даты автоматический возврат на Free, если не продлишь.
+        {% elif current_user.pro_until %}
+          Подписка <strong>навсегда</strong> ✨
+        {% elif trial_days_left and trial_days_left > 0 %}
+          Trial-период — осталось <strong>{{ trial_days_left }} дн.</strong>
+          Купи подписку чтобы закрепить Pro-функции.
+        {% else %}
+          Тариф зафиксирован вручную (legacy).
+        {% endif %}
+      </p>
+    {% else %}
+      <p class="text-sm text-[var(--text-muted)] mb-4">
+        Free-тариф. Pro снимает лимиты на проекты/задачи и открывает премиум-темы,
+        утренний дайджест, Telegram-бот и эксп-функции. Оплата через Telegram Stars —
+        списываются в Telegram-приложении.
+      </p>
+    {% endif %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      {# Server-rendered product cards; load from /api/billing/products on hover for now. #}
+      <template x-for="product in products" :key="product.code">
+        <button type="button" @click="buy(product.code)"
+                :disabled="busy"
+                :class="busy === product.code ? 'opacity-60' : ''"
+                class="text-left p-3 rounded-xl bg-[var(--surface-2)]/40 border border-[var(--border)] hover:border-[var(--accent)]/50 hover:bg-[var(--surface-2)] transition">
+          <div class="flex items-center justify-between gap-2 mb-1">
+            <span class="font-medium text-sm" x-text="product.title"></span>
+            <span class="text-xs font-bold text-amber-400 shrink-0" x-text="product.stars_amount + ' ⭐'"></span>
+          </div>
+          <div class="text-[11px] text-[var(--text-muted)] leading-relaxed" x-text="product.description"></div>
+        </button>
+      </template>
+    </div>
+    <template x-if="err">
+      <p class="text-xs text-rose-400 mt-3" x-text="'⚠ ' + err"></p>
+    </template>
+    <template x-if="loading && !products.length">
+      <p class="text-xs text-[var(--text-muted)] mt-3 italic">Загружаю список тарифов…</p>
+    </template>
+    <p class="text-[11px] text-[var(--text-muted)] mt-3">
+      Stars покупаются в любом приложении Telegram. На десктопе нажми кнопку —
+      откроется invoice-страница Telegram; на мобильном — окно оплаты прямо в приложении.
+      Возврат возможен в течение 21 дня — напиши на
+      <a href="mailto:doday.support@gmail.com" class="text-[var(--accent)] hover:underline">doday.support@gmail.com</a>.
+    </p>
+    <a href="/app/billing/payments" class="inline-block mt-3 text-xs text-[var(--accent)] hover:underline">
+      → История платежей
+    </a>
+  </section>
+  <script>
+    function dodayStarsBuyDesktop() {
+      return {
+        products: [],
+        busy: null,
+        err: null,
+        loading: false,
+        async init() {
+          this.loading = true;
+          try {
+            const r = await fetch('/api/billing/products', {credentials: 'include'});
+            if (r.ok) this.products = await r.json();
+          } catch (e) {} finally { this.loading = false; }
+        },
+        async buy(code) {
+          this.busy = code; this.err = null;
+          try {
+            const r = await fetch('/api/billing/stars/invoice', {
+              method: 'POST', credentials: 'include',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({product_code: code}),
+            });
+            if (!r.ok) {
+              const d = await r.json().catch(() => ({}));
+              this.err = d.detail || ('HTTP ' + r.status);
+              return;
+            }
+            const data = await r.json();
+            // On desktop browser — open invoice URL in new tab (Telegram deeplink).
+            window.open(data.invoice_url, '_blank');
+          } catch (e) {
+            this.err = String(e);
+          } finally {
+            this.busy = null;
+          }
+        },
+      };
+    }
+  </script>
+
   <section class="card p-6"
            x-data="{ link: '', copied: false, loading: false,
              async generate() {
