@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Перенос записи · {{ tutor.display_name }}</title>
+  <meta name="robots" content="noindex,nofollow">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(180deg, #0f0a1f 0%, #2e1065 100%);
+      color: #f5f3ff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+    }
+  </style>
+</head>
+<body>
+<main class="mx-auto max-w-xl px-5 py-12">
+  <a href="/lessio/manage/{{ booking.manage_token }}" class="text-violet-300/70 text-sm hover:text-violet-200">
+    ← Назад к записи
+  </a>
+
+  <h1 class="text-3xl font-extrabold mt-4 mb-2">Перенос записи</h1>
+  <p class="text-violet-200/70 mb-2">
+    Текущее время: <b>{{ booking.starts_at.strftime('%d.%m.%Y %H:%M') }} UTC</b>
+  </p>
+  <p class="text-violet-200/70 mb-8">{{ service.title }} ({{ service.duration_minutes }} мин)</p>
+
+  <form method="post"
+        action="/lessio/manage/{{ booking.manage_token }}/reschedule"
+        class="space-y-5 bg-white/5 border border-white/10 rounded-2xl p-5"
+        x-data="{ slot: '' }">
+
+    <div>
+      <span class="text-sm font-semibold mb-2 block">Выберите новое время (UTC)</span>
+      {% if slots %}
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-72 overflow-y-auto p-1">
+        {% for s in slots %}
+        <button type="button"
+                data-slot="{{ s.isoformat() }}"
+                x-on:click="slot='{{ s.isoformat() }}'"
+                x-bind:class="slot==='{{ s.isoformat() }}' ? 'bg-violet-500 border-violet-400 text-white' : 'bg-white/5 border-white/10 text-violet-100'"
+                class="px-3 py-2 border rounded-lg text-sm hover:border-violet-400 transition">
+          {{ s.strftime('%d.%m %H:%M') }}
+        </button>
+        {% endfor %}
+      </div>
+      <input type="hidden" name="slot_iso" x-bind:value="slot" required>
+      {% else %}
+      <p class="text-violet-300/50 text-sm">Свободных слотов на ближайшие 2 недели нет.</p>
+      {% endif %}
+    </div>
+
+    <button {% if not slots %}disabled{% endif %}
+            class="w-full px-6 py-3.5 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-bold hover:opacity-90 transition disabled:opacity-30 disabled:cursor-not-allowed">
+      Перенести →
+    </button>
+  </form>
+
+  <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</main>
+</body>
+</html>

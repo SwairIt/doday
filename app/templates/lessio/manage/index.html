@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Моя запись · {{ tutor.display_name }} · Lessio</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" href="/favicon.ico">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(180deg, #0f0a1f 0%, #1a0f3d 60%, #2e1065 100%);
+      color: #f5f3ff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+    }
+  </style>
+</head>
+<body class="antialiased">
+<main class="mx-auto max-w-xl px-5 py-12">
+  <a href="/u/{{ tutor.slug }}" class="text-violet-300/70 text-sm hover:text-violet-200">
+    ← {{ tutor.display_name }}
+  </a>
+
+  <h1 class="text-3xl font-extrabold mt-4 mb-2">Ваши записи</h1>
+  <p class="text-violet-200/70 mb-8">{{ booking.client_email }}</p>
+
+  {% if booking.status == 'cancelled' %}
+  <div class="mb-6 px-4 py-3 rounded-xl bg-rose-500/15 text-rose-300 text-sm">
+    ❌ Эта запись отменена. Можно записаться снова на
+    <a href="/u/{{ tutor.slug }}" class="underline">странице репетитора</a>.
+  </div>
+  {% endif %}
+
+  <section class="space-y-4">
+    {% for b in siblings %}
+    <article class="bg-white/5 border border-white/10 rounded-2xl p-5">
+      <div class="text-sm text-violet-300/70 mb-1">{{ service.title }}</div>
+      <div class="text-2xl font-bold mb-2">
+        {{ b.starts_at.strftime('%d.%m.%Y') }} в {{ b.starts_at.strftime('%H:%M') }} UTC
+      </div>
+      <div class="text-sm text-violet-300/70 mb-4">
+        {{ b.duration_minutes }} мин ·
+        {% if b.payment_status == 'paid' %}
+          <span class="text-emerald-300">оплачено</span>
+        {% else %}
+          <span class="text-amber-300">оплата off-platform</span>
+        {% endif %}
+      </div>
+
+      {% if b.meeting_url %}
+      <p class="text-sm mb-4">
+        <b>Ссылка на встречу:</b>
+        <a href="{{ b.meeting_url }}" class="text-violet-300 underline break-all">{{ b.meeting_url }}</a>
+      </p>
+      {% endif %}
+
+      <div class="flex gap-2 flex-wrap">
+        <a href="/lessio/manage/{{ b.manage_token }}/reschedule"
+           class="px-4 py-2 bg-white/10 rounded-lg text-sm font-semibold hover:bg-white/20 transition">
+          Перенести
+        </a>
+        <form method="post" action="/lessio/manage/{{ b.manage_token }}/cancel"
+              onsubmit="return confirm('Отменить запись на {{ b.starts_at.strftime('%d.%m %H:%M') }}?');"
+              class="inline">
+          <button type="submit"
+                  class="px-4 py-2 bg-rose-500/20 text-rose-300 rounded-lg text-sm font-semibold hover:bg-rose-500/30 transition">
+            Отменить
+          </button>
+        </form>
+      </div>
+    </article>
+    {% else %}
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-8 text-center">
+      <p class="text-violet-200/70 mb-4">У вас нет будущих записей у {{ tutor.display_name }}.</p>
+      <a href="/u/{{ tutor.slug }}"
+         class="inline-block px-5 py-2.5 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-bold text-sm">
+        Записаться снова
+      </a>
+    </div>
+    {% endfor %}
+  </section>
+
+  <footer class="text-center text-sm text-violet-300/40 mt-10">
+    Эта ссылка персональная. Сохраните её, чтобы возвращаться к управлению записями.
+  </footer>
+</main>
+</body>
+</html>

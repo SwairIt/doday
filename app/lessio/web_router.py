@@ -29,10 +29,12 @@ from app.lessio.models import LessioBooking, LessioService, LessioTutorProfile
 from app.lessio.service import (
     BookingConflictError,
     OnboardError,
+    cancel_booking,
     create_booking,
     create_services_from_template,
     create_tutor_profile,
     find_free_slots,
+    reschedule_booking,
 )
 
 router = APIRouter(prefix="/lessio", tags=["lessio-web"])
@@ -182,6 +184,115 @@ async def lessio_today_placeholder(
         "(календарь, клиенты, услуги, доход) — в разработке.</p>"
         "</main></body></html>"
     )
+
+
+# ── Manage magic-link (anon client) ───────────────────────────────────
+
+
+async def _load_booking_by_token(
+    session: AsyncSession, token: str
+) -> tuple[LessioBooking, LessioTutorProfile, LessioService]:
+    booking = (
+        await session.execute(select(LessioBooking).where(LessioBooking.manage_token == token))
+    ).scalar_one_or_none()
+    if booking is None:
+        raise HTTPException(404, "Запись не найдена")
+    tutor = await session.get(LessioTutorProfile, booking.tutor_id)
+    service = await session.get(LessioService, booking.service_id)
+    if tutor is None or service is None:
+        raise HTTPException(404, "Запись не найдена")
+    return booking, tutor, service
+
+
+@router.get("/manage/{token}", response_class=HTMLResponse, include_in_schema=False)
+async def manage_page(
+    token: str,
+    request: Request,
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> Response:
+    booking, tutor, service = await _load_booking_by_token(session, token)
+    siblings = (
+        (
+            await session.execute(
+                select(LessioBooking)
+                .where(
+                    LessioBooking.tutor_id == tutor.id,
+                    LessioBooking.client_email == booking.client_email,
+                    LessioBooking.starts_at >= datetime.now(UTC),
+                    LessioBooking.status == "confirmed",
+                )
+                .order_by(LessioBooking.starts_at)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    return _templates.TemplateResponse(
+        request,
+        "lessio/manage/index.html",
+        {
+            "booking": booking,
+            "tutor": tutor,
+            "service": service,
+            "siblings": siblings,
+        },
+    )
+
+
+@router.post("/manage/{token}/cancel", response_class=HTMLResponse, include_in_schema=False)
+async def manage_cancel(
+    token: str,
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> Response:
+    booking, _, _ = await _load_booking_by_token(session, token)
+    await cancel_booking(session, booking=booking, by="client")
+    await session.commit()
+    return RedirectResponse(f"/lessio/manage/{token}", status_code=303)
+
+
+@router.get("/manage/{token}/reschedule", response_class=HTMLResponse, include_in_schema=False)
+async def manage_reschedule_page(
+    token: str,
+    request: Request,
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> Response:
+    booking, tutor, service = await _load_booking_by_token(session, token)
+    slots = await find_free_slots(
+        session,
+        tutor,
+        date_from=datetime.now(UTC),
+        date_to=datetime.now(UTC) + timedelta(days=14),
+        service=service,
+    )
+    return _templates.TemplateResponse(
+        request,
+        "lessio/manage/reschedule.html",
+        {
+            "booking": booking,
+            "tutor": tutor,
+            "service": service,
+            "slots": slots,
+        },
+    )
+
+
+@router.post("/manage/{token}/reschedule", response_class=HTMLResponse, include_in_schema=False)
+async def manage_reschedule_submit(
+    token: str,
+    slot_iso: Annotated[str, Form()],
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> Response:
+    booking, _, _ = await _load_booking_by_token(session, token)
+    try:
+        new_slot = datetime.fromisoformat(slot_iso)
+    except ValueError as exc:
+        raise HTTPException(400, "Некорректное время") from exc
+    try:
+        new = await reschedule_booking(session, booking=booking, new_slot=new_slot, by="client")
+    except BookingConflictError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    await session.commit()
+    return RedirectResponse(f"/lessio/manage/{new.manage_token}", status_code=303)
 
 
 # ── Public profile ────────────────────────────────────────────────────
