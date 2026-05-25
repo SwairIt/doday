@@ -575,12 +575,16 @@ async def _job_morning_digest(context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 def build_doday_app() -> Application[Any, Any, Any, Any, Any, Any]:
-    """Build @DodayTaskBot Application (full Doday Tasks feature set + Stars)."""
+    """Build @DodayTaskBot Application (full Doday Tasks feature set + Stars).
+
+    Raises RuntimeError if TELEGRAM_BOT_TOKEN is empty — caller in `_run_both`
+    catches this and continues with Lessio only (graceful per-bot degradation).
+    """
     # IPv4-only DNS — должен сработать ДО первого httpx.AsyncClient.
     _force_ipv4_resolve()
     settings = get_settings()
     if not settings.telegram_bot_token:
-        raise RuntimeError("TELEGRAM_BOT_TOKEN не задан в .env — bot worker не стартует")
+        raise RuntimeError("TELEGRAM_BOT_TOKEN empty — Doday bot disabled")
 
     async def _post_init(app: Application[Any, Any, Any, Any, Any, Any]) -> None:
         """Post-init: chat menu button + setMyCommands. Идемпотентно."""
@@ -684,31 +688,59 @@ def build_lessio_app() -> Application[Any, Any, Any, Any, Any, Any] | None:
 async def _run_both() -> None:
     """Start Doday + (optional) Lessio Application'ы в одном asyncio loop.
 
+    Каждый бот начинает независимо: если Doday Application упал на initialize()
+    (Telegram API timeout, invalid token, network — обычно инфра-причины), это
+    НЕ должно блокировать Lessio bot и наоборот. Изолированный try/except на
+    каждый startup, лог ошибки + продолжаем.
+
     Не используем `Application.run_polling()` — он сам управляет loop'ом и
     несовместим с gather'ом. Вместо этого ручная связка initialize/start/
     updater.start_polling + бесконечное ожидание `asyncio.Event()` пока процесс
     не получит SIGTERM от systemd.
     """
-    doday_app = build_doday_app()
+    doday_app: Application[Any, Any, Any, Any, Any, Any] | None
+    try:
+        doday_app = build_doday_app()
+    except RuntimeError as exc:
+        logger.warning("Doday Application build failed: %s — running without Doday bot", exc)
+        doday_app = None
+
     lessio_app = build_lessio_app()
 
-    doday_updater = doday_app.updater
-    if doday_updater is None:
-        raise RuntimeError("Doday Application.updater is None — builder misconfigured")
-    await doday_app.initialize()
-    await doday_app.start()
-    await doday_updater.start_polling(allowed_updates=Update.ALL_TYPES)
-    logger.info("Doday bot polling started")
+    doday_updater = None
+    if doday_app is not None:
+        try:
+            doday_updater = doday_app.updater
+            if doday_updater is None:
+                raise RuntimeError("Doday Application.updater is None — builder misconfigured")
+            await doday_app.initialize()
+            await doday_app.start()
+            await doday_updater.start_polling(allowed_updates=Update.ALL_TYPES)
+            logger.info("Doday bot polling started")
+        except Exception as exc:
+            logger.error("Doday bot failed to start: %s — continuing with Lessio only", exc)
+            # Don't try to shutdown a half-initialized app; just drop the reference.
+            doday_app = None
+            doday_updater = None
 
     lessio_updater = None
     if lessio_app is not None:
-        lessio_updater = lessio_app.updater
-        if lessio_updater is None:
-            raise RuntimeError("Lessio Application.updater is None — builder misconfigured")
-        await lessio_app.initialize()
-        await lessio_app.start()
-        await lessio_updater.start_polling(allowed_updates=Update.ALL_TYPES)
-        logger.info("Lessio bot polling started")
+        try:
+            lessio_updater = lessio_app.updater
+            if lessio_updater is None:
+                raise RuntimeError("Lessio Application.updater is None — builder misconfigured")
+            await lessio_app.initialize()
+            await lessio_app.start()
+            await lessio_updater.start_polling(allowed_updates=Update.ALL_TYPES)
+            logger.info("Lessio bot polling started")
+        except Exception as exc:
+            logger.error("Lessio bot failed to start: %s — continuing with Doday only", exc)
+            lessio_app = None
+            lessio_updater = None
+
+    if doday_app is None and lessio_app is None:
+        logger.error("Both bots failed to start — exiting worker (watchdog will retry)")
+        return
 
     # Wait until the worker is killed (systemd SIGTERM → CancelledError below).
     stop_event = asyncio.Event()
@@ -718,12 +750,19 @@ async def _run_both() -> None:
         logger.info("shutdown signal received, stopping bots…")
     finally:
         if lessio_app is not None and lessio_updater is not None:
-            await lessio_updater.stop()
-            await lessio_app.stop()
-            await lessio_app.shutdown()
-        await doday_updater.stop()
-        await doday_app.stop()
-        await doday_app.shutdown()
+            try:
+                await lessio_updater.stop()
+                await lessio_app.stop()
+                await lessio_app.shutdown()
+            except Exception as exc:
+                logger.warning("Lessio shutdown error: %s", exc)
+        if doday_app is not None and doday_updater is not None:
+            try:
+                await doday_updater.stop()
+                await doday_app.stop()
+                await doday_app.shutdown()
+            except Exception as exc:
+                logger.warning("Doday shutdown error: %s", exc)
 
 
 def main() -> None:
