@@ -123,4 +123,45 @@
     Сохранить
   </button>
 </form>
+
+{# Google Calendar OAuth — Phase 2 опц. фича. Скрыто если OAuth не настроен. #}
+{% if request.query_params.get('gcal') == 'connected' %}
+<div class="mt-6 px-4 py-3 rounded-xl bg-emerald-500/15 text-emerald-300 text-sm">
+  ✓ Google Calendar подключён — busy-times будут вычитаться из свободных слотов.
+</div>
+{% elif request.query_params.get('gcal') == 'disconnected' %}
+<div class="mt-6 px-4 py-3 rounded-xl bg-amber-500/15 text-amber-300 text-sm">
+  Google Calendar отключён.
+</div>
+{% elif request.query_params.get('gcal_error') %}
+<div class="mt-6 px-4 py-3 rounded-xl bg-rose-500/15 text-rose-300 text-sm">
+  Ошибка подключения Google Calendar: {{ request.query_params.get('gcal_error') }}
+</div>
+{% endif %}
+
+<section class="mt-8 bg-white/5 border border-white/10 rounded-2xl p-6">
+  <h2 class="text-lg font-bold mb-2">Google Calendar (опционально)</h2>
+  <p class="text-sm text-violet-200/70 mb-4">
+    Подключение позволит вычитать ваши встречи из Google Calendar из публичного
+    расписания — клиенты не смогут забронировать время, когда вы заняты.
+    Read-only: мы только читаем busy-times, ничего не пишем.
+  </p>
+  {% if profile.google_calendar_refresh_token %}
+  <div class="flex flex-wrap items-center gap-3">
+    <span class="px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-lg text-sm font-semibold">
+      ✓ Подключено
+    </span>
+    <form method="post" action="/lessio/oauth/google/disconnect" class="inline">
+      <button class="px-4 py-2 bg-rose-500/20 text-rose-300 rounded-lg text-sm font-semibold hover:bg-rose-500/30 transition">
+        Отключить
+      </button>
+    </form>
+  </div>
+  {% else %}
+  <a href="/lessio/oauth/google/connect"
+     class="inline-block px-5 py-2.5 bg-white text-gray-800 rounded-xl font-semibold text-sm hover:bg-gray-100 transition">
+    🗓 Подключить Google Calendar
+  </a>
+  {% endif %}
+</section>
 {% endblock %}

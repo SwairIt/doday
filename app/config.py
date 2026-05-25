@@ -33,6 +33,14 @@ class Settings(BaseSettings):
     # Empty → ping no-op. Используется Lessio при создании tutor-профиля.
     indexnow_key: str = ""
 
+    # Google OAuth для Lessio Calendar busy-times sync (опционально).
+    # Регистрация: https://console.cloud.google.com/apis/credentials
+    # Scopes: https://www.googleapis.com/auth/calendar.readonly
+    # Redirect URI в Google Cloud: https://getdoday.ru/lessio/oauth/google/callback
+    # Empty → /lessio/app/settings скрывает «Подключить Google Calendar».
+    google_oauth_client_id: str = ""
+    google_oauth_client_secret: str = ""
+
     # Secret token for /api/digest/cron-trigger — prod cron passes it in
     # X-Cron-Token header, missing/wrong header → 403. Empty in dev disables
     # the endpoint (returns 503 with a hint to set the env var).

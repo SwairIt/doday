@@ -549,6 +549,109 @@ async def cron_dispatch_reminders(
     return {"24h": r24, "1h": r1, "completed": completed, "digests": digests}
 
 
+# ── Google Calendar OAuth (Phase 2 optional) ──────────────────────────
+
+
+@router.get("/oauth/google/connect", include_in_schema=False)
+async def oauth_google_connect(
+    user: RequiredUser,
+) -> Response:
+    """Redirect tutor'а на Google OAuth consent. Возврат → /oauth/google/callback."""
+    from urllib.parse import urlencode
+
+    from app.config import get_settings as _gs
+    from app.lessio.google_calendar import GOOGLE_OAUTH_AUTH_URL, GOOGLE_OAUTH_SCOPES
+
+    settings = _gs()
+    if not settings.google_oauth_client_id:
+        raise HTTPException(503, "Google OAuth не настроен на сервере")
+    redirect_uri = f"{settings.app_base_url.rstrip('/')}/lessio/oauth/google/callback"
+    params = {
+        "client_id": settings.google_oauth_client_id,
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": GOOGLE_OAUTH_SCOPES,
+        "access_type": "offline",  # gives refresh_token
+        "prompt": "consent",  # forces refresh_token even on re-auth
+        "state": str(user.id),  # tutor-id для callback идентификации
+    }
+    return RedirectResponse(f"{GOOGLE_OAUTH_AUTH_URL}?{urlencode(params)}", status_code=302)
+
+
+@router.get("/oauth/google/callback", include_in_schema=False)
+async def oauth_google_callback(
+    user: RequiredUser,
+    code: str | None = None,
+    state: str | None = None,
+    error: str | None = None,
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> Response:
+    """Google OAuth callback: code → refresh_token → encrypt + save."""
+    import httpx as _httpx
+
+    from app.config import get_settings as _gs
+    from app.lessio.google_calendar import GOOGLE_OAUTH_TOKEN_URL, encrypt_refresh_token
+
+    if error:
+        return RedirectResponse(f"/lessio/app/settings?gcal_error={error}", status_code=303)
+    if not code:
+        raise HTTPException(400, "OAuth callback missing 'code' parameter")
+    if state != str(user.id):
+        raise HTTPException(400, "OAuth state mismatch — повторите попытку")
+
+    settings = _gs()
+    redirect_uri = f"{settings.app_base_url.rstrip('/')}/lessio/oauth/google/callback"
+    async with _httpx.AsyncClient(timeout=10.0) as http_client:
+        token_resp = await http_client.post(
+            GOOGLE_OAUTH_TOKEN_URL,
+            data={
+                "code": code,
+                "client_id": settings.google_oauth_client_id,
+                "client_secret": settings.google_oauth_client_secret,
+                "redirect_uri": redirect_uri,
+                "grant_type": "authorization_code",
+            },
+        )
+        if token_resp.status_code != 200:
+            return RedirectResponse(
+                "/lessio/app/settings?gcal_error=token_exchange_failed", status_code=303
+            )
+        refresh_token = token_resp.json().get("refresh_token")
+        if not refresh_token:
+            return RedirectResponse(
+                "/lessio/app/settings?gcal_error=no_refresh_token", status_code=303
+            )
+
+    profile = (
+        await session.execute(
+            select(LessioTutorProfile).where(LessioTutorProfile.user_id == user.id)
+        )
+    ).scalar_one_or_none()
+    if profile is None:
+        raise HTTPException(404, "Tutor profile not found")
+    profile.google_calendar_refresh_token = encrypt_refresh_token(refresh_token)
+    await session.commit()
+    return RedirectResponse("/lessio/app/settings?gcal=connected", status_code=303)
+
+
+@router.post("/oauth/google/disconnect", include_in_schema=False)
+async def oauth_google_disconnect(
+    user: RequiredUser,
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> Response:
+    """Удалить refresh_token — отключить GCal sync."""
+    profile = (
+        await session.execute(
+            select(LessioTutorProfile).where(LessioTutorProfile.user_id == user.id)
+        )
+    ).scalar_one_or_none()
+    if profile is None:
+        raise HTTPException(404, "Tutor profile not found")
+    profile.google_calendar_refresh_token = None
+    await session.commit()
+    return RedirectResponse("/lessio/app/settings?gcal=disconnected", status_code=303)
+
+
 @_public_router.get("/u/{slug}/og.svg", include_in_schema=False)
 async def public_profile_og(
     slug: str,

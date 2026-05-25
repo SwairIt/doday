@@ -19,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import User
 from app.lessio.email import send_booking_emails, send_cancellation_email
+from app.lessio.google_calendar import decrypt_refresh_token, fetch_google_busy_times
 from app.lessio.models import LessioBooking, LessioClient, LessioService, LessioTutorProfile
 from app.telegram.models import TelegramLink
 
@@ -234,6 +235,17 @@ async def find_free_slots(
         start_with_buffer = b.starts_at - timedelta(minutes=tutor.buffer_minutes)
         end_with_buffer = b.starts_at + timedelta(minutes=b.duration_minutes + tutor.buffer_minutes)
         busy_intervals.append((start_with_buffer, end_with_buffer))
+
+    # Google Calendar busy-times (если tutor подключил OAuth) — fire-and-forget,
+    # любые ошибки graceful (вернёт []). Buffer не применяем — GCal events точные.
+    gcal_token_dec = decrypt_refresh_token(tutor.google_calendar_refresh_token or "")
+    if gcal_token_dec:
+        gcal_busy = await fetch_google_busy_times(
+            refresh_token=gcal_token_dec,
+            date_from=candidates[0],
+            date_to=candidates[-1] + timedelta(hours=1),
+        )
+        busy_intervals.extend(gcal_busy)
 
     # Group-session опубликованные слоты — клиенты присоединяются к существующим
     # временам, а не выбирают произвольное start_minute (на step grid).

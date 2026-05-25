@@ -24,6 +24,8 @@ dependencies = [
     # tzdata bundled — Windows нет system /usr/share/zoneinfo; нужно для
     # pythonsoftware zoneinfo. Linux/Mac берёт системные, но pip-install harmless.
     "tzdata>=2024.2",
+    # Fernet symmetric encryption — для шифрования Google refresh-token в БД (Lessio)
+    "cryptography>=43.0",
 ]
 
 [dependency-groups]
@@ -136,6 +138,8 @@ ignore = [
 "app/lessio/csv_export.py" = ["RUF001", "RUF002", "RUF003"]      # Russian docstrings
 "app/lessio/indexnow.py" = ["RUF001", "RUF002", "RUF003"]        # Russian docstrings + log messages
 "app/lessio/reviews.py" = ["RUF001", "RUF002", "RUF003"]         # Russian docstrings + error messages
+"app/lessio/google_calendar.py" = ["RUF001", "RUF002", "RUF003"] # Russian docstrings
+"alembic/versions/0044_lessio_daily_digest_timestamp.py" = ["RUF001", "RUF002", "RUF003"]
 "alembic/versions/0043_lessio_reviews.py" = ["RUF001", "RUF002", "RUF003"]
 "alembic/versions/0041_lessio_telegram_only_users.py" = ["RUF001", "RUF002", "RUF003"]  # Russian in migration docstring
 "alembic/versions/0042_lessio_web_expansion.py" = ["RUF001", "RUF002", "RUF003"]  # Russian in migration docstring/comments
