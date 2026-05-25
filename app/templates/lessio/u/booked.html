@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Запись подтверждена · {{ tutor.display_name }}</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" href="/favicon.ico">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(180deg, #0f0a1f 0%, #1a0f3d 60%, #2e1065 100%);
+      color: #f5f3ff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+    }
+  </style>
+</head>
+<body class="antialiased">
+<main class="mx-auto max-w-md py-12 px-5 text-center">
+  <div class="text-6xl mb-4" aria-hidden="true">✅</div>
+  <h1 class="text-3xl font-extrabold mb-3">Записано!</h1>
+  <p class="text-violet-200/70 mb-6">
+    Подтверждение и ссылка на встречу отправлены на
+    <b class="text-white">{{ booking.client_email }}</b>.
+  </p>
+
+  <div class="bg-white/5 border border-white/10 rounded-2xl p-5 mb-6 text-left">
+    <div class="text-sm text-violet-300/70 mb-2">{{ booking.starts_at.strftime('%d.%m.%Y') }}</div>
+    <div class="text-2xl font-bold mb-2">{{ booking.starts_at.strftime('%H:%M') }} UTC</div>
+    <div class="text-sm text-violet-300/70">
+      {{ booking.duration_minutes }} мин · {{ tutor.display_name }}
+    </div>
+  </div>
+
+  <a href="{{ manage_url }}"
+     class="inline-block px-6 py-3 bg-white/10 rounded-xl font-semibold hover:bg-white/20 transition">
+    Управление записью
+  </a>
+
+  <p class="text-xs text-violet-300/40 mt-8 leading-relaxed">
+    Сохраните ссылку из письма — по ней можно перенести или отменить запись.
+  </p>
+</main>
+</body>
+</html>

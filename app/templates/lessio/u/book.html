@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Запись · {{ service.title }} · {{ tutor.display_name }}</title>
+  {# Booking-форма — без index, но canonical для дедупликации #}
+  <meta name="robots" content="noindex,follow">
+  <link rel="canonical" href="{{ canonical_url }}">
+  <link rel="icon" href="/favicon.ico">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(180deg, #0f0a1f 0%, #1a0f3d 60%, #2e1065 100%);
+      color: #f5f3ff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+    }
+    .slot-btn { transition: all .15s; }
+  </style>
+</head>
+<body class="antialiased">
+<main class="mx-auto max-w-2xl px-5 py-12">
+  <a href="/u/{{ tutor.slug }}" class="text-violet-300/70 text-sm hover:text-violet-200">
+    ← {{ tutor.display_name }}
+  </a>
+
+  <h1 class="text-3xl font-extrabold mt-4 mb-2">{{ service.title }}</h1>
+  <p class="text-violet-200/70 mb-8">
+    {{ service.duration_minutes }} мин ·
+    <span class="font-bold text-white">
+      {{ "{:,}".format(service.price_kopecks // 100).replace(',', ' ') }} ₽
+    </span>
+    {% if service.is_group_session %}
+      · группа до {{ service.max_attendees }}
+    {% endif %}
+  </p>
+
+  {% if error %}
+  <div class="mb-6 px-4 py-3 rounded-xl bg-rose-500/15 text-rose-300 text-sm">{{ error }}</div>
+  {% endif %}
+
+  <form method="post"
+        action="/u/{{ tutor.slug }}/book/{{ service.id }}"
+        class="space-y-5 bg-white/5 border border-white/10 rounded-2xl p-5"
+        x-data="{ slot: '' }">
+
+    <div>
+      <span class="text-sm font-semibold mb-2 block">Выбери время (UTC)</span>
+      {% if slots %}
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-72 overflow-y-auto p-1">
+        {% for s in slots %}
+        <button type="button"
+                data-slot="{{ s.isoformat() }}"
+                x-on:click="slot='{{ s.isoformat() }}'"
+                x-bind:class="slot==='{{ s.isoformat() }}' ? 'bg-violet-500 border-violet-400 text-white' : 'bg-white/5 border-white/10 text-violet-100'"
+                class="slot-btn px-3 py-2 border rounded-lg text-sm hover:border-violet-400">
+          {{ s.strftime('%d.%m %H:%M') }}
+        </button>
+        {% endfor %}
+      </div>
+      <input type="hidden" name="slot_iso" x-bind:value="slot" required>
+      {% else %}
+      <p class="text-violet-300/50 text-sm">Свободных слотов на ближайшие 2 недели нет.</p>
+      {% endif %}
+    </div>
+
+    <label class="block">
+      <span class="text-sm font-semibold mb-1.5 block">Ваше имя</span>
+      <input name="client_full_name" type="text" required maxlength="120"
+             autocomplete="name"
+             class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
+    </label>
+
+    <label class="block">
+      <span class="text-sm font-semibold mb-1.5 block">Email</span>
+      <input name="client_email" type="email" required maxlength="255"
+             autocomplete="email"
+             class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
+      <span class="text-xs text-violet-300/40 mt-1 block">
+        Туда придёт ссылка на встречу + управление записью
+      </span>
+    </label>
+
+    <label class="block">
+      <span class="text-sm font-semibold mb-1.5 block">Телефон (опционально)</span>
+      <input name="client_phone" type="tel" maxlength="50"
+             autocomplete="tel"
+             class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
+    </label>
+
+    <label class="block">
+      <span class="text-sm font-semibold mb-1.5 block">Комментарий (опционально)</span>
+      <textarea name="notes" rows="2" maxlength="500"
+                placeholder="Что хотите обсудить, уровень подготовки..."
+                class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg resize-none focus:outline-none focus:border-violet-400"></textarea>
+    </label>
+
+    <button {% if not slots %}disabled{% endif %}
+            class="w-full px-6 py-3.5 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-bold hover:opacity-90 transition disabled:opacity-30 disabled:cursor-not-allowed">
+      Записаться →
+    </button>
+  </form>
+
+  <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</main>
+</body>
+</html>

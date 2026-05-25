@@ -10,7 +10,9 @@ Doday-auth (email+password) и публичных страниц с SEO.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
@@ -23,11 +25,14 @@ from app.auth.deps import CurrentUser, RequiredUser
 from app.auth.schemas import RegisterIn
 from app.auth.service import EmailAlreadyExists, register_user
 from app.db import get_session
-from app.lessio.models import LessioService, LessioTutorProfile
+from app.lessio.models import LessioBooking, LessioService, LessioTutorProfile
 from app.lessio.service import (
+    BookingConflictError,
     OnboardError,
+    create_booking,
     create_services_from_template,
     create_tutor_profile,
+    find_free_slots,
 )
 
 router = APIRouter(prefix="/lessio", tags=["lessio-web"])
@@ -218,6 +223,156 @@ async def public_profile(
             "tutor": profile,
             "services": services,
             "canonical_url": f"https://getdoday.ru/u/{profile.slug}",
+        },
+    )
+
+
+# ── Public booking flow ───────────────────────────────────────────────
+
+
+async def _load_tutor_and_service(
+    session: AsyncSession, *, slug: str, service_id: UUID
+) -> tuple[LessioTutorProfile, LessioService]:
+    profile = (
+        await session.execute(
+            select(LessioTutorProfile).where(LessioTutorProfile.slug == slug.lower())
+        )
+    ).scalar_one_or_none()
+    if profile is None or not profile.is_active:
+        raise HTTPException(404, "Репетитор не найден")
+    service = (
+        await session.execute(
+            select(LessioService).where(
+                LessioService.id == service_id,
+                LessioService.tutor_id == profile.id,
+                LessioService.is_active.is_(True),
+            )
+        )
+    ).scalar_one_or_none()
+    if service is None:
+        raise HTTPException(404, "Услуга не найдена")
+    return profile, service
+
+
+@_public_router.get(
+    "/u/{slug}/book/{service_id}", response_class=HTMLResponse, include_in_schema=False
+)
+async def book_page(
+    slug: str,
+    service_id: UUID,
+    request: Request,
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> Response:
+    profile, service = await _load_tutor_and_service(session, slug=slug, service_id=service_id)
+    slots = await find_free_slots(
+        session,
+        profile,
+        date_from=datetime.now(UTC),
+        date_to=datetime.now(UTC) + timedelta(days=14),
+        service=service,
+    )
+    return _templates.TemplateResponse(
+        request,
+        "lessio/u/book.html",
+        {
+            "tutor": profile,
+            "service": service,
+            "slots": slots,
+            "canonical_url": f"https://getdoday.ru/u/{profile.slug}/book/{service.id}",
+        },
+    )
+
+
+@_public_router.post(
+    "/u/{slug}/book/{service_id}", response_class=HTMLResponse, include_in_schema=False
+)
+async def book_submit(
+    slug: str,
+    service_id: UUID,
+    request: Request,
+    slot_iso: Annotated[str, Form()],
+    client_email: Annotated[str, Form()],
+    client_full_name: Annotated[str, Form()],
+    client_phone: Annotated[str | None, Form()] = None,
+    notes: Annotated[str | None, Form()] = None,
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> Response:
+    profile, service = await _load_tutor_and_service(session, slug=slug, service_id=service_id)
+    try:
+        slot = datetime.fromisoformat(slot_iso)
+    except ValueError:
+        return _templates.TemplateResponse(
+            request,
+            "lessio/u/book.html",
+            {
+                "tutor": profile,
+                "service": service,
+                "slots": [],
+                "error": "Некорректный формат времени",
+            },
+            status_code=400,
+        )
+
+    try:
+        booking = await create_booking(
+            session,
+            tutor=profile,
+            service=service,
+            slot=slot,
+            client_email=client_email,
+            client_full_name=client_full_name,
+            client_phone=client_phone,
+            notes=notes,
+        )
+    except BookingConflictError as exc:
+        # Перезагрузить актуальные слоты — старые могли стать заняты
+        slots = await find_free_slots(
+            session,
+            profile,
+            date_from=datetime.now(UTC),
+            date_to=datetime.now(UTC) + timedelta(days=14),
+            service=service,
+        )
+        return _templates.TemplateResponse(
+            request,
+            "lessio/u/book.html",
+            {
+                "tutor": profile,
+                "service": service,
+                "slots": slots,
+                "error": str(exc),
+            },
+            status_code=400,
+        )
+    await session.commit()
+    return RedirectResponse(
+        f"/u/{profile.slug}/booked?token={booking.manage_token}",
+        status_code=303,
+    )
+
+
+@_public_router.get("/u/{slug}/booked", response_class=HTMLResponse, include_in_schema=False)
+async def booked_page(
+    slug: str,
+    token: str,
+    request: Request,
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> Response:
+    booking = (
+        await session.execute(select(LessioBooking).where(LessioBooking.manage_token == token))
+    ).scalar_one_or_none()
+    if booking is None:
+        raise HTTPException(404, "Запись не найдена")
+    tutor = await session.get(LessioTutorProfile, booking.tutor_id)
+    if tutor is None or tutor.slug != slug.lower():
+        raise HTTPException(404, "Запись не найдена")
+    return _templates.TemplateResponse(
+        request,
+        "lessio/u/booked.html",
+        {
+            "tutor": tutor,
+            "booking": booking,
+            "manage_url": f"/lessio/manage/{booking.manage_token}",
         },
     )
 

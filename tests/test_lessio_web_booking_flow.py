@@ -1,11 +1,13 @@
-"""Booking service: create_booking + cancel + reschedule + email side-effects."""
+"""Booking service: create_booking + cancel + reschedule + email side-effects + public router."""
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, patch
+from uuid import uuid4
 
 import pytest
+from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,6 +19,7 @@ from app.lessio.service import (
     create_booking,
     create_services_from_template,
     create_tutor_profile,
+    find_free_slots,
 )
 
 
@@ -239,3 +242,133 @@ async def test_cancel_booking_marks_status_and_sends_email(
     assert booking.status == "cancelled"
     assert booking.cancelled_at is not None
     mock_cancel.assert_awaited_once()
+
+
+# ── Router-level: GET/POST /u/<slug>/book/<service_id> + GET /u/<slug>/booked ──
+
+
+async def test_book_page_renders_slots(client: AsyncClient, db_session: AsyncSession) -> None:
+    user, _ = await auto_onboard_tutor(db_session, telegram_user_id=40000010)
+    tutor = await create_tutor_profile(db_session, user=user, slug="book_pg_t", display_name="T")
+    services = await create_services_from_template(db_session, tutor=tutor, niche="english")
+    await db_session.commit()
+
+    resp = await client.get(f"/u/book_pg_t/book/{services[0].id}")
+    assert resp.status_code == 200
+    body = resp.text
+    assert 'name="client_email"' in body
+    assert services[0].title in body
+    # Хотя бы один слот должен быть отрисован (next 14 days, working_days)
+    assert "data-slot=" in body or "Свободных слотов" in body
+
+
+async def test_book_page_404_unknown_slug(client: AsyncClient) -> None:
+    resp = await client.get(f"/u/nopedont/book/{uuid4()}")
+    assert resp.status_code == 404
+
+
+async def test_book_page_404_wrong_service(client: AsyncClient, db_session: AsyncSession) -> None:
+    user, _ = await auto_onboard_tutor(db_session, telegram_user_id=40000011)
+    await create_tutor_profile(db_session, user=user, slug="book_ws_t", display_name="T")
+    await db_session.commit()
+    resp = await client.get(f"/u/book_ws_t/book/{uuid4()}")
+    assert resp.status_code == 404
+
+
+@patch("app.lessio.service.send_booking_emails", new_callable=AsyncMock)
+async def test_post_book_creates_booking_and_redirects(
+    mock_send: AsyncMock, client: AsyncClient, db_session: AsyncSession
+) -> None:
+    user, _ = await auto_onboard_tutor(db_session, telegram_user_id=40000012)
+    tutor = await create_tutor_profile(db_session, user=user, slug="book_post_t", display_name="T")
+    services = await create_services_from_template(db_session, tutor=tutor, niche="english")
+    await db_session.commit()
+
+    slots = await find_free_slots(
+        db_session,
+        tutor,
+        date_from=datetime.now(UTC),
+        date_to=datetime.now(UTC) + timedelta(days=14),
+        service=services[0],
+    )
+    assert slots, "find_free_slots должна вернуть хоть один слот для дефолт-расписания"
+
+    resp = await client.post(
+        f"/u/book_post_t/book/{services[0].id}",
+        data={
+            "slot_iso": slots[0].isoformat(),
+            "client_email": "book@e.com",
+            "client_full_name": "Booker",
+            "client_phone": "+79991234567",
+        },
+        follow_redirects=False,
+    )
+    assert resp.status_code in (302, 303), resp.text
+    assert "/u/book_post_t/booked" in resp.headers["location"]
+    mock_send.assert_awaited_once()
+
+    created = (
+        await db_session.execute(
+            select(LessioBooking).where(LessioBooking.client_email == "book@e.com")
+        )
+    ).scalar_one()
+    assert created.status == "confirmed"
+
+
+@patch("app.lessio.service.send_booking_emails", new_callable=AsyncMock)
+async def test_post_book_rejects_taken_slot(
+    mock_send: AsyncMock, client: AsyncClient, db_session: AsyncSession
+) -> None:
+    user, _ = await auto_onboard_tutor(db_session, telegram_user_id=40000013)
+    tutor = await create_tutor_profile(db_session, user=user, slug="book_taken_t", display_name="T")
+    services = await create_services_from_template(db_session, tutor=tutor, niche="english")
+    await db_session.commit()
+
+    slot = datetime(2026, 6, 8, 14, 0, tzinfo=UTC)
+    await create_booking(
+        db_session,
+        tutor=tutor,
+        service=services[0],
+        slot=slot,
+        client_email="a@e.com",
+        client_full_name="A",
+        client_phone=None,
+    )
+    await db_session.commit()
+
+    resp = await client.post(
+        f"/u/book_taken_t/book/{services[0].id}",
+        data={
+            "slot_iso": slot.isoformat(),
+            "client_email": "b@e.com",
+            "client_full_name": "B",
+        },
+    )
+    assert resp.status_code == 400
+    assert "занят" in resp.text
+
+
+@patch("app.lessio.service.send_booking_emails", new_callable=AsyncMock)
+async def test_booked_page_shows_booking_details(
+    mock_send: AsyncMock, client: AsyncClient, db_session: AsyncSession
+) -> None:
+    user, _ = await auto_onboard_tutor(db_session, telegram_user_id=40000014)
+    tutor = await create_tutor_profile(db_session, user=user, slug="booked_pg_t", display_name="T")
+    services = await create_services_from_template(db_session, tutor=tutor, niche="english")
+    await db_session.commit()
+
+    booking = await create_booking(
+        db_session,
+        tutor=tutor,
+        service=services[0],
+        slot=datetime(2026, 6, 8, 14, 0, tzinfo=UTC),
+        client_email="be@e.com",
+        client_full_name="BookedEd",
+        client_phone=None,
+    )
+    await db_session.commit()
+
+    resp = await client.get(f"/u/booked_pg_t/booked?token={booking.manage_token}")
+    assert resp.status_code == 200
+    assert "be@e.com" in resp.text
+    assert "Записано" in resp.text or "записано" in resp.text.lower()
