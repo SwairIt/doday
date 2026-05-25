@@ -75,11 +75,19 @@ logger = logging.getLogger("doday.telegram")
 
 # Hardcoded IPv4 Telegram API. systemd-resolved отдаёт только AAAA, а
 # IPv6-сеть из прода не маршрутизируется. У Telegram несколько A-записей,
-# но **с нашего сервера маршрут есть только к 149.154.167.220** —
-# остальные DC отвечают SYN-SENT (asymmetric routing / firewall провайдера).
-# Поэтому жёстко один IP: иначе httpx выбирает random, попадает на
-# заблокированный, и polling висит на connect timeout.
-_TELEGRAM_API_IPS = ("149.154.167.220",)
+# но **с нашего сервера маршрут есть только к части DC** —
+# остальные отвечают SYN-SENT (asymmetric routing / firewall провайдера).
+# Поэтому жёстко список IP: httpx попробует по порядку, если первый failed —
+# следующий. Без этого httpx random'но выбирает один и виснет на connect timeout.
+#
+# Состав списка проверен 2026-05-25 с dev-машины (оба отдают 302 на GET /):
+# - 149.154.166.110 — current A-record (Google DNS + Cloudflare DNS)
+# - 149.154.167.220 — старый hardcoded, всё ещё отвечает с dev
+#
+# Если оба не доступны с прод-сервера → это сетевой блок (RKN / провайдер /
+# MTU / firewall), не stale-IP. Тогда фикс через MTProxy или HTTP-прокси,
+# не через обновление этого списка. См. memory feedback_telegram_api_infra_debt.
+_TELEGRAM_API_IPS = ("149.154.166.110", "149.154.167.220")
 _FORCED_HOSTS = {"api.telegram.org"}
 
 
@@ -711,11 +719,15 @@ async def _run_both() -> None:
     не получит SIGTERM от systemd.
     """
     doday_app: Application[Any, Any, Any, Any, Any, Any] | None
-    try:
-        doday_app = build_doday_app()
-    except RuntimeError as exc:
-        logger.warning("Doday Application build failed: %s — running without Doday bot", exc)
+    if get_settings().disable_doday_bot:
+        logger.info("DISABLE_DODAY_BOT set — skipping @DodayTaskBot Application (local-dev mode)")
         doday_app = None
+    else:
+        try:
+            doday_app = build_doday_app()
+        except RuntimeError as exc:
+            logger.warning("Doday Application build failed: %s — running without Doday bot", exc)
+            doday_app = None
 
     lessio_app = build_lessio_app()
 

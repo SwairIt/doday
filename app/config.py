@@ -47,10 +47,15 @@ class Settings(BaseSettings):
 
     # Когда True — bot worker пропускает hardcoded-IPv4 monkey-patch resolver для
     # api.telegram.org (см. app/telegram/bot.py:_force_ipv4_resolve). Нужно когда
-    # zashitkoдированный IP перестал отвечать (Telegram ротирует DC адреса).
-    # Без патча bot использует системный DNS — если провайдер сейчас отдаёт работающий
-    # IPv4, бот заходит. Дефолт — False (патч применяется, как было).
+    # hardcoded IP перестал отвечать (Telegram ротирует DC адреса) или сетевой блок
+    # бьёт по конкретным IP. Без патча bot использует системный DNS.
     disable_telegram_ipv4_patch: bool = False
+
+    # Когда True — bot worker НЕ запускает @DodayTaskBot Application. Полезно для
+    # local-dev запуска ТОЛЬКО Lessio bot — избегаем конкуренции за getUpdates на
+    # prod @DodayTaskBot polling (Telegram запрещает два long-poll'а на одном
+    # токене). Дефолт — False (Doday запускается как обычно).
+    disable_doday_bot: bool = False
 
     # Lessio bot — отдельный @LessioBot для brand-separation от @DodayTaskBot.
     # Worker процесс один и тот же (app/telegram/bot.py main()), но Application'ов
