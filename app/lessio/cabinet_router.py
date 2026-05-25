@@ -655,6 +655,145 @@ async def income_export_csv(
     )
 
 
+# ── PWA: manifest + service worker (для install prompt на mobile) ──────
+
+
+_PWA_ICON_SVG_DATA = (
+    "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'>"
+    "<defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>"
+    "<stop offset='0' stop-color='%23a78bfa'/><stop offset='1' stop-color='%23f472b6'/>"
+    "</linearGradient></defs>"
+    "<rect width='192' height='192' rx='36' fill='url(%23g)'/>"
+    "<text x='96' y='130' font-size='110' text-anchor='middle' font-family='sans-serif' fill='white'>L</text>"
+    "</svg>"
+)
+
+
+@router.get("/manifest.webmanifest", include_in_schema=False)
+async def pwa_manifest() -> Response:
+    """PWA manifest для добавления Lessio cabinet на homescreen mobile."""
+    body = {
+        "name": "Lessio",
+        "short_name": "Lessio",
+        "description": "Кабинет репетитора · Lessio",
+        "start_url": "/lessio/app/today",
+        "scope": "/lessio/app/",
+        "display": "standalone",
+        "background_color": "#0f0a1f",
+        "theme_color": "#7c3aed",
+        "lang": "ru",
+        "icons": [
+            {"src": _PWA_ICON_SVG_DATA, "sizes": "192x192", "type": "image/svg+xml"},
+            {"src": _PWA_ICON_SVG_DATA, "sizes": "512x512", "type": "image/svg+xml"},
+        ],
+    }
+    import json
+
+    return Response(
+        content=json.dumps(body, ensure_ascii=False),
+        media_type="application/manifest+json",
+    )
+
+
+_SW_JS = """\
+// Lessio cabinet service-worker — network-first с offline fallback.
+const CACHE = 'lessio-cab-v1';
+
+self.addEventListener('install', e => { self.skipWaiting(); });
+self.addEventListener('activate', e => { e.waitUntil(self.clients.claim()); });
+
+self.addEventListener('fetch', e => {
+  // Only handle GET requests under /lessio/app/
+  if (e.request.method !== 'GET' || !e.request.url.includes('/lessio/app/')) return;
+  e.respondWith(
+    fetch(e.request)
+      .then(resp => {
+        const copy = resp.clone();
+        caches.open(CACHE).then(c => c.put(e.request, copy)).catch(() => {});
+        return resp;
+      })
+      .catch(() => caches.match(e.request))
+  );
+});
+"""
+
+
+@router.get("/sw.js", include_in_schema=False)
+async def pwa_service_worker() -> Response:
+    return Response(content=_SW_JS, media_type="application/javascript; charset=utf-8")
+
+
+# ── Stats dashboard ───────────────────────────────────────────────────
+
+
+@router.get("/stats", response_class=HTMLResponse, include_in_schema=False)
+async def stats_page(
+    request: Request,
+    user: RequiredUser,
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> Response:
+    profile = await _require_profile(session, user.id)
+    # Все non-cancelled bookings — для total counts + revenue
+    bookings = (
+        (
+            await session.execute(
+                select(LessioBooking)
+                .where(
+                    LessioBooking.tutor_id == profile.id,
+                    LessioBooking.status.in_(["confirmed", "completed"]),
+                )
+                .order_by(LessioBooking.starts_at.desc())
+            )
+        )
+        .scalars()
+        .all()
+    )
+    services = (
+        (await session.execute(select(LessioService).where(LessioService.tutor_id == profile.id)))
+        .scalars()
+        .all()
+    )
+    service_titles = {s.id: s.title for s in services}
+
+    total_count = len(bookings)
+    total_earned = sum(b.price_kopecks for b in bookings if b.payment_status == "paid") // 100
+    total_pending = sum(b.price_kopecks for b in bookings if b.payment_status != "paid") // 100
+
+    # Aggregate by service (count + revenue)
+    by_service: dict[str, dict[str, int]] = {}
+    for b in bookings:
+        title = service_titles.get(b.service_id, "—")
+        bucket = by_service.setdefault(title, {"count": 0, "revenue_rub": 0})
+        bucket["count"] += 1
+        if b.payment_status == "paid":
+            bucket["revenue_rub"] += b.price_kopecks // 100
+    service_breakdown: list[dict[str, int | str]] = sorted(
+        [
+            {"title": t, "count": v["count"], "revenue_rub": v["revenue_rub"]}
+            for t, v in by_service.items()
+        ],
+        key=lambda d: -int(d["count"]),
+    )
+
+    # Last 30d count (rough conversion proxy)
+    now = datetime.now(UTC)
+    last_30d = sum(1 for b in bookings if b.starts_at >= now - timedelta(days=30))
+
+    return _templates.TemplateResponse(
+        request,
+        "lessio/app/stats.html",
+        {
+            "profile": profile,
+            "active_nav": "stats",
+            "total_count": total_count,
+            "total_earned": total_earned,
+            "total_pending": total_pending,
+            "service_breakdown": service_breakdown,
+            "last_30d": last_30d,
+        },
+    )
+
+
 # ── Bulk CSV import ───────────────────────────────────────────────────
 
 

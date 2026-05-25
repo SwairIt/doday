@@ -6,6 +6,8 @@
   <title>{% block title %}Lessio · Кабинет{% endblock %}</title>
   <meta name="robots" content="noindex,nofollow">
   <link rel="icon" href="/favicon.ico">
+  <link rel="manifest" href="/lessio/app/manifest.webmanifest">
+  <meta name="theme-color" content="#7c3aed">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
@@ -40,6 +42,7 @@
       <a href="/lessio/app/services" class="nav-link {% if active_nav == 'services' %}active{% endif %}">💼 Услуги</a>
       <a href="/lessio/app/schedule" class="nav-link {% if active_nav == 'schedule' %}active{% endif %}">⏰ Расписание</a>
       <a href="/lessio/app/income" class="nav-link {% if active_nav == 'income' %}active{% endif %}">💰 Доход</a>
+      <a href="/lessio/app/stats" class="nav-link {% if active_nav == 'stats' %}active{% endif %}">📊 Статистика</a>
       <a href="/lessio/app/settings" class="nav-link {% if active_nav == 'settings' %}active{% endif %}">⚙️ Настройки</a>
     </nav>
     <div class="mt-8 px-3 py-2 bg-white/5 rounded-lg text-xs">
@@ -59,5 +62,14 @@
   </main>
 </div>
 {% include "lessio/_metrika.html" %}
+<script>
+  // PWA SW registration — silent fail в old browsers
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/lessio/app/sw.js', { scope: '/lessio/app/' })
+        .catch(err => console.log('SW register failed:', err));
+    });
+  }
+</script>
 </body>
 </html>

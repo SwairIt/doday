@@ -1,0 +1,65 @@
+{% extends "lessio/app/_base.html" %}
+{% block title %}Статистика · Lessio{% endblock %}
+{% block content %}
+<header class="mb-8">
+  <h1 class="text-3xl font-extrabold mb-1">Статистика</h1>
+  <p class="text-violet-200/60 text-sm">Доход, встречи, услуги</p>
+</header>
+
+<section class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+  <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4">
+    <div class="text-xs text-emerald-300/80 mb-1">Заработано</div>
+    <div class="text-2xl font-extrabold text-emerald-300">
+      {{ "{:,}".format(total_earned).replace(',', ' ') }} ₽
+    </div>
+  </div>
+  <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4">
+    <div class="text-xs text-amber-300/80 mb-1">Ждёт оплаты</div>
+    <div class="text-2xl font-extrabold text-amber-300">
+      {{ "{:,}".format(total_pending).replace(',', ' ') }} ₽
+    </div>
+  </div>
+  <div class="bg-violet-500/10 border border-violet-500/30 rounded-2xl p-4">
+    <div class="text-xs text-violet-300/80 mb-1">Всего встреч</div>
+    <div class="text-2xl font-extrabold">{{ total_count }}</div>
+  </div>
+  <div class="bg-white/5 border border-white/10 rounded-2xl p-4">
+    <div class="text-xs text-violet-300/60 mb-1">За 30 дней</div>
+    <div class="text-2xl font-extrabold">{{ last_30d }}</div>
+  </div>
+</section>
+
+<h2 class="text-xl font-bold mb-4">Разбивка по услугам</h2>
+
+{% if service_breakdown %}
+<table class="w-full bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+  <thead>
+    <tr class="text-xs text-violet-300/60">
+      <th class="text-left py-3 px-4">Услуга</th>
+      <th class="text-right py-3 px-4">Встреч</th>
+      <th class="text-right py-3 px-4">Доход</th>
+    </tr>
+  </thead>
+  <tbody class="text-sm">
+    {% for s in service_breakdown %}
+    <tr class="border-t border-white/5">
+      <td class="py-3 px-4 font-semibold">{{ s.title }}</td>
+      <td class="py-3 px-4 text-right">{{ s.count }}</td>
+      <td class="py-3 px-4 text-right text-emerald-300/80">
+        {{ "{:,}".format(s.revenue_rub).replace(',', ' ') }} ₽
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="text-violet-300/50 text-sm">Пока нет встреч.</p>
+{% endif %}
+
+<aside class="mt-8 p-4 bg-white/5 border border-white/10 rounded-xl text-sm text-violet-300/60">
+  <p>
+    Анализируется по всем confirmed + completed booking'ам. Cancelled — не считаются.
+    Conversion rate (views → bookings) появится когда подключите Yandex.Metrika.
+  </p>
+</aside>
+{% endblock %}
