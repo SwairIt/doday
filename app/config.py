@@ -45,6 +45,13 @@ class Settings(BaseSettings):
     telegram_bot_token: str = ""
     telegram_bot_username: str = ""
 
+    # Когда True — bot worker пропускает hardcoded-IPv4 monkey-patch resolver для
+    # api.telegram.org (см. app/telegram/bot.py:_force_ipv4_resolve). Нужно когда
+    # zashitkoдированный IP перестал отвечать (Telegram ротирует DC адреса).
+    # Без патча bot использует системный DNS — если провайдер сейчас отдаёт работающий
+    # IPv4, бот заходит. Дефолт — False (патч применяется, как было).
+    disable_telegram_ipv4_patch: bool = False
+
     # Lessio bot — отдельный @LessioBot для brand-separation от @DodayTaskBot.
     # Worker процесс один и тот же (app/telegram/bot.py main()), но Application'ов
     # два — крутятся в одном asyncio loop через gather. Если LESSIO_BOT_TOKEN пуст
