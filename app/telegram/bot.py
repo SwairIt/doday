@@ -635,9 +635,16 @@ def build_doday_app() -> Application[Any, Any, Any, Any, Any, Any]:
         except Exception as e:
             logger.warning("failed to set commands: %s", e)
 
-    application: Application[Any, Any, Any, Any, Any, Any] = (
-        Application.builder().token(settings.telegram_bot_token).post_init(_post_init).build()
-    )
+    builder = Application.builder().token(settings.telegram_bot_token).post_init(_post_init)
+    if settings.telegram_proxy_url:
+        # python-telegram-bot v21: .proxy(url) для get_me/sendMessage и
+        # .get_updates_proxy(url) для long-poll'а getUpdates. Без второго
+        # polling может всё равно идти напрямую → таймаут.
+        builder = builder.proxy(settings.telegram_proxy_url).get_updates_proxy(
+            settings.telegram_proxy_url
+        )
+        logger.info("Doday bot using proxy: %s", settings.telegram_proxy_url.split("@")[-1])
+    application: Application[Any, Any, Any, Any, Any, Any] = builder.build()
     application.add_handler(CommandHandler("start", cmd_start))
     application.add_handler(CommandHandler("help", cmd_help))
     application.add_handler(CommandHandler("app", cmd_app))
@@ -696,9 +703,13 @@ def build_lessio_app() -> Application[Any, Any, Any, Any, Any, Any] | None:
         except Exception as e:
             logger.warning("failed to set Lessio commands: %s", e)
 
-    application: Application[Any, Any, Any, Any, Any, Any] = (
-        Application.builder().token(settings.lessio_bot_token).post_init(_post_init).build()
-    )
+    builder = Application.builder().token(settings.lessio_bot_token).post_init(_post_init)
+    if settings.telegram_proxy_url:
+        builder = builder.proxy(settings.telegram_proxy_url).get_updates_proxy(
+            settings.telegram_proxy_url
+        )
+        logger.info("Lessio bot using proxy: %s", settings.telegram_proxy_url.split("@")[-1])
+    application: Application[Any, Any, Any, Any, Any, Any] = builder.build()
     from app.lessio.telegram_handlers import register_handlers as register_lessio_handlers
 
     register_lessio_handlers(application)

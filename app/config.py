@@ -57,6 +57,21 @@ class Settings(BaseSettings):
     # токене). Дефолт — False (Doday запускается как обычно).
     disable_doday_bot: bool = False
 
+    # HTTP/SOCKS5/HTTPS-прокси для всех Telegram API запросов из bot worker.
+    # На проде RKN/провайдер блокируют исходящий доступ к api.telegram.org —
+    # даже с обновлёнными IP TLS-handshake таймаутит. python-telegram-bot
+    # async-арх не работает с monkey-patch'ингом DNS (uvloop игнорирует
+    # BaseEventLoop.getaddrinfo override). Решение — прокси.
+    #
+    # Поддерживаются:
+    # - HTTP-proxy: http://USER:PASS@HOST:PORT
+    # - SOCKS5: socks5://USER:PASS@HOST:PORT (нужен `uv add httpx[socks]`)
+    #
+    # Если пусто — bot ходит напрямую (на dev обычно работает, на проде —
+    # таймаутит). Когда непусто — bot подключается через прокси, патч resolver'а
+    # не нужен (прокси сам резолвит).
+    telegram_proxy_url: str = ""
+
     # Lessio bot — отдельный @LessioBot для brand-separation от @DodayTaskBot.
     # Worker процесс один и тот же (app/telegram/bot.py main()), но Application'ов
     # два — крутятся в одном asyncio loop через gather. Если LESSIO_BOT_TOKEN пуст
