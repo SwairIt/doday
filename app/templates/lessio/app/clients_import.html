@@ -1,0 +1,46 @@
+{% extends "lessio/app/_base.html" %}
+{% block title %}Импорт клиентов · Lessio{% endblock %}
+{% block content %}
+<a href="/lessio/app/clients" class="text-violet-300/70 text-sm hover:text-violet-200">← Все клиенты</a>
+
+<header class="mt-4 mb-8">
+  <h1 class="text-3xl font-extrabold mb-1">Импорт клиентов</h1>
+  <p class="text-violet-200/60 text-sm">Загрузите CSV с клиентами из другой системы</p>
+</header>
+
+{% if error %}
+<div class="mb-6 px-4 py-3 rounded-xl bg-rose-500/15 text-rose-300 text-sm">{{ error }}</div>
+{% endif %}
+
+<form method="post" action="/lessio/app/clients/import"
+      enctype="multipart/form-data"
+      class="space-y-5 bg-white/5 border border-white/10 rounded-2xl p-6">
+
+  <label class="block">
+    <span class="text-sm font-semibold mb-2 block">CSV файл</span>
+    <input type="file" name="csv" accept=".csv,text/csv" required
+           class="w-full text-sm text-violet-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-violet-500 file:text-white file:font-semibold hover:file:bg-violet-600">
+  </label>
+
+  <button class="px-6 py-3 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-bold hover:opacity-90 transition">
+    Импортировать →
+  </button>
+</form>
+
+<aside class="mt-8 p-5 bg-white/5 border border-white/10 rounded-2xl text-sm">
+  <h2 class="font-bold mb-3">Формат CSV</h2>
+  <p class="text-violet-200/70 mb-3">
+    Первая строка — заголовки колонок. Минимальный набор: <code class="bg-black/30 px-1.5 py-0.5 rounded text-xs">email,full_name,phone</code>.
+    Phone может быть пустым.
+  </p>
+  <pre class="bg-black/30 rounded-lg p-3 text-xs text-violet-200/80 overflow-x-auto"><code>email,full_name,phone
+anna@example.com,Анна Иванова,+79991234567
+boris@example.com,Борис Петров,
+maria@example.com,Мария Сидорова,+79992223344</code></pre>
+  <ul class="mt-4 text-xs text-violet-300/60 space-y-1">
+    <li>• Email-дубли (уже у вас в системе) — <b>обновляются</b> новыми full_name/phone</li>
+    <li>• Строки без email или без @ — <b>пропускаются</b></li>
+    <li>• Кодировка UTF-8 (с BOM или без)</li>
+  </ul>
+</aside>
+{% endblock %}

@@ -4,6 +4,29 @@
 
 ---
 
+## 2026-05-26 — Lessio Phase 2: Tutor-TZ + Reviews + Bulk-import + IndexNow deployed на прод
+
+После Week 4 юзер сказал «сам всё сделай и продолжай» → автономно сделано Phase 2:
+
+- ✅ **INDEXNOW_KEY** автогенерирован + добавлен в прод `.env` через SSH + uvicorn-restart (порт 8011 убит/поднят без касания Tap Tower 8012 / IndigoSmart 8000); `/8c03…5527.txt` отдаёт ключ на проде; pinger готов слать уведомления Яндексу при создании tutor-профилей.
+- ✅ **Phase 2 chunk A** (cfe5a06): tutor-timezone overrides. `tzdata` в deps (Windows-fix); `cabinet_router.py::_LESSIO_TIMEZONES` — 16 popular RU/СНГ зон + UTC; settings.html — select для выбора зоны; today endpoint считает «сегодня» в tutor.timezone (а не в UTC) + pre-computes time_local + tz_label; 4 TDD-кейса.
+- ✅ **Phase 2 chunk B** (0d58329): tutor reviews + aggregateRating. Migration 0043 — `lessio_reviews` (UNIQUE booking_id, rating 1-5 CHECK, text 2000). `app/lessio/reviews.py` — create_review/get_tutor_aggregate/get_tutor_recent_reviews; GET+POST `/lessio/review/<token>` через тот же manage_token; profile.html: aggregateRating + review[] в JSON-LD (Google rich snippets → ★ в SERP); visual header показывает звёзды + средняя оценка; reviews section после services; review/submit.html — Alpine star-rating picker; 10 TDD-кейсов.
+- ✅ **Phase 2 chunk C** (этот коммит): bulk-CSV import clients. GET `/lessio/app/clients/import` — upload-форма; POST принимает multipart CSV (UTF-8 with/without BOM), парсит DictReader, для каждой строки: invalid email → skip, существующий email → update full_name/phone (last-write-wins), новый → INSERT. Редирект с counters ?created=&updated=&skipped=. clients.html: «Импорт CSV →» button + success-banner. 4 TDD-кейса.
+
+**Тесты Phase 2:** 4 + 10 + 4 = **18 новых TDD**. Полный Lessio-suite: **137 passed** (101 MVP + 18 Week 4 + 18 Phase 2). ruff + mypy --strict + jinja-lint зелёные.
+
+**Коммиты Phase 2:** cfe5a06 (tz) → 0d58329 (reviews + migration 0043) → [этот] (clients/import).
+
+**Что в Phase 3 (deferred — нужны внешние credentials / сильно меняют систему):**
+- Google Calendar OAuth busy-times sync (heavy Fernet + refresh-token rotation).
+- Embedded payments (ЮKassa требует 18+, Stars вне TG).
+- PWA install prompt + push notifications.
+- Multi-language UI (только RU сейчас).
+- Search/discovery /lessio/discover (нужен scale ≥50 tutors).
+- Auto-completion bookings cron + auto-send review-email (сейчас admin вручную marks status='completed', клиент идёт на /lessio/manage/<token> чтобы оценить — но дополнительный «оцените встречу» email пока не шлётся автоматически).
+
+---
+
 ## 2026-05-26 — Lessio Week 4: Post-MVP polish (editable profile · TZ · analytics · IndexNow)
 
 После MVP юзер сказал «давай доделывай» → 4 follow-up chunks отполировали UX и SEO:

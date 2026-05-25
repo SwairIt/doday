@@ -8,12 +8,14 @@ LessioTutorProfile (иначе redirect на setup-profile).
 from __future__ import annotations
 
 import calendar
+import csv as _csv
+import io
 from datetime import UTC, date, datetime, timedelta
 from typing import Annotated
 from uuid import UUID
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
@@ -650,6 +652,93 @@ async def income_export_csv(
         content=body,
         media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+# ── Bulk CSV import ───────────────────────────────────────────────────
+
+
+@router.get("/clients/import", response_class=HTMLResponse, include_in_schema=False)
+async def clients_import_page(
+    request: Request,
+    user: RequiredUser,
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> Response:
+    profile = await _require_profile(session, user.id)
+    return _templates.TemplateResponse(
+        request,
+        "lessio/app/clients_import.html",
+        {"profile": profile, "active_nav": "clients"},
+    )
+
+
+@router.post("/clients/import", response_class=HTMLResponse, include_in_schema=False)
+async def clients_import_submit(
+    request: Request,
+    user: RequiredUser,
+    csv: Annotated[UploadFile, File()],
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> Response:
+    profile = await _require_profile(session, user.id)
+    raw = (await csv.read()).decode("utf-8-sig", errors="replace")
+    reader = _csv.DictReader(io.StringIO(raw))
+    if not reader.fieldnames or "email" not in {
+        (f or "").strip().lower() for f in reader.fieldnames
+    }:
+        return _templates.TemplateResponse(
+            request,
+            "lessio/app/clients_import.html",
+            {
+                "profile": profile,
+                "active_nav": "clients",
+                "error": (
+                    "В CSV не найдена колонка 'email' — она обязательна. "
+                    "Минимальный формат: email,full_name,phone"
+                ),
+            },
+            status_code=400,
+        )
+
+    created = 0
+    updated = 0
+    skipped = 0
+    for row in reader:
+        # Normalize keys to lowercase
+        row_norm = {(k or "").strip().lower(): (v or "").strip() for k, v in row.items()}
+        email = row_norm.get("email", "").lower()
+        full_name = row_norm.get("full_name") or row_norm.get("name", "")
+        phone = row_norm.get("phone") or None
+        if not email or "@" not in email:
+            skipped += 1
+            continue
+        existing = (
+            await session.execute(
+                select(LessioClient).where(
+                    LessioClient.tutor_id == profile.id,
+                    LessioClient.email == email,
+                )
+            )
+        ).scalar_one_or_none()
+        if existing is not None:
+            if full_name:
+                existing.full_name = full_name[:120]
+            if phone:
+                existing.phone = phone[:50]
+            updated += 1
+        else:
+            client = LessioClient(
+                tutor_id=profile.id,
+                email=email[:255],
+                full_name=(full_name or email)[:120],
+                phone=(phone or None) and phone[:50],
+                telegram_user_id=None,
+            )
+            session.add(client)
+            created += 1
+    await session.commit()
+    return RedirectResponse(
+        f"/lessio/app/clients?imported=1&created={created}&updated={updated}&skipped={skipped}",
+        status_code=303,
     )
 
 
