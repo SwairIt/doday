@@ -1,0 +1,67 @@
+{% extends "lessio/_base_auth.html" %}
+{% block title %}Настройка профиля · Lessio{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-xl py-12 px-5">
+  <h1 class="text-3xl font-extrabold mb-2 gradient-text">Настроим профиль</h1>
+  <p class="text-violet-200/70 mb-6">30 секунд. Эти данные увидят клиенты на твоей публичной странице.</p>
+
+  {% if error %}
+  <div class="mb-4 px-4 py-3 rounded-xl bg-rose-500/15 text-rose-300 text-sm">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" action="/lessio/app/setup-profile"
+        class="space-y-5 bg-white/5 border border-white/10 rounded-2xl p-5">
+
+    <label class="block">
+      <span class="text-sm font-semibold mb-1.5 block">Публичная ссылка</span>
+      <div class="flex items-center gap-2">
+        <span class="text-violet-300/60 text-sm whitespace-nowrap">getdoday.ru/u/</span>
+        <input name="slug" type="text" required minlength="3" maxlength="50"
+               pattern="[a-z0-9][a-z0-9_\-]{2,49}" placeholder="anna_english"
+               value="{{ slug or '' }}"
+               class="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400/50">
+      </div>
+      <span class="text-xs text-violet-300/40 mt-1 block">Латиница, цифры, дефис, подчёркивание</span>
+    </label>
+
+    <label class="block">
+      <span class="text-sm font-semibold mb-1.5 block">Имя на странице</span>
+      <input name="display_name" type="text" required maxlength="100"
+             placeholder="Анна · английский для взрослых"
+             value="{{ display_name or '' }}"
+             class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400/50">
+    </label>
+
+    <label class="block">
+      <span class="text-sm font-semibold mb-1.5 block">Что преподаёшь</span>
+      <select name="niche" required
+              class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400/50">
+        <option value="english">Английский / иностранные языки</option>
+        <option value="ielts">IELTS / TOEFL / экзамены</option>
+        <option value="math">Математика / физика / другие предметы</option>
+        <option value="school">Школа / ЕГЭ / ОГЭ</option>
+        <option value="fitness">Фитнес / персональные тренировки</option>
+        <option value="psychology">Психология / коучинг</option>
+        <option value="yoga">Йога / медитация (групповые занятия)</option>
+        <option value="other">Что-то другое</option>
+      </select>
+      <span class="text-xs text-violet-300/40 mt-1 block">Сразу сгенерируем 1-2 стандартные услуги под нишу</span>
+    </label>
+
+    <label class="block">
+      <span class="text-sm font-semibold mb-1.5 block">О себе (опционально)</span>
+      <textarea name="bio" rows="3" maxlength="1000"
+                placeholder="5 лет опыта, IELTS 8.0, готовлю к экзаменам и собеседованиям..."
+                class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg resize-none focus:outline-none focus:border-violet-400/50">{{ bio or '' }}</textarea>
+    </label>
+
+    <button class="w-full px-6 py-3.5 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-bold hover:opacity-90 transition">
+      Создать профиль →
+    </button>
+  </form>
+
+  <p class="text-center text-sm text-violet-300/40 mt-6">
+    Сможешь изменить позже в настройках кабинета
+  </p>
+</div>
+{% endblock %}
