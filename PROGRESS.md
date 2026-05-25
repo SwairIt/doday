@@ -4,6 +4,39 @@
 
 ---
 
+## 2026-05-25 — Lessio Web MVP · Week 1 завершена + задеплоено
+
+Spec → plan → 4 chunks → prod за одну сессию. Web-flow для репетиторов/тренеров/психологов внутри Doday-монорепо, рынок РФ, postoplata off-platform.
+
+**Что задеплоено (prod SHA 37d06d3):**
+- ✅ Migration 0042: расширение `lessio_clients` (email NOT NULL, phone, full_name; telegram_user_id → nullable), `lessio_bookings` (manage_token UNIQUE, payment_status, reminder timestamps, denormalized client_email/full_name, meeting_url), `lessio_services` (meeting_url_template, is_group_session, max_attendees, location), `lessio_tutor_profiles` (default_meeting_url_template, notification_email, google_calendar_refresh_token). Старый UNIQUE (tutor_id, starts_at) убран — replaced by app-level double-booking guard в `create_booking` (Postgres не поддерживает subquery в partial-unique-index).
+- ✅ `find_free_slots()` — реальная реализация: working_days/work_hours/buffer-aware + group-session логика (клиенты join'ятся к уже опубликованным временам пока < max_attendees).
+- ✅ `create_services_from_template()` — bulk-create default-услуг под 8 ниш (english/ielts/math/school/fitness/psychology/yoga/other).
+- ✅ `/lessio/auth/register` (email+password через Doday `register_user`) → auto-login → `/lessio/app/setup-profile` (slug + display_name + niche + bio) → создание `LessioTutorProfile` + автогенерация default-услуг → `/lessio/app/today` (placeholder-кабинет с публичной ссылкой, full UI — Week 3).
+- ✅ `/u/<slug>` публичная страница: hero (avatar + display_name + bio), grid услуг с ценами, footer. SEO: canonical, OG (title/desc/url/image/locale ru_RU), Twitter card, JSON-LD Person schema + makesOffer (для каждой услуги — name/price RUB/duration в минутах). 404 на unknown/inactive.
+- ✅ `sitemap.xml` — динамический: автоматически добавляет `/u/<slug>` для всех `is_active=true` tutor-профилей. `robots.txt` — явный `Allow: /u/` + `Disallow: /lessio/{app,auth,manage}/`.
+
+**Архитектура (внутри Doday-монорепо):**
+- `app/lessio/web_router.py` — новый router (auth/cabinet + public). Параллельно с `app/lessio/router.py` (TG-flow + Mini App) и `app/lessio/admin.py`. Все три зарегистрированы в `app/main.py`.
+- `app/templates/lessio/{_base_auth.html, auth/, app/, u/}` — Lessio-брендированные shell+formы+public-profile.
+- Auth flow — реиспользует стандартный Doday-`register_user` + sessions cookie, **email verification опционально** (не блокирует setup-profile, в отличие от Doday-flow). Пароль ≥ 8 char (Doday's `RegisterIn` validator).
+
+**Тесты:** 4 (models) + 8 (free_slots) + 4 (register) + 6 (public_profile) = **22 новых TDD-кейса**, все зелёные. Полный suite **923 passed, 660s**. `pre-commit` (ruff/mypy --strict/jinja-lint) — зелёный.
+
+**Коммиты:** e42a1b7 (spec) → 3989fc5 (plan) → d15e883 (chunk 1.1: migration+models) → 4d010eb (chunk 1.2: free_slots + service templates) → 05d3b27 (chunk 1.3: register/setup-profile) → 37d06d3 (chunk 1.4: public profile + SEO).
+
+**End-to-end flow работает на проде**: новый юзер → /lessio/auth/register → setup-profile → today + публичная ссылка → /u/<slug> render'ится с JSON-LD для Google.
+
+**Что НЕ делает Week 1 (планируется на Week 2-3):**
+- Booking-flow (форма выбора слота + клиент-форма email/phone/name + email-confirmation) — Week 2.
+- Magic-link для управления booking'ом клиентом (отмена/перенос) — Week 2.
+- SMTP-уведомления (tutor + client + reminders 24h/1h cron) — Week 2.
+- Полный кабинет (calendar/clients/services CRUD/income+CSV/settings) — Week 3.
+- Google Calendar OAuth (двусторонняя синхронизация) — Week 3.
+- Dynamic per-tutor OG-image (SVG-генератор с именем + аватаром) — SEO chunk Week 3.
+
+---
+
 ## 2026-05-25 — @LessioBot подключён dual-Application + обнаружен Telegram-API infra-debt
 
 Bot worker (`app/telegram/bot.py`) переписан под dual-Application:
