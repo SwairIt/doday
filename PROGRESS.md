@@ -4,6 +4,44 @@
 
 ---
 
+## 2026-05-26 — Lessio Web MVP · Week 2 завершена + задеплоено
+
+End-to-end booking flow живой. Anon-клиент видит `/u/<slug>` → выбирает услугу+слот → POST `/u/<slug>/book/<service_id>` создаёт LessioBooking + рассылает email клиенту (с magic-link) + tutor (на notification_email). Magic-link `/lessio/manage/<token>` показывает все будущие confirmed-записи клиента у этого репетитора с кнопками [Перенести] [Отменить]. Cron-endpoint `/api/lessio/cron/dispatch-reminders` (X-Cron-Token) — батч reminders 24h+1h в окне ±5мин, идемпотентный.
+
+**Что задеплоено (prod SHA 52523f0):**
+- ✅ Chunk 2.1: `app/lessio/email.py` (send_booking_emails / send_cancellation_email / send_reminder_email через aiosmtplib + Jinja env), `service.py` обновлён с `create_booking` (find/upsert LessioClient, INSERT booking, конфликт-guard на app-level, manage_token=secrets.token_urlsafe(48)), `cancel_booking`, `reschedule_booking`, `BookingConflictError`. 6 email-шаблонов (HTML+txt каждый): `_base` + booking_confirmed + new_booking + cancelled_by_{client,tutor} + reminder_{24h,1h}.
+- ✅ Chunk 2.2: Public booking flow `/u/<slug>/book/<service_id>` GET (Alpine.js slot-picker grid + клиент-форма) + POST (create_booking → redirect на `/u/<slug>/booked?token=…`) + GET booked success-страница.
+- ✅ Chunk 2.3: Magic-link manage `/lessio/manage/<token>` GET (siblings: все confirmed-будущие записи клиента у этого репетитора), POST `/cancel`, GET+POST `/reschedule` (cancel-old + create-new в одной транзакции, при BookingConflictError откат старого в confirmed).
+- ✅ Chunk 2.4: `app/lessio/cron.py::dispatch_reminders(hours=24|1)` — SELECT confirmed bookings в окне ±5мин без `reminder_*h_sent_at`, на каждый `send_reminder_email`, UPDATE timestamp только при SMTP success. `POST /api/lessio/cron/dispatch-reminders` с `hmac.compare_digest` против `cron_token`, 503 при отсутствии настройки.
+
+**Тесты:** 10 (chunk 2.1) + 6 (chunk 2.2) + 5 (chunk 2.3) + 5 (chunk 2.4) = **26 новых TDD-кейсов**. Полный suite **949 passed, 654s**. ruff + mypy --strict зелёные.
+
+**Архитектура (router-разделение в Lessio):**
+- `app/lessio/router.py` — landing + waitlist + Mini App TG-flow
+- `app/lessio/web_router.py` — register/setup-profile + cabinet placeholder + manage magic-link + public `/u/<slug>` + booking flow + cron-endpoint. Содержит 3 routers: `router` (`/lessio`), `_public_router` (no prefix), `_cron_router` (`/api/lessio`).
+- `app/lessio/admin.py` — admin token-auth endpoints
+- `app/lessio/email.py` — все email-функции (booking, cancel, reminder)
+- `app/lessio/cron.py` — `dispatch_reminders` batch handler
+- Все email-шаблоны в `app/templates/lessio/email/` — отдельная Jinja Environment, чтобы `{% extends "_base.html" %}` работал без префикса.
+
+**Коммиты:** d274961 (week 2 plan) → 25fc166 (chunk 2.1) → 5bb9d98 (chunk 2.2) → b469590 (chunk 2.3) → 52523f0 (chunk 2.4).
+
+**Smoke prod после deploy:** /version SHA совпал за 30с, /lessio/manage/<unknown> → 404, /api/lessio/cron/dispatch-reminders без token → 403, /u/<unknown>/book/<uuid> → 404.
+
+**Что осталось до production-ready (Week 3, plan уже есть):**
+- Кабинет: Today / Calendar / Clients / Services / Schedule / Income / Settings (7 страниц с CRUD).
+- Toggle-paid + CSV export income (для самозанятого учёта в Мой Налог).
+- Dynamic per-tutor OG-image (SVG-генератор, без headless browser).
+- README + ENV.example + final PROGRESS update.
+
+**Phase 2 (после wk3):**
+- Google Calendar OAuth busy-times sync.
+- Embedded payments (ЮKassa требует 18+).
+- Aggregate rating в JSON-LD (нужны отзывы).
+- IndexNow API для sitemap ping.
+
+---
+
 ## 2026-05-25 — Lessio Web MVP · Week 1 завершена + задеплоено
 
 Spec → plan → 4 chunks → prod за одну сессию. Web-flow для репетиторов/тренеров/психологов внутри Doday-монорепо, рынок РФ, postoplata off-platform.
