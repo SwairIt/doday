@@ -26,8 +26,12 @@
   </p>
 
   <div class="bg-white/5 border border-white/10 rounded-2xl p-5 mb-6 text-left">
-    <div class="text-sm text-violet-300/70 mb-2">{{ booking.starts_at.strftime('%d.%m.%Y') }}</div>
-    <div class="text-2xl font-bold mb-2">{{ booking.starts_at.strftime('%H:%M') }} UTC</div>
+    <div class="text-sm text-violet-300/70 mb-2 lessio-localize-date" data-utc-iso="{{ booking.starts_at.isoformat() }}">
+      {{ booking.starts_at.strftime('%d.%m.%Y') }}
+    </div>
+    <div class="text-2xl font-bold mb-2 lessio-localize-time" data-utc-iso="{{ booking.starts_at.isoformat() }}">
+      {{ booking.starts_at.strftime('%H:%M') }} UTC
+    </div>
     <div class="text-sm text-violet-300/70">
       {{ booking.duration_minutes }} мин · {{ tutor.display_name }}
     </div>
@@ -41,6 +45,19 @@
   <p class="text-xs text-violet-300/40 mt-8 leading-relaxed">
     Сохраните ссылку из письма — по ней можно перенести или отменить запись.
   </p>
+
+  <script>
+    (function() {
+      const fmtDate = new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      const fmtTime = new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' });
+      document.querySelectorAll('.lessio-localize-date[data-utc-iso]').forEach(el => {
+        try { el.textContent = fmtDate.format(new Date(el.dataset.utcIso)); } catch (e) {}
+      });
+      document.querySelectorAll('.lessio-localize-time[data-utc-iso]').forEach(el => {
+        try { el.textContent = fmtTime.format(new Date(el.dataset.utcIso)); } catch (e) {}
+      });
+    })();
+  </script>
 </main>
 </body>
 </html>

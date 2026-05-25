@@ -39,13 +39,17 @@
         {% for s in slots %}
         <button type="button"
                 data-slot="{{ s.isoformat() }}"
+                data-utc-iso="{{ s.isoformat() }}"
                 x-on:click="slot='{{ s.isoformat() }}'"
                 x-bind:class="slot==='{{ s.isoformat() }}' ? 'bg-violet-500 border-violet-400 text-white' : 'bg-white/5 border-white/10 text-violet-100'"
-                class="px-3 py-2 border rounded-lg text-sm hover:border-violet-400 transition">
+                class="lessio-localize px-3 py-2 border rounded-lg text-sm hover:border-violet-400 transition">
           {{ s.strftime('%d.%m %H:%M') }}
         </button>
         {% endfor %}
       </div>
+      <p class="text-xs text-violet-300/40 mt-2" data-tz-hint>
+        Время в UTC. JS показывает в вашей зоне.
+      </p>
       <input type="hidden" name="slot_iso" x-bind:value="slot" required>
       {% else %}
       <p class="text-violet-300/50 text-sm">Свободных слотов на ближайшие 2 недели нет.</p>
@@ -59,6 +63,21 @@
   </form>
 
   <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <script>
+    (function() {
+      const fmtSlot = new Intl.DateTimeFormat('ru-RU', {
+        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+      });
+      document.querySelectorAll('.lessio-localize[data-utc-iso]').forEach(el => {
+        try { el.textContent = fmtSlot.format(new Date(el.dataset.utcIso)).replace(',', ''); } catch (e) {}
+      });
+      const hint = document.querySelector('[data-tz-hint]');
+      if (hint) {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        hint.innerHTML = 'Время в вашей зоне (<b>' + tz + '</b>).';
+      }
+    })();
+  </script>
 </main>
 </body>
 </html>

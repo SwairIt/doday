@@ -36,7 +36,7 @@
     {% for b in siblings %}
     <article class="bg-white/5 border border-white/10 rounded-2xl p-5">
       <div class="text-sm text-violet-300/70 mb-1">{{ service.title }}</div>
-      <div class="text-2xl font-bold mb-2">
+      <div class="text-2xl font-bold mb-2 lessio-localize-full" data-utc-iso="{{ b.starts_at.isoformat() }}">
         {{ b.starts_at.strftime('%d.%m.%Y') }} в {{ b.starts_at.strftime('%H:%M') }} UTC
       </div>
       <div class="text-sm text-violet-300/70 mb-4">
@@ -84,6 +84,18 @@
   <footer class="text-center text-sm text-violet-300/40 mt-10">
     Эта ссылка персональная. Сохраните её, чтобы возвращаться к управлению записями.
   </footer>
+
+  <script>
+    (function() {
+      const fmtFull = new Intl.DateTimeFormat('ru-RU', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', timeZoneName: 'short'
+      });
+      document.querySelectorAll('.lessio-localize-full[data-utc-iso]').forEach(el => {
+        try { el.textContent = fmtFull.format(new Date(el.dataset.utcIso)); } catch (e) {}
+      });
+    })();
+  </script>
 </main>
 </body>
 </html>
