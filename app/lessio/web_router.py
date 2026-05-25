@@ -10,11 +10,12 @@ Doday-auth (email+password) и публичных страниц с SEO.
 
 from __future__ import annotations
 
+import hmac
 from datetime import UTC, datetime, timedelta
-from typing import Annotated
+from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi import APIRouter, Depends, Form, Header, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from pydantic import ValidationError
@@ -39,6 +40,7 @@ from app.lessio.service import (
 
 router = APIRouter(prefix="/lessio", tags=["lessio-web"])
 _public_router = APIRouter(tags=["lessio-public"])
+_cron_router = APIRouter(prefix="/api/lessio", tags=["lessio-cron"])
 _templates = Jinja2Templates(directory="app/templates")
 
 
@@ -488,4 +490,27 @@ async def booked_page(
     )
 
 
+# ── Cron: dispatch reminders 24h+1h ───────────────────────────────────
+
+
+@_cron_router.post("/cron/dispatch-reminders", include_in_schema=False)
+async def cron_dispatch_reminders(
+    x_cron_token: Annotated[str | None, Header(alias="X-Cron-Token")] = None,
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> dict[str, Any]:
+    from app.config import get_settings
+    from app.lessio.cron import dispatch_reminders
+
+    settings = get_settings()
+    if not settings.cron_token:
+        raise HTTPException(503, "cron не настроен на этом сервере")
+    if not x_cron_token or not hmac.compare_digest(x_cron_token, settings.cron_token):
+        raise HTTPException(403, "Неверный X-Cron-Token")
+    r24 = await dispatch_reminders(session, hours=24)
+    r1 = await dispatch_reminders(session, hours=1)
+    await session.commit()
+    return {"24h": r24, "1h": r1}
+
+
 public_router = _public_router
+cron_router = _cron_router

@@ -41,6 +41,7 @@ from app.labels.router import router as labels_router
 from app.labels.router import task_labels_router
 from app.lessio.admin import router as lessio_admin_router
 from app.lessio.router import router as lessio_router
+from app.lessio.web_router import cron_router as lessio_cron_router
 from app.lessio.web_router import public_router as lessio_public_router
 from app.lessio.web_router import router as lessio_web_router
 from app.links.router import graph_router
@@ -219,6 +220,7 @@ app.include_router(taptower_router)
 app.include_router(lessio_router)
 app.include_router(lessio_web_router)
 app.include_router(lessio_public_router)
+app.include_router(lessio_cron_router)
 app.include_router(lessio_admin_router)
 
 
