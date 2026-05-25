@@ -1,0 +1,11 @@
+Здравствуйте, {{ booking.client_full_name }}!
+
+Напоминание: завтра у вас встреча с {{ tutor.display_name }}:
+
+{{ service_title }}
+{{ booking.starts_at.strftime('%d.%m.%Y в %H:%M') }} UTC
+Длительность: {{ booking.duration_minutes }} мин
+
+{% if meeting_url %}Ссылка на встречу: {{ meeting_url }}
+{% endif %}
+Перенести или отменить: {{ manage_url }}

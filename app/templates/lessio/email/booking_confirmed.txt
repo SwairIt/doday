@@ -1,0 +1,14 @@
+Здравствуйте, {{ booking.client_full_name }}!
+
+Ваша запись к {{ tutor.display_name }} подтверждена:
+
+{{ service_title }}
+{{ booking.starts_at.strftime('%d.%m.%Y в %H:%M') }} UTC
+Длительность: {{ booking.duration_minutes }} мин
+
+{% if meeting_url %}Ссылка на встречу: {{ meeting_url }}
+{% endif %}
+Управление записью (отмена / перенос): {{ manage_url }}
+
+—
+Lessio · {{ profile_url }}

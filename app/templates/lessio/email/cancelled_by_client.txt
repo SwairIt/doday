@@ -1,0 +1,6 @@
+{{ booking.client_full_name }} ({{ booking.client_email }}) отменил(-а) запись:
+
+{{ service_title }}
+{{ booking.starts_at.strftime('%d.%m.%Y · %H:%M') }} UTC
+
+Слот снова свободен для других клиентов.

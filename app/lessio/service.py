@@ -8,6 +8,7 @@ payment_status='unpaid', клиент платит как угодно (СБП/�
 from __future__ import annotations
 
 import re
+import secrets
 from datetime import UTC, datetime, timedelta
 from typing import TypedDict
 from uuid import UUID
@@ -17,12 +18,17 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import User
-from app.lessio.models import LessioBooking, LessioService, LessioTutorProfile
+from app.lessio.email import send_booking_emails, send_cancellation_email
+from app.lessio.models import LessioBooking, LessioClient, LessioService, LessioTutorProfile
 from app.telegram.models import TelegramLink
 
 
 class OnboardError(Exception):
     """Auto-onboard fails — пробрасывается до router который вернёт 400/409."""
+
+
+class BookingConflictError(Exception):
+    """Slot занят (для индивидуальной услуги) или группа full."""
 
 
 _SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{2,49}$")
@@ -377,6 +383,154 @@ async def create_services_from_template(
 
 
 # ---------------------------------------------------------------------------
+# Web booking flow — anon-клиент create/cancel/reschedule
+# ---------------------------------------------------------------------------
+
+
+async def create_booking(
+    session: AsyncSession,
+    *,
+    tutor: LessioTutorProfile,
+    service: LessioService,
+    slot: datetime,
+    client_email: str,
+    client_full_name: str,
+    client_phone: str | None,
+    notes: str | None = None,
+) -> LessioBooking:
+    """Anon-клиент создаёт booking.
+
+    Шаги (одна транзакция):
+    1. App-level conflict guard (см. migration 0042 — partial-unique нельзя).
+    2. find/upsert LessioClient по (tutor_id, email) — last-write-wins на name/phone.
+    3. INSERT LessioBooking со status='confirmed' + manage_token.
+    4. send_booking_emails (если SMTP не работает — лог, transaction всё равно commit'ится).
+
+    Caller обязан вызвать `session.commit()` после успеха.
+    """
+    existing_q = await session.execute(
+        select(LessioBooking).where(
+            LessioBooking.tutor_id == tutor.id,
+            LessioBooking.starts_at == slot,
+            LessioBooking.status.in_(["confirmed", "completed"]),
+        )
+    )
+    existing = existing_q.scalars().all()
+    if service.is_group_session:
+        same_service = [b for b in existing if b.service_id == service.id]
+        if len(same_service) >= service.max_attendees:
+            raise BookingConflictError("Группа уже заполнена")
+        if any(b.service_id != service.id for b in existing):
+            raise BookingConflictError("Это время уже занято другой встречей")
+    elif existing:
+        raise BookingConflictError("Это время уже занято")
+
+    email_norm = client_email.lower().strip()
+    client = (
+        await session.execute(
+            select(LessioClient).where(
+                LessioClient.tutor_id == tutor.id,
+                LessioClient.email == email_norm,
+            )
+        )
+    ).scalar_one_or_none()
+    if client is None:
+        client = LessioClient(
+            tutor_id=tutor.id,
+            email=email_norm,
+            phone=client_phone,
+            full_name=client_full_name[:120],
+            telegram_user_id=None,
+        )
+        session.add(client)
+        await session.flush()
+    else:
+        client.full_name = client_full_name[:120]
+        if client_phone:
+            client.phone = client_phone
+
+    booking = LessioBooking(
+        tutor_id=tutor.id,
+        client_id=client.id,
+        service_id=service.id,
+        starts_at=slot,
+        duration_minutes=service.duration_minutes,
+        status="confirmed",
+        price_kopecks=service.price_kopecks,
+        price_stars=service.price_stars,
+        notes=notes,
+        manage_token=secrets.token_urlsafe(48),
+        meeting_url=service.meeting_url_template or tutor.default_meeting_url_template,
+        payment_status="unpaid",
+        client_email=email_norm,
+        client_full_name=client_full_name[:120],
+    )
+    session.add(booking)
+    await session.flush()
+
+    await send_booking_emails(booking=booking, tutor=tutor, service_title=service.title)
+    return booking
+
+
+async def cancel_booking(
+    session: AsyncSession,
+    *,
+    booking: LessioBooking,
+    by: str,
+) -> LessioBooking:
+    """Mark cancelled + send email противоположной стороне (by ∈ {client, tutor})."""
+    booking.status = "cancelled"
+    booking.cancelled_at = datetime.now(UTC)
+    await session.flush()
+
+    tutor = await session.get(LessioTutorProfile, booking.tutor_id)
+    service = await session.get(LessioService, booking.service_id)
+    if tutor is not None and service is not None:
+        await send_cancellation_email(
+            booking=booking, tutor=tutor, by=by, service_title=service.title
+        )
+    return booking
+
+
+async def reschedule_booking(
+    session: AsyncSession,
+    *,
+    booking: LessioBooking,
+    new_slot: datetime,
+    by: str,
+) -> LessioBooking:
+    """Cancel старый + create новый со теми же client/service полями. Возвращает новый."""
+    tutor = await session.get(LessioTutorProfile, booking.tutor_id)
+    service = await session.get(LessioService, booking.service_id)
+    if tutor is None or service is None:
+        raise BookingConflictError("Tutor or service missing — cannot reschedule")
+
+    booking.status = "cancelled"
+    booking.cancelled_at = datetime.now(UTC)
+    await session.flush()
+
+    try:
+        new = await create_booking(
+            session,
+            tutor=tutor,
+            service=service,
+            slot=new_slot,
+            client_email=booking.client_email,
+            client_full_name=booking.client_full_name,
+            client_phone=None,
+            notes=booking.notes,
+        )
+    except BookingConflictError:
+        # Откат — старый booking восстанавливается в confirmed
+        booking.status = "confirmed"
+        booking.cancelled_at = None
+        await session.flush()
+        raise
+    _ = by  # `by` пока не используется — оба emails (cancel old + confirm new) уходят клиенту
+    return new
+
+
+# ---------------------------------------------------------------------------
 # Booking — stub под Stars-flow (web-flow платит off-platform, см. spec).
 # ---------------------------------------------------------------------------
 
@@ -395,15 +549,20 @@ async def create_booking_invoice(
 
 
 __all__ = [
+    "BookingConflictError",
     "LessioBooking",
+    "LessioClient",
     "LessioService",
     "LessioTutorProfile",
     "OnboardError",
     "auto_onboard_tutor",
+    "cancel_booking",
+    "create_booking",
     "create_booking_invoice",
     "create_services_from_template",
     "create_tutor_profile",
     "find_free_slots",
     "is_slug_available",
+    "reschedule_booking",
     "validate_slug",
 ]

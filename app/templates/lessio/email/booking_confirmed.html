@@ -1,0 +1,42 @@
+{% extends "_base.html" %}
+{% block title %}Вы записаны{% endblock %}
+{% block content %}
+<h1 style="margin:0 0 16px 0;font-size:24px;color:#1a1230;line-height:1.2;">✅ Вы записаны</h1>
+<p style="font-size:16px;line-height:1.55;color:#444;margin:0 0 16px 0;">
+  Здравствуйте, {{ booking.client_full_name }}!
+</p>
+<p style="font-size:16px;line-height:1.55;color:#444;margin:0 0 24px 0;">
+  Ваша запись к <b>{{ tutor.display_name }}</b> подтверждена:
+</p>
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
+       style="background:#faf5ff;border-radius:12px;margin-bottom:24px;">
+<tr><td style="padding:18px 20px;">
+  <div style="font-size:15px;color:#7c3aed;margin-bottom:6px;">{{ service_title }}</div>
+  <div style="font-size:22px;font-weight:800;color:#1a1230;">
+    {{ booking.starts_at.strftime('%d.%m.%Y') }} в {{ booking.starts_at.strftime('%H:%M') }} UTC
+  </div>
+  <div style="font-size:14px;color:#666;margin-top:6px;">
+    Длительность: {{ booking.duration_minutes }} мин
+  </div>
+</td></tr>
+</table>
+
+{% if meeting_url %}
+<p style="font-size:15px;margin:0 0 20px 0;color:#444;">
+  <b>Ссылка на встречу:</b><br>
+  <a href="{{ meeting_url }}" style="color:#7c3aed;word-break:break-all;">{{ meeting_url }}</a>
+</p>
+{% endif %}
+
+<p style="text-align:center;margin:28px 0 16px 0;">
+  <a href="{{ manage_url }}"
+     style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#d946ef);
+            color:#fff;text-decoration:none;font-weight:700;padding:14px 28px;border-radius:12px;">
+    Управление записью →
+  </a>
+</p>
+<p style="font-size:13px;color:#888;margin:0;text-align:center;">
+  По этой ссылке вы сможете перенести или отменить запись.
+</p>
+{% endblock %}

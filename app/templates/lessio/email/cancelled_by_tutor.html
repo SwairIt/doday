@@ -1,0 +1,23 @@
+{% extends "_base.html" %}
+{% block title %}Запись отменена{% endblock %}
+{% block content %}
+<h1 style="margin:0 0 16px 0;font-size:22px;line-height:1.2;">❌ Запись отменена</h1>
+<p style="font-size:16px;color:#444;line-height:1.55;margin:0 0 16px 0;">
+  Здравствуйте, {{ booking.client_full_name }}. К сожалению, репетитор
+  <b>{{ tutor.display_name }}</b> отменил вашу запись:
+</p>
+<table role="presentation" width="100%" style="background:#fef2f2;border-radius:12px;margin-bottom:18px;">
+<tr><td style="padding:14px 18px;">
+  <div style="font-size:15px;color:#991b1b;">{{ service_title }}</div>
+  <div style="font-size:18px;font-weight:700;color:#1a1230;">
+    {{ booking.starts_at.strftime('%d.%m.%Y · %H:%M') }} UTC
+  </div>
+</td></tr>
+</table>
+<p style="font-size:15px;margin:18px 0 8px 0;color:#444;">
+  Можно записаться на другое время:
+</p>
+<p style="margin:0 0 8px 0;">
+  <a href="{{ profile_url }}" style="color:#7c3aed;word-break:break-all;">{{ profile_url }}</a>
+</p>
+{% endblock %}

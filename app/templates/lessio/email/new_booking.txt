@@ -1,0 +1,8 @@
+Новая запись от {{ booking.client_full_name }} ({{ booking.client_email }}):
+
+{{ service_title }}
+{{ booking.starts_at.strftime('%d.%m.%Y · %H:%M') }} UTC
+{{ booking.duration_minutes }} мин
+{% if booking.notes %}Комментарий: {{ booking.notes }}
+{% endif %}
+Кабинет: {{ cabinet_url }}

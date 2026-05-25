@@ -1,0 +1,6 @@
+Здравствуйте, {{ booking.client_full_name }}.
+
+Репетитор {{ tutor.display_name }} отменил вашу запись:
+{{ service_title }} — {{ booking.starts_at.strftime('%d.%m.%Y %H:%M') }} UTC
+
+Другие свободные слоты: {{ profile_url }}

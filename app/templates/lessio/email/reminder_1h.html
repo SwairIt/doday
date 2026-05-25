@@ -1,0 +1,31 @@
+{% extends "_base.html" %}
+{% block title %}Через час встреча{% endblock %}
+{% block content %}
+<h1 style="margin:0 0 16px 0;font-size:24px;line-height:1.2;">🚀 Через час встреча</h1>
+<p style="font-size:16px;line-height:1.55;color:#444;margin:0 0 16px 0;">
+  {{ booking.client_full_name }}, через час у вас встреча с <b>{{ tutor.display_name }}</b>!
+</p>
+
+<table role="presentation" width="100%" style="background:#fef3c7;border-radius:12px;margin-bottom:20px;">
+<tr><td style="padding:18px 20px;">
+  <div style="font-size:15px;color:#92400e;margin-bottom:6px;">{{ service_title }}</div>
+  <div style="font-size:22px;font-weight:800;color:#1a1230;">
+    {{ booking.starts_at.strftime('%H:%M') }} UTC
+  </div>
+</td></tr>
+</table>
+
+{% if meeting_url %}
+<p style="font-size:16px;text-align:center;margin:20px 0;">
+  <a href="{{ meeting_url }}"
+     style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#d946ef);
+            color:#fff;text-decoration:none;font-weight:700;padding:14px 28px;border-radius:12px;">
+    Открыть встречу →
+  </a>
+</p>
+{% else %}
+<p style="font-size:14px;color:#666;text-align:center;">
+  (ссылку на встречу пришлёт репетитор)
+</p>
+{% endif %}
+{% endblock %}

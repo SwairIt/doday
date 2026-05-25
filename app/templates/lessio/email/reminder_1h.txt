@@ -1,0 +1,8 @@
+{{ booking.client_full_name }}, через час у вас встреча с {{ tutor.display_name }}!
+
+{{ service_title }}
+{{ booking.starts_at.strftime('%H:%M') }} UTC
+
+{% if meeting_url %}Открыть встречу: {{ meeting_url }}
+{% else %}(ссылку на встречу пришлёт репетитор)
+{% endif %}

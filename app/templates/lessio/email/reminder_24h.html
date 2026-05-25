@@ -1,0 +1,38 @@
+{% extends "_base.html" %}
+{% block title %}Напоминание: завтра встреча{% endblock %}
+{% block content %}
+<h1 style="margin:0 0 16px 0;font-size:24px;line-height:1.2;">⏰ Напоминание: завтра встреча</h1>
+<p style="font-size:16px;line-height:1.55;color:#444;margin:0 0 16px 0;">
+  Здравствуйте, {{ booking.client_full_name }}!
+</p>
+<p style="font-size:16px;line-height:1.55;color:#444;margin:0 0 24px 0;">
+  Напоминаем — завтра у вас встреча с <b>{{ tutor.display_name }}</b>:
+</p>
+
+<table role="presentation" width="100%" style="background:#faf5ff;border-radius:12px;margin-bottom:24px;">
+<tr><td style="padding:18px 20px;">
+  <div style="font-size:15px;color:#7c3aed;margin-bottom:6px;">{{ service_title }}</div>
+  <div style="font-size:22px;font-weight:800;color:#1a1230;">
+    {{ booking.starts_at.strftime('%d.%m.%Y') }} в {{ booking.starts_at.strftime('%H:%M') }} UTC
+  </div>
+  <div style="font-size:14px;color:#666;margin-top:6px;">
+    Длительность: {{ booking.duration_minutes }} мин
+  </div>
+</td></tr>
+</table>
+
+{% if meeting_url %}
+<p style="font-size:15px;margin:0 0 20px 0;color:#444;">
+  <b>Ссылка на встречу:</b><br>
+  <a href="{{ meeting_url }}" style="color:#7c3aed;word-break:break-all;">{{ meeting_url }}</a>
+</p>
+{% endif %}
+
+<p style="text-align:center;margin:20px 0 8px 0;">
+  <a href="{{ manage_url }}"
+     style="display:inline-block;background:#ede9fe;color:#7c3aed;
+            text-decoration:none;font-weight:600;padding:10px 20px;border-radius:10px;font-size:14px;">
+    Перенести или отменить
+  </a>
+</p>
+{% endblock %}
