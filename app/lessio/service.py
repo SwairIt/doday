@@ -1,17 +1,18 @@
-"""Lessio service-layer: auto-onboarding, slot search, booking-invoice creation.
+"""Lessio service-layer: auto-onboarding, slot search, service templates.
 
-Validation-phase: реально используется только `auto_onboard_tutor`. Booking-функции
-(`find_free_slots`, `create_booking_invoice`) — stub'ы под MVP, добавятся
-после ≥100 waitlist по 2026-06-01.
+Booking-invoice flow (Telegram-Stars) — отдельная фаза, сейчас stub. Web-flow
+платит off-platform: тренер создаёт booking сразу со status='confirmed' +
+payment_status='unpaid', клиент платит как угодно (СБП/перевод/нал).
 """
 
 from __future__ import annotations
 
 import re
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
+from typing import TypedDict
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import and_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -157,7 +158,7 @@ async def is_slug_available(session: AsyncSession, slug: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# Booking — stub'ы под MVP-фазу.
+# Free-slots search
 # ---------------------------------------------------------------------------
 
 
@@ -167,16 +168,217 @@ async def find_free_slots(
     *,
     date_from: datetime,
     date_to: datetime,
-    duration_minutes: int = 60,
+    service: LessioService,
 ) -> list[datetime]:
-    """Вернуть свободные слоты репетитора в диапазоне.
+    """Compute свободные слоты в [date_from, date_to) для услуги.
 
-    MVP-stub: возвращает пустой список. Реальная имплементация:
-    - Парсит tutor.working_days + work_start/end_minute + buffer_minutes
-    - Вычитает существующие LessioBooking'и с status in (pending_payment, paid)
-    - Учитывает timezone tutor'а
+    Алгоритм:
+    1. Кандидаты: для каждого дня диапазона, если weekday в tutor.working_days,
+       перебираем start_minute от work_start_minute с шагом
+       (service.duration_minutes + buffer_minutes), пока start + duration ≤ work_end.
+    2. Фильтр прошлого: slot ≥ now().
+    3. Вычитание занятых:
+       - Индивидуальная услуга: slot блокируется если пересекается с интервалом
+         любого confirmed/completed booking ± buffer_minutes.
+       - Групповая (is_group_session=True): slot блокируется только если на тот же
+         starts_at набралось ≥ max_attendees booking'ов этой же услуги.
     """
-    return []
+    now = datetime.now(UTC)
+    working_days = set(tutor.working_days)
+    step = service.duration_minutes + tutor.buffer_minutes
+
+    candidates: list[datetime] = []
+    day = date_from.astimezone(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+    while day < date_to:
+        if day.isoweekday() in working_days:
+            minute = tutor.work_start_minute
+            while minute + service.duration_minutes <= tutor.work_end_minute:
+                slot = day + timedelta(minutes=minute)
+                if slot >= now and slot >= date_from:
+                    candidates.append(slot)
+                minute += step
+        day += timedelta(days=1)
+
+    if not candidates:
+        return []
+
+    bookings = (
+        (
+            await session.execute(
+                select(LessioBooking).where(
+                    and_(
+                        LessioBooking.tutor_id == tutor.id,
+                        LessioBooking.status.in_(["confirmed", "completed"]),
+                        LessioBooking.starts_at >= candidates[0] - timedelta(hours=24),
+                        LessioBooking.starts_at <= candidates[-1] + timedelta(hours=24),
+                    )
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    busy_intervals: list[tuple[datetime, datetime]] = []
+    group_counts: dict[datetime, int] = {}
+    for b in bookings:
+        if service.is_group_session and b.service_id == service.id:
+            group_counts[b.starts_at] = group_counts.get(b.starts_at, 0) + 1
+            continue
+        start_with_buffer = b.starts_at - timedelta(minutes=tutor.buffer_minutes)
+        end_with_buffer = b.starts_at + timedelta(minutes=b.duration_minutes + tutor.buffer_minutes)
+        busy_intervals.append((start_with_buffer, end_with_buffer))
+
+    # Group-session опубликованные слоты — клиенты присоединяются к существующим
+    # временам, а не выбирают произвольное start_minute (на step grid).
+    if service.is_group_session:
+        for existing_start in group_counts:
+            if (
+                existing_start >= max(now, date_from)
+                and existing_start < date_to
+                and existing_start not in candidates
+            ):
+                candidates.append(existing_start)
+
+    def is_free(slot: datetime) -> bool:
+        if service.is_group_session:
+            return group_counts.get(slot, 0) < service.max_attendees
+        slot_end = slot + timedelta(minutes=service.duration_minutes)
+        for busy_start, busy_end in busy_intervals:
+            if slot < busy_end and slot_end > busy_start:
+                return False
+        return True
+
+    return sorted(s for s in candidates if is_free(s))
+
+
+# ---------------------------------------------------------------------------
+# Service templates — bulk-create дефолт-услуг под нишу
+# ---------------------------------------------------------------------------
+
+
+class _ServiceTemplate(TypedDict, total=False):
+    title: str
+    duration_minutes: int
+    price_kopecks: int
+    price_stars: int
+    package_size: int
+    is_group_session: bool
+    max_attendees: int
+
+
+_SERVICE_TEMPLATES: dict[str, list[_ServiceTemplate]] = {
+    "english": [
+        {
+            "title": "Английский · урок 60 мин",
+            "duration_minutes": 60,
+            "price_kopecks": 150000,
+            "price_stars": 1500,
+        },
+        {
+            "title": "Английский · пакет 4 урока",
+            "duration_minutes": 60,
+            "price_kopecks": 540000,
+            "price_stars": 5400,
+            "package_size": 4,
+        },
+    ],
+    "ielts": [
+        {
+            "title": "IELTS подготовка · 90 мин",
+            "duration_minutes": 90,
+            "price_kopecks": 250000,
+            "price_stars": 2500,
+        },
+        {
+            "title": "Mock IELTS Speaking",
+            "duration_minutes": 30,
+            "price_kopecks": 100000,
+            "price_stars": 1000,
+        },
+    ],
+    "math": [
+        {
+            "title": "Математика · 60 мин",
+            "duration_minutes": 60,
+            "price_kopecks": 120000,
+            "price_stars": 1200,
+        },
+    ],
+    "school": [
+        {
+            "title": "ЕГЭ профильный · 60 мин",
+            "duration_minutes": 60,
+            "price_kopecks": 180000,
+            "price_stars": 1800,
+        },
+    ],
+    "fitness": [
+        {
+            "title": "Персональная тренировка · 60 мин",
+            "duration_minutes": 60,
+            "price_kopecks": 200000,
+            "price_stars": 2000,
+        },
+    ],
+    "psychology": [
+        {
+            "title": "Консультация · 50 мин",
+            "duration_minutes": 50,
+            "price_kopecks": 350000,
+            "price_stars": 3500,
+        },
+    ],
+    "yoga": [
+        {
+            "title": "Групповая йога · 60 мин",
+            "duration_minutes": 60,
+            "price_kopecks": 80000,
+            "price_stars": 800,
+            "is_group_session": True,
+            "max_attendees": 8,
+        },
+    ],
+    "other": [
+        {
+            "title": "Встреча · 60 мин",
+            "duration_minutes": 60,
+            "price_kopecks": 150000,
+            "price_stars": 1500,
+        },
+    ],
+}
+
+
+async def create_services_from_template(
+    session: AsyncSession,
+    *,
+    tutor: LessioTutorProfile,
+    niche: str,
+) -> list[LessioService]:
+    """Bulk-create дефолт-услуг под нишу tutor'а (вызывается из setup-profile)."""
+    templates = _SERVICE_TEMPLATES.get(niche, _SERVICE_TEMPLATES["other"])
+    created: list[LessioService] = []
+    for tpl in templates:
+        service = LessioService(
+            tutor_id=tutor.id,
+            title=tpl["title"],
+            duration_minutes=tpl["duration_minutes"],
+            price_kopecks=tpl["price_kopecks"],
+            price_stars=tpl["price_stars"],
+            package_size=tpl.get("package_size"),
+            is_group_session=tpl.get("is_group_session", False),
+            max_attendees=tpl.get("max_attendees", 1),
+        )
+        session.add(service)
+        created.append(service)
+    await session.flush()
+    return created
+
+
+# ---------------------------------------------------------------------------
+# Booking — stub под Stars-flow (web-flow платит off-platform, см. spec).
+# ---------------------------------------------------------------------------
 
 
 async def create_booking_invoice(
@@ -187,21 +389,11 @@ async def create_booking_invoice(
     service_id: UUID,
     starts_at: datetime,
 ) -> str:
-    """Создать Stars-invoice URL для booking'а. MVP-stub.
-
-    Реальная имплементация:
-    - Найти/создать LessioClient (per-tutor unique by telegram_user_id)
-    - Создать LessioBooking с status='pending_payment'
-    - Через app.billing.stars.create_invoice_link выписать invoice на @LessioBot
-      с product_code = ad-hoc `lessio_booking_<booking_id>` (динамический продукт)
-    - Сохранить invoice URL + LessioBooking.star_payment_id когда придёт SuccessfulPayment
-
-    Сейчас — raise NotImplementedError чтобы router падал чисто.
-    """
-    raise NotImplementedError("booking flow — MVP-фаза, не валидация")
+    """Stars-invoice URL для booking'а. Активируется в Telegram-only фазе."""
+    _ = session, tutor_id, client_telegram_user_id, service_id, starts_at
+    raise NotImplementedError("Stars-booking flow — позже, web-flow платит off-platform")
 
 
-# Re-export для router-layer.
 __all__ = [
     "LessioBooking",
     "LessioService",
@@ -209,6 +401,7 @@ __all__ = [
     "OnboardError",
     "auto_onboard_tutor",
     "create_booking_invoice",
+    "create_services_from_template",
     "create_tutor_profile",
     "find_free_slots",
     "is_slug_available",
