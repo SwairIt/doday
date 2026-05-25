@@ -45,13 +45,15 @@ async def test_logout_button_in_sidebar(logged_in_client: AsyncClient) -> None:
 
 
 async def test_landing_preview_for_logged_in(logged_in_client: AsyncClient) -> None:
-    response = await logged_in_client.get("/?preview=1", follow_redirects=False)
+    """Doday Tasks landing at /doday — logged-in user can preview with ?preview=1."""
+    response = await logged_in_client.get("/doday?preview=1", follow_redirects=False)
     assert response.status_code == 200
     assert "Тудулист" in response.text or "Doday" in response.text
 
 
 async def test_landing_still_redirects_without_preview(logged_in_client: AsyncClient) -> None:
-    response = await logged_in_client.get("/", follow_redirects=False)
+    """Without ?preview=1, logged-in users get bounced to /app/today."""
+    response = await logged_in_client.get("/doday", follow_redirects=False)
     assert response.status_code in (302, 303, 307)
     assert response.headers["location"].endswith("/app/today")
 

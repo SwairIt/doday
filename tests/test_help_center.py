@@ -41,5 +41,6 @@ async def test_help_unknown_article_404(client: AsyncClient) -> None:
 
 
 async def test_help_link_appears_on_landing(client: AsyncClient) -> None:
-    body = (await client.get("/")).text
+    """Doday Tasks landing at /doday links to /help."""
+    body = (await client.get("/doday")).text
     assert "/help" in body

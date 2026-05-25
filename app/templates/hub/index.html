@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0d0820">
+  <meta name="robots" content="index,follow">
+
+  <title>Doday — мини-продукты от одного разработчика</title>
+  <meta name="description" content="Doday — набор небольших web-продуктов одного автора (15 лет, building in public). Внутри: Doday Tasks (туду-лист, 400+ пользователей), Lessio (Telegram-кабинет для репетиторов), Беллстрой ТВ (мем-аркада), Tap Tower (кликер).">
+  <meta name="keywords" content="doday, studio, indie hacker, building in public, мини-продукты, telegram mini app, fastapi, лендинг, репетиторы, туду-лист">
+  <link rel="canonical" href="https://getdoday.ru/">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Doday">
+  <meta property="og:locale" content="ru_RU">
+  <meta property="og:title" content="Doday — мини-продукты от одного разработчика">
+  <meta property="og:description" content="Студия мини-продуктов: туду-лист, кабинет для репетиторов, мем-игра. Один автор, 15 лет, building in public.">
+  <meta property="og:url" content="https://getdoday.ru/">
+  <meta property="og:image" content="https://getdoday.ru/og.svg">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Doday — мини-продукты от одного разработчика">
+  <meta name="twitter:description" content="Студия мини-продуктов от 15-летнего соло-разработчика.">
+
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/favicon.ico" type="image/svg+xml">
+
+  <!-- Linked-data: Person + Organization so Google knows what this hub is -->
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"Organization","name":"Doday","alternateName":"Doday Studio","url":"https://getdoday.ru/","logo":"https://getdoday.ru/favicon.ico","description":"Студия мини-продуктов от одного разработчика","founder":{"@type":"Person","name":"Ярослав","alternateName":"SwairIt","url":"https://github.com/SwairIt"},"sameAs":["https://github.com/SwairIt"]}
+  </script>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'doday-bg': '#0d0820',
+            'doday-bg-2': '#1a0f3d',
+            'doday-violet': '#7c3aed',
+            'doday-pink': '#d946ef',
+            'doday-amber': '#fbbf24',
+            'doday-emerald': '#10b981',
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    body {
+      background: linear-gradient(180deg, #0d0820 0%, #1a0f3d 50%, #2e1065 100%);
+      color: #f5f3ff;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, #a78bfa, #f472b6);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .glow { box-shadow: 0 0 80px 20px rgba(167, 139, 250, 0.18); }
+    .glow-amber { box-shadow: 0 0 60px 18px rgba(251, 191, 36, 0.15); }
+    .glow-emerald { box-shadow: 0 0 60px 18px rgba(16, 185, 129, 0.12); }
+    .card-hover { transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
+    .card-hover:hover { transform: translateY(-3px); }
+  </style>
+</head>
+<body class="antialiased">
+
+<main class="mx-auto max-w-6xl px-5 py-10 sm:py-14">
+
+  <!-- ── Top nav ──────────────────────────────────────────────────── -->
+  <nav class="flex items-center justify-between mb-12 sm:mb-16">
+    <a href="/" class="flex items-center gap-2.5">
+      <span class="inline-flex w-9 h-9 items-center justify-center rounded-lg bg-gradient-to-br from-doday-violet to-doday-pink text-white font-extrabold text-lg">D</span>
+      <span class="text-lg font-semibold tracking-tight">Doday</span>
+    </a>
+    <div class="flex items-center gap-3 text-sm">
+      {% if user %}
+        <a href="/app/today" class="px-4 py-2 rounded-lg bg-gradient-to-r from-doday-violet to-doday-pink text-white font-medium">К задачам →</a>
+      {% else %}
+        <a href="/auth/login" class="text-violet-200 hover:text-white">Войти</a>
+        <a href="/auth/register" class="px-4 py-2 rounded-lg bg-gradient-to-r from-doday-violet to-doday-pink text-white font-medium">Создать аккаунт</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <!-- ── Hero ─────────────────────────────────────────────────────── -->
+  <section class="text-center mb-16 sm:mb-20">
+    <div class="inline-block px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs uppercase tracking-widest text-violet-300 mb-6">
+      🛠 студия одного разработчика · building in public
+    </div>
+    <h1 class="text-4xl sm:text-6xl font-extrabold leading-tight mb-5">
+      Мини-продукты <span class="gradient-text">которые работают</span>
+    </h1>
+    <p class="text-lg sm:text-xl text-violet-200/80 max-w-2xl mx-auto leading-relaxed">
+      Меня Ярослав, мне 15. Делаю web-приложения соло на FastAPI + Telegram Mini App.
+      Все живут под одной крышей <strong>getdoday.ru</strong> — одна инфра, одна БД, один бот.
+      Когда что-то выстреливает — переезжает в свой репо.
+    </p>
+  </section>
+
+  <!-- ── Featured: Doday Tasks (main mature product) ────────────────── -->
+  <section class="mb-12">
+    <a
+      href="/doday"
+      class="block relative bg-gradient-to-br from-doday-violet/30 via-doday-pink/15 to-transparent border border-doday-violet/40 rounded-3xl p-7 sm:p-10 card-hover glow"
+    >
+      <div class="absolute top-5 right-5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-semibold uppercase tracking-wider">
+        ⚡ Active · 400+ пользователей
+      </div>
+      <div class="flex items-start gap-5 mb-5">
+        <span class="inline-flex w-14 h-14 items-center justify-center rounded-2xl bg-gradient-to-br from-doday-violet to-doday-pink text-white font-extrabold text-2xl shrink-0">D</span>
+        <div>
+          <h2 class="text-3xl sm:text-4xl font-extrabold mb-2">Doday Tasks</h2>
+          <p class="text-violet-200/70">Туду-лист, проекты, команды. На замену Todoist.</p>
+        </div>
+      </div>
+      <p class="text-base sm:text-lg text-violet-100/85 mb-6 leading-relaxed">
+        Бесплатный планировщик задач на русском: проекты с секциями, лейблы, фильтры,
+        календарь, помодоро, статистика, графы связей, привычки. Web + Telegram Mini App +
+        бот. Без рекламы, без слежки. Оплата через Telegram Stars.
+      </p>
+      <div class="flex flex-wrap items-center gap-3 text-sm">
+        <span class="px-3 py-1.5 rounded-lg bg-white/10 border border-white/15">Web · Mini App · Bot</span>
+        <span class="px-3 py-1.5 rounded-lg bg-white/10 border border-white/15">Команды</span>
+        <span class="px-3 py-1.5 rounded-lg bg-white/10 border border-white/15">Free + Pro</span>
+        <span class="ml-auto text-violet-300 group-hover:text-white">Узнать больше →</span>
+      </div>
+    </a>
+  </section>
+
+  <!-- ── Other projects grid ──────────────────────────────────────── -->
+  <section class="mb-16">
+    <h2 class="text-xl font-semibold text-violet-200/70 mb-5 px-1">Остальные проекты</h2>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+      <!-- Lessio -->
+      <a href="/lessio" class="card-hover bg-white/5 border border-doday-pink/30 rounded-2xl p-6 hover:border-doday-pink/60">
+        <div class="flex items-center justify-between mb-4">
+          <span class="inline-flex w-11 h-11 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-500 to-pink-500 text-white font-extrabold text-lg">L</span>
+          <span class="px-2 py-0.5 rounded-full bg-fuchsia-500/20 text-fuchsia-300 text-[10px] font-semibold uppercase tracking-wider">
+            🧪 Validation
+          </span>
+        </div>
+        <h3 class="text-xl font-bold mb-2">Lessio</h3>
+        <p class="text-sm text-violet-200/70 mb-4">Telegram-кабинет для репетиторов: запись клиентов, оплата через Stars, напоминания.</p>
+        <div class="text-xs text-violet-300/60">Запуск зависит от waitlist'а (до 2026-06-01) →</div>
+      </a>
+
+      <!-- Беллстрой ТВ -->
+      <a href="/game" class="card-hover bg-white/5 border border-doday-amber/30 rounded-2xl p-6 hover:border-doday-amber/60">
+        <div class="flex items-center justify-between mb-4">
+          <span class="inline-flex w-11 h-11 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white font-extrabold text-lg">Б</span>
+          <span class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-semibold uppercase tracking-wider">
+            🎮 Toy
+          </span>
+        </div>
+        <h3 class="text-xl font-bold mb-2">Беллстрой ТВ</h3>
+        <p class="text-sm text-violet-200/70 mb-4">Бесконечная мем-аркада с Italian-brainrot врагами. Three.js без сборки, прямо в браузере.</p>
+        <div class="text-xs text-violet-300/60">Играть в браузере →</div>
+      </a>
+
+      <!-- Tap Tower -->
+      <a href="/taptower" class="card-hover bg-white/5 border border-doday-emerald/30 rounded-2xl p-6 hover:border-doday-emerald/60">
+        <div class="flex items-center justify-between mb-4">
+          <span class="inline-flex w-11 h-11 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white font-extrabold text-lg">T</span>
+          <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-semibold uppercase tracking-wider">
+            🏗 Legacy
+          </span>
+        </div>
+        <h3 class="text-xl font-bold mb-2">Tap Tower</h3>
+        <p class="text-sm text-violet-200/70 mb-4">Кликер-башня в Telegram Mini App формате. Один из первых экспериментов с Mini App SDK.</p>
+        <div class="text-xs text-violet-300/60">Открыть Mini App →</div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ── About / stats ────────────────────────────────────────────── -->
+  <section class="mb-16 bg-white/5 border border-white/10 rounded-3xl p-7 sm:p-10">
+    <div class="grid sm:grid-cols-3 gap-6 text-center">
+      <div>
+        <div class="text-3xl font-extrabold gradient-text mb-1">1</div>
+        <div class="text-sm text-violet-200/70">Разработчик</div>
+      </div>
+      <div>
+        <div class="text-3xl font-extrabold gradient-text mb-1">4</div>
+        <div class="text-sm text-violet-200/70">Продукта в работе</div>
+      </div>
+      <div>
+        <div class="text-3xl font-extrabold gradient-text mb-1">400+</div>
+        <div class="text-sm text-violet-200/70">Пользователей у Doday Tasks</div>
+      </div>
+    </div>
+    <p class="text-center text-sm text-violet-200/60 mt-6 max-w-2xl mx-auto leading-relaxed">
+      Делаю всё соло с мая 2026, в школе 9 класс. Стек: Python 3.12 / FastAPI / async SQLAlchemy /
+      Jinja2 + HTMX + Tailwind / Telegram Stars (XTR). Никакого React, никакого Node — один backend
+      обслуживает все продукты.
+    </p>
+  </section>
+
+  <!-- ── Footer ───────────────────────────────────────────────────── -->
+  <footer class="text-center text-sm text-violet-300/50 pt-8 border-t border-white/5">
+    <p class="mb-3">
+      <a href="https://github.com/SwairIt/doday" class="underline hover:text-white">GitHub</a> ·
+      <a href="https://t.me/DodayTaskBot" class="underline hover:text-white">@DodayTaskBot</a> ·
+      <a href="mailto:doday.support@gmail.com" class="underline hover:text-white">doday.support@gmail.com</a>
+    </p>
+    <p class="text-xs">© 2026 Doday. Built in public by a 15-year-old solo dev.</p>
+  </footer>
+</main>
+
+</body>
+</html>

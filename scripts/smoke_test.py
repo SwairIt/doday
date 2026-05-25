@@ -31,7 +31,9 @@ class Result:
 
 # Endpoints checked by `main()`. Adding new public routes? Add them here too.
 ENDPOINTS: list[Endpoint] = [
-    Endpoint("/", 200, "landing"),
+    Endpoint("/", 200, "hub"),
+    Endpoint("/doday", 200, "doday-tasks-landing"),
+    Endpoint("/lessio", 200, "lessio-landing"),
     Endpoint("/privacy", 200, "privacy"),
     Endpoint("/terms", 200, "terms"),
     Endpoint("/pricing", 200, "pricing"),

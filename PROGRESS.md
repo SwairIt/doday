@@ -4,6 +4,26 @@
 
 ---
 
+## 2026-05-25 — Studio-hub на `/`, Doday Tasks лендинг переехал на `/doday`
+
+Архитектурный реорг: getdoday.ru теперь зонтичная студия, не один туду-лист. Корневой `/` — это хаб с карточками всех проектов автора (Doday Tasks, Lessio, Беллстрой ТВ, Tap Tower). Бывший `/` (long marketing landing про туду-лист) переехал на `/doday` без изменений в содержимом.
+
+Изменения:
+- **`app/hub/__init__.py` + `app/hub/router.py`** — новый модуль для root-landing'а
+- **`app/templates/hub/index.html`** — standalone-страница: nav, hero «Мини-продукты которые работают», featured Doday Tasks card сверху, grid из 3 других проектов с статусами (Active / Validation / Toy / Legacy), about-stats block (1 dev · 4 продукта · 400+ юзеров), footer с GitHub/Email
+- **`app/pages/router.py`** — `@router.get("/")` → `@router.get("/doday")`. Логика redirect для logged-in остаётся (без `?preview=1` → `/app/today`).
+- **`app/main.py`** — `app.include_router(hub_router)` перед `pages_router` (hub отвечает за `/`, pages держит остальные docs-страницы и теперь `/doday`)
+- **`sitemap.xml`** — добавлены `/doday`, `/lessio`
+- **`scripts/smoke_test.py`** — `/` теперь label `hub`, добавлены `/doday` (doday-tasks-landing) и `/lessio` (lessio-landing)
+- **`app/templates/lessio/index.html`** footer — cross-link «На Doday» теперь ведёт на `/doday` (Doday Tasks), а на хаб ведёт «Все проекты студии»
+- **Тесты:** `tests/test_hub.py` (3 кейса), все упоминания `/` в test_landing.py / test_landing_page.py / test_help_center.py / test_polish_batch.py заменены на `/doday`
+
+Login flow не тронут — он редиректит на `/app/today?welcome=1` напрямую (не через `/`). Logout редиректит на `/` (теперь юзер видит хаб после logout — это правильное UX).
+
+pytest -q зелёный, ruff + mypy --strict зелёные.
+
+---
+
 ## 2026-05-25 — Lessio как модуль внутри Doday + админка waitlist'а (578d8ef + следующий)
 
 Pivot после двух часов в отдельном репо `SwairIt/Lessio`: вместо отдельной инфры и FastPanel-vhost под `lessio.getdoday.ru`, Lessio живёт прямо внутри Doday-репо по пути `/lessio`. Один cron-poll, одна БД, один бот `@DodayTaskBot`. Не дёргаем брата под каждый новый проект — Doday становится monorepo для всех вертикалей.

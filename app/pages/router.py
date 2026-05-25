@@ -14,9 +14,14 @@ router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
 
-@router.get("/")
-async def landing(request: Request, user: CurrentUser) -> Response:
-    """Anonymous → marketing landing. Logged-in → /app/today (or landing if ?preview=1)."""
+@router.get("/doday")
+async def doday_landing(request: Request, user: CurrentUser) -> Response:
+    """Doday Tasks marketing landing (todo-list product page).
+
+    Lives at `/doday` since 2026-05-25 when `/` was repurposed as the studio hub
+    (`app.hub.router`). Anonymous visitors see marketing copy; logged-in users
+    are bounced to /app/today unless they explicitly opted into preview.
+    """
     preview = request.query_params.get("preview") == "1"
     if user is not None and not preview:
         return RedirectResponse(url="/app/today", status_code=302)

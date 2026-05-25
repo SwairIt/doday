@@ -18,7 +18,9 @@ async def test_terms_renders(client: AsyncClient) -> None:
 
 
 async def test_public_footer_shows_requisites_on_landing(client: AsyncClient) -> None:
-    body = (await client.get("/")).text
+    """Self-employed person's tax requisites live on the Doday Tasks landing
+    (/doday since 2026-05-25 — `/` became the studio hub which doesn't sell anything)."""
+    body = (await client.get("/doday")).text
     assert "550149009405" in body
     assert "Самозанятый" in body or "самозанятый" in body
     assert "/terms" in body  # link to offer is in the footer

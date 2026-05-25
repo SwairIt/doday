@@ -33,6 +33,7 @@ from app.config import get_settings
 from app.digest.router import router as digest_router
 from app.habits.router import router as habits_router
 from app.help.router import router as help_router
+from app.hub.router import router as hub_router
 from app.labels.router import router as labels_router
 from app.labels.router import task_labels_router
 from app.lessio.admin import router as lessio_admin_router
@@ -173,6 +174,7 @@ async def _security_headers(
     return response
 
 
+app.include_router(hub_router)
 app.include_router(auth_router)
 app.include_router(pages_router)
 app.include_router(projects_router)
@@ -313,6 +315,8 @@ async def sitemap_xml() -> Response:
     base = _settings.app_base_url.rstrip("/")
     static_paths = [
         "/",
+        "/doday",
+        "/lessio",
         "/for-students",
         "/for-teachers",
         "/todoist-alternative",

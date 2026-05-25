@@ -198,15 +198,17 @@ End-to-end: `git push` → live in ~60 seconds.
 
 ---
 
-## Sibling projects on the same infra
+## URL map — what lives where on getdoday.ru
 
-Doday is becoming a monorepo for several small vertical products from the same author. They share the FastAPI host, the cron-poll deploy, the PostgreSQL instance, and the `@DodayTaskBot`. Each lives under a path on `getdoday.ru`:
+Since 2026-05-25, `getdoday.ru` is the umbrella for several products by the same author. They share one FastAPI host, one cron-poll deploy, one PostgreSQL instance, and one Telegram bot `@DodayTaskBot`:
 
+- **[`/`](https://getdoday.ru/)** — **studio hub**: project cards + author intro. Code: [`app/hub/`](app/hub/), template [`app/templates/hub/index.html`](app/templates/hub/index.html). This is the new front door (before 2026-05-25 the todo-list landing was here).
+- **[`/doday`](https://getdoday.ru/doday)** — Doday Tasks marketing landing (the former `/`). Anonymous see marketing; logged-in users get bounced to `/app/today`. Code: [`app/pages/router.py`](app/pages/router.py), template [`app/templates/landing.html`](app/templates/landing.html). The product (todo + teams app) is at `/app/today`, `/app/inbox`, etc. — unchanged.
 - **[`/lessio`](https://getdoday.ru/lessio)** — Telegram-native booking + payments for tutors and online coaches. Validation phase opened 2026-05-25; if waitlist reaches 100 by 2026-06-01 → MVP. Code: [`app/lessio/`](app/lessio/), tables prefixed `lessio_*`, Stars products `tutor_pro_*` in [`app/billing/products.py`](app/billing/products.py).
 - **[`/game`](https://getdoday.ru/game)** — Беллстрой ТВ, infinite arcade with Italian-brainrot enemies. Procedural Three.js, no build step. Code in [`app/static/game/`](app/static/game/).
 - **[`/taptower`](https://getdoday.ru/taptower)** — Tap Tower Mini App game (proxied legacy module).
 
-The pattern: a new vertical lives as `app/<vertical>/` with its own router, models (prefixed table names), templates, and tests. Migrations append, never alter Doday's `public` schema. Shared infra (auth, billing, Mini App framework) is pulled in via imports — no duplication. When a vertical proves itself out (≥1K MRR or strategic), it gets extracted into its own repo.
+The pattern: a new vertical lives as `app/<vertical>/` with its own router, models (prefixed table names), templates, and tests. Migrations append, never alter Doday's `public` schema. Shared infra (auth, billing, Mini App framework) is pulled in via imports — no duplication. SEO-pages (`/pricing`, `/help`, `/changelog`, `/roadmap`, `/for-students`, etc.) are about Doday Tasks specifically and stay where they are. When a vertical proves itself out (≥1K MRR or strategic), it gets extracted into its own repo.
 
 ---
 

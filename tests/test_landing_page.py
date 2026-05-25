@@ -1,10 +1,13 @@
-"""Tests for the long marketing landing page."""
+"""Tests for the long marketing landing page at /doday.
+
+(Moved from `/` on 2026-05-25 when root became the studio hub — see tests/test_hub.py.)
+"""
 
 from httpx import AsyncClient
 
 
 async def test_landing_renders_for_anon(client: AsyncClient) -> None:
-    response = await client.get("/")
+    response = await client.get("/doday")
     assert response.status_code == 200
     body = response.text
     # Hero
@@ -20,7 +23,7 @@ async def test_landing_renders_for_anon(client: AsyncClient) -> None:
 
 
 async def test_landing_pricing_lists_three_tiers(client: AsyncClient) -> None:
-    body = (await client.get("/")).text
+    body = (await client.get("/doday")).text
     # Section heading + tier names.
     assert ">Free<" in body
     assert ">Pro<" in body or 'grad-text">Pro</h3>' in body
@@ -32,11 +35,11 @@ async def test_landing_pricing_lists_three_tiers(client: AsyncClient) -> None:
 
 
 async def test_landing_includes_help_link(client: AsyncClient) -> None:
-    body = (await client.get("/")).text
+    body = (await client.get("/doday")).text
     assert "/help" in body
 
 
 async def test_landing_when_logged_in_redirects_to_app(logged_in_client: AsyncClient) -> None:
-    response = await logged_in_client.get("/", follow_redirects=False)
+    response = await logged_in_client.get("/doday", follow_redirects=False)
     assert response.status_code in (302, 303, 307)
     assert response.headers["location"].endswith("/app/today")

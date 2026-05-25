@@ -72,9 +72,15 @@ async def test_sitemap_includes_seo_pages() -> None:
 
 
 async def test_landing_footer_links_to_seo_pages() -> None:
-    """Internal link-graph helps Google crawl new SEO pages from the homepage."""
+    """Internal link-graph helps Google crawl new SEO pages from the Doday Tasks landing.
+
+    (Moved from `/` to `/doday` on 2026-05-25 — `/` is now the studio hub which intentionally
+    does not link to per-product SEO pages.)
+    """
     async with await _public_client() as c:
-        resp = await c.get("/?preview=1")  # ?preview=1 lets logged-out users see the landing too
+        resp = await c.get(
+            "/doday?preview=1"
+        )  # ?preview=1 lets logged-out users see the landing too
     body = resp.text
     assert "/for-students" in body
     assert "/for-teachers" in body
