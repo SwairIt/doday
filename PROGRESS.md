@@ -4,6 +4,22 @@
 
 ---
 
+## 2026-05-26 — Lessio Production Polish: Welcome + Digest + Stats + PWA + GCal scaffolding
+
+Юзер сказал «делай всё» после списка возможных улучшений → 4 batch'а автономно:
+
+- ✅ **Batch A** (85f0669): **Welcome email** после setup-profile + **Daily morning digest cron**. Migration 0044 `lessio_tutor_profiles.last_daily_digest_at` для idempotency (cron-poll каждую минуту → digest 1×/день через 20h check). `send_welcome_email` (3-шаговый onboarding tutorial с публ.ссылкой) и `send_daily_digest_email` (список встреч в tutor TZ). 6 TDD-кейсов.
+- ✅ **Batch B** (338352f): **Stats dashboard** `/lessio/app/stats` — 4 metric cards (заработано/ждёт/всего/30d) + breakdown по услугам. **PWA install** — `/lessio/app/manifest.webmanifest` + `/lessio/app/sw.js` (network-first SW с offline cache) + auto-register в `_base.html`. Tutor добавляет cabinet на phone homescreen, выглядит как нативное app. 7 TDD-кейсов.
+- ⏭️ **Batch C** SKIPPED: TG-уведомления через @LessioBot — отложены из-за известного Telegram-API infra-debt (бот worker на проде не работает из-за RKN-блокировки). Email-уведомления уже закрывают эту потребность; вернёмся когда инфра починена.
+- ✅ **Batch D** (1fb18d3): **Google Calendar OAuth scaffolding** — full flow с Fernet-encrypted refresh-tokens (PBKDF2-SHA256 derived от `app_secret_key`, restart-safe). `fetch_google_busy_times` интегрирован в `find_free_slots` (если refresh_token есть → exchange → FreeBusy API → extend busy_intervals). `/lessio/oauth/google/{connect,callback,disconnect}`. Settings.html: Connect/Disconnect buttons + status banners. **Активируется когда добавишь `GOOGLE_OAUTH_CLIENT_ID` + `GOOGLE_OAUTH_CLIENT_SECRET` в прод .env**. `cryptography>=43.0` в deps. 9 TDD-кейсов.
+- ⏭️ **Batch E SKIPPED**: Email verification для Lessio — Doday auth вообще не имеет forgot-password flow (shared infra-gap, не Lessio-specific); отложу до Phase 3 для всей платформы.
+
+**Тесты Production Polish:** 6+7+0+9 = **22 новых TDD**. Полный Lessio-suite: **165 passed**. ruff + mypy --strict зелёные.
+
+**Коммиты:** 85f0669 (A) → 338352f (B) → 1fb18d3 (D). Push'нуто на прод.
+
+---
+
 ## 2026-05-26 — Lessio Phase 2: Tutor-TZ + Reviews + Bulk-import + IndexNow deployed на прод
 
 После Week 4 юзер сказал «сам всё сделай и продолжай» → автономно сделано Phase 2:
