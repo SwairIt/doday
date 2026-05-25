@@ -5,10 +5,12 @@ import subprocess
 from collections.abc import Awaitable, Callable
 from urllib.parse import urlparse
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.achievements.router import router as achievements_router
@@ -30,6 +32,7 @@ from app.calendar_feed.router import (
 )
 from app.comments.router import comments_router, task_comments_router
 from app.config import get_settings
+from app.db import get_session
 from app.digest.router import router as digest_router
 from app.habits.router import router as habits_router
 from app.help.router import router as help_router
@@ -299,22 +302,31 @@ async def version() -> dict[str, str]:
 
 @app.get("/robots.txt", include_in_schema=False)
 async def robots_txt() -> PlainTextResponse:
-    """Allow indexing of marketing pages, disallow the logged-in app shell."""
+    """Allow indexing of marketing pages, disallow the logged-in app shell.
+
+    `Allow: /u/` is explicit — public Lessio tutor pages live there and must be
+    indexable even though `/app/` and `/auth/` (used by Lessio too) are blocked.
+    """
     body = (
         "User-agent: *\n"
         "Disallow: /app/\n"
         "Disallow: /api/\n"
         "Disallow: /htmx/\n"
         "Disallow: /auth/\n"
+        "Disallow: /lessio/app/\n"
+        "Disallow: /lessio/auth/\n"
+        "Disallow: /lessio/manage/\n"
+        "Allow: /u/\n"
         f"Sitemap: {_settings.app_base_url.rstrip('/')}/sitemap.xml\n"
     )
     return PlainTextResponse(body)
 
 
 @app.get("/sitemap.xml", include_in_schema=False)
-async def sitemap_xml() -> Response:
-    """Static sitemap for the public marketing pages + every help article."""
+async def sitemap_xml(session: AsyncSession = Depends(get_session)) -> Response:  # noqa: B008
+    """Static marketing/help pages + every active Lessio tutor's public page."""
     from app.help.articles import ARTICLES
+    from app.lessio.models import LessioTutorProfile
 
     base = _settings.app_base_url.rstrip("/")
     static_paths = [
@@ -332,10 +344,22 @@ async def sitemap_xml() -> Response:
         "/terms",
     ]
     article_paths = [f"/help/{a['slug']}" for a in ARTICLES]
+
+    active_tutor_slugs = (
+        (
+            await session.execute(
+                select(LessioTutorProfile.slug).where(LessioTutorProfile.is_active.is_(True))
+            )
+        )
+        .scalars()
+        .all()
+    )
+    tutor_paths = [f"/u/{slug}" for slug in active_tutor_slugs]
+
     items = "".join(
         f"<url><loc>{base}{p}</loc><changefreq>weekly</changefreq>"
         f"<priority>{'1.0' if p == '/' else '0.7'}</priority></url>"
-        for p in static_paths + article_paths
+        for p in static_paths + article_paths + tutor_paths
     )
     body = (
         '<?xml version="1.0" encoding="UTF-8"?>'
