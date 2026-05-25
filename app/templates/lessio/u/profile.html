@@ -33,6 +33,30 @@
     "url": "{{ canonical_url }}",
     "description": "{% if tutor.bio %}{{ tutor.bio[:300] | e }}{% endif %}",
     "jobTitle": "{{ {'english': 'Преподаватель английского', 'ielts': 'Преподаватель IELTS/TOEFL', 'math': 'Репетитор математики', 'school': 'Школьный репетитор', 'fitness': 'Тренер', 'psychology': 'Психолог', 'yoga': 'Инструктор йоги'}.get(tutor.niche, 'Преподаватель') }}",
+    {% if aggregate and aggregate.count > 0 %}
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "{{ '%.2f' % aggregate.avg }}",
+      "reviewCount": {{ aggregate.count }},
+      "bestRating": "5",
+      "worstRating": "1"
+    },
+    "review": [
+      {%- for r in recent_reviews %}
+      {
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "{{ r.rating }}",
+          "bestRating": "5"
+        },
+        "author": {"@type": "Person", "name": "{{ r.client_full_name | e }}"},
+        "datePublished": "{{ r.created_at.strftime('%Y-%m-%d') }}"
+        {% if r.text %}, "reviewBody": "{{ r.text | e }}"{% endif %}
+      }{% if not loop.last %},{% endif %}
+      {%- endfor %}
+    ],
+    {% endif %}
     "makesOffer": [
       {%- for s in services %}
       {
@@ -74,11 +98,28 @@
 <body class="antialiased">
 <main class="mx-auto max-w-3xl px-5 py-12">
 
+  {% if request.query_params.get('thanks') %}
+  <div class="mb-6 px-4 py-3 rounded-xl bg-emerald-500/15 text-emerald-300 text-sm text-center">
+    ✨ Спасибо за отзыв! Он появится на странице после премодерации.
+  </div>
+  {% endif %}
+
   <header class="text-center mb-12">
     <div class="text-6xl mb-4" aria-hidden="true">{{ tutor.avatar_emoji }}</div>
     <h1 class="text-4xl font-extrabold mb-3 gradient-text">{{ tutor.display_name }}</h1>
     {% if tutor.bio %}
     <p class="text-violet-200/80 leading-relaxed max-w-xl mx-auto">{{ tutor.bio }}</p>
+    {% endif %}
+    {% if aggregate and aggregate.count > 0 %}
+    <div class="mt-5 flex items-center justify-center gap-2 text-sm">
+      <span class="text-amber-300 text-lg">
+        {% for i in range(5) %}{{ '★' if i < aggregate.avg|round(0, 'floor')|int else '☆' }}{% endfor %}
+      </span>
+      <span class="text-violet-200">
+        <b>{{ '%.2f'|format(aggregate.avg) }}</b> ·
+        <span class="text-violet-300/60">{{ aggregate.count }} {{ 'отзыв' if aggregate.count == 1 else 'отзыва' if 2 <= aggregate.count <= 4 else 'отзывов' }}</span>
+      </span>
+    </div>
     {% endif %}
   </header>
 
@@ -103,6 +144,28 @@
       {% endfor %}
     </div>
   </section>
+
+  {% if recent_reviews %}
+  <section aria-labelledby="reviews-h" class="mt-16">
+    <h2 id="reviews-h" class="text-xl font-bold mb-5 text-violet-200/70">Отзывы клиентов</h2>
+    <div class="space-y-3">
+      {% for r in recent_reviews %}
+      <article class="bg-white/5 border border-white/10 rounded-2xl p-5">
+        <div class="flex items-baseline gap-3 mb-2">
+          <span class="text-amber-300 text-lg" aria-label="оценка {{ r.rating }} из 5">
+            {% for i in range(5) %}{{ '★' if i < r.rating else '☆' }}{% endfor %}
+          </span>
+          <span class="text-sm font-semibold">{{ r.client_full_name }}</span>
+          <span class="text-xs text-violet-300/50">{{ r.created_at.strftime('%d.%m.%Y') }}</span>
+        </div>
+        {% if r.text %}
+        <p class="text-sm text-violet-200/80 leading-relaxed">{{ r.text }}</p>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
 
   <footer class="text-center text-sm text-violet-300/50 mt-16 pt-8 border-t border-white/5">
     <p>

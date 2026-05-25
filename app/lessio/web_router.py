@@ -271,6 +271,52 @@ async def manage_reschedule_submit(
     return RedirectResponse(f"/lessio/manage/{new.manage_token}", status_code=303)
 
 
+# ── Review submit (after completed booking) ───────────────────────────
+
+
+@router.get("/review/{token}", response_class=HTMLResponse, include_in_schema=False)
+async def review_page(
+    token: str,
+    request: Request,
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> Response:
+    booking, tutor, service = await _load_booking_by_token(session, token)
+    return _templates.TemplateResponse(
+        request,
+        "lessio/review/submit.html",
+        {"booking": booking, "tutor": tutor, "service": service},
+    )
+
+
+@router.post("/review/{token}", response_class=HTMLResponse, include_in_schema=False)
+async def review_submit(
+    token: str,
+    request: Request,
+    rating: Annotated[int, Form()],
+    text: Annotated[str | None, Form()] = None,
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> Response:
+    from app.lessio.reviews import ReviewError, create_review
+
+    booking, tutor, service = await _load_booking_by_token(session, token)
+    try:
+        await create_review(session, booking=booking, rating=rating, text=text)
+    except ReviewError as exc:
+        return _templates.TemplateResponse(
+            request,
+            "lessio/review/submit.html",
+            {
+                "booking": booking,
+                "tutor": tutor,
+                "service": service,
+                "error": str(exc),
+            },
+            status_code=400,
+        )
+    await session.commit()
+    return RedirectResponse(f"/u/{tutor.slug}?thanks=1", status_code=303)
+
+
 # ── Public profile ────────────────────────────────────────────────────
 
 
@@ -280,6 +326,8 @@ async def public_profile(
     request: Request,
     session: AsyncSession = Depends(get_session),  # noqa: B008
 ) -> Response:
+    from app.lessio.reviews import get_tutor_aggregate, get_tutor_recent_reviews
+
     profile = (
         await session.execute(
             select(LessioTutorProfile).where(LessioTutorProfile.slug == slug.lower())
@@ -303,12 +351,17 @@ async def public_profile(
         .all()
     )
 
+    aggregate = await get_tutor_aggregate(session, tutor_id=profile.id)
+    recent_reviews = await get_tutor_recent_reviews(session, tutor_id=profile.id, limit=5)
+
     return _templates.TemplateResponse(
         request,
         "lessio/u/profile.html",
         {
             "tutor": profile,
             "services": services,
+            "aggregate": aggregate,
+            "recent_reviews": recent_reviews,
             "canonical_url": f"https://getdoday.ru/u/{profile.slug}",
         },
     )

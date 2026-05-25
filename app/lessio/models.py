@@ -14,6 +14,7 @@ from uuid import UUID, uuid4
 from sqlalchemy import (
     BigInteger,
     Boolean,
+    CheckConstraint,
     DateTime,
     ForeignKey,
     Integer,
@@ -223,3 +224,39 @@ class LessioBooking(Base):
     )
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class LessioReview(Base):
+    """Отзыв клиента после завершённой встречи (status='completed').
+
+    Один review per booking (UNIQUE). Client_email/full_name денормализованы —
+    если LessioClient удалят, review останется читаемым.
+
+    Aggregate rating tutor'а — SELECT count(*), avg(rating) FROM lessio_reviews
+    WHERE tutor_id = ?. На /u/<slug> показываем aggregateRating в JSON-LD
+    schema.org для SEO + последние N reviews для social proof.
+    """
+
+    __tablename__ = "lessio_reviews"
+    __table_args__ = (
+        CheckConstraint("rating BETWEEN 1 AND 5", name="ck_lessio_review_rating_1_5"),
+    )
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    booking_id: Mapped[UUID] = mapped_column(
+        ForeignKey("lessio_bookings.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+    )
+    tutor_id: Mapped[UUID] = mapped_column(
+        ForeignKey("lessio_tutor_profiles.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    client_email: Mapped[str] = mapped_column(String(255), nullable=False)
+    client_full_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    rating: Mapped[int] = mapped_column(Integer, nullable=False)
+    text: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, nullable=False
+    )

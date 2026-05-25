@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Оцените встречу · {{ tutor.display_name }}</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" href="/favicon.ico">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(180deg, #0f0a1f 0%, #2e1065 100%);
+      color: #f5f3ff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+    }
+    .star-input { font-size: 2.5rem; line-height: 1; cursor: pointer; }
+  </style>
+</head>
+<body>
+<main class="mx-auto max-w-md py-12 px-5">
+  <h1 class="text-2xl font-extrabold mb-2 text-center">Как прошла встреча?</h1>
+  <p class="text-violet-200/70 text-sm text-center mb-8">
+    {{ service.title }} с <b>{{ tutor.display_name }}</b><br>
+    {{ booking.starts_at.strftime('%d.%m.%Y %H:%M') }} UTC
+  </p>
+
+  {% if error %}
+  <div class="mb-4 px-4 py-3 rounded-xl bg-rose-500/15 text-rose-300 text-sm">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" action="/lessio/review/{{ booking.manage_token }}"
+        class="space-y-5 bg-white/5 border border-white/10 rounded-2xl p-5"
+        x-data="{ rating: 5 }">
+
+    <div class="text-center">
+      <span class="text-sm font-semibold mb-3 block text-violet-200/80">Ваша оценка</span>
+      <div class="flex justify-center gap-1">
+        {% for i in range(1, 6) %}
+        <button type="button" x-on:click="rating={{ i }}"
+                x-bind:class="rating >= {{ i }} ? 'text-amber-300' : 'text-violet-300/30'"
+                class="star-input hover:scale-110 transition-transform">★</button>
+        {% endfor %}
+      </div>
+      <input type="hidden" name="rating" x-bind:value="rating" required>
+    </div>
+
+    <label class="block">
+      <span class="text-sm font-semibold mb-1.5 block">Комментарий (опционально)</span>
+      <textarea name="text" rows="4" maxlength="2000"
+                placeholder="Что понравилось? Чем выделяется репетитор?"
+                class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg resize-none focus:outline-none focus:border-violet-400"></textarea>
+      <span class="text-xs text-violet-300/40 mt-1 block">До 2000 символов</span>
+    </label>
+
+    <button class="w-full px-6 py-3 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-bold hover:opacity-90 transition">
+      Отправить отзыв →
+    </button>
+  </form>
+
+  <p class="text-xs text-violet-300/40 text-center mt-6">
+    Отзыв будет виден на странице {{ tutor.display_name }} после премодерации.
+  </p>
+
+  <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</main>
+{% include "lessio/_metrika.html" %}
+</body>
+</html>
