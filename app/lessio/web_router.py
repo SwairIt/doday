@@ -154,40 +154,6 @@ async def setup_profile_submit(
     return RedirectResponse("/lessio/app/today", status_code=302)
 
 
-# ── Placeholder cabinet endpoint (полный кабинет — wk3) ───────────────
-
-
-@router.get("/app/today", response_class=HTMLResponse, include_in_schema=False)
-async def lessio_today_placeholder(
-    user: RequiredUser,
-    session: AsyncSession = Depends(get_session),  # noqa: B008
-) -> Response:
-    profile = (
-        await session.execute(
-            select(LessioTutorProfile).where(LessioTutorProfile.user_id == user.id)
-        )
-    ).scalar_one_or_none()
-    if profile is None:
-        return RedirectResponse("/lessio/app/setup-profile", status_code=302)
-    return HTMLResponse(
-        f'<!doctype html><html lang="ru"><head><meta charset="utf-8">'
-        f"<title>Lessio · {profile.display_name}</title>"
-        '<meta name="robots" content="noindex,nofollow">'
-        '<script src="https://cdn.tailwindcss.com"></script></head>'
-        '<body style="background:linear-gradient(180deg,#0f0a1f,#2e1065);'
-        'color:#f5f3ff;font-family:-apple-system,Segoe UI,sans-serif;min-height:100vh;">'
-        '<main class="mx-auto max-w-2xl px-5 py-12">'
-        f'<h1 class="text-4xl font-extrabold mb-4">Привет, {profile.display_name}!</h1>'
-        '<p class="text-violet-200/80 mb-6">Профиль создан. Поделись ссылкой с клиентами:</p>'
-        '<div class="bg-white/5 border border-white/10 rounded-2xl p-5 mb-6">'
-        f'<a href="/u/{profile.slug}" class="text-violet-300 underline break-all">'
-        f"getdoday.ru/u/{profile.slug}</a></div>"
-        '<p class="text-violet-300/60 text-sm">Полный кабинет '
-        "(календарь, клиенты, услуги, доход) — в разработке.</p>"
-        "</main></body></html>"
-    )
-
-
 # ── Manage magic-link (anon client) ───────────────────────────────────
 
 

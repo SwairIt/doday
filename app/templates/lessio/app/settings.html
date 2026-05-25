@@ -1,0 +1,59 @@
+{% extends "lessio/app/_base.html" %}
+{% block title %}Настройки · Lessio{% endblock %}
+{% block content %}
+<header class="mb-8">
+  <h1 class="text-3xl font-extrabold mb-1">Настройки</h1>
+  <p class="text-violet-200/60 text-sm">Профиль, видеоссылка, уведомления</p>
+</header>
+
+{% if request.query_params.get('saved') %}
+<div class="mb-6 px-4 py-3 rounded-xl bg-emerald-500/15 text-emerald-300 text-sm">
+  ✓ Сохранено
+</div>
+{% endif %}
+
+<form method="post" action="/lessio/app/settings"
+      class="space-y-6 bg-white/5 border border-white/10 rounded-2xl p-6">
+
+  <label class="block">
+    <span class="text-sm font-semibold mb-1.5 block">О себе (показывается на /u/{{ profile.slug }})</span>
+    <textarea name="bio" rows="4" maxlength="1000"
+              class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg resize-none focus:outline-none focus:border-violet-400">{{ profile.bio or '' }}</textarea>
+    <span class="text-xs text-violet-300/40 mt-1 block">До 1000 символов</span>
+  </label>
+
+  <label class="block">
+    <span class="text-sm font-semibold mb-1.5 block">Шаблон видеоссылки</span>
+    <input name="default_meeting_url_template" type="url" maxlength="500"
+           placeholder="https://meet.google.com/abc-defg-hij"
+           value="{{ profile.default_meeting_url_template or '' }}"
+           class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
+    <span class="text-xs text-violet-300/40 mt-1 block">
+      Подставляется в подтверждение booking'а если у услуги нет своей ссылки.
+    </span>
+  </label>
+
+  <label class="block">
+    <span class="text-sm font-semibold mb-1.5 block">Email для уведомлений</span>
+    <input name="notification_email" type="email" maxlength="255"
+           placeholder="me@example.com"
+           value="{{ profile.notification_email or '' }}"
+           class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
+    <span class="text-xs text-violet-300/40 mt-1 block">
+      Куда слать «новая запись» / «клиент отменил». Если пусто — уведомления tutor'у не идут.
+    </span>
+  </label>
+
+  <button class="px-6 py-3 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-bold hover:opacity-90 transition">
+    Сохранить
+  </button>
+</form>
+
+<aside class="mt-8 p-4 bg-white/5 border border-white/10 rounded-xl text-sm text-violet-300/60">
+  <p>
+    <b class="text-violet-200">Slug</b> ({{ profile.slug }}) и
+    <b class="text-violet-200">имя на странице</b> ({{ profile.display_name }})
+    задаются при создании профиля. Изменение этих полей появится в следующих версиях.
+  </p>
+</aside>
+{% endblock %}

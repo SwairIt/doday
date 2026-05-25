@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{% block title %}Lessio · Кабинет{% endblock %}</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" href="/favicon.ico">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(180deg, #0f0a1f 0%, #1a0f3d 60%, #2e1065 100%);
+      color: #f5f3ff;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .nav-link {
+      display: block;
+      padding: .6rem .9rem;
+      border-radius: .6rem;
+      color: rgba(245, 243, 255, .6);
+      transition: background .1s, color .1s;
+    }
+    .nav-link:hover { background: rgba(255, 255, 255, .05); color: rgba(245, 243, 255, .9); }
+    .nav-link.active { background: rgba(167, 139, 250, .15); color: #a78bfa; }
+  </style>
+</head>
+<body class="antialiased">
+<div class="md:grid md:grid-cols-[220px_1fr] min-h-screen">
+  <aside class="border-b md:border-b-0 md:border-r border-white/5 p-4 bg-black/20">
+    <a href="/lessio" class="block text-xl font-extrabold mb-6">
+      <span style="background:linear-gradient(135deg,#a78bfa,#f472b6);-webkit-background-clip:text;background-clip:text;color:transparent;">
+        ✦ Lessio
+      </span>
+    </a>
+    <nav class="space-y-1 text-sm">
+      <a href="/lessio/app/today" class="nav-link {% if active_nav == 'today' %}active{% endif %}">📅 Сегодня</a>
+      <a href="/lessio/app/calendar" class="nav-link {% if active_nav == 'calendar' %}active{% endif %}">📆 Календарь</a>
+      <a href="/lessio/app/clients" class="nav-link {% if active_nav == 'clients' %}active{% endif %}">👥 Клиенты</a>
+      <a href="/lessio/app/services" class="nav-link {% if active_nav == 'services' %}active{% endif %}">💼 Услуги</a>
+      <a href="/lessio/app/schedule" class="nav-link {% if active_nav == 'schedule' %}active{% endif %}">⏰ Расписание</a>
+      <a href="/lessio/app/income" class="nav-link {% if active_nav == 'income' %}active{% endif %}">💰 Доход</a>
+      <a href="/lessio/app/settings" class="nav-link {% if active_nav == 'settings' %}active{% endif %}">⚙️ Настройки</a>
+    </nav>
+    <div class="mt-8 px-3 py-2 bg-white/5 rounded-lg text-xs">
+      <div class="text-violet-300/60 mb-1">Публичная ссылка</div>
+      <a href="/u/{{ profile.slug }}" target="_blank" rel="noopener"
+         class="text-violet-300 break-all hover:text-violet-200">
+        /u/{{ profile.slug }}
+      </a>
+    </div>
+    <form method="post" action="/auth/logout" class="mt-4">
+      <button class="text-xs text-violet-300/40 hover:text-violet-300/80">Выйти →</button>
+    </form>
+  </aside>
+
+  <main class="p-6 md:p-10 max-w-5xl">
+    {% block content %}{% endblock %}
+  </main>
+</div>
+</body>
+</html>
