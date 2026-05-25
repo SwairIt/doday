@@ -694,8 +694,22 @@ def build_lessio_app() -> Application[Any, Any, Any, Any, Any, Any] | None:
         return None
 
     async def _post_init(app: Application[Any, Any, Any, Any, Any, Any]) -> None:
-        """Lessio bot post-init: setMyCommands (validation phase: just /start)."""
-        from telegram import BotCommand
+        """Lessio bot post-init: setMyCommands + menu-button открывающую Lessio в WebApp."""
+        from telegram import BotCommand, MenuButtonWebApp, WebAppInfo
+
+        base = settings.app_base_url or "https://getdoday.ru"
+        # На фазе валидации menu-button открывает лендинг /lessio (waitlist форма).
+        # После MVP сменим URL на /lessio/miniapp/cabinet (tutor cabinet с TG-SDK).
+        webapp_url = base.rstrip("/") + "/lessio"
+        try:
+            await app.bot.set_chat_menu_button(
+                menu_button=MenuButtonWebApp(
+                    text="Открыть Lessio", web_app=WebAppInfo(url=webapp_url)
+                )
+            )
+            logger.info("Lessio menu button set to %s", webapp_url)
+        except Exception as e:
+            logger.warning("failed to set Lessio menu button: %s", e)
 
         try:
             await app.bot.set_my_commands([BotCommand("start", "Что такое Lessio")])
@@ -751,6 +765,10 @@ async def _run_both() -> None:
             await doday_app.initialize()
             await doday_app.start()
             await doday_updater.start_polling(allowed_updates=Update.ALL_TYPES)
+            # post_init НЕ вызывается автоматически при ручном initialize/start —
+            # это делает только Application.run_polling(). Вызываем вручную.
+            if doday_app.post_init is not None:
+                await doday_app.post_init(doday_app)
             logger.info("Doday bot polling started")
         except Exception as exc:
             logger.error("Doday bot failed to start: %s — continuing with Lessio only", exc)
@@ -767,6 +785,8 @@ async def _run_both() -> None:
             await lessio_app.initialize()
             await lessio_app.start()
             await lessio_updater.start_polling(allowed_updates=Update.ALL_TYPES)
+            if lessio_app.post_init is not None:
+                await lessio_app.post_init(lessio_app)
             logger.info("Lessio bot polling started")
         except Exception as exc:
             logger.error("Lessio bot failed to start: %s — continuing with Doday only", exc)

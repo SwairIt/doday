@@ -24,13 +24,19 @@ async def test_cmd_start_sends_welcome_with_cta() -> None:
     await cmd_start(update, SimpleNamespace())  # type: ignore[arg-type]
     update.message.reply_text.assert_awaited_once()
     text = update.message.reply_text.call_args.args[0]
-    # Брендинг + CTA + ссылка на waitlist.
+    # Брендинг + CTA в тексте + наличие inline-кнопки с WebApp в reply_markup.
     assert "Lessio" in text
-    assert "getdoday.ru/lessio" in text
     assert "waitlist" in text.lower()
-    # HTML parse mode для жирного текста и ссылок.
+    # HTML parse mode для жирного текста.
     kwargs = update.message.reply_text.call_args.kwargs
     assert kwargs.get("parse_mode") == "HTML"
+    # Inline-кнопка с WebApp = /lessio (открывается прямо в Telegram WebView).
+    markup = kwargs.get("reply_markup")
+    assert markup is not None, "expected reply_markup with inline button"
+    # Спускаемся до WebAppInfo URL — структура: [[InlineKeyboardButton(web_app=WebAppInfo(url=...))]]
+    button = markup.inline_keyboard[0][0]
+    assert button.web_app is not None
+    assert button.web_app.url.endswith("/lessio")
 
 
 async def test_cmd_start_ignores_missing_message() -> None:
