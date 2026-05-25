@@ -1,0 +1,74 @@
+{% extends "lessio/app/_base.html" %}
+{% block title %}Расписание · Lessio{% endblock %}
+{% block content %}
+<header class="mb-8">
+  <h1 class="text-3xl font-extrabold mb-1">Расписание</h1>
+  <p class="text-violet-200/60 text-sm">Когда вы доступны для встреч</p>
+</header>
+
+{% if request.query_params.get('saved') %}
+<div class="mb-6 px-4 py-3 rounded-xl bg-emerald-500/15 text-emerald-300 text-sm">
+  ✓ Сохранено
+</div>
+{% endif %}
+
+<form method="post" action="/lessio/app/schedule"
+      class="space-y-6 bg-white/5 border border-white/10 rounded-2xl p-6">
+
+  <div>
+    <span class="text-sm font-semibold mb-3 block">Рабочие дни</span>
+    <div class="grid grid-cols-7 gap-2">
+      {% set day_labels = [('1', 'Пн'), ('2', 'Вт'), ('3', 'Ср'), ('4', 'Чт'), ('5', 'Пт'), ('6', 'Сб'), ('7', 'Вс')] %}
+      {% for val, label in day_labels %}
+      <label class="text-center">
+        <input type="checkbox" name="working_days" value="{{ val }}"
+               {% if val|int in profile.working_days %}checked{% endif %}
+               class="peer sr-only">
+        <span class="block px-2 py-3 bg-white/5 border border-white/10 rounded-lg cursor-pointer peer-checked:bg-violet-500 peer-checked:border-violet-400 transition">
+          {{ label }}
+        </span>
+      </label>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <label class="block">
+      <span class="text-sm font-semibold mb-1.5 block">Начало рабочего дня</span>
+      <input name="work_start_hour" type="number" min="0" max="23" required
+             value="{{ work_start_hour }}"
+             class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
+      <span class="text-xs text-violet-300/40 mt-1 block">часов (0–23)</span>
+    </label>
+    <label class="block">
+      <span class="text-sm font-semibold mb-1.5 block">Конец рабочего дня</span>
+      <input name="work_end_hour" type="number" min="1" max="24" required
+             value="{{ work_end_hour }}"
+             class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
+      <span class="text-xs text-violet-300/40 mt-1 block">часов (1–24)</span>
+    </label>
+  </div>
+
+  <label class="block">
+    <span class="text-sm font-semibold mb-1.5 block">Буфер между встречами</span>
+    <input name="buffer_minutes" type="number" min="0" max="240" required
+           value="{{ profile.buffer_minutes }}"
+           class="w-32 px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
+    <span class="text-xs text-violet-300/40 mt-1 block">
+      минут. После каждой встречи система не позволит забронировать ближе чем через N минут.
+    </span>
+  </label>
+
+  <button class="px-6 py-3 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-bold hover:opacity-90 transition">
+    Сохранить расписание
+  </button>
+</form>
+
+<aside class="mt-8 p-4 bg-white/5 border border-white/10 rounded-xl text-sm text-violet-300/60">
+  <p>
+    Все слоты считаются в <b>UTC</b>. Это упрощает интеграцию с международными
+    клиентами — каждый видит время в своей зоне.
+    Поддержку tutor-timezone сделаем после первых 10 регистраций.
+  </p>
+</aside>
+{% endblock %}

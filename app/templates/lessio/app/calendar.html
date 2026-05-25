@@ -1,0 +1,59 @@
+{% extends "lessio/app/_base.html" %}
+{% block title %}Календарь · Lessio{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <h1 class="text-3xl font-extrabold mb-1">Календарь</h1>
+    <p class="text-violet-200/60 text-sm">{{ month_label }} · {{ profile.display_name }}</p>
+  </div>
+  <nav class="flex gap-2">
+    <a href="{{ prev_link }}"
+       class="px-3 py-2 bg-white/5 rounded-lg text-sm hover:bg-white/10">← Назад</a>
+    <a href="/lessio/app/calendar"
+       class="px-3 py-2 bg-white/5 rounded-lg text-sm hover:bg-white/10">Сегодня</a>
+    <a href="{{ next_link }}"
+       class="px-3 py-2 bg-white/5 rounded-lg text-sm hover:bg-white/10">Вперёд →</a>
+  </nav>
+</header>
+
+<div class="grid grid-cols-7 gap-1 text-center text-xs text-violet-300/40 mb-2">
+  {% for d in ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'] %}
+  <div>{{ d }}</div>
+  {% endfor %}
+</div>
+
+<div class="grid grid-cols-7 gap-1">
+  {% for day in days_grid %}
+    {% if day is none %}
+      <div class="aspect-square"></div>
+    {% else %}
+      {% set bookings_today = by_day.get(day.day, []) %}
+      <div class="aspect-square p-1.5 border border-white/5 rounded-lg
+                  {% if day == today %}bg-violet-500/15 border-violet-400/40{% else %}bg-white/5{% endif %}
+                  overflow-hidden">
+        <div class="text-xs font-bold {% if day == today %}text-violet-200{% else %}text-violet-300/60{% endif %} mb-1">
+          {{ day.day }}
+        </div>
+        <div class="space-y-0.5">
+          {% for b in bookings_today[:3] %}
+          <div class="text-[10px] truncate
+                      {% if b.status == 'cancelled' %}bg-rose-500/20 text-rose-300{% elif b.status == 'completed' %}bg-emerald-500/20 text-emerald-300{% else %}bg-violet-500/20 text-violet-200{% endif %}
+                      px-1 py-0.5 rounded">
+            {{ b.starts_at.strftime('%H:%M') }} {{ b.client_full_name[:10] }}
+          </div>
+          {% endfor %}
+          {% if bookings_today | length > 3 %}
+          <div class="text-[10px] text-violet-300/40">+{{ bookings_today | length - 3 }}</div>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  {% endfor %}
+</div>
+
+<aside class="mt-6 flex flex-wrap gap-3 text-xs text-violet-300/60">
+  <div class="flex items-center gap-1.5"><span class="w-3 h-3 bg-violet-500/40 rounded"></span> подтверждено</div>
+  <div class="flex items-center gap-1.5"><span class="w-3 h-3 bg-rose-500/40 rounded"></span> отменено</div>
+  <div class="flex items-center gap-1.5"><span class="w-3 h-3 bg-emerald-500/40 rounded"></span> проведено</div>
+</aside>
+{% endblock %}
