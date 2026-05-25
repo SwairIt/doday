@@ -21,6 +21,9 @@ dependencies = [
     "structlog>=24.4,<25",
     "python-telegram-bot>=21.10,<22",
     "sentry-sdk[fastapi]>=2.18,<3",
+    # tzdata bundled — Windows нет system /usr/share/zoneinfo; нужно для
+    # pythonsoftware zoneinfo. Linux/Mac берёт системные, но pip-install harmless.
+    "tzdata>=2024.2",
 ]
 
 [dependency-groups]

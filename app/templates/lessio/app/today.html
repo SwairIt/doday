@@ -8,13 +8,16 @@
   </p>
 </header>
 
-{% if bookings %}
+{% if booking_views %}
 <section class="space-y-3">
-  {% for b in bookings %}
+  {% for view in booking_views %}
+  {% set b = view.obj %}
   <article class="bg-white/5 border border-white/10 rounded-2xl p-5 flex flex-wrap items-start gap-4">
     <div class="min-w-[80px]">
-      <div class="text-2xl font-extrabold">{{ b.starts_at.strftime('%H:%M') }}</div>
-      <div class="text-xs text-violet-300/60">{{ b.duration_minutes }} мин</div>
+      <div class="text-2xl font-extrabold">{{ view.time_local }}</div>
+      <div class="text-xs text-violet-300/60">
+        {{ b.duration_minutes }} мин · ({{ view.tz_label }})
+      </div>
     </div>
     <div class="flex-1 min-w-[200px]">
       <div class="font-bold text-lg">{{ b.client_full_name }}</div>

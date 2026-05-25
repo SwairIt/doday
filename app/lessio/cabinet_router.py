@@ -11,6 +11,7 @@ import calendar
 from datetime import UTC, date, datetime, timedelta
 from typing import Annotated
 from uuid import UUID
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
@@ -47,8 +48,16 @@ async def today(
     session: AsyncSession = Depends(get_session),  # noqa: B008
 ) -> Response:
     profile = await _require_profile(session, user.id)
-    today_start = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
-    today_end = today_start + timedelta(days=1)
+    # Считаем границу «сегодня» в зоне tutor'а — иначе UTC-полночь может
+    # неправильно отделить вечерние/ночные встречи.
+    try:
+        tz = ZoneInfo(profile.timezone)
+    except ZoneInfoNotFoundError:
+        tz = ZoneInfo("UTC")
+    now_local = datetime.now(tz)
+    day_start_local = now_local.replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start = day_start_local.astimezone(UTC)
+    today_end = (day_start_local + timedelta(days=1)).astimezone(UTC)
     bookings = (
         (
             await session.execute(
@@ -65,10 +74,24 @@ async def today(
         .scalars()
         .all()
     )
+    # Pre-compute formatted-tz strings (Jinja не должен знать про ZoneInfo)
+    booking_views = [
+        {
+            "obj": b,
+            "time_local": _format_in_tz(b.starts_at, profile.timezone, fmt="%H:%M"),
+            "tz_label": _format_in_tz(b.starts_at, profile.timezone, fmt="%Z"),
+        }
+        for b in bookings
+    ]
     return _templates.TemplateResponse(
         request,
         "lessio/app/today.html",
-        {"profile": profile, "bookings": bookings, "active_nav": "today"},
+        {
+            "profile": profile,
+            "bookings": bookings,
+            "booking_views": booking_views,
+            "active_nav": "today",
+        },
     )
 
 
@@ -85,13 +108,48 @@ async def settings_page(
     return _templates.TemplateResponse(
         request,
         "lessio/app/settings.html",
-        {"profile": profile, "active_nav": "settings"},
+        {
+            "profile": profile,
+            "active_nav": "settings",
+            "lessio_timezones": _LESSIO_TIMEZONES,
+        },
     )
 
 
 _SETTINGS_ALLOWED_NICHES: frozenset[str] = frozenset(
     {"english", "ielts", "math", "school", "fitness", "psychology", "yoga", "other"}
 )
+
+# Популярные TZ репетиторов РФ/СНГ. Server-side проверка zoneinfo всё равно
+# идёт через ZoneInfo(...) — этот список — для UI dropdown.
+_LESSIO_TIMEZONES: list[tuple[str, str]] = [
+    ("Europe/Kaliningrad", "Калининград (UTC+2)"),
+    ("Europe/Moscow", "Москва · Санкт-Петербург (UTC+3)"),
+    ("Europe/Samara", "Самара (UTC+4)"),
+    ("Asia/Yekaterinburg", "Екатеринбург (UTC+5)"),
+    ("Asia/Omsk", "Омск (UTC+6)"),
+    ("Asia/Krasnoyarsk", "Красноярск (UTC+7)"),
+    ("Asia/Irkutsk", "Иркутск (UTC+8)"),
+    ("Asia/Yakutsk", "Якутск (UTC+9)"),
+    ("Asia/Vladivostok", "Владивосток (UTC+10)"),
+    ("Asia/Magadan", "Магадан (UTC+11)"),
+    ("Asia/Kamchatka", "Камчатка (UTC+12)"),
+    ("Asia/Almaty", "Алматы (UTC+6)"),
+    ("Asia/Tashkent", "Ташкент (UTC+5)"),
+    ("Europe/Kyiv", "Киев (UTC+2/+3)"),
+    ("Europe/Minsk", "Минск (UTC+3)"),
+    ("Europe/Belgrade", "Белград (UTC+1/+2)"),
+    ("UTC", "UTC"),
+]
+
+
+def _format_in_tz(dt: datetime, tz_name: str, *, fmt: str) -> str:
+    """Format aware UTC datetime в tutor's timezone. Fall back to UTC if invalid."""
+    try:
+        tz = ZoneInfo(tz_name)
+    except ZoneInfoNotFoundError:
+        tz = ZoneInfo("UTC")
+    return dt.astimezone(tz).strftime(fmt)
 
 
 @router.post("/settings", response_class=HTMLResponse, include_in_schema=False)
@@ -102,6 +160,7 @@ async def settings_submit(
     display_name: Annotated[str, Form()] = "",
     niche: Annotated[str, Form()] = "",
     avatar_emoji: Annotated[str, Form()] = "",
+    timezone: Annotated[str, Form()] = "",
     bio: Annotated[str | None, Form()] = None,
     default_meeting_url_template: Annotated[str | None, Form()] = None,
     notification_email: Annotated[str | None, Form()] = None,
@@ -115,6 +174,14 @@ async def settings_submit(
     new_display_name = (display_name or "").strip()
     new_niche = niche if niche in _SETTINGS_ALLOWED_NICHES else profile.niche
     new_emoji = (avatar_emoji or "").strip()[:8] or profile.avatar_emoji
+    # Validate timezone via ZoneInfo — invalid keeps current
+    new_tz = profile.timezone
+    if timezone:
+        try:
+            ZoneInfo(timezone)
+            new_tz = timezone[:64]
+        except ZoneInfoNotFoundError:
+            pass  # keep current
 
     slug_changed = False
     if new_slug and new_slug != profile.slug:
@@ -152,6 +219,7 @@ async def settings_submit(
         profile.display_name = new_display_name[:100]
     profile.niche = new_niche
     profile.avatar_emoji = new_emoji
+    profile.timezone = new_tz
     profile.bio = ((bio or "").strip()[:1000]) or None
     profile.default_meeting_url_template = (
         ((default_meeting_url_template or "").strip()[:500]) or None

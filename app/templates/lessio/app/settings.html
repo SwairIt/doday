@@ -77,6 +77,20 @@
                 class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg resize-none focus:outline-none focus:border-violet-400">{{ profile.bio or '' }}</textarea>
       <span class="text-xs text-violet-300/40 mt-1 block">До 1000 символов</span>
     </label>
+
+    <label class="block">
+      <span class="text-sm font-semibold mb-1.5 block">Часовой пояс</span>
+      <select name="timezone" required
+              class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
+        {% for tz_value, tz_label in lessio_timezones %}
+        <option value="{{ tz_value }}" {% if profile.timezone == tz_value %}selected{% endif %}>{{ tz_label }}</option>
+        {% endfor %}
+      </select>
+      <span class="text-xs text-violet-300/40 mt-1 block">
+        В этой зоне отображаются ваш Today / Calendar / Income. Клиенты видят время
+        в своей зоне автоматически (через браузерный Intl).
+      </span>
+    </label>
   </fieldset>
 
   <fieldset class="space-y-4">

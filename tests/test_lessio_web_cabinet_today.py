@@ -54,7 +54,14 @@ async def test_today_shows_upcoming_bookings(client: AsyncClient, db_session: As
     assert service is not None
 
     with patch("app.lessio.service.send_booking_emails", new_callable=AsyncMock):
-        today_slot = datetime.now(UTC).replace(hour=14, minute=0, second=0, microsecond=0)
+        # «Сегодня» считается в tutor TZ (default Europe/Moscow); используем MSK 14:00
+        # чтобы тест был детерминированным независимо от UTC времени запуска.
+        from zoneinfo import ZoneInfo
+
+        msk_today = datetime.now(ZoneInfo("Europe/Moscow")).replace(
+            hour=14, minute=0, second=0, microsecond=0
+        )
+        today_slot = msk_today.astimezone(UTC)
         await create_booking(
             db_session,
             tutor=tutor,
