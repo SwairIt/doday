@@ -151,6 +151,14 @@ async def setup_profile_submit(
 
     await create_services_from_template(session, tutor=tutor, niche=safe_niche)
     await session.commit()
+
+    # Fire-and-forget IndexNow ping — Yandex/Bing должны узнать о новой /u/<slug>
+    from app.config import get_settings as _gs
+    from app.lessio.indexnow import ping_indexnow
+
+    base = _gs().app_base_url.rstrip("/")
+    await ping_indexnow(urls=[f"{base}/u/{tutor.slug}"])
+
     return RedirectResponse("/lessio/app/today", status_code=302)
 
 

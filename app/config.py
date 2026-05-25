@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     # Empty в dev — скрипт не подключается. Задаётся в .env прода.
     ya_metrika_id: str = ""
 
+    # IndexNow API key (16+ hex chars). Должен также быть размещён на
+    # https://getdoday.ru/<key>.txt — endpoint в app.main отдаёт его автоматически.
+    # Empty → ping no-op. Используется Lessio при создании tutor-профиля.
+    indexnow_key: str = ""
+
     # Secret token for /api/digest/cron-trigger — prod cron passes it in
     # X-Cron-Token header, missing/wrong header → 403. Empty in dev disables
     # the endpoint (returns 503 with a hint to set the env var).

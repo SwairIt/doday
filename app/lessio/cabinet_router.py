@@ -116,6 +116,7 @@ async def settings_submit(
     new_niche = niche if niche in _SETTINGS_ALLOWED_NICHES else profile.niche
     new_emoji = (avatar_emoji or "").strip()[:8] or profile.avatar_emoji
 
+    slug_changed = False
     if new_slug and new_slug != profile.slug:
         if not validate_slug(new_slug):
             return _templates.TemplateResponse(
@@ -145,6 +146,7 @@ async def settings_submit(
                 status_code=400,
             )
         profile.slug = new_slug
+        slug_changed = True
 
     if new_display_name:
         profile.display_name = new_display_name[:100]
@@ -156,6 +158,14 @@ async def settings_submit(
     )
     profile.notification_email = ((notification_email or "").strip()[:255]) or None
     await session.commit()
+
+    if slug_changed:
+        from app.config import get_settings as _gs
+        from app.lessio.indexnow import ping_indexnow
+
+        base = _gs().app_base_url.rstrip("/")
+        await ping_indexnow(urls=[f"{base}/u/{profile.slug}"])
+
     return RedirectResponse("/lessio/app/settings?saved=1", status_code=303)
 
 

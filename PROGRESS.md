@@ -4,6 +4,29 @@
 
 ---
 
+## 2026-05-26 — Lessio Week 4: Post-MVP polish (editable profile · TZ · analytics · IndexNow)
+
+После MVP юзер сказал «давай доделывай» → 4 follow-up chunks отполировали UX и SEO:
+
+- ✅ **Chunk 4.1** (8e43b5b): editable profile в Settings (slug/display_name/niche/avatar_emoji/bio) с защитой от collision и invalid-format. Раньше эти поля были locked после setup-profile с заглушкой «появится в следующих версиях» — теперь редактируются.
+- ✅ **Chunk 4.2** (8ee4c27): client-side timezone localize для slot-pickers + booking confirm + manage. Каждый отображаемый UTC-слот несёт `data-utc-iso=<ISO>` и `class=lessio-localize`; inline `Intl.DateTimeFormat` JS конвертит в браузерную зону (Europe/Moscow, Asia/Yekaterinburg, etc) с display tz-name. Server-side остаётся UTC fallback если JS отключён.
+- ✅ **Chunk 4.3** (c5075d6): Yandex.Metrika tracking + `lessioGoal()` обёртка + `lessio_booking` conversion goal на /booked. Шаблон `templates/lessio/_metrika.html` подключается из всех Lessio public+cabinet страниц; conditional на `request.state.ya_metrika_id` — в dev no-op.
+- ✅ **Chunk 4.4** (этот коммит): IndexNow integration — ping Яндекса при создании tutor-профиля и при slug-change в settings → /u/<slug> попадает в индекс за минуты вместо дней. `app/lessio/indexnow.py::ping_indexnow` fire-and-forget. Endpoint `/<KEY>.txt` в `app/main.py` отдаёт ключ для верификации владения. `INDEXNOW_KEY` в `.env.example` документирован.
+
+**Тесты Week 4:** 5 + 3 + 5 + 5 = **18 новых TDD**. Полный Lessio-suite: **124 passed** (101 + 18 + 5). Полный Doday-suite остаётся зелёным.
+
+**Коммиты Week 4:** 8e43b5b (editable profile) → 8ee4c27 (tz-localize) → c5075d6 (metrika+goal) → [этот] (IndexNow).
+
+**Что осталось в Phase 2 (как было до wk4):**
+- Google Calendar OAuth busy-times sync.
+- Embedded payments (ЮKassa / Stars вне TG).
+- Aggregate rating в JSON-LD (нужны отзывы).
+- Tutor-timezone overrides на server-side (сейчас всё UTC + client-side display).
+- Multi-language UI (только RU).
+- PWA install prompt + push notifications.
+
+---
+
 ## 2026-05-26 — Lessio Web MVP · Week 3 завершена · Production-ready
 
 Полный кабинет репетитора + Income/CSV + dynamic OG-image. **3-недельный MVP (12 chunks) задеплоен полностью.**

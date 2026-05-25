@@ -5,7 +5,7 @@ import subprocess
 from collections.abc import Awaitable, Callable
 from urllib.parse import urlparse
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -377,6 +377,17 @@ async def sitemap_xml(session: AsyncSession = Depends(get_session)) -> Response:
 async def favicon() -> Response:
     """Inline SVG favicon — same gradient D as the PWA icon."""
     return Response(content=_PWA_ICON_SVG, media_type="image/svg+xml")
+
+
+@app.get("/{key:str}.txt", include_in_schema=False)
+async def indexnow_key_verification(key: str) -> Response:
+    """IndexNow key-verification endpoint (Yandex/Bing fetches /<KEY>.txt to confirm
+    ownership). Returns 404 unless `key` matches the configured INDEXNOW_KEY.
+    """
+    configured = (_settings.indexnow_key or "").strip()
+    if not configured or key != configured:
+        raise HTTPException(404, "Not found")
+    return PlainTextResponse(configured + "\n")
 
 
 _OG_IMAGE_SVG = (
