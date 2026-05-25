@@ -89,6 +89,41 @@ PRODUCTS: tuple[Product, ...] = (
         duration_months=12,
         stars_amount=5000,
     ),
+    # ── Lessio (Telegram-кабинет для репетиторов) — отдельный продукт внутри
+    # того же бота @DodayTaskBot. Запускается после прохождения waitlist-
+    # валидации (≥100 подписок к 2026-06-01).
+    Product(
+        code="tutor_pro_1m",
+        title="Lessio Pro · 1 месяц",
+        description=(
+            "Безлимит клиентов и занятий, статистика, экспорт CSV для «Моего "
+            "налога», брендирование бота — на 30 дней."
+        ),
+        grants_tier="pro",
+        duration_months=1,
+        stars_amount=1000,
+    ),
+    Product(
+        code="tutor_pro_12m",
+        title="Lessio Pro · 12 месяцев",
+        description=(
+            "Всё что в Pro 1 мес, но на год. Выгоднее на 17% — как 10 месяцев по цене 12."
+        ),
+        grants_tier="pro",
+        duration_months=12,
+        stars_amount=10000,
+    ),
+    Product(
+        code="tutor_pro_forever",
+        title="Lessio Pro · Founder",
+        description=(
+            "Founder-тариф — Pro без ограничения по времени. Платишь один раз, "
+            "пользуешься пока сервис жив. Лимит — первые 200 репетиторов."
+        ),
+        grants_tier="pro",
+        duration_months=None,  # lifetime
+        stars_amount=50000,
+    ),
 )
 
 

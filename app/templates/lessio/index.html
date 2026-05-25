@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0f0a1f">
+  <meta name="robots" content="index,follow">
+
+  <title>Lessio — Telegram-кабинет для репетиторов</title>
+  <meta name="description" content="Lessio — записи и оплата для репетиторов и онлайн-тренеров прямо в Telegram. Без сайта, без переводов на сбер, без Excel.">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Lessio — Telegram-кабинет для репетиторов">
+  <meta property="og:description" content="Записи и оплата в Telegram. 5 минут на запуск.">
+  <meta property="og:url" content="https://getdoday.ru/lessio">
+
+  <link rel="icon" href="/favicon.ico">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'tf-bg': '#0f0a1f',
+            'tf-accent': '#a78bfa',
+            'tf-accent-2': '#f472b6',
+          },
+        },
+      },
+    };
+  </script>
+  <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+
+  <style>
+    body {
+      background: linear-gradient(180deg, #0f0a1f 0%, #1a0f3d 60%, #2e1065 100%);
+      color: #f5f3ff;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .glow { box-shadow: 0 0 80px 20px rgba(167, 139, 250, 0.2); }
+    .gradient-text {
+      background: linear-gradient(135deg, #a78bfa, #f472b6);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+  </style>
+</head>
+<body class="antialiased">
+
+<main class="mx-auto max-w-5xl px-5 py-12 sm:py-20">
+
+  <!-- Hero -->
+  <section class="text-center mb-20">
+    <div class="inline-block px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs uppercase tracking-widest text-tf-accent mb-6">
+      🚀 Готовится к запуску · присоединяйся к founder-листу
+    </div>
+    <h1 class="text-4xl sm:text-6xl font-extrabold leading-tight mb-5">
+      Записи и оплата<br>
+      <span class="gradient-text">прямо в Telegram</span>
+    </h1>
+    <p class="text-lg sm:text-xl text-violet-200/80 max-w-2xl mx-auto mb-10 leading-relaxed">
+      Для репетиторов и онлайн-тренеров. Клиент тапает в боте → выбирает время →
+      платит через Telegram Stars → ты получаешь деньги и запись в календарь.
+      Без сайта, без переводов на сбер, без Excel с расписанием.
+    </p>
+
+    <div id="form-target" class="max-w-md mx-auto">
+      <form
+        hx-post="/lessio/waitlist"
+        hx-target="#form-target"
+        hx-swap="innerHTML"
+        class="space-y-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-5 glow"
+      >
+        <input
+          name="email"
+          type="email"
+          required
+          placeholder="ваш email"
+          class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-violet-300/40 focus:outline-none focus:border-tf-accent"
+        >
+        <select
+          name="niche"
+          class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-tf-accent"
+        >
+          <option value="english" class="bg-tf-bg">Английский / иностранные языки</option>
+          <option value="ielts" class="bg-tf-bg">IELTS / TOEFL / экзамены</option>
+          <option value="math" class="bg-tf-bg">Математика / физика / другие предметы</option>
+          <option value="school" class="bg-tf-bg">Школа / ЕГЭ / ОГЭ</option>
+          <option value="fitness" class="bg-tf-bg">Фитнес / йога / тренер</option>
+          <option value="psychology" class="bg-tf-bg">Психология / коучинг</option>
+          <option value="other" class="bg-tf-bg">Что-то другое</option>
+        </select>
+        <input
+          name="telegram_handle"
+          type="text"
+          placeholder="Telegram @handle (необязательно)"
+          class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-violet-300/40 focus:outline-none focus:border-tf-accent"
+        >
+        <textarea
+          name="pain_point"
+          rows="2"
+          placeholder="Что больше всего мешает тебе в работе сейчас? (необязательно, но это самое полезное для меня)"
+          class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-violet-300/40 focus:outline-none focus:border-tf-accent resize-none"
+        ></textarea>
+        <input name="source" type="hidden" value="landing">
+        <button
+          type="submit"
+          class="w-full px-6 py-3.5 bg-gradient-to-r from-tf-accent to-tf-accent-2 rounded-xl font-bold text-white hover:brightness-110 transition"
+        >
+          Хочу попробовать первым →
+        </button>
+      </form>
+      {% if show_count %}
+      <p class="text-sm text-violet-300/50 mt-4">Уже {{ waitlist_count }} репетиторов в листе ожидания</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- Pain → Solution rows -->
+  <section class="mb-20 space-y-6">
+    <h2 class="text-3xl font-bold text-center mb-8">Что было — что станет</h2>
+    {% for pain, fix in [
+      ("Расписание в Google Calendar и в голове. Клиент пишет «можно во вторник?» — лезешь смотреть.",
+       "Клиент видит твои свободные слоты в боте и записывается сам. Тебе приходит уведомление."),
+      ("Оплата — «переведи на сбер 5000». Чек? Иногда. Потом крутишься с самозанятым налогом.",
+       "Клиент платит через Telegram Stars прямо в боте. Доход видно в админке. Один CSV — и налог посчитан."),
+      ("Переносы по 5 раз в неделю. WhatsApp забит «давайте перенесём».",
+       "Клиент сам переносит на свободный слот. Ты подтверждаешь одной кнопкой."),
+      ("Напоминания клиенту — отдельно каждому. Если забыл — клиент не пришёл.",
+       "Бот шлёт напоминание клиенту за 24 ч и за 1 ч. No-show почти исчезает."),
+      ("Учёт клиентов — Notion или тетрадка. История платежей — нигде.",
+       "Карточка клиента: история занятий, оплат, средний интервал, заметки.")
+    ] %}
+    <div class="grid sm:grid-cols-2 gap-4 sm:gap-6 bg-white/5 border border-white/10 rounded-2xl p-5 sm:p-6">
+      <div class="text-violet-300/70">
+        <div class="text-xs uppercase tracking-widest text-rose-400/80 mb-2">Сейчас</div>
+        <p>{{ pain }}</p>
+      </div>
+      <div>
+        <div class="text-xs uppercase tracking-widest text-emerald-400/80 mb-2">С Lessio</div>
+        <p class="font-medium">{{ fix }}</p>
+      </div>
+    </div>
+    {% endfor %}
+  </section>
+
+  <!-- Pricing -->
+  <section class="mb-20">
+    <h2 class="text-3xl font-bold text-center mb-4">Цена</h2>
+    <p class="text-center text-violet-300/70 mb-10">Платишь только когда зарабатываешь больше, чем платишь нам.</p>
+    <div class="grid sm:grid-cols-3 gap-5">
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-6 text-center">
+        <div class="text-xs uppercase tracking-widest text-violet-300/70 mb-3">Free</div>
+        <div class="text-3xl font-extrabold mb-3">0 ⭐</div>
+        <p class="text-sm text-violet-300/70">До 5 клиентов и 20 занятий/мес. Полный функционал — чтобы попробовать без риска.</p>
+      </div>
+      <div class="bg-gradient-to-b from-tf-accent/30 to-tf-accent-2/20 border border-tf-accent/50 rounded-2xl p-6 text-center glow relative">
+        <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-tf-accent rounded-full text-xs font-bold">Рекомендую</div>
+        <div class="text-xs uppercase tracking-widest text-tf-accent mb-3">Pro · месяц</div>
+        <div class="text-3xl font-extrabold mb-1">1000 ⭐</div>
+        <div class="text-sm text-violet-200/60 mb-3">≈ 750 ₽</div>
+        <p class="text-sm">Безлимит клиентов, статистика, экспорт для «Моего налога», брендирование бота.</p>
+      </div>
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-6 text-center">
+        <div class="text-xs uppercase tracking-widest text-amber-400 mb-3">Founder · навсегда</div>
+        <div class="text-3xl font-extrabold mb-1">50 000 ⭐</div>
+        <div class="text-sm text-violet-200/60 mb-3">≈ 37 500 ₽ один раз</div>
+        <p class="text-sm">Pro без срока. Только первые 200 репетиторов.</p>
+      </div>
+    </div>
+    <p class="text-center text-xs text-violet-300/50 mt-6">+ Комиссия платформы 5% с каждой Stars-транзакции между тобой и клиентом.</p>
+  </section>
+
+  <!-- FAQ -->
+  <section class="mb-20 max-w-3xl mx-auto">
+    <h2 class="text-3xl font-bold text-center mb-8">Вопросы</h2>
+    <div class="space-y-3">
+      {% for q, a in [
+        ("Когда запуск?",
+         "Если за неделю наберётся 100+ репетиторов в waitlist — начинаю MVP. Первая бета через 4 недели после старта разработки."),
+        ("Сколько Telegram забирает со Stars?",
+         "Около 30% — стандартная комиссия за вывод. На странице цены указано нетто — то, что реально доходит до тебя."),
+        ("Мне 15 лет — могу я доверять?",
+         "Доверять стоит результату, а не возрасту. Уже сделал getdoday.ru (~400 пользователей, Stars работают). Архитектура Lessio той же команды. Код открытый на GitHub."),
+        ("Что если идея не зайдёт?",
+         "Тогда не делаю MVP, а пишу в waitlist что отказался. Твой email никуда не уйдёт."),
+        ("Можно платить с карты, не через Stars?",
+         "Stars — единственный способ для меня сейчас (15 лет, юрлица нет). Когда заведём юрлицо — добавим карты."),
+      ] %}
+      <details class="bg-white/5 border border-white/10 rounded-xl p-5">
+        <summary class="cursor-pointer font-semibold">{{ q }}</summary>
+        <p class="mt-3 text-violet-200/80 text-sm leading-relaxed">{{ a }}</p>
+      </details>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="text-center text-sm text-violet-300/50 pt-10 border-t border-white/5">
+    <p class="mb-2">Lessio · ещё один проект от <a href="/" class="underline hover:text-white">Doday.ru</a></p>
+    <p>
+      <a href="/" class="underline hover:text-white">← Doday (туду-лист)</a> ·
+      <a href="mailto:doday.support@gmail.com" class="underline hover:text-white">doday.support@gmail.com</a>
+    </p>
+  </footer>
+</main>
+
+</body>
+</html>

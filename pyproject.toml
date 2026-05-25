@@ -119,6 +119,9 @@ ignore = [
 "app/reminders/__init__.py" = ["RUF002"]
 "app/reminders/models.py" = ["RUF002"]
 "app/reminders/service.py" = ["RUF001", "RUF002", "RUF003"]
+"app/lessio/__init__.py" = ["RUF002"]                            # Russian in module docstring
+"app/lessio/models.py" = ["RUF001", "RUF002", "RUF003"]          # Russian in column docstrings + comments
+"app/lessio/router.py" = ["RUF001", "RUF002"]                    # Russian in user-facing error/success messages
 
 [tool.mypy]
 python_version = "3.12"
