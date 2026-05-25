@@ -134,6 +134,46 @@ async def send_reminder_email(
     return await _send(to=booking.client_email, subject=subject, html=html, text=text)
 
 
+async def send_welcome_email(*, to: str, tutor: LessioTutorProfile) -> bool:
+    """One-shot после создания LessioTutorProfile — onboarding tutorial + share link."""
+    base = _base_url()
+    ctx = {
+        "tutor": tutor,
+        "profile_url": f"{base}/u/{tutor.slug}",
+        "cabinet_url": f"{base}/lessio/app/today",
+        "services_url": f"{base}/lessio/app/services",
+        "schedule_url": f"{base}/lessio/app/schedule",
+    }
+    html = _env.get_template("welcome.html").render(**ctx)
+    text = _env.get_template("welcome.txt").render(**ctx)
+    return await _send(
+        to=to, subject=f"Добро пожаловать в Lessio, {tutor.display_name}! 🚀", html=html, text=text
+    )
+
+
+async def send_daily_digest_email(
+    *,
+    tutor: LessioTutorProfile,
+    to: str,
+    bookings_today: list[LessioBooking],
+    timezone_label: str,
+) -> bool:
+    """Утренний digest tutor'у — список встреч на сегодня в его зоне."""
+    base = _base_url()
+    ctx = {
+        "tutor": tutor,
+        "bookings": bookings_today,
+        "timezone_label": timezone_label,
+        "cabinet_url": f"{base}/lessio/app/today",
+    }
+    html = _env.get_template("daily_digest.html").render(**ctx)
+    text = _env.get_template("daily_digest.txt").render(**ctx)
+    count = len(bookings_today)
+    word = "встреча" if count == 1 else "встречи" if 2 <= count <= 4 else "встреч"
+    subject = f"☀️ Сегодня у вас {count} {word} · Lessio"
+    return await _send(to=to, subject=subject, html=html, text=text)
+
+
 async def send_review_request_email(
     *, booking: LessioBooking, tutor: LessioTutorProfile, service_title: str
 ) -> bool:

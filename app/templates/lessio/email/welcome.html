@@ -1,0 +1,37 @@
+{% extends "_base.html" %}
+{% block title %}Добро пожаловать в Lessio{% endblock %}
+{% block content %}
+<h1 style="margin:0 0 16px 0;font-size:24px;line-height:1.2;">🚀 Добро пожаловать!</h1>
+<p style="font-size:16px;line-height:1.55;color:#444;margin:0 0 16px 0;">
+  Привет, <b>{{ tutor.display_name }}</b>! Ваш профиль в Lessio готов.
+</p>
+
+<p style="font-size:16px;line-height:1.55;color:#444;margin:0 0 24px 0;">
+  Ваша публичная ссылка:
+</p>
+<table role="presentation" width="100%" style="background:#faf5ff;border-radius:12px;margin-bottom:24px;">
+<tr><td style="padding:16px 20px;text-align:center;">
+  <a href="{{ profile_url }}" style="color:#7c3aed;font-weight:700;word-break:break-all;">
+    {{ profile_url }}
+  </a>
+</td></tr>
+</table>
+
+<h2 style="font-size:18px;margin:24px 0 12px 0;color:#1a1230;">Что сделать сейчас:</h2>
+<ol style="padding-left:20px;color:#444;line-height:1.7;font-size:15px;">
+  <li><b>Проверьте расписание</b> — <a href="{{ schedule_url }}" style="color:#7c3aed;">рабочие дни / часы / буфер</a></li>
+  <li><b>Настройте услуги</b> — <a href="{{ services_url }}" style="color:#7c3aed;">цены / длительность / групповые занятия</a></li>
+  <li><b>Поделитесь ссылкой</b> в соцсетях, Telegram-канале, в подписи email</li>
+</ol>
+
+<p style="text-align:center;margin:28px 0 8px 0;">
+  <a href="{{ cabinet_url }}"
+     style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#d946ef);
+            color:#fff;text-decoration:none;font-weight:700;padding:14px 28px;border-radius:12px;">
+    Открыть кабинет →
+  </a>
+</p>
+<p style="font-size:13px;color:#888;margin:16px 0 0 0;text-align:center;">
+  Когда клиент запишется, придёт уведомление сюда. Удачных встреч!
+</p>
+{% endblock %}

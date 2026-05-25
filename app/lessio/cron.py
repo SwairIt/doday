@@ -9,12 +9,17 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 from typing import Any
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.lessio.email import send_reminder_email, send_review_request_email
+from app.lessio.email import (
+    send_daily_digest_email,
+    send_reminder_email,
+    send_review_request_email,
+)
 from app.lessio.models import LessioBooking, LessioService, LessioTutorProfile
 
 _log = structlog.get_logger(__name__)
@@ -142,3 +147,98 @@ async def mark_completed_bookings(session: AsyncSession) -> dict[str, Any]:
 # Backwards-compat alias: spec назывался dispatch_review_requests,
 # но фактически делает mark+email одной transaction'ой.
 dispatch_review_requests = mark_completed_bookings
+
+
+async def dispatch_daily_digests(session: AsyncSession) -> dict[str, Any]:
+    """Утренний digest: для каждого tutor'а с notification_email и confirmed-bookings
+    на сегодня (в его tz) → шлём список встреч.
+
+    Не идемпотентный: cron должен запускаться раз в день (через cron-poll
+    можно ограничить через флаг или WHERE-clause в будущем). В MVP принимаем что
+    дёрнут его раз в утро (e.g. 06:00 MSK).
+    """
+    now = datetime.now(UTC)
+    # Idempotency: skip если digest уже шёл < 20h назад
+    twenty_hours_ago = now - timedelta(hours=20)
+    tutors = (
+        (
+            await session.execute(
+                select(LessioTutorProfile).where(
+                    LessioTutorProfile.is_active.is_(True),
+                    LessioTutorProfile.notification_email.is_not(None),
+                    (LessioTutorProfile.last_daily_digest_at.is_(None))
+                    | (LessioTutorProfile.last_daily_digest_at < twenty_hours_ago),
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    sent = 0
+    failed = 0
+    for tutor in tutors:
+        try:
+            tz = ZoneInfo(tutor.timezone)
+        except ZoneInfoNotFoundError:
+            tz = ZoneInfo("UTC")
+        now_local = now.astimezone(tz)
+        day_start_local = now_local.replace(hour=0, minute=0, second=0, microsecond=0)
+        today_start = day_start_local.astimezone(UTC)
+        today_end = (day_start_local + timedelta(days=1)).astimezone(UTC)
+
+        bookings = (
+            (
+                await session.execute(
+                    select(LessioBooking)
+                    .where(
+                        LessioBooking.tutor_id == tutor.id,
+                        LessioBooking.starts_at >= today_start,
+                        LessioBooking.starts_at < today_end,
+                        LessioBooking.status == "confirmed",
+                    )
+                    .order_by(LessioBooking.starts_at)
+                )
+            )
+            .scalars()
+            .all()
+        )
+        if not bookings:
+            continue
+        # Enrich для шаблона: local_time + service_title + client_name
+        booking_views = []
+        for b in bookings:
+            service = await session.get(LessioService, b.service_id)
+            booking_views.append(
+                {
+                    "local_time": b.starts_at.astimezone(tz).strftime("%H:%M"),
+                    "client_name": b.client_full_name,
+                    "service_title": service.title if service else "—",
+                    "duration_minutes": b.duration_minutes,
+                }
+            )
+
+        tz_label = day_start_local.strftime("%Z") or tutor.timezone
+        try:
+            # filter уже отсёк None — но mypy не знает, поэтому fallback
+            recipient = tutor.notification_email or ""
+            if not recipient:
+                continue
+            ok = await send_daily_digest_email(
+                tutor=tutor,
+                to=recipient,
+                bookings_today=booking_views,  # type: ignore[arg-type]
+                timezone_label=tz_label,
+            )
+            if ok:
+                tutor.last_daily_digest_at = now
+                sent += 1
+            else:
+                failed += 1
+        except Exception as exc:
+            _log.warning("lessio_digest_failed", tutor_id=str(tutor.id), error=str(exc))
+            failed += 1
+    await session.flush()
+
+    _log.info("lessio_daily_digests_dispatched", sent=sent, failed=failed)
+    return {"sent": sent, "failed": failed}

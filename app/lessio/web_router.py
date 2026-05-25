@@ -154,10 +154,14 @@ async def setup_profile_submit(
 
     # Fire-and-forget IndexNow ping — Yandex/Bing должны узнать о новой /u/<slug>
     from app.config import get_settings as _gs
+    from app.lessio.email import send_welcome_email
     from app.lessio.indexnow import ping_indexnow
 
     base = _gs().app_base_url.rstrip("/")
     await ping_indexnow(urls=[f"{base}/u/{tutor.slug}"])
+
+    # Welcome email — onboarding tutorial. Fail-safe (SMTP-fail логируется).
+    await send_welcome_email(to=user.email, tutor=tutor)
 
     return RedirectResponse("/lessio/app/today", status_code=302)
 
@@ -526,7 +530,11 @@ async def cron_dispatch_reminders(
     session: AsyncSession = Depends(get_session),  # noqa: B008
 ) -> dict[str, Any]:
     from app.config import get_settings
-    from app.lessio.cron import dispatch_reminders, mark_completed_bookings
+    from app.lessio.cron import (
+        dispatch_daily_digests,
+        dispatch_reminders,
+        mark_completed_bookings,
+    )
 
     settings = get_settings()
     if not settings.cron_token:
@@ -536,8 +544,9 @@ async def cron_dispatch_reminders(
     r24 = await dispatch_reminders(session, hours=24)
     r1 = await dispatch_reminders(session, hours=1)
     completed = await mark_completed_bookings(session)
+    digests = await dispatch_daily_digests(session)
     await session.commit()
-    return {"24h": r24, "1h": r1, "completed": completed}
+    return {"24h": r24, "1h": r1, "completed": completed, "digests": digests}
 
 
 @_public_router.get("/u/{slug}/og.svg", include_in_schema=False)

@@ -1,0 +1,7 @@
+Доброе утро, {{ tutor.display_name }}!
+
+Сегодня у вас {{ bookings | length }} встреч ({{ timezone_label }}):
+
+{% for b in bookings %}{{ b.local_time }}  {{ b.client_name }} ({{ b.service_title }}, {{ b.duration_minutes }} мин)
+{% endfor %}
+Открыть Today: {{ cabinet_url }}

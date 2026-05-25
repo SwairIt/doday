@@ -87,6 +87,11 @@ class LessioTutorProfile(Base):
     default_meeting_url_template: Mapped[str | None] = mapped_column(String(500), nullable=True)
     notification_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     google_calendar_refresh_token: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # Idempotency для dispatch_daily_digests — cron-poll бьёт каждую минуту, но
+    # digest должен идти максимум 1×/день. Filter: WHERE NULL OR < now - 20h.
+    last_daily_digest_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False
     )
