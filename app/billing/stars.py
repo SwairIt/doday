@@ -109,22 +109,40 @@ class StarsError(Exception):
     """Bot API call failed."""
 
 
+def _bot_token_for_product(product_code: str) -> str:
+    """Return the bot token whose Stars-balance should hold this product's revenue.
+
+    Lessio products (`tutor_pro_*`) live on @LessioBot for brand separation +
+    isolated revenue accounting. All other Doday Tasks products (`pro_*`,
+    `family_*`) live on @DodayTaskBot. Raises StarsError if the matching token
+    is not configured.
+    """
+    settings = get_settings()
+    if product_code.startswith("tutor_pro_"):
+        if not settings.lessio_bot_token:
+            raise StarsError("LESSIO_BOT_TOKEN не задан — Stars-платежи для Lessio отключены")
+        return settings.lessio_bot_token
+    if not settings.telegram_bot_token:
+        raise StarsError("TELEGRAM_BOT_TOKEN не задан — Stars-платежи отключены")
+    return settings.telegram_bot_token
+
+
 async def create_invoice_link(user: User, product_code: str) -> str:
     """Ask Telegram for an `https://t.me/$...` link that opens the payment dialog.
 
     The user opens the URL inside Telegram (Mini App, chat, browser-deeplink) →
     Telegram shows the Stars-purchase prompt → after confirm, sends
-    pre_checkout_query then successful_payment to our bot.
+    pre_checkout_query then successful_payment to our bot. The invoice is
+    routed to the bot returned by `_bot_token_for_product` — Doday products
+    invoice @DodayTaskBot, Lessio products invoice @LessioBot.
     """
-    settings = get_settings()
-    if not settings.telegram_bot_token:
-        raise StarsError("TELEGRAM_BOT_TOKEN не задан — Stars-платежи отключены")
     product = get_product(product_code)
     if product is None:
         raise StarsError(f"неизвестный продукт: {product_code}")
+    bot_token = _bot_token_for_product(product_code)
 
     payload = sign_payload(product_code, user.id)
-    url = f"https://api.telegram.org/bot{settings.telegram_bot_token}/createInvoiceLink"
+    url = f"https://api.telegram.org/bot{bot_token}/createInvoiceLink"
     body = {
         "title": product.title,
         "description": product.description,
@@ -282,15 +300,15 @@ async def refund_payment(
     """Call Bot API refundStarPayment, mark row refunded, and roll back pro_until.
 
     Returns True on success. On Bot API failure (e.g. >21 days) we keep the
-    row as `paid` so the admin sees the error reason.
+    row as `paid` so the admin sees the error reason. Routes through the same
+    bot token that issued the original invoice (Lessio products → @LessioBot;
+    Doday products → @DodayTaskBot).
     """
-    settings = get_settings()
-    if not settings.telegram_bot_token:
-        raise StarsError("TELEGRAM_BOT_TOKEN не задан")
     if payment.status == "refunded":
         return True  # idempotent admin click
+    bot_token = _bot_token_for_product(payment.product_code)
 
-    url = f"https://api.telegram.org/bot{settings.telegram_bot_token}/refundStarPayment"
+    url = f"https://api.telegram.org/bot{bot_token}/refundStarPayment"
     body: dict[str, Any] = {
         "user_id": _telegram_user_id_for(session, payment.user_id),
         "telegram_payment_charge_id": payment.telegram_payment_charge_id,

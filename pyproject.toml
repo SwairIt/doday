@@ -124,6 +124,7 @@ ignore = [
 "app/lessio/admin.py" = ["RUF001", "RUF002"]                     # Russian in admin error/comment strings
 "app/lessio/models.py" = ["RUF001", "RUF002", "RUF003"]          # Russian in column docstrings + comments
 "app/lessio/router.py" = ["RUF001", "RUF002"]                    # Russian in user-facing error/success messages
+"app/lessio/telegram_handlers.py" = ["RUF001", "RUF002", "RUF003"]  # Russian welcome message + comments
 
 [tool.mypy]
 python_version = "3.12"

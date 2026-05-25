@@ -45,6 +45,16 @@ class Settings(BaseSettings):
     telegram_bot_token: str = ""
     telegram_bot_username: str = ""
 
+    # Lessio bot — отдельный @LessioBot для brand-separation от @DodayTaskBot.
+    # Worker процесс один и тот же (app/telegram/bot.py main()), но Application'ов
+    # два — крутятся в одном asyncio loop через gather. Если LESSIO_BOT_TOKEN пуст
+    # (validation phase до 2026-06-01 готов к этапу или просто Lessio выключен) —
+    # Lessio Application не создаётся, Doday bot работает как раньше. Stars-invoice
+    # для tutor_pro_* продуктов выписываются на этом боте, потому что Stars-выручка
+    # привязана к боту-источнику createInvoiceLink.
+    lessio_bot_token: str = ""
+    lessio_bot_username: str = ""
+
     # Beta-flag: если True — все юзеры получают Pro-фичи независимо от tier.
     # Раннее grandfather-обещание: «всё бесплатно сейчас, ранним юзерам Pro
     # останется навсегда когда введём оплату». Снимается в один клик в .env

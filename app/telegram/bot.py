@@ -1,12 +1,22 @@
-"""Telegram bot worker — long-running polling loop.
+"""Telegram bot worker — long-running polling loop для двух ботов.
 
 Запускается отдельно от uvicorn:
     .venv/bin/python -m app.telegram.bot
 
 На проде — systemd-сервис /etc/systemd/system/doday-bot.service с
-restart-on-failure. BOT_TOKEN из app/.env (settings.telegram_bot_token).
+restart-on-failure. Один процесс держит **два Telegram Application'а** в
+одном asyncio loop через `asyncio.gather`:
 
-Команды:
+- **@DodayTaskBot** (settings.telegram_bot_token) — Doday Tasks: /add, /today,
+  /done, /upcoming, /help, /app, /unlink. Stars payments для pro_* продуктов.
+- **@LessioBot** (settings.lessio_bot_token, OPTIONAL) — Lessio: на текущей
+  фазе валидации только /start с CTA на waitlist. Если LESSIO_BOT_TOKEN пуст —
+  Lessio Application не создаётся, worker крутит только Doday. После waitlist'а
+  ≥100 здесь добавятся /start lessio_<slug>, /cabinet и Stars handlers для
+  tutor_pro_* — handler-функции pre_checkout / successful_payment унифицированы
+  через HMAC payload (см. app.billing.stars).
+
+Команды Doday Tasks:
 - /start [token]   — приветствие; если токен — привязать к Doday-аккаунту
 - /help            — список команд
 - /add <текст>     — создать задачу (через quickadd-парсер: даты, приоритеты,
@@ -19,6 +29,7 @@ restart-on-failure. BOT_TOKEN из app/.env (settings.telegram_bot_token).
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import socket
 from datetime import UTC, datetime, timedelta
@@ -563,7 +574,8 @@ async def _job_morning_digest(context: ContextTypes.DEFAULT_TYPE) -> None:
                 logger.warning("Failed to send morning digest to %s: %s", link.chat_id, e)
 
 
-def build_app() -> Application[Any, Any, Any, Any, Any, Any]:
+def build_doday_app() -> Application[Any, Any, Any, Any, Any, Any]:
+    """Build @DodayTaskBot Application (full Doday Tasks feature set + Stars)."""
     # IPv4-only DNS — должен сработать ДО первого httpx.AsyncClient.
     _force_ipv4_resolve()
     settings = get_settings()
@@ -637,13 +649,89 @@ def build_app() -> Application[Any, Any, Any, Any, Any, Any]:
     return application
 
 
+def build_lessio_app() -> Application[Any, Any, Any, Any, Any, Any] | None:
+    """Build @LessioBot Application — validation-phase handlers only.
+
+    Returns None if LESSIO_BOT_TOKEN is empty (Lessio bot disabled). Returning
+    None — not raising — keeps the worker process running just Doday in graceful
+    degradation mode. Token can be added later via .env edit + systemctl restart
+    doday-bot, no code redeploy needed.
+    """
+    settings = get_settings()
+    if not settings.lessio_bot_token:
+        logger.info("LESSIO_BOT_TOKEN empty — @LessioBot disabled, running only Doday")
+        return None
+
+    async def _post_init(app: Application[Any, Any, Any, Any, Any, Any]) -> None:
+        """Lessio bot post-init: setMyCommands (validation phase: just /start)."""
+        from telegram import BotCommand
+
+        try:
+            await app.bot.set_my_commands([BotCommand("start", "Что такое Lessio")])
+            logger.info("Lessio bot commands registered: /start")
+        except Exception as e:
+            logger.warning("failed to set Lessio commands: %s", e)
+
+    application: Application[Any, Any, Any, Any, Any, Any] = (
+        Application.builder().token(settings.lessio_bot_token).post_init(_post_init).build()
+    )
+    from app.lessio.telegram_handlers import register_handlers as register_lessio_handlers
+
+    register_lessio_handlers(application)
+    return application
+
+
+async def _run_both() -> None:
+    """Start Doday + (optional) Lessio Application'ы в одном asyncio loop.
+
+    Не используем `Application.run_polling()` — он сам управляет loop'ом и
+    несовместим с gather'ом. Вместо этого ручная связка initialize/start/
+    updater.start_polling + бесконечное ожидание `asyncio.Event()` пока процесс
+    не получит SIGTERM от systemd.
+    """
+    doday_app = build_doday_app()
+    lessio_app = build_lessio_app()
+
+    doday_updater = doday_app.updater
+    if doday_updater is None:
+        raise RuntimeError("Doday Application.updater is None — builder misconfigured")
+    await doday_app.initialize()
+    await doday_app.start()
+    await doday_updater.start_polling(allowed_updates=Update.ALL_TYPES)
+    logger.info("Doday bot polling started")
+
+    lessio_updater = None
+    if lessio_app is not None:
+        lessio_updater = lessio_app.updater
+        if lessio_updater is None:
+            raise RuntimeError("Lessio Application.updater is None — builder misconfigured")
+        await lessio_app.initialize()
+        await lessio_app.start()
+        await lessio_updater.start_polling(allowed_updates=Update.ALL_TYPES)
+        logger.info("Lessio bot polling started")
+
+    # Wait until the worker is killed (systemd SIGTERM → CancelledError below).
+    stop_event = asyncio.Event()
+    try:
+        await stop_event.wait()
+    except (asyncio.CancelledError, KeyboardInterrupt):
+        logger.info("shutdown signal received, stopping bots…")
+    finally:
+        if lessio_app is not None and lessio_updater is not None:
+            await lessio_updater.stop()
+            await lessio_app.stop()
+            await lessio_app.shutdown()
+        await doday_updater.stop()
+        await doday_app.stop()
+        await doday_app.shutdown()
+
+
 def main() -> None:
     logging.basicConfig(
         format="%(asctime)s %(levelname)s %(name)s: %(message)s", level=logging.INFO
     )
-    logger.info("starting Doday Telegram bot...")
-    app = build_app()
-    app.run_polling(allowed_updates=Update.ALL_TYPES)
+    logger.info("starting Telegram bot worker (Doday + optional Lessio)…")
+    asyncio.run(_run_both())
 
 
 if __name__ == "__main__":
