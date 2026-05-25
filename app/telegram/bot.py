@@ -97,8 +97,22 @@ def _force_ipv4_resolve() -> None:
     маршрутизируется — httpx виснет на 30s connect-timeout, бот молча
     падает. Hardcoded IP — единственный путь без sudo /etc/hosts.
 
+    **Override**: можно отключить через env `DISABLE_TELEGRAM_IPV4_PATCH=1` —
+    нужно когда конкретный hardcoded IP перестал отвечать (Telegram периодически
+    ротирует DC IP-адреса). Без патча уйдёт обычный системный DNS, и если
+    провайдер сейчас отдаёт работающий IPv4 (или маршрут до IPv6 починили) —
+    бот заработает.
+
     Все остальные хосты резолвятся как было — мы не ломаем прочий outbound.
     """
+    import os
+
+    if os.environ.get("DISABLE_TELEGRAM_IPV4_PATCH", "").strip() in ("1", "true", "yes"):
+        logger.info(
+            "DISABLE_TELEGRAM_IPV4_PATCH set — skipping hardcoded api.telegram.org resolver"
+        )
+        return
+
     import asyncio.base_events
 
     sync_orig = socket.getaddrinfo
