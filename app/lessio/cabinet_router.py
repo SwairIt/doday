@@ -385,6 +385,144 @@ async def calendar_page(
     )
 
 
+# ── Income (paid bookings + CSV export) ───────────────────────────────
+
+
+async def _month_bookings(
+    session: AsyncSession, tutor_id: UUID, year: int, mo: int
+) -> list[LessioBooking]:
+    first = datetime(year, mo, 1, tzinfo=UTC)
+    if mo == 12:
+        next_first = datetime(year + 1, 1, 1, tzinfo=UTC)
+    else:
+        next_first = datetime(year, mo + 1, 1, tzinfo=UTC)
+    return list(
+        (
+            await session.execute(
+                select(LessioBooking)
+                .where(
+                    LessioBooking.tutor_id == tutor_id,
+                    LessioBooking.starts_at >= first,
+                    LessioBooking.starts_at < next_first,
+                    LessioBooking.status.in_(["confirmed", "completed"]),
+                )
+                .order_by(LessioBooking.starts_at)
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+
+@router.get("/income", response_class=HTMLResponse, include_in_schema=False)
+async def income_page(
+    request: Request,
+    user: RequiredUser,
+    month: str | None = None,
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> Response:
+    profile = await _require_profile(session, user.id)
+    year, mo = _parse_month(month)
+    bookings = await _month_bookings(session, profile.id, year, mo)
+    total_paid = sum(b.price_kopecks for b in bookings if b.payment_status == "paid")
+    total_unpaid = sum(b.price_kopecks for b in bookings if b.payment_status == "unpaid")
+    services = (
+        (await session.execute(select(LessioService).where(LessioService.tutor_id == profile.id)))
+        .scalars()
+        .all()
+    )
+    service_titles = {s.id: s.title for s in services}
+    prev_mo = (mo - 1) or 12
+    prev_yr = year if mo > 1 else year - 1
+    next_mo = (mo % 12) + 1
+    next_yr = year if mo < 12 else year + 1
+    return _templates.TemplateResponse(
+        request,
+        "lessio/app/income.html",
+        {
+            "profile": profile,
+            "active_nav": "income",
+            "year": year,
+            "month": mo,
+            "month_label": f"{year}-{mo:02d}",
+            "bookings": bookings,
+            "service_titles": service_titles,
+            "total_paid_rub": total_paid // 100,
+            "total_unpaid_rub": total_unpaid // 100,
+            "prev_link": f"/lessio/app/income?month={prev_yr}-{prev_mo:02d}",
+            "next_link": f"/lessio/app/income?month={next_yr}-{next_mo:02d}",
+            "csv_link": f"/lessio/app/income/export.csv?year={year}&month={mo}",
+        },
+    )
+
+
+@router.post(
+    "/bookings/{booking_id}/toggle-paid",
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+async def toggle_paid(
+    booking_id: UUID,
+    user: RequiredUser,
+    request: Request,
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> Response:
+    profile = await _require_profile(session, user.id)
+    booking = (
+        await session.execute(
+            select(LessioBooking).where(
+                LessioBooking.id == booking_id,
+                LessioBooking.tutor_id == profile.id,
+            )
+        )
+    ).scalar_one_or_none()
+    if booking is None:
+        raise HTTPException(404, "Запись не найдена")
+    if booking.payment_status == "paid":
+        booking.payment_status = "unpaid"
+        booking.paid_at = None
+    else:
+        booking.payment_status = "paid"
+        booking.paid_at = datetime.now(UTC)
+    await session.commit()
+    referer = request.headers.get("referer", "/lessio/app/income")
+    return RedirectResponse(referer, status_code=303)
+
+
+@router.get(
+    "/income/export.csv",
+    response_class=Response,
+    include_in_schema=False,
+)
+async def income_export_csv(
+    user: RequiredUser,
+    year: int,
+    month: int,
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> Response:
+    from app.lessio.csv_export import bookings_to_csv
+
+    profile = await _require_profile(session, user.id)
+    if not (1 <= month <= 12 and 2020 <= year <= 2100):
+        raise HTTPException(400, "Некорректный год/месяц")
+    bookings = await _month_bookings(session, profile.id, year, month)
+    services = (
+        (await session.execute(select(LessioService).where(LessioService.tutor_id == profile.id)))
+        .scalars()
+        .all()
+    )
+    service_titles = {s.id: s.title for s in services}
+    csv_text = bookings_to_csv(bookings, service_titles=service_titles)
+    # UTF-8 BOM — чтобы Excel/Numbers корректно отображал кириллицу
+    body = "﻿" + csv_text
+    filename = f"lessio_income_{year}-{month:02d}.csv"
+    return Response(
+        content=body,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
 @router.get("/clients/{client_id}", response_class=HTMLResponse, include_in_schema=False)
 async def client_detail(
     client_id: UUID,

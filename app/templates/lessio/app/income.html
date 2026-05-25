@@ -1,0 +1,74 @@
+{% extends "lessio/app/_base.html" %}
+{% block title %}Доход · Lessio{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <h1 class="text-3xl font-extrabold mb-1">Доход</h1>
+    <p class="text-violet-200/60 text-sm">{{ month_label }}</p>
+  </div>
+  <nav class="flex gap-2">
+    <a href="{{ prev_link }}" class="px-3 py-2 bg-white/5 rounded-lg text-sm hover:bg-white/10">← Назад</a>
+    <a href="/lessio/app/income" class="px-3 py-2 bg-white/5 rounded-lg text-sm hover:bg-white/10">Сегодня</a>
+    <a href="{{ next_link }}" class="px-3 py-2 bg-white/5 rounded-lg text-sm hover:bg-white/10">Вперёд →</a>
+  </nav>
+</header>
+
+<section class="grid grid-cols-2 gap-3 mb-6">
+  <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-5">
+    <div class="text-xs text-emerald-300/80 mb-1">Оплачено</div>
+    <div class="text-3xl font-extrabold text-emerald-300">
+      {{ "{:,}".format(total_paid_rub).replace(',', ' ') }} ₽
+    </div>
+  </div>
+  <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-5">
+    <div class="text-xs text-amber-300/80 mb-1">Ждёт оплаты</div>
+    <div class="text-3xl font-extrabold text-amber-300">
+      {{ "{:,}".format(total_unpaid_rub).replace(',', ' ') }} ₽
+    </div>
+  </div>
+</section>
+
+<div class="flex justify-end mb-4">
+  <a href="{{ csv_link }}"
+     class="px-4 py-2 bg-violet-500/20 text-violet-200 rounded-lg text-sm hover:bg-violet-500/30 transition">
+    Скачать CSV →
+  </a>
+</div>
+
+{% if bookings %}
+<section class="space-y-2">
+  {% for b in bookings %}
+  <article class="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-wrap items-center gap-4">
+    <div class="text-sm font-mono text-violet-300/80 min-w-[120px]">
+      {{ b.starts_at.strftime('%d.%m %H:%M') }}
+    </div>
+    <div class="flex-1 min-w-[160px]">
+      <div class="font-semibold text-sm">{{ b.client_full_name }}</div>
+      <div class="text-xs text-violet-300/60">{{ service_titles.get(b.service_id, '—') }}</div>
+    </div>
+    <div class="text-right">
+      <div class="text-sm font-semibold mb-1">
+        {{ "{:,}".format(b.price_kopecks // 100).replace(',', ' ') }} ₽
+      </div>
+      <form method="post" action="/lessio/app/bookings/{{ b.id }}/toggle-paid" class="inline">
+        <button type="submit"
+                class="text-xs px-2.5 py-1 rounded
+                       {% if b.payment_status == 'paid' %}bg-emerald-500/30 text-emerald-200 hover:bg-emerald-500/50{% else %}bg-amber-500/30 text-amber-200 hover:bg-amber-500/50{% endif %}">
+          {% if b.payment_status == 'paid' %}✓ оплачено{% else %}отметить оплату{% endif %}
+        </button>
+      </form>
+    </div>
+  </article>
+  {% endfor %}
+</section>
+{% else %}
+<p class="text-violet-300/50 text-sm">В этом месяце встреч не было.</p>
+{% endif %}
+
+<aside class="mt-8 p-4 bg-white/5 border border-white/10 rounded-xl text-sm text-violet-300/60">
+  <p>
+    <b>CSV-формат:</b> совместим с импортом в «Мой Налог» (приложение Самозанятого).
+    Колонки: дата, время UTC, клиент, услуга, длительность, сумма ₽, статус оплаты.
+  </p>
+</aside>
+{% endblock %}

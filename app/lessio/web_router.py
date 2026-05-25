@@ -478,5 +478,27 @@ async def cron_dispatch_reminders(
     return {"24h": r24, "1h": r1}
 
 
+@_public_router.get("/u/{slug}/og.svg", include_in_schema=False)
+async def public_profile_og(
+    slug: str,
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> Response:
+    from app.lessio.og_image import render_tutor_og_svg
+
+    profile = (
+        await session.execute(
+            select(LessioTutorProfile).where(LessioTutorProfile.slug == slug.lower())
+        )
+    ).scalar_one_or_none()
+    if profile is None or not profile.is_active:
+        raise HTTPException(404, "Репетитор не найден")
+    svg = render_tutor_og_svg(profile)
+    return Response(
+        content=svg,
+        media_type="image/svg+xml",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
 public_router = _public_router
 cron_router = _cron_router

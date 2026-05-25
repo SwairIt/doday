@@ -4,6 +4,50 @@
 
 ---
 
+## 2026-05-26 — Lessio Web MVP · Week 3 завершена · Production-ready
+
+Полный кабинет репетитора + Income/CSV + dynamic OG-image. **3-недельный MVP (12 chunks) задеплоен полностью.**
+
+**Что задеплоено в Week 3 (4 chunk'а):**
+- ✅ **Chunk 3.1**: `app/lessio/cabinet_router.py` — единый router `/lessio/app/*` для всех cabinet-страниц с `_require_profile` guard. GET `/today` (booking-list на сегодня UTC). GET/POST `/settings` (bio + default_meeting_url_template + notification_email). Templates: `lessio/app/_base.html` (sidebar shell с nav-tabs + публ.ссылка + logout), `today.html` (cards со временем/именем/оплатой/meeting-кнопкой или empty-state), `settings.html` (form + ?saved=1 alert).
+- ✅ **Chunk 3.2**: Services CRUD (GET list, POST create с group-session checkbox, POST `/services/<id>/toggle-active`, POST `/services/<id>/edit`). Clients pages (GET list + GET `/clients/<id>` detail с историей bookings). Templates: `services.html` (cards с inline-edit form + Alpine для group toggle), `clients.html`, `client_detail.html`. Auto-calc `price_stars = max(1, kopecks // 120)`.
+- ✅ **Chunk 3.3**: GET/POST `/schedule` (working_days checkbox-grid, work_start/end_hour, buffer_minutes + валидация). GET `/calendar?month=YYYY-MM` (6×7 month-grid с цветными bookings: violet=confirmed, rose=cancelled, emerald=completed). Helper `_parse_month` для безопасной валидации query-param. Templates: `schedule.html` (sr-only checkbox + peer-checked label-trick), `calendar.html` (aspect-square cells + top-3 bookings preview).
+- ✅ **Chunk 3.4**: GET `/income?month=YYYY-MM` (paid + unpaid totals + booking list + CSV link). POST `/bookings/<id>/toggle-paid` (flip payment_status + paid_at, redirect back via Referer). GET `/income/export.csv?year=&month=` (CSV с UTF-8 BOM для Excel, формат: date/time/client/service/duration/price_rub/status — совместим с импортом в «Мой Налог»). `app/lessio/csv_export.py::bookings_to_csv` (pure function). `app/lessio/og_image.py::render_tutor_og_svg` (1200×630 dynamic SVG с emoji + display_name + niche-label, HTML-escape для XSS-safety). GET `/u/<slug>/og.svg` (public, Cache-Control: 1 day). `profile.html` обновлён → `og:image` теперь per-tutor.
+
+**Architecture (production-ready):**
+- 7 cabinet-страниц + 4 manage-страницы + публ. /u/<slug> + booking flow + cron — всё под `app/lessio/*`, 4 router-файла (`router.py`, `web_router.py`, `cabinet_router.py`, `admin.py`) + 2 utility-модуля (`email.py`, `cron.py`, `csv_export.py`, `og_image.py`).
+- Все cabinet-endpoint'ы требуют `RequiredUser` + наличие `LessioTutorProfile` (303 redirect на setup-profile если нет).
+- Authentication: стандартный Doday `register_user` + session-cookie. Email verification опциональна (не блокирует setup).
+- Email-уведомления через `aiosmtplib` + Jinja, SMTP-fail graceful (логирует но не raise'ит, чтобы не блокировать booking-транзакцию).
+- Cron `dispatch_reminders` идемпотентный (UPDATE `reminder_*h_sent_at` только при SMTP success).
+- SEO: canonical, OG-tags (per-tutor SVG image), Twitter card, JSON-LD Person + makesOffer, sitemap.xml dynamic, robots.txt explicit.
+
+**Тесты:** 6 (chunk 3.1) + 7 (chunk 3.2) + 5 (chunk 3.3) + 7 (chunk 3.4 income+og) = **25 новых TDD-кейсов в Week 3**. Полный Lessio-suite: **101 passed**. Полный Doday-suite: **~975 passed**. ruff + mypy --strict + jinja-lint зелёные.
+
+**Коммиты Week 3:** c641774 (week3 plan + PROGRESS Week 2 close) → a4317e3 (chunk 3.1) → 51e9208 (chunk 3.2) → 571e7a0 (chunk 3.3) → [chunk 3.4 — этот коммит].
+
+**МVP завершён.** За одну сессию: spec → 3 plan-файла → 12 chunks → ~73 новых TDD-кейсов → 13 commits → задеплоено на прод.
+
+**Что в Phase 2 (явно не делалось):**
+- Google Calendar OAuth (двусторонняя busy-times sync — heavy: Fernet encryption + refresh-token rotation + Google API calls).
+- Embedded payments (ЮKassa требует 18+, Stars — за пределами TG-flow без смысла).
+- Aggregate rating в JSON-LD (нужны отзывы клиентов — отдельная фича после первых регистраций).
+- IndexNow API для sitemap ping (notify Google/Yandex при tutor signup).
+- Search/discovery `/lessio/discover` (нужен scale ≥50 tutors).
+- Multi-language UI (только RU в MVP).
+- Mobile PWA install prompt + push notifications.
+- Tutor timezone overrides (сейчас всё в UTC).
+
+**End-to-end flow на проде:**
+1. Tutor: `/lessio` → CTA «Стать репетитором» → register → setup-profile (slug/name/niche) → автогенерация default-услуг → `/lessio/app/today` (cabinet)
+2. Tutor: настраивает расписание/услуги/настройки в кабинете, делится публ. ссылкой `getdoday.ru/u/<slug>`
+3. Client: открывает `/u/<slug>` → выбирает услугу → `/book/<id>` → слот + email/phone/name → POST → email-подтверждение с magic-link
+4. Client: по magic-link `/lessio/manage/<token>` видит свои записи, может перенести/отменить
+5. Cron каждые ~5 мин шлёт reminders 24h и 1h на client email
+6. Tutor: видит встречи в Today/Calendar, отмечает оплату в `/income`, экспортирует CSV для «Мой Налог»
+
+---
+
 ## 2026-05-26 — Lessio Web MVP · Week 2 завершена + задеплоено
 
 End-to-end booking flow живой. Anon-клиент видит `/u/<slug>` → выбирает услугу+слот → POST `/u/<slug>/book/<service_id>` создаёт LessioBooking + рассылает email клиенту (с magic-link) + tutor (на notification_email). Magic-link `/lessio/manage/<token>` показывает все будущие confirmed-записи клиента у этого репетитора с кнопками [Перенести] [Отменить]. Cron-endpoint `/api/lessio/cron/dispatch-reminders` (X-Cron-Token) — батч reminders 24h+1h в окне ±5мин, идемпотентный.
