@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0f0a1f">
+  <title>Lessio — настройка профиля</title>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'tf-bg': '#0f0a1f',
+            'tf-accent': '#a78bfa',
+            'tf-accent-2': '#f472b6',
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    body {
+      background: linear-gradient(180deg, #0f0a1f 0%, #1a0f3d 60%, #2e1065 100%);
+      color: #f5f3ff;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, #a78bfa, #f472b6);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .field { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
+    .field:focus { outline: none; border-color: #a78bfa; }
+    .ok { color: #34d399; }
+    .err { color: #fb7185; }
+  </style>
+</head>
+<body class="antialiased">
+
+<main class="mx-auto max-w-xl px-5 py-8">
+
+  <header class="text-center mb-8">
+    <div class="inline-block px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs uppercase tracking-widest text-tf-accent mb-4">
+      шаг 1 из 1 · 30 секунд
+    </div>
+    <h1 class="text-3xl font-extrabold mb-2">
+      Привет, <span class="gradient-text">{{ telegram_first_name }}!</span>
+    </h1>
+    <p class="text-violet-200/70 text-sm leading-relaxed">
+      Заполни профиль — это публичная страница для клиентов. Ссылка вида
+      <code class="text-tf-accent">t.me/mylessiobot?start=<твой_handle></code>
+      будет работать сразу после.
+    </p>
+  </header>
+
+  <form
+    id="onboard-form"
+    method="post"
+    action="/lessio/miniapp/onboard"
+    class="space-y-5 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-5"
+  >
+    <!-- slug -->
+    <label class="block">
+      <span class="text-sm font-semibold mb-1.5 block">Handle (URL)</span>
+      <div class="flex items-center gap-2">
+        <span class="text-violet-300/60 text-sm">t.me/mylessiobot?start=</span>
+        <input
+          name="slug"
+          type="text"
+          required
+          minlength="3"
+          maxlength="50"
+          pattern="[a-z0-9][a-z0-9_-]{2,49}"
+          placeholder="anna_english"
+          class="flex-1 px-3 py-2 field rounded-lg text-white placeholder-violet-300/40"
+          autocomplete="off"
+          spellcheck="false"
+        >
+      </div>
+      <p id="slug-feedback" class="text-xs mt-1.5 text-violet-300/60">
+        Латиница + цифры + - и _, минимум 3 символа. Это твой публичный handle.
+      </p>
+    </label>
+
+    <!-- display_name -->
+    <label class="block">
+      <span class="text-sm font-semibold mb-1.5 block">Имя на странице</span>
+      <input
+        name="display_name"
+        type="text"
+        required
+        maxlength="100"
+        placeholder="Анна · английский для взрослых"
+        value="{{ telegram_first_name }}"
+        class="w-full px-3 py-2 field rounded-lg text-white placeholder-violet-300/40"
+      >
+      <p class="text-xs mt-1.5 text-violet-300/60">
+        Что увидят клиенты на странице записи. Можно добавить специализацию.
+      </p>
+    </label>
+
+    <!-- niche -->
+    <label class="block">
+      <span class="text-sm font-semibold mb-1.5 block">Что преподаёшь</span>
+      <select
+        name="niche"
+        class="w-full px-3 py-2 field rounded-lg text-white"
+      >
+        <option value="english" class="bg-tf-bg">Английский / иностранные языки</option>
+        <option value="ielts" class="bg-tf-bg">IELTS / TOEFL / экзамены</option>
+        <option value="math" class="bg-tf-bg">Математика / физика / другие предметы</option>
+        <option value="school" class="bg-tf-bg">Школа / ЕГЭ / ОГЭ</option>
+        <option value="fitness" class="bg-tf-bg">Фитнес / йога / тренер</option>
+        <option value="psychology" class="bg-tf-bg">Психология / коучинг</option>
+        <option value="yoga" class="bg-tf-bg">Йога / медитация</option>
+        <option value="other" class="bg-tf-bg">Что-то другое</option>
+      </select>
+    </label>
+
+    <!-- bio -->
+    <label class="block">
+      <span class="text-sm font-semibold mb-1.5 block">О себе (опционально)</span>
+      <textarea
+        name="bio"
+        rows="3"
+        maxlength="1000"
+        placeholder="5 лет опыта, IELTS 8.0, специализация на разговорной речи."
+        class="w-full px-3 py-2 field rounded-lg text-white placeholder-violet-300/40 resize-none"
+      ></textarea>
+    </label>
+
+    <button
+      type="submit"
+      id="submit-btn"
+      class="w-full px-6 py-3.5 bg-gradient-to-r from-tf-accent to-tf-accent-2 rounded-xl font-bold text-white hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      Создать профиль →
+    </button>
+
+    <p class="text-xs text-violet-300/50 text-center mt-2">
+      Услуги, расписание и оплата — настроишь после создания профиля.
+    </p>
+  </form>
+
+  <script>
+    // Telegram WebApp init — нужно чтобы initData попал в форму.
+    if (window.Telegram && window.Telegram.WebApp) {
+      const tg = window.Telegram.WebApp;
+      tg.ready();
+      tg.expand();
+      // initData передаётся через ?tgWebAppData (URL) или через header X-Telegram-Init-Data.
+      // Здесь форма POST'ит на /lessio/miniapp/onboard с тем же tgWebAppData в querystring,
+      // который мы получили на GET (передаём через скрытое поле).
+      const params = new URLSearchParams(window.location.search);
+      const tgData = params.get('tgWebAppData') || tg.initData;
+      if (tgData) {
+        const form = document.getElementById('onboard-form');
+        form.action = `/lessio/miniapp/onboard?tgWebAppData=${encodeURIComponent(tgData)}`;
+      }
+    }
+
+    // Live slug-validation через /lessio/miniapp/check-slug.
+    const slugInput = document.querySelector('input[name="slug"]');
+    const slugFeedback = document.getElementById('slug-feedback');
+    const submitBtn = document.getElementById('submit-btn');
+    let slugTimer = null;
+
+    slugInput.addEventListener('input', () => {
+      clearTimeout(slugTimer);
+      const v = slugInput.value.trim().toLowerCase();
+      if (!v) {
+        slugFeedback.textContent = 'Латиница + цифры + - и _, минимум 3 символа.';
+        slugFeedback.className = 'text-xs mt-1.5 text-violet-300/60';
+        submitBtn.disabled = false;
+        return;
+      }
+      slugFeedback.textContent = 'Проверяю…';
+      slugFeedback.className = 'text-xs mt-1.5 text-violet-300/60';
+      submitBtn.disabled = true;
+      slugTimer = setTimeout(async () => {
+        try {
+          const resp = await fetch(`/lessio/miniapp/check-slug?slug=${encodeURIComponent(v)}`);
+          const data = await resp.json();
+          if (data.available) {
+            slugFeedback.textContent = `✓ «${v}» свободен`;
+            slugFeedback.className = 'text-xs mt-1.5 ok';
+            submitBtn.disabled = false;
+          } else {
+            slugFeedback.textContent = `✗ ${data.reason || 'недоступен'}`;
+            slugFeedback.className = 'text-xs mt-1.5 err';
+            submitBtn.disabled = true;
+          }
+        } catch (e) {
+          slugFeedback.textContent = 'Ошибка проверки — попробуй ещё раз';
+          slugFeedback.className = 'text-xs mt-1.5 err';
+          submitBtn.disabled = false;
+        }
+      }, 400);
+    });
+  </script>
+
+</main>
+</body>
+</html>

@@ -132,6 +132,14 @@ async def change_password(
     new_password: Annotated[str, Form()],
 ) -> dict[str, str]:
     """Change the signed-in user's password (requires current password)."""
+    if user.password_hash is None:
+        # Telegram-only Lessio account — у него нет пароля чтобы его менять. Юзер
+        # должен сначала установить пароль через /auth/set-password (когда такой
+        # endpoint появится). Пока — 400 с понятным сообщением.
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "У вашего аккаунта нет пароля (Telegram-only). Установите пароль через профиль.",
+        )
     if not verify_password(current_password, user.password_hash):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Текущий пароль неверный")
     if len(new_password) < 8:

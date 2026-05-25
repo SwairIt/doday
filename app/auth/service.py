@@ -164,7 +164,12 @@ async def authenticate(session: AsyncSession, email: str, password: str) -> User
     normalized = email.lower().strip()
     result = await session.execute(select(User).where(User.email == normalized))
     user = result.scalar_one_or_none()
-    if user is None or not verify_password(password, user.password_hash):
+    if (
+        user is None
+        or user.password_hash is None
+        or not verify_password(password, user.password_hash)
+    ):
+        # password_hash is None → Telegram-only Lessio account (no password to verify).
         raise InvalidCredentials()
     # Email verification is "soft": unverified users may sign in and use the app.
     # Verification only gates email-dependent features (digest / password reset).
