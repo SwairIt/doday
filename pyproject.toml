@@ -126,6 +126,7 @@ ignore = [
 "app/lessio/router.py" = ["RUF001", "RUF002", "RUF003"]          # Russian in user-facing error/success messages + comments
 "app/lessio/service.py" = ["RUF001", "RUF002", "RUF003"]         # Russian in docstrings/comments/error messages
 "alembic/versions/0041_lessio_telegram_only_users.py" = ["RUF001", "RUF002", "RUF003"]  # Russian in migration docstring
+"alembic/versions/0042_lessio_web_expansion.py" = ["RUF001", "RUF002", "RUF003"]  # Russian in migration docstring/comments
 "app/lessio/telegram_handlers.py" = ["RUF001", "RUF002", "RUF003"]  # Russian welcome message + comments
 
 [tool.mypy]

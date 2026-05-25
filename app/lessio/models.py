@@ -82,6 +82,10 @@ class LessioTutorProfile(Base):
     is_active: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True, server_default="true"
     )
+    # Web-expansion (migration 0042, 2026-05-25)
+    default_meeting_url_template: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    notification_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    google_calendar_refresh_token: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False
     )
@@ -109,20 +113,34 @@ class LessioService(Base):
     is_active: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True, server_default="true"
     )
+    # Web-expansion (migration 0042, 2026-05-25)
+    meeting_url_template: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    is_group_session: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
+    max_attendees: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=1, server_default="1"
+    )
+    location: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False
     )
 
 
 class LessioClient(Base):
-    """Client (person who books with one tutor). Scoped per-tutor — same Telegram
-    user across two tutors = two rows, isolates data.
+    """Client (person who books with one tutor). Scoped per-tutor — один Telegram
+    юзер у двух репетиторов = две row'ы, isolates data.
+
+    Web-expansion 2026-05-25 (migration 0042):
+    - telegram_user_id → nullable (web-клиенты без TG)
+    - email NOT NULL, phone nullable, full_name NOT NULL
+    - UNIQUE per-tutor by email (новая стандартная identity)
+    - старый UNIQUE (tutor_id, telegram_user_id) убран — TG-клиенты идентифицируются
+      по email тоже (placeholder lessio_tg_<id>@auto.lessio для legacy)
     """
 
     __tablename__ = "lessio_clients"
-    __table_args__ = (
-        UniqueConstraint("tutor_id", "telegram_user_id", name="uq_lessio_client_tutor_telegram"),
-    )
+    __table_args__ = (UniqueConstraint("tutor_id", "email", name="uq_lessio_client_tutor_email"),)
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     tutor_id: Mapped[UUID] = mapped_column(
@@ -130,9 +148,12 @@ class LessioClient(Base):
         nullable=False,
         index=True,
     )
-    telegram_user_id: Mapped[int] = mapped_column(BigInteger, nullable=False, index=True)
+    telegram_user_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True, index=True)
     telegram_first_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     telegram_username: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    email: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    full_name: Mapped[str] = mapped_column(String(120), nullable=False)
     notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False
@@ -140,13 +161,19 @@ class LessioClient(Base):
 
 
 class LessioBooking(Base):
-    """Confirmed appointment between tutor and client."""
+    """Confirmed appointment between tutor and client.
+
+    Web-expansion 2026-05-25 (migration 0042):
+    - UNIQUE (tutor_id, starts_at) убран — заменён на **partial unique index** в БД
+      (WHERE status IN ('confirmed','completed') AND service не-групповая).
+    - + manage_token (UNIQUE) — magic-link для клиента
+    - + payment_status (unpaid/paid/refunded) + paid_at
+    - + reminder_24h_sent_at, reminder_1h_sent_at (idempotency для cron)
+    - + client_email, client_full_name (denorm)
+    - + meeting_url (per-booking override)
+    """
 
     __tablename__ = "lessio_bookings"
-    __table_args__ = (
-        # No two bookings at the same starts_at for one tutor.
-        UniqueConstraint("tutor_id", "starts_at", name="uq_lessio_booking_slot"),
-    )
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     tutor_id: Mapped[UUID] = mapped_column(
@@ -166,14 +193,31 @@ class LessioBooking(Base):
     )
     starts_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
     duration_minutes: Mapped[int] = mapped_column(Integer, nullable=False)
-    # pending_payment | paid | completed | cancelled | no_show
-    status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending_payment")
+    # confirmed | completed | cancelled | no_show
+    # Web-flow: default 'confirmed' т.к. постоплата off-platform — слот фиксируется
+    # сразу, payment_status отслеживается отдельно.
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="confirmed")
     price_kopecks: Mapped[int] = mapped_column(Integer, nullable=False)
     price_stars: Mapped[int] = mapped_column(Integer, nullable=False)
     star_payment_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("star_payments.id", ondelete="SET NULL"), nullable=True
     )
     notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # Web-expansion 0042
+    manage_token: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
+    meeting_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    payment_status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="unpaid", server_default="unpaid"
+    )
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    reminder_24h_sent_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    reminder_1h_sent_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    client_email: Mapped[str] = mapped_column(String(255), nullable=False)
+    client_full_name: Mapped[str] = mapped_column(String(120), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False
     )
