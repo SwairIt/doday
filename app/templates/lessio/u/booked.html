@@ -59,5 +59,12 @@
     })();
   </script>
 </main>
+{% include "lessio/_metrika.html" %}
+<script>
+  // Conversion event: booking confirmed — fire goal once on page load.
+  if (typeof window.lessioGoal === 'function') {
+    try { window.lessioGoal('lessio_booking', { slug: '{{ tutor.slug }}' }); } catch (e) {}
+  }
+</script>
 </body>
 </html>

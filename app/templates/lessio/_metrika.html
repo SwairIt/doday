@@ -1,0 +1,32 @@
+{# Yandex.Metrika включается ТОЛЬКО когда YA_METRIKA_ID задан в env (через
+    request.state.ya_metrika_id middleware). В dev пусто → ничего не выводится,
+    что-исключает накрутку счётчика тестовыми сессиями. window.lessioGoal —
+    тонкая обёртка для шаблонов: вызывают lessioGoal('lessio_booking', {...}).
+#}
+{% if request.state.ya_metrika_id %}
+<script type="text/javascript">
+   (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+   m[i].l=1*new Date();
+   for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+   k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+   (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+
+   ym({{ request.state.ya_metrika_id }}, "init", {
+       clickmap: true,
+       trackLinks: true,
+       accurateTrackBounce: true,
+       webvisor: true
+   });
+
+   window.lessioGoal = function(name, params) {
+     try {
+       if (typeof ym !== 'undefined') {
+         ym({{ request.state.ya_metrika_id }}, 'reachGoal', name, params || {});
+       }
+     } catch (e) { /* swallow — never break UX for analytics */ }
+   };
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/{{ request.state.ya_metrika_id }}" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+{% else %}
+<script>window.lessioGoal = function() {};</script>
+{% endif %}
