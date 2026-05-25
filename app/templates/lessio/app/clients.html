@@ -1,0 +1,38 @@
+{% extends "lessio/app/_base.html" %}
+{% block title %}Клиенты · Lessio{% endblock %}
+{% block content %}
+<header class="mb-8">
+  <h1 class="text-3xl font-extrabold mb-1">Клиенты</h1>
+  <p class="text-violet-200/60 text-sm">{{ clients | length }} {{ 'клиент' if clients|length == 1 else 'клиента' if 2 <= clients|length <= 4 else 'клиентов' }}</p>
+</header>
+
+{% if clients %}
+<section class="space-y-2">
+  {% for c in clients %}
+  <a href="/lessio/app/clients/{{ c.id }}"
+     class="block bg-white/5 border border-white/10 rounded-2xl p-4 hover:border-violet-400/40 transition">
+    <div class="flex flex-wrap items-center gap-3">
+      <div class="flex-1 min-w-[200px]">
+        <div class="font-bold">{{ c.full_name }}</div>
+        <div class="text-sm text-violet-300/70">{{ c.email }}</div>
+        {% if c.phone %}<div class="text-xs text-violet-300/50">{{ c.phone }}</div>{% endif %}
+      </div>
+      <div class="text-xs text-violet-300/40">
+        с {{ c.created_at.strftime('%d.%m.%Y') }}
+      </div>
+    </div>
+  </a>
+  {% endfor %}
+</section>
+{% else %}
+<section class="bg-white/5 border border-white/10 rounded-2xl p-10 text-center">
+  <div class="text-5xl mb-4" aria-hidden="true">👥</div>
+  <h2 class="text-xl font-bold mb-2">Клиентов пока нет</h2>
+  <p class="text-violet-200/60 mb-6">
+    Когда кто-то запишется через
+    <a href="/u/{{ profile.slug }}" class="text-violet-300 underline">вашу страницу</a>,
+    он появится здесь.
+  </p>
+</section>
+{% endif %}
+{% endblock %}

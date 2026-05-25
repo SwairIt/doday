@@ -1,0 +1,53 @@
+{% extends "lessio/app/_base.html" %}
+{% block title %}{{ client.full_name }} · Lessio{% endblock %}
+{% block content %}
+<a href="/lessio/app/clients" class="text-violet-300/70 text-sm hover:text-violet-200">← Все клиенты</a>
+
+<header class="mt-4 mb-8">
+  <h1 class="text-3xl font-extrabold mb-1">{{ client.full_name }}</h1>
+  <p class="text-violet-200/70 text-sm">
+    {{ client.email }}{% if client.phone %} · {{ client.phone }}{% endif %}
+  </p>
+  <p class="text-violet-300/40 text-xs mt-1">с {{ client.created_at.strftime('%d.%m.%Y') }}</p>
+</header>
+
+<h2 class="text-xl font-bold mb-4">История встреч</h2>
+
+{% if bookings %}
+<section class="space-y-3">
+  {% for b in bookings %}
+  <article class="bg-white/5 border border-white/10 rounded-2xl p-5">
+    <div class="flex flex-wrap items-start gap-4">
+      <div class="flex-1 min-w-[200px]">
+        <div class="text-sm text-violet-300/70">{{ b.starts_at.strftime('%d.%m.%Y') }}</div>
+        <div class="text-2xl font-bold">{{ b.starts_at.strftime('%H:%M') }} UTC</div>
+        <div class="text-sm text-violet-300/70 mt-1">{{ b.duration_minutes }} мин</div>
+      </div>
+      <div class="text-right">
+        <div class="text-sm font-semibold mb-1">
+          {{ "{:,}".format(b.price_kopecks // 100).replace(',', ' ') }} ₽
+        </div>
+        <div class="text-xs mb-2">
+          {% if b.status == 'cancelled' %}<span class="text-rose-300">отменено</span>
+          {% elif b.status == 'completed' %}<span class="text-emerald-300">проведено</span>
+          {% else %}<span class="text-violet-200">подтверждено</span>{% endif %}
+        </div>
+        <div class="text-xs">
+          {% if b.payment_status == 'paid' %}
+            <span class="text-emerald-300">✓ оплачено</span>
+          {% else %}
+            <span class="text-amber-300">не оплачено</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% if b.notes %}
+    <p class="text-sm text-violet-200/60 mt-3 italic">«{{ b.notes }}»</p>
+    {% endif %}
+  </article>
+  {% endfor %}
+</section>
+{% else %}
+<p class="text-violet-300/50">Нет встреч.</p>
+{% endif %}
+{% endblock %}

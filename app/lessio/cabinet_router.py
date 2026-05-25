@@ -19,7 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.deps import RequiredUser
 from app.db import get_session
-from app.lessio.models import LessioBooking, LessioTutorProfile
+from app.lessio.models import LessioBooking, LessioClient, LessioService, LessioTutorProfile
 
 router = APIRouter(prefix="/lessio/app", tags=["lessio-cabinet"])
 _templates = Jinja2Templates(directory="app/templates")
@@ -104,3 +104,193 @@ async def settings_submit(
     profile.notification_email = ((notification_email or "").strip()[:255]) or None
     await session.commit()
     return RedirectResponse("/lessio/app/settings?saved=1", status_code=303)
+
+
+# ── Services CRUD ─────────────────────────────────────────────────────
+
+
+@router.get("/services", response_class=HTMLResponse, include_in_schema=False)
+async def services_page(
+    request: Request,
+    user: RequiredUser,
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> Response:
+    profile = await _require_profile(session, user.id)
+    services = (
+        (
+            await session.execute(
+                select(LessioService)
+                .where(LessioService.tutor_id == profile.id)
+                .order_by(LessioService.is_active.desc(), LessioService.price_kopecks)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    return _templates.TemplateResponse(
+        request,
+        "lessio/app/services.html",
+        {"profile": profile, "services": services, "active_nav": "services"},
+    )
+
+
+@router.post("/services", response_class=HTMLResponse, include_in_schema=False)
+async def services_create(
+    user: RequiredUser,
+    title: Annotated[str, Form()],
+    duration_minutes: Annotated[int, Form()],
+    price_kopecks: Annotated[int, Form()],
+    is_group_session: Annotated[bool, Form()] = False,
+    max_attendees: Annotated[int, Form()] = 1,
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> Response:
+    profile = await _require_profile(session, user.id)
+    if duration_minutes < 5 or duration_minutes > 480:
+        raise HTTPException(400, "Длительность от 5 до 480 минут")
+    if price_kopecks < 0:
+        raise HTTPException(400, "Цена не может быть отрицательной")
+    # Stars = ₽ × 100 / 120 ≈ kopecks / 120. Round to nearest.
+    price_stars = max(1, price_kopecks // 120)
+    service = LessioService(
+        tutor_id=profile.id,
+        title=title[:120],
+        duration_minutes=duration_minutes,
+        price_kopecks=price_kopecks,
+        price_stars=price_stars,
+        is_group_session=bool(is_group_session),
+        max_attendees=max(1, max_attendees) if is_group_session else 1,
+    )
+    session.add(service)
+    await session.commit()
+    return RedirectResponse("/lessio/app/services", status_code=303)
+
+
+@router.post(
+    "/services/{service_id}/toggle-active",
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+async def services_toggle_active(
+    service_id: UUID,
+    user: RequiredUser,
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> Response:
+    profile = await _require_profile(session, user.id)
+    service = (
+        await session.execute(
+            select(LessioService).where(
+                LessioService.id == service_id,
+                LessioService.tutor_id == profile.id,
+            )
+        )
+    ).scalar_one_or_none()
+    if service is None:
+        raise HTTPException(404, "Услуга не найдена")
+    service.is_active = not service.is_active
+    await session.commit()
+    return RedirectResponse("/lessio/app/services", status_code=303)
+
+
+@router.post(
+    "/services/{service_id}/edit",
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+async def services_edit(
+    service_id: UUID,
+    user: RequiredUser,
+    title: Annotated[str, Form()],
+    duration_minutes: Annotated[int, Form()],
+    price_kopecks: Annotated[int, Form()],
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> Response:
+    profile = await _require_profile(session, user.id)
+    service = (
+        await session.execute(
+            select(LessioService).where(
+                LessioService.id == service_id,
+                LessioService.tutor_id == profile.id,
+            )
+        )
+    ).scalar_one_or_none()
+    if service is None:
+        raise HTTPException(404, "Услуга не найдена")
+    if duration_minutes < 5 or duration_minutes > 480:
+        raise HTTPException(400, "Длительность от 5 до 480 минут")
+    if price_kopecks < 0:
+        raise HTTPException(400, "Цена не может быть отрицательной")
+    service.title = title[:120]
+    service.duration_minutes = duration_minutes
+    service.price_kopecks = price_kopecks
+    service.price_stars = max(1, price_kopecks // 120)
+    await session.commit()
+    return RedirectResponse("/lessio/app/services", status_code=303)
+
+
+# ── Clients ───────────────────────────────────────────────────────────
+
+
+@router.get("/clients", response_class=HTMLResponse, include_in_schema=False)
+async def clients_page(
+    request: Request,
+    user: RequiredUser,
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> Response:
+    profile = await _require_profile(session, user.id)
+    clients = (
+        (
+            await session.execute(
+                select(LessioClient)
+                .where(LessioClient.tutor_id == profile.id)
+                .order_by(LessioClient.created_at.desc())
+            )
+        )
+        .scalars()
+        .all()
+    )
+    return _templates.TemplateResponse(
+        request,
+        "lessio/app/clients.html",
+        {"profile": profile, "clients": clients, "active_nav": "clients"},
+    )
+
+
+@router.get("/clients/{client_id}", response_class=HTMLResponse, include_in_schema=False)
+async def client_detail(
+    client_id: UUID,
+    request: Request,
+    user: RequiredUser,
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> Response:
+    profile = await _require_profile(session, user.id)
+    client = (
+        await session.execute(
+            select(LessioClient).where(
+                LessioClient.id == client_id,
+                LessioClient.tutor_id == profile.id,
+            )
+        )
+    ).scalar_one_or_none()
+    if client is None:
+        raise HTTPException(404, "Клиент не найден")
+    bookings = (
+        (
+            await session.execute(
+                select(LessioBooking)
+                .where(LessioBooking.client_id == client.id)
+                .order_by(LessioBooking.starts_at.desc())
+            )
+        )
+        .scalars()
+        .all()
+    )
+    return _templates.TemplateResponse(
+        request,
+        "lessio/app/client_detail.html",
+        {
+            "profile": profile,
+            "client": client,
+            "bookings": bookings,
+            "active_nav": "clients",
+        },
+    )
