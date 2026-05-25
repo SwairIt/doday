@@ -1,0 +1,32 @@
+{% extends "_base.html" %}
+{% block title %}Как прошла встреча?{% endblock %}
+{% block content %}
+<h1 style="margin:0 0 16px 0;font-size:24px;line-height:1.2;">⭐ Как прошла встреча?</h1>
+<p style="font-size:16px;line-height:1.55;color:#444;margin:0 0 16px 0;">
+  Здравствуйте, {{ booking.client_full_name }}!
+</p>
+<p style="font-size:16px;line-height:1.55;color:#444;margin:0 0 24px 0;">
+  Спасибо, что записались к <b>{{ tutor.display_name }}</b>. Оцените встречу —
+  это поможет другим клиентам выбрать репетитора.
+</p>
+
+<table role="presentation" width="100%" style="background:#faf5ff;border-radius:12px;margin-bottom:24px;">
+<tr><td style="padding:18px 20px;">
+  <div style="font-size:15px;color:#7c3aed;margin-bottom:4px;">{{ service_title }}</div>
+  <div style="font-size:18px;font-weight:700;color:#1a1230;">
+    {{ booking.starts_at.strftime('%d.%m.%Y · %H:%M') }} UTC
+  </div>
+</td></tr>
+</table>
+
+<p style="text-align:center;margin:28px 0 16px 0;">
+  <a href="{{ review_url }}"
+     style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#d946ef);
+            color:#fff;text-decoration:none;font-weight:700;padding:14px 28px;border-radius:12px;">
+    Оставить отзыв →
+  </a>
+</p>
+<p style="font-size:13px;color:#888;margin:0;text-align:center;">
+  Это займёт не больше 30 секунд.
+</p>
+{% endblock %}

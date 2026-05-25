@@ -132,3 +132,16 @@ async def send_reminder_email(
     subject_prefix = "Завтра в" if hours == 24 else "Через час:"
     subject = f"{subject_prefix} {service_title} · {tutor.display_name}"
     return await _send(to=booking.client_email, subject=subject, html=html, text=text)
+
+
+async def send_review_request_email(
+    *, booking: LessioBooking, tutor: LessioTutorProfile, service_title: str
+) -> bool:
+    """После завершения встречи — просьба оценить (magic-link на review-форму)."""
+    ctx = _ctx(booking, tutor, service_title=service_title)
+    # review-URL переиспользует тот же manage_token
+    ctx["review_url"] = ctx["manage_url"].replace("/lessio/manage/", "/lessio/review/")
+    html = _env.get_template("review_request.html").render(**ctx)
+    text = _env.get_template("review_request.txt").render(**ctx)
+    subject = f"Как прошла встреча с {tutor.display_name}? · Lessio"
+    return await _send(to=booking.client_email, subject=subject, html=html, text=text)

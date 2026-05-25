@@ -1,0 +1,9 @@
+Здравствуйте, {{ booking.client_full_name }}!
+
+Спасибо, что записались к {{ tutor.display_name }}. Оцените встречу —
+это поможет другим клиентам выбрать репетитора.
+
+{{ service_title }}
+{{ booking.starts_at.strftime('%d.%m.%Y · %H:%M') }} UTC
+
+Оставить отзыв (30 сек): {{ review_url }}

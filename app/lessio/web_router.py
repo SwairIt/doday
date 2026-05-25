@@ -526,7 +526,7 @@ async def cron_dispatch_reminders(
     session: AsyncSession = Depends(get_session),  # noqa: B008
 ) -> dict[str, Any]:
     from app.config import get_settings
-    from app.lessio.cron import dispatch_reminders
+    from app.lessio.cron import dispatch_reminders, mark_completed_bookings
 
     settings = get_settings()
     if not settings.cron_token:
@@ -535,8 +535,9 @@ async def cron_dispatch_reminders(
         raise HTTPException(403, "Неверный X-Cron-Token")
     r24 = await dispatch_reminders(session, hours=24)
     r1 = await dispatch_reminders(session, hours=1)
+    completed = await mark_completed_bookings(session)
     await session.commit()
-    return {"24h": r24, "1h": r1}
+    return {"24h": r24, "1h": r1, "completed": completed}
 
 
 @_public_router.get("/u/{slug}/og.svg", include_in_schema=False)
