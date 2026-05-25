@@ -89,15 +89,67 @@ async def settings_page(
     )
 
 
+_SETTINGS_ALLOWED_NICHES: frozenset[str] = frozenset(
+    {"english", "ielts", "math", "school", "fitness", "psychology", "yoga", "other"}
+)
+
+
 @router.post("/settings", response_class=HTMLResponse, include_in_schema=False)
 async def settings_submit(
+    request: Request,
     user: RequiredUser,
+    slug: Annotated[str, Form()] = "",
+    display_name: Annotated[str, Form()] = "",
+    niche: Annotated[str, Form()] = "",
+    avatar_emoji: Annotated[str, Form()] = "",
     bio: Annotated[str | None, Form()] = None,
     default_meeting_url_template: Annotated[str | None, Form()] = None,
     notification_email: Annotated[str | None, Form()] = None,
     session: AsyncSession = Depends(get_session),  # noqa: B008
 ) -> Response:
+    from app.lessio.service import validate_slug
+
     profile = await _require_profile(session, user.id)
+
+    new_slug = (slug or "").strip().lower()
+    new_display_name = (display_name or "").strip()
+    new_niche = niche if niche in _SETTINGS_ALLOWED_NICHES else profile.niche
+    new_emoji = (avatar_emoji or "").strip()[:8] or profile.avatar_emoji
+
+    if new_slug and new_slug != profile.slug:
+        if not validate_slug(new_slug):
+            return _templates.TemplateResponse(
+                request,
+                "lessio/app/settings.html",
+                {
+                    "profile": profile,
+                    "active_nav": "settings",
+                    "error": ("slug должен быть 3-50 символов: только латиница/цифры/дефис/_"),
+                },
+                status_code=400,
+            )
+        clash = (
+            await session.execute(
+                select(LessioTutorProfile).where(LessioTutorProfile.slug == new_slug)
+            )
+        ).scalar_one_or_none()
+        if clash is not None and clash.id != profile.id:
+            return _templates.TemplateResponse(
+                request,
+                "lessio/app/settings.html",
+                {
+                    "profile": profile,
+                    "active_nav": "settings",
+                    "error": f"slug «{new_slug}» уже занят — выберите другой",
+                },
+                status_code=400,
+            )
+        profile.slug = new_slug
+
+    if new_display_name:
+        profile.display_name = new_display_name[:100]
+    profile.niche = new_niche
+    profile.avatar_emoji = new_emoji
     profile.bio = ((bio or "").strip()[:1000]) or None
     profile.default_meeting_url_template = (
         ((default_meeting_url_template or "").strip()[:500]) or None

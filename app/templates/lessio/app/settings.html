@@ -12,48 +12,101 @@
 </div>
 {% endif %}
 
+{% if error %}
+<div class="mb-6 px-4 py-3 rounded-xl bg-rose-500/15 text-rose-300 text-sm">{{ error }}</div>
+{% endif %}
+
 <form method="post" action="/lessio/app/settings"
       class="space-y-6 bg-white/5 border border-white/10 rounded-2xl p-6">
 
-  <label class="block">
-    <span class="text-sm font-semibold mb-1.5 block">О себе (показывается на /u/{{ profile.slug }})</span>
-    <textarea name="bio" rows="4" maxlength="1000"
-              class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg resize-none focus:outline-none focus:border-violet-400">{{ profile.bio or '' }}</textarea>
-    <span class="text-xs text-violet-300/40 mt-1 block">До 1000 символов</span>
-  </label>
+  <fieldset class="space-y-4 border-b border-white/10 pb-6">
+    <legend class="text-sm font-semibold text-violet-200/80">Публичный профиль</legend>
 
-  <label class="block">
-    <span class="text-sm font-semibold mb-1.5 block">Шаблон видеоссылки</span>
-    <input name="default_meeting_url_template" type="url" maxlength="500"
-           placeholder="https://meet.google.com/abc-defg-hij"
-           value="{{ profile.default_meeting_url_template or '' }}"
-           class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
-    <span class="text-xs text-violet-300/40 mt-1 block">
-      Подставляется в подтверждение booking'а если у услуги нет своей ссылки.
-    </span>
-  </label>
+    <label class="block">
+      <span class="text-sm font-semibold mb-1.5 block">Публичная ссылка</span>
+      <div class="flex items-center gap-2">
+        <span class="text-violet-300/60 text-sm whitespace-nowrap">getdoday.ru/u/</span>
+        <input name="slug" type="text" required minlength="3" maxlength="50"
+               pattern="[a-z0-9][a-z0-9_\-]{2,49}"
+               value="{{ profile.slug }}"
+               class="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
+      </div>
+      <span class="text-xs text-amber-300/70 mt-1 block">
+        ⚠️ Меняя slug, вы потеряете SEO-вес страницы — клиенты не найдут по старой ссылке.
+      </span>
+    </label>
 
-  <label class="block">
-    <span class="text-sm font-semibold mb-1.5 block">Email для уведомлений</span>
-    <input name="notification_email" type="email" maxlength="255"
-           placeholder="me@example.com"
-           value="{{ profile.notification_email or '' }}"
-           class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
-    <span class="text-xs text-violet-300/40 mt-1 block">
-      Куда слать «новая запись» / «клиент отменил». Если пусто — уведомления tutor'у не идут.
-    </span>
-  </label>
+    <label class="block">
+      <span class="text-sm font-semibold mb-1.5 block">Имя на странице</span>
+      <input name="display_name" type="text" required maxlength="100"
+             value="{{ profile.display_name }}"
+             class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
+    </label>
+
+    <div class="grid sm:grid-cols-2 gap-4">
+      <label class="block">
+        <span class="text-sm font-semibold mb-1.5 block">Эмодзи-аватар</span>
+        <input name="avatar_emoji" type="text" maxlength="8"
+               value="{{ profile.avatar_emoji }}" placeholder="👨‍🏫"
+               class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400 text-2xl text-center">
+      </label>
+      <label class="block">
+        <span class="text-sm font-semibold mb-1.5 block">Что преподаёшь</span>
+        <select name="niche" required
+                class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
+          {% set niche_options = [
+              ('english', 'Английский / иностранные'),
+              ('ielts', 'IELTS / TOEFL / экзамены'),
+              ('math', 'Математика / физика'),
+              ('school', 'Школа / ЕГЭ / ОГЭ'),
+              ('fitness', 'Фитнес / тренер'),
+              ('psychology', 'Психология / коучинг'),
+              ('yoga', 'Йога / медитация'),
+              ('other', 'Что-то другое'),
+          ] %}
+          {% for val, label in niche_options %}
+          <option value="{{ val }}" {% if profile.niche == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+    </div>
+
+    <label class="block">
+      <span class="text-sm font-semibold mb-1.5 block">О себе</span>
+      <textarea name="bio" rows="4" maxlength="1000"
+                class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg resize-none focus:outline-none focus:border-violet-400">{{ profile.bio or '' }}</textarea>
+      <span class="text-xs text-violet-300/40 mt-1 block">До 1000 символов</span>
+    </label>
+  </fieldset>
+
+  <fieldset class="space-y-4">
+    <legend class="text-sm font-semibold text-violet-200/80">Встречи и уведомления</legend>
+
+    <label class="block">
+      <span class="text-sm font-semibold mb-1.5 block">Шаблон видеоссылки</span>
+      <input name="default_meeting_url_template" type="url" maxlength="500"
+             placeholder="https://meet.google.com/abc-defg-hij"
+             value="{{ profile.default_meeting_url_template or '' }}"
+             class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
+      <span class="text-xs text-violet-300/40 mt-1 block">
+        Подставляется в подтверждение booking'а если у услуги нет своей ссылки.
+      </span>
+    </label>
+
+    <label class="block">
+      <span class="text-sm font-semibold mb-1.5 block">Email для уведомлений</span>
+      <input name="notification_email" type="email" maxlength="255"
+             placeholder="me@example.com"
+             value="{{ profile.notification_email or '' }}"
+             class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
+      <span class="text-xs text-violet-300/40 mt-1 block">
+        Куда слать «новая запись» / «клиент отменил». Если пусто — уведомления tutor'у не идут.
+      </span>
+    </label>
+  </fieldset>
 
   <button class="px-6 py-3 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-bold hover:opacity-90 transition">
     Сохранить
   </button>
 </form>
-
-<aside class="mt-8 p-4 bg-white/5 border border-white/10 rounded-xl text-sm text-violet-300/60">
-  <p>
-    <b class="text-violet-200">Slug</b> ({{ profile.slug }}) и
-    <b class="text-violet-200">имя на странице</b> ({{ profile.display_name }})
-    задаются при создании профиля. Изменение этих полей появится в следующих версиях.
-  </p>
-</aside>
 {% endblock %}
