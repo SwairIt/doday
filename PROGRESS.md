@@ -4,6 +4,43 @@
 
 ---
 
+## 2026-05-25 — @LessioBot подключён dual-Application + обнаружен Telegram-API infra-debt
+
+Bot worker (`app/telegram/bot.py`) переписан под dual-Application:
+- @DodayTaskBot (settings.telegram_bot_token) — Doday Tasks
+- @LessioBot (settings.lessio_bot_token = `@mylessiobot`) — Lessio /start с CTA на /lessio
+- Оба в одном процессе через ручной `await app.initialize() / start() / updater.start_polling()` + `asyncio.Event().wait()`. `Application.run_polling()` несовместим с gather'ом, поэтому отказались.
+- **Per-bot graceful degradation**: каждый стартует в своём try/except, если один упал — продолжаем с другим. Если оба упали → return (watchdog перезапустит).
+- `app/billing/stars.py._bot_token_for_product`: `tutor_pro_*` → Lessio token, остальное → Doday. Доход Lessio идёт на отдельный Stars-балланс @mylessiobot.
+- `app/lessio/telegram_handlers.py`: только `cmd_start` для фазы валидации.
+- Тесты: `test_lessio_telegram_handlers.py` + `test_stars_token_routing.py` (7 кейсов).
+
+LESSIO_BOT_TOKEN + LESSIO_BOT_USERNAME подгружены в локальный .env из архивной `c:\www-Yaroslav\Lessio\.env` (где они лежали с момента инициализации Lessio-репо в той сессии). На прод через SSH прокинуто. Bot username — `@mylessiobot` (orphan из той сессии, теперь снова активен под брендом Lessio).
+
+**Infra-debt найден** (НЕ МОЯ задача исправить, до моих изменений):
+- Bot worker на проде падает с `TelegramError: Invalid server response` / `TimedOut` уже давно, даже на старом `run_polling()`-коде.
+- Причина: hardcoded IPv4 `149.154.167.220` для api.telegram.org устарел — Telegram ротирует DC-адреса.
+- Добавлен env-флаг `DISABLE_TELEGRAM_IPV4_PATCH=1` в settings — обходит monkey-patch'инг resolver'а.
+- Но и системный DNS на проде тоже даёт TimedOut → провайдер не маршрутизирует к Telegram API через текущие IP. **Нужен SSH с sudo чтобы фикстить `/etc/resolv.conf` или iptables, либо обновить hardcoded IP списком 149.154.167.220-223** (надо найти рабочий из российской сети).
+- Pid 2096941 на проде — был **Tap Tower's bot**, не Doday. Случайно убил, восстановил через `start-poller.sh`.
+
+**Что работает сейчас:**
+- ✅ Lessio web (`/lessio` лендинг + waitlist API) — задеплоено и работает
+- ✅ Lessio admin endpoints (`/api/admin/lessio/waitlist/*` с X-Admin-Token)
+- ✅ Hub `/` + Doday Tasks `/doday`
+- ✅ Stars-product catalog содержит `tutor_pro_*`
+- ✅ Bot code готов и unit-тестирован, ждёт фикса инфры
+
+**Что НЕ работает:**
+- ❌ @DodayTaskBot — был сломан до моих изменений (Telegram API timeout)
+- ❌ @mylessiobot — не запустится пока инфра не починена (та же причина)
+
+Коммиты этого блока: 0296520 (dual-app), 513cbf0 (per-bot degradation), 7118343 (env-флаг через os.environ — не сработал), cb94de2 (флаг через pydantic-settings — правильно).
+
+pytest -q зелёный 892 passed (+7 от новых тестов). ruff + mypy --strict зелёные.
+
+---
+
 ## 2026-05-25 — Studio-hub на `/`, Doday Tasks лендинг переехал на `/doday`
 
 Архитектурный реорг: getdoday.ru теперь зонтичная студия, не один туду-лист. Корневой `/` — это хаб с карточками всех проектов автора (Doday Tasks, Lessio, Беллстрой ТВ, Tap Tower). Бывший `/` (long marketing landing про туду-лист) переехал на `/doday` без изменений в содержимом.
