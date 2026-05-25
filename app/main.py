@@ -35,6 +35,7 @@ from app.habits.router import router as habits_router
 from app.help.router import router as help_router
 from app.labels.router import router as labels_router
 from app.labels.router import task_labels_router
+from app.lessio.admin import router as lessio_admin_router
 from app.lessio.router import router as lessio_router
 from app.links.router import graph_router
 from app.links.router import router as links_router
@@ -209,6 +210,7 @@ app.include_router(admin_token_router)
 app.include_router(miniapp_router)
 app.include_router(taptower_router)
 app.include_router(lessio_router)
+app.include_router(lessio_admin_router)
 
 
 # Static assets for the Three.js meme-game at /game.

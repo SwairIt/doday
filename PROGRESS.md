@@ -4,6 +4,29 @@
 
 ---
 
+## 2026-05-25 — Lessio как модуль внутри Doday + админка waitlist'а (578d8ef + следующий)
+
+Pivot после двух часов в отдельном репо `SwairIt/Lessio`: вместо отдельной инфры и FastPanel-vhost под `lessio.getdoday.ru`, Lessio живёт прямо внутри Doday-репо по пути `/lessio`. Один cron-poll, одна БД, один бот `@DodayTaskBot`. Не дёргаем брата под каждый новый проект — Doday становится monorepo для всех вертикалей.
+
+Что в этом релизе:
+- **`app/lessio/`** — 5 ORM-моделей с префиксом `lessio_*` (LessioWaitlistEntry активна, остальные заготовка под MVP), router c `GET /lessio` (лендинг) + `POST /lessio/waitlist` (idempotent по email)
+- **`app/templates/lessio/index.html`** — лендинг: hero, pain→solution rows, pricing (Free / Pro 1000⭐ / Founder 50000⭐), FAQ, cross-link на Doday
+- **`app/lessio/admin.py`** — X-Admin-Token endpoint'ы: `GET /api/admin/lessio/waitlist.json`, `GET /api/admin/lessio/waitlist/stats.json` (агрегаты + threshold-met флаг), `DELETE /api/admin/lessio/waitlist/by-email`. Для day-7 решения go/pivot/drop.
+- **`app/billing/products.py`** — +3 Stars-продукта: `tutor_pro_1m` (1000⭐), `tutor_pro_12m` (10000⭐), `tutor_pro_forever` (50000⭐ lifetime, Founder)
+- **`alembic/0040_lessio_module.py`** — 5 таблиц с FK на `users` и `star_payments`
+- **Тесты:** 14 кейсов (6 landing + 3 Stars products + 5 admin), pytest 877+5 = 882 passed
+- **Архив** старого Lessio-репо в `c:\www-Yaroslav\Lessio\` + `github.com/SwairIt/Lessio` остаётся как референс — может пригодиться когда отделим в свой репо после ≥100 waitlist
+
+Validation phase: с 2026-05-25 до 2026-06-01 собираем waitlist через посты в каналах репетиторов (см. `docs/lessio-launch-posts.md`). Decision rule locked: ≥100 → MVP go, 30-99 → пивот, <30 → drop.
+
+Мониторинг waitlist'а (X-Admin-Token из .env):
+```bash
+TOKEN=$(grep ADMIN_TOKEN .env | cut -d= -f2-)
+curl -s -H "X-Admin-Token: $TOKEN" https://getdoday.ru/api/admin/lessio/waitlist/stats.json | python -m json.tool
+```
+
+---
+
 ## 2026-05-24 — Беллстрой ТВ → бесконечная аркада с brainrot-врагами (6b1e7da)
 
 По запросу юзера: «нельзя прыгать / маленькая локация / быстро прошёл / текстурки покрасивее / чтобы можно было умереть и мемно». Развалил `game.js` на 4 модуля и дописал HUD:
