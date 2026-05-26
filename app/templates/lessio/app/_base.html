@@ -43,9 +43,13 @@
       to { transform: translateY(0); opacity: 1; }
     }
     .toast { animation: toastIn .25s ease-out; }
+    /* Mobile sidebar — slide-in drawer */
+    @keyframes drawerIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+    .drawer-enter { animation: drawerIn .2s ease-out; }
+    [x-cloak] { display: none !important; }
   </style>
 </head>
-<body class="antialiased">
+<body class="antialiased" x-data="{ sidebarOpen: false }">
 
 {# Toast container — reads ?toast=<key>&toast_type=<ok|warn|err> query param.
    Auto-dismisses after 4s via Alpine. Strip URL после показа чтобы F5 не повторял. #}
@@ -98,13 +102,48 @@
   </template>
 </div>
 
-<div class="md:grid md:grid-cols-[230px_1fr] min-h-screen">
-  <aside class="border-b md:border-b-0 md:border-r border-white/5 p-4 bg-black/20">
-    <a href="/lessio" class="block text-xl font-extrabold mb-6">
-      <span style="background:linear-gradient(135deg,#a78bfa,#f472b6);-webkit-background-clip:text;background-clip:text;color:transparent;">
-        ✦ Lessio
-      </span>
-    </a>
+{# ── Mobile top-bar (hamburger + logo) — виден только < md ──────────── #}
+<header class="md:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-black/40 backdrop-blur border-b border-white/10">
+  <a href="/lessio" class="text-lg font-extrabold">
+    <span style="background:linear-gradient(135deg,#a78bfa,#f472b6);-webkit-background-clip:text;background-clip:text;color:transparent;">
+      ✦ Lessio
+    </span>
+  </a>
+  <button type="button"
+          x-on:click="sidebarOpen = true"
+          aria-label="Открыть меню"
+          class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-violet-200">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+      <path d="M4 6h16M4 12h16M4 18h16"/>
+    </svg>
+  </button>
+</header>
+
+<div class="md:grid md:grid-cols-[240px_1fr] min-h-screen">
+  {# ── Mobile backdrop ─────────────────────────────────────────────── #}
+  <div x-show="sidebarOpen" x-cloak x-transition.opacity
+       x-on:click="sidebarOpen = false"
+       class="md:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"></div>
+
+  {# ── Sidebar — fixed drawer on mobile, regular grid column on md+ ─ #}
+  <aside class="md:relative md:translate-x-0
+                fixed md:static inset-y-0 left-0 z-50 w-[280px] md:w-auto
+                md:border-r border-white/5 p-4 bg-[#120a2e] md:bg-black/20
+                overflow-y-auto
+                md:flex md:flex-col"
+         x-bind:class="sidebarOpen ? 'drawer-enter' : 'hidden md:flex md:flex-col'">
+    <div class="flex items-center justify-between mb-6">
+      <a href="/lessio" class="block text-xl font-extrabold">
+        <span style="background:linear-gradient(135deg,#a78bfa,#f472b6);-webkit-background-clip:text;background-clip:text;color:transparent;">
+          ✦ Lessio
+        </span>
+      </a>
+      <button type="button" x-on:click="sidebarOpen = false"
+              aria-label="Закрыть меню"
+              class="md:hidden w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/5 text-violet-300">
+        ✕
+      </button>
+    </div>
     <nav class="space-y-0.5">
       <a href="/lessio/app/today" class="nav-link {% if active_nav == 'today' %}active{% endif %}">
         <span class="nav-link-emoji">📅</span><span>Сегодня</span>
@@ -130,7 +169,17 @@
       <a href="/lessio/app/settings" class="nav-link {% if active_nav == 'settings' %}active{% endif %}">
         <span class="nav-link-emoji">⚙️</span><span>Настройки</span>
       </a>
+
+      <div class="border-t border-white/5 my-3"></div>
+
+      <a href="/lessio/help" class="nav-link">
+        <span class="nav-link-emoji">📚</span><span>Помощь</span>
+      </a>
+      <a href="/u/{{ profile.slug }}" target="_blank" rel="noopener" class="nav-link">
+        <span class="nav-link-emoji">👁</span><span>Моя страница</span>
+      </a>
     </nav>
+
     <div class="mt-6 px-3 py-3 bg-gradient-to-br from-violet-500/10 to-pink-500/5 rounded-xl border border-violet-400/20 text-xs"
          x-data="{ copied: false }">
       <div class="text-violet-300/60 mb-1.5 flex items-center justify-between">
@@ -150,7 +199,7 @@
     </form>
   </aside>
 
-  <main class="p-6 md:p-10 max-w-5xl">
+  <main class="p-4 sm:p-6 md:p-8 lg:p-10 w-full max-w-6xl mx-auto">
     {% block content %}{% endblock %}
   </main>
 </div>
