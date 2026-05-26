@@ -4,6 +4,51 @@
 
 ---
 
+## 2026-05-26 (closeout) — Prod-readiness wave 2: monitoring + backups + observability (27ec297)
+
+**Code (`27ec297`):**
+
+1. **`/health/deep`** endpoint для uptime-monitor:
+   - DB SELECT 1 ping
+   - Sanity check /u/demo seed
+   - Env-vars validation (SMTP_HOST, TELEGRAM_BOT_TOKEN)
+   - 200/503 → подключай Better Stack или UptimeRobot
+
+2. **Stars-handlers observability:**
+   - `on_pre_checkout_query`: structured-log + Sentry breadcrumb + warning capture при reject
+   - `on_successful_payment`: structured-log + breadcrumb + tag `stars_payment=received`
+   - `logger.exception` → Sentry auto-capture с full stacktrace + контекст
+   - При первом реальном Stars-payment в проде — будет понятно что произошло
+
+3. **App-level anon rate-limit middleware:**
+   - 120 req/min с IP на `/lessio/help/*`, `/blog/*`, `/dlya-*`, `/u/*`
+   - 429 + `Retry-After: 60`
+   - Защита от DDoS на статические render'ы (nginx нужен sudo)
+
+**Server (SSH):**
+
+4. **pg_backup cron:** `/var/www/getdoday/data/pg_backup.sh` + `30 4 * * *`
+   - Daily backup → `/var/www/getdoday/data/backups/doday-YYYY-MM-DD_HHMM.sql.gz`
+   - Retention 7 daily auto-cleanup
+   - Recovery-команда документирована в launch-docs
+
+**SSH-аудит выявил:**
+- ✅ SENTRY_DSN, SMTP_HOST, TELEGRAM_BOT_TOKEN, LESSIO_BOT_TOKEN, DATABASE_URL — все set
+- ✅ SMTP уже на Resend (`smtp.resend.com:587`)
+- ⚠️ SPF/DKIM на DNS НЕТ — нужно verify в Resend Dashboard + добавить TXT/MX через
+  DNS-провайдера домена. Без этого письма попадут в спам mail.ru/yandex.ru
+- ✅ DMARC partial есть (`p=none`)
+
+**Что осталось вручную (не могу сделать из кода):**
+- DNS-записи SPF/DKIM/MX — нужен доступ к DNS-провайдеру домена `getdoday.ru`
+- Реальный Stars-test через @LessioBot — нужен Telegram-клиент
+- Better Stack uptime-monitor account — нужен email-регистрация
+- @BotFather аватарка + descriptions
+
+Полный launch-checklist: `docs/lessio-production-launch.md`.
+
+---
+
 ## 2026-05-26 (final) — Prod-readiness: rate limit + unpaid audit + launch docs (8c74452)
 
 Юзер: «Давай тогда все это доделаем» — после моей prod-готовности оценки.
