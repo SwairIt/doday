@@ -6,32 +6,23 @@
   <meta name="theme-color" content="#0f0a1f">
   <meta name="robots" content="index,follow">
 
-  <title>Lessio — Telegram-кабинет для репетиторов</title>
-  <meta name="description" content="Lessio — записи и оплата для репетиторов и онлайн-тренеров прямо в Telegram. Без сайта, без переводов на сбер, без Excel.">
+  <title>Lessio — расписание и записи для репетиторов · бесплатно</title>
+  <meta name="description" content="Lessio — сайт-кабинет для репетиторов, тренеров и психологов. Клиент сам выбирает время → ты получаешь email + календарь. Без переводов на сбер, без Excel, без чат-бесед.">
+
+  <link rel="canonical" href="https://getdoday.ru/lessio">
 
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Lessio — Telegram-кабинет для репетиторов">
-  <meta property="og:description" content="Записи и оплата в Telegram. 5 минут на запуск.">
+  <meta property="og:title" content="Lessio — расписание и записи для онлайн-репетиторов">
+  <meta property="og:description" content="Клиент видит свободные слоты → записывается сам → ты узнаёшь по email. Бесплатно.">
   <meta property="og:url" content="https://getdoday.ru/lessio">
+  <meta property="og:image" content="https://getdoday.ru/og.svg">
+  <meta property="og:locale" content="ru_RU">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Lessio — расписание и записи для репетиторов">
 
   <link rel="icon" href="/favicon.ico">
-
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            'tf-bg': '#0f0a1f',
-            'tf-accent': '#a78bfa',
-            'tf-accent-2': '#f472b6',
-          },
-        },
-      },
-    };
-  </script>
-  <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
-
   <style>
     body {
       background: linear-gradient(180deg, #0f0a1f 0%, #1a0f3d 60%, #2e1065 100%);
@@ -46,165 +37,342 @@
       background-clip: text;
       color: transparent;
     }
+    .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 1rem; }
+    .feature-icon {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 44px; height: 44px; border-radius: 0.6rem;
+      background: linear-gradient(135deg, rgba(167,139,250,.25), rgba(244,114,182,.2));
+      font-size: 22px;
+    }
   </style>
 </head>
 <body class="antialiased">
 
-<main class="mx-auto max-w-5xl px-5 py-12 sm:py-20">
+<nav class="px-5 py-5 flex items-center justify-between max-w-6xl mx-auto">
+  <a href="/lessio" class="text-2xl font-extrabold">
+    <span class="gradient-text">✦ Lessio</span>
+  </a>
+  <div class="flex items-center gap-3 text-sm">
+    <a href="/auth/login" class="text-violet-300/70 hover:text-violet-200">Войти</a>
+    <a href="/lessio/auth/register"
+       class="px-4 py-2 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-semibold hover:opacity-90 transition">
+      Стать репетитором →
+    </a>
+  </div>
+</nav>
 
-  <!-- Hero -->
-  <section class="text-center mb-20">
-    <div class="inline-block px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs uppercase tracking-widest text-tf-accent mb-6">
-      🚀 Готовится к запуску · присоединяйся к founder-листу
-    </div>
-    <h1 class="text-4xl sm:text-6xl font-extrabold leading-tight mb-5">
-      Записи и оплата<br>
-      <span class="gradient-text">прямо в Telegram</span>
+<main>
+
+  <!-- HERO -->
+  <section class="px-5 py-12 md:py-20 max-w-4xl mx-auto text-center">
+    <p class="inline-block px-4 py-1.5 rounded-full bg-violet-500/15 text-violet-300 text-xs font-semibold mb-6 tracking-wide">
+      БЕСПЛАТНО · 2 МИНУТЫ НА НАСТРОЙКУ · РУНЕТ-ХОСТИНГ
+    </p>
+    <h1 class="text-5xl md:text-6xl font-extrabold mb-5 leading-[1.1]">
+      Расписание и записи<br>
+      <span class="gradient-text">без переводов на сбер</span>
     </h1>
-    <p class="text-lg sm:text-xl text-violet-200/80 max-w-2xl mx-auto mb-10 leading-relaxed">
-      Для репетиторов и онлайн-тренеров. Клиент тапает в боте → выбирает время →
-      платит через Telegram Stars → ты получаешь деньги и запись в календарь.
-      Без сайта, без переводов на сбер, без Excel с расписанием.
+    <p class="text-xl text-violet-200/80 max-w-2xl mx-auto leading-relaxed mb-8">
+      Для репетиторов, онлайн-тренеров и психологов. Клиент видит твои свободные
+      слоты на твоей странице → записывается сам → ты получаешь email +
+      напоминания за 24 ч / 1 ч.
+      <br><b class="text-white">Никаких чатов «можно во вторник?».</b>
     </p>
 
-    <div id="form-target" class="max-w-md mx-auto">
-      <form
-        hx-post="/lessio/waitlist"
-        hx-target="#form-target"
-        hx-swap="innerHTML"
-        class="space-y-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-5 glow"
-      >
-        <input
-          name="email"
-          type="email"
-          required
-          placeholder="ваш email"
-          class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-violet-300/40 focus:outline-none focus:border-tf-accent"
-        >
-        <select
-          name="niche"
-          class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-tf-accent"
-        >
-          <option value="english" class="bg-tf-bg">Английский / иностранные языки</option>
-          <option value="ielts" class="bg-tf-bg">IELTS / TOEFL / экзамены</option>
-          <option value="math" class="bg-tf-bg">Математика / физика / другие предметы</option>
-          <option value="school" class="bg-tf-bg">Школа / ЕГЭ / ОГЭ</option>
-          <option value="fitness" class="bg-tf-bg">Фитнес / йога / тренер</option>
-          <option value="psychology" class="bg-tf-bg">Психология / коучинг</option>
-          <option value="other" class="bg-tf-bg">Что-то другое</option>
-        </select>
-        <input
-          name="telegram_handle"
-          type="text"
-          placeholder="Telegram @handle (необязательно)"
-          class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-violet-300/40 focus:outline-none focus:border-tf-accent"
-        >
-        <textarea
-          name="pain_point"
-          rows="2"
-          placeholder="Что больше всего мешает тебе в работе сейчас? (необязательно, но это самое полезное для меня)"
-          class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-violet-300/40 focus:outline-none focus:border-tf-accent resize-none"
-        ></textarea>
-        <input name="source" type="hidden" value="landing">
-        <button
-          type="submit"
-          class="w-full px-6 py-3.5 bg-gradient-to-r from-tf-accent to-tf-accent-2 rounded-xl font-bold text-white hover:brightness-110 transition"
-        >
-          Хочу попробовать первым →
-        </button>
-      </form>
-      {% if show_count %}
-      <p class="text-sm text-violet-300/50 mt-4">Уже {{ waitlist_count }} репетиторов в листе ожидания</p>
-      {% endif %}
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-3 mb-12">
+      <a href="/lessio/auth/register"
+         class="px-8 py-4 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-bold text-lg hover:opacity-90 transition glow">
+        Создать страницу бесплатно →
+      </a>
+      <a href="/u/demo"
+         class="px-6 py-3 bg-white/5 border border-white/10 rounded-xl font-semibold hover:bg-white/10 transition">
+        Посмотреть пример страницы
+      </a>
+    </div>
+
+    <p class="text-sm text-violet-300/50">
+      ✓ Без подписки  ·  ✓ Без комиссий за бронирование  ·  ✓ Деньги напрямую тебе
+    </p>
+  </section>
+
+  <!-- BEFORE / AFTER -->
+  <section class="px-5 py-12 max-w-5xl mx-auto">
+    <h2 class="text-3xl md:text-4xl font-extrabold text-center mb-10">
+      Что было — что станет
+    </h2>
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="card p-6">
+        <h3 class="text-rose-300 font-bold mb-3 text-sm tracking-wide">СЕЙЧАС</h3>
+        <ul class="space-y-3 text-violet-100/85 text-sm leading-relaxed">
+          <li>📝 Расписание в Google Calendar + в голове</li>
+          <li>💬 Клиент пишет «можно во вторник?» → лезешь смотреть</li>
+          <li>💸 Перевод на сбер по номеру → не помнишь кто оплатил</li>
+          <li>🤦 Кто-то забыл про встречу → весь день пустой</li>
+          <li>📊 В конце месяца «сколько я заработал?» — считаешь в Excel</li>
+        </ul>
+      </div>
+      <div class="card p-6 border-violet-400/40">
+        <h3 class="text-emerald-300 font-bold mb-3 text-sm tracking-wide">С LESSIO</h3>
+        <ul class="space-y-3 text-violet-100/85 text-sm leading-relaxed">
+          <li>📅 Клиент видит свободные слоты на getdoday.ru/u/твой_ник</li>
+          <li>✅ Сам выбирает время → email тебе «новая запись»</li>
+          <li>💰 Платит как угодно (СБП/перевод/нал) — ты ставишь галочку «оплачено»</li>
+          <li>⏰ Cron сам шлёт ему напоминания за сутки и за час</li>
+          <li>📊 Дашборд показывает доход за месяц + CSV для «Мой Налог»</li>
+        </ul>
+      </div>
     </div>
   </section>
 
-  <!-- Pain → Solution rows -->
-  <section class="mb-20 space-y-6">
-    <h2 class="text-3xl font-bold text-center mb-8">Что было — что станет</h2>
-    {% for pain, fix in [
-      ("Расписание в Google Calendar и в голове. Клиент пишет «можно во вторник?» — лезешь смотреть.",
-       "Клиент видит твои свободные слоты в боте и записывается сам. Тебе приходит уведомление."),
-      ("Оплата — «переведи на сбер 5000». Чек? Иногда. Потом крутишься с самозанятым налогом.",
-       "Клиент платит через Telegram Stars прямо в боте. Доход видно в админке. Один CSV — и налог посчитан."),
-      ("Переносы по 5 раз в неделю. WhatsApp забит «давайте перенесём».",
-       "Клиент сам переносит на свободный слот. Ты подтверждаешь одной кнопкой."),
-      ("Напоминания клиенту — отдельно каждому. Если забыл — клиент не пришёл.",
-       "Бот шлёт напоминание клиенту за 24 ч и за 1 ч. No-show почти исчезает."),
-      ("Учёт клиентов — Notion или тетрадка. История платежей — нигде.",
-       "Карточка клиента: история занятий, оплат, средний интервал, заметки.")
-    ] %}
-    <div class="grid sm:grid-cols-2 gap-4 sm:gap-6 bg-white/5 border border-white/10 rounded-2xl p-5 sm:p-6">
-      <div class="text-violet-300/70">
-        <div class="text-xs uppercase tracking-widest text-rose-400/80 mb-2">Сейчас</div>
-        <p>{{ pain }}</p>
+  <!-- HOW IT WORKS -->
+  <section class="px-5 py-16 max-w-5xl mx-auto">
+    <h2 class="text-3xl md:text-4xl font-extrabold text-center mb-12">
+      Как это работает
+    </h2>
+    <div class="grid md:grid-cols-3 gap-5">
+      <div class="card p-6">
+        <div class="text-4xl font-extrabold gradient-text mb-3">1</div>
+        <h3 class="font-bold mb-2">Регистрируешься</h3>
+        <p class="text-sm text-violet-200/70 leading-relaxed">
+          Email + пароль. 30 секунд: выбираешь ник, нишу (английский / йога / коучинг…), эмодзи.
+          Система автоматом создаёт пару типовых услуг — можно сразу делиться.
+        </p>
       </div>
-      <div>
-        <div class="text-xs uppercase tracking-widest text-emerald-400/80 mb-2">С Lessio</div>
-        <p class="font-medium">{{ fix }}</p>
+      <div class="card p-6">
+        <div class="text-4xl font-extrabold gradient-text mb-3">2</div>
+        <h3 class="font-bold mb-2">Делишься ссылкой</h3>
+        <p class="text-sm text-violet-200/70 leading-relaxed">
+          В подписи email, в Telegram-канале, в био Instagram.
+          На странице — твоё фото / эмодзи, услуги, цены, отзывы.
+          Видна Гуглу + Яндексу с JSON-LD ★-разметкой.
+        </p>
+      </div>
+      <div class="card p-6">
+        <div class="text-4xl font-extrabold gradient-text mb-3">3</div>
+        <h3 class="font-bold mb-2">Принимаешь записи</h3>
+        <p class="text-sm text-violet-200/70 leading-relaxed">
+          Клиент выбрал слот → ему email со ссылкой на встречу + magic-link
+          (отменить / перенести без чатов). Тебе email + утренний digest.
+        </p>
       </div>
     </div>
-    {% endfor %}
   </section>
 
-  <!-- Pricing -->
-  <section class="mb-20">
-    <h2 class="text-3xl font-bold text-center mb-4">Цена</h2>
-    <p class="text-center text-violet-300/70 mb-10">Платишь только когда зарабатываешь больше, чем платишь нам.</p>
-    <div class="grid sm:grid-cols-3 gap-5">
-      <div class="bg-white/5 border border-white/10 rounded-2xl p-6 text-center">
-        <div class="text-xs uppercase tracking-widest text-violet-300/70 mb-3">Free</div>
-        <div class="text-3xl font-extrabold mb-3">0 ⭐</div>
-        <p class="text-sm text-violet-300/70">До 5 клиентов и 20 занятий/мес. Полный функционал — чтобы попробовать без риска.</p>
+  <!-- FEATURES -->
+  <section class="px-5 py-16 max-w-5xl mx-auto">
+    <h2 class="text-3xl md:text-4xl font-extrabold text-center mb-3">
+      Что внутри
+    </h2>
+    <p class="text-center text-violet-200/60 mb-12 max-w-2xl mx-auto">
+      Всё, что реально нужно соло-репетитору. Никаких фич ради фич.
+    </p>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="card p-5">
+        <div class="feature-icon mb-3">📅</div>
+        <h3 class="font-bold mb-1">Публичная страница</h3>
+        <p class="text-sm text-violet-200/70">
+          getdoday.ru/u/твой_ник — клиент видит услуги, цены, свободные слоты,
+          отзывы. JSON-LD ★-разметка для Google SERP.
+        </p>
       </div>
-      <div class="bg-gradient-to-b from-tf-accent/30 to-tf-accent-2/20 border border-tf-accent/50 rounded-2xl p-6 text-center glow relative">
-        <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-tf-accent rounded-full text-xs font-bold">Рекомендую</div>
-        <div class="text-xs uppercase tracking-widest text-tf-accent mb-3">Pro · месяц</div>
-        <div class="text-3xl font-extrabold mb-1">1000 ⭐</div>
-        <div class="text-sm text-violet-200/60 mb-3">≈ 750 ₽</div>
-        <p class="text-sm">Безлимит клиентов, статистика, экспорт для «Моего налога», брендирование бота.</p>
+      <div class="card p-5">
+        <div class="feature-icon mb-3">⏰</div>
+        <h3 class="font-bold mb-1">Авто-напоминания</h3>
+        <p class="text-sm text-violet-200/70">
+          Cron шлёт клиенту email за 24 часа и за 1 час до встречи. Не приходят
+          — догоняем review-просьбой после.
+        </p>
       </div>
-      <div class="bg-white/5 border border-white/10 rounded-2xl p-6 text-center">
-        <div class="text-xs uppercase tracking-widest text-amber-400 mb-3">Founder · навсегда</div>
-        <div class="text-3xl font-extrabold mb-1">50 000 ⭐</div>
-        <div class="text-sm text-violet-200/60 mb-3">≈ 37 500 ₽ один раз</div>
-        <p class="text-sm">Pro без срока. Только первые 200 репетиторов.</p>
+      <div class="card p-5">
+        <div class="feature-icon mb-3">🗓</div>
+        <h3 class="font-bold mb-1">Google Calendar sync</h3>
+        <p class="text-sm text-violet-200/70">
+          Подключаешь свой GCal → твои встречи (с тёщей / у врача) автоматом
+          вычитаются из свободных слотов. Read-only, безопасно.
+        </p>
+      </div>
+      <div class="card p-5">
+        <div class="feature-icon mb-3">⭐</div>
+        <h3 class="font-bold mb-1">Отзывы клиентов</h3>
+        <p class="text-sm text-violet-200/70">
+          После встречи клиент получает email «оцените» → ★ на твоей странице →
+          новые клиенты доверяют. Бесплатное social proof.
+        </p>
+      </div>
+      <div class="card p-5">
+        <div class="feature-icon mb-3">💰</div>
+        <h3 class="font-bold mb-1">Дашборд дохода + CSV</h3>
+        <p class="text-sm text-violet-200/70">
+          Видно сколько заработал за месяц, по каким услугам, кто не оплатил.
+          CSV-экспорт совместим с приложением «Мой Налог».
+        </p>
+      </div>
+      <div class="card p-5">
+        <div class="feature-icon mb-3">📲</div>
+        <h3 class="font-bold mb-1">PWA на телефоне</h3>
+        <p class="text-sm text-violet-200/70">
+          Кабинет можно добавить на homescreen — выглядит и работает как
+          нативное приложение. Без App Store, без модерации.
+        </p>
+      </div>
+      <div class="card p-5">
+        <div class="feature-icon mb-3">🌍</div>
+        <h3 class="font-bold mb-1">Любой часовой пояс</h3>
+        <p class="text-sm text-violet-200/70">
+          Москва, Екб, Алматы, Минск — выбираешь свою TZ в настройках. Клиент
+          видит время в своей зоне (браузер сам конвертит).
+        </p>
+      </div>
+      <div class="card p-5">
+        <div class="feature-icon mb-3">👥</div>
+        <h3 class="font-bold mb-1">Групповые занятия</h3>
+        <p class="text-sm text-violet-200/70">
+          Йога / групповой английский / мастермайнд — указываешь max
+          участников, клиенты записываются параллельно на тот же слот.
+        </p>
+      </div>
+      <div class="card p-5">
+        <div class="feature-icon mb-3">🔗</div>
+        <h3 class="font-bold mb-1">Magic-link управление</h3>
+        <p class="text-sm text-violet-200/70">
+          Клиент по личной ссылке из email переносит/отменяет запись сам — тебе
+          приходит уведомление. Никаких «можно в другое время?» в чатах.
+        </p>
       </div>
     </div>
-    <p class="text-center text-xs text-violet-300/50 mt-6">+ Комиссия платформы 5% с каждой Stars-транзакции между тобой и клиентом.</p>
+  </section>
+
+  <!-- DEMO LINK -->
+  <section class="px-5 py-12 max-w-4xl mx-auto">
+    <div class="card p-8 text-center border-violet-400/30">
+      <h2 class="text-2xl md:text-3xl font-extrabold mb-3">
+        Посмотри как выглядит для клиента
+      </h2>
+      <p class="text-violet-200/70 mb-6">
+        Открой пример публичной страницы — это то, что увидят твои клиенты:
+      </p>
+      <a href="/u/demo"
+         class="inline-block px-6 py-3 bg-white/10 border border-white/20 rounded-xl font-semibold hover:bg-white/20 transition">
+        getdoday.ru/u/demo →
+      </a>
+      <p class="text-xs text-violet-300/40 mt-3">
+        (если страницы нет — значит первый репетитор ещё не успел зарегиться)
+      </p>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="px-5 py-16 max-w-3xl mx-auto">
+    <h2 class="text-3xl md:text-4xl font-extrabold text-center mb-3">
+      Сколько стоит
+    </h2>
+    <p class="text-center text-violet-200/60 mb-10">
+      Сейчас — бесплатно навсегда для founder-tutors.
+    </p>
+    <div class="card p-8 text-center border-violet-400/40 glow">
+      <div class="text-5xl font-extrabold gradient-text mb-3">0 ₽</div>
+      <p class="text-violet-200/70 mb-6">за репетитора в месяц</p>
+      <ul class="text-sm text-violet-100/85 space-y-2 mb-6 max-w-xs mx-auto text-left">
+        <li>✓ Безлимит услуг</li>
+        <li>✓ Безлимит клиентов</li>
+        <li>✓ Безлимит записей</li>
+        <li>✓ Email-уведомления + reminders</li>
+        <li>✓ CSV-экспорт для «Мой Налог»</li>
+        <li>✓ Google Calendar sync</li>
+        <li>✓ Отзывы + публичная страница</li>
+      </ul>
+      <p class="text-xs text-violet-300/50">
+        Когда подключим встроенные платежи — будет комиссия только с тех,
+        кто захочет через нас принимать оплату. Кто отмечает галочку «оплачено»
+        вручную — всегда бесплатно.
+      </p>
+    </div>
   </section>
 
   <!-- FAQ -->
-  <section class="mb-20 max-w-3xl mx-auto">
-    <h2 class="text-3xl font-bold text-center mb-8">Вопросы</h2>
+  <section class="px-5 py-16 max-w-3xl mx-auto">
+    <h2 class="text-3xl md:text-4xl font-extrabold text-center mb-10">
+      Частые вопросы
+    </h2>
     <div class="space-y-3">
-      {% for q, a in [
-        ("Когда запуск?",
-         "Если за неделю наберётся 100+ репетиторов в waitlist — начинаю MVP. Первая бета через 4 недели после старта разработки."),
-        ("Сколько Telegram забирает со Stars?",
-         "Около 30% — стандартная комиссия за вывод. На странице цены указано нетто — то, что реально доходит до тебя."),
-        ("Мне 15 лет — могу я доверять?",
-         "Доверять стоит результату, а не возрасту. Уже сделал getdoday.ru (~400 пользователей, Stars работают). Архитектура Lessio той же команды. Код открытый на GitHub."),
-        ("Что если идея не зайдёт?",
-         "Тогда не делаю MVP, а пишу в waitlist что отказался. Твой email никуда не уйдёт."),
-        ("Можно платить с карты, не через Stars?",
-         "Stars — единственный способ для меня сейчас (15 лет, юрлица нет). Когда заведём юрлицо — добавим карты."),
-      ] %}
-      <details class="bg-white/5 border border-white/10 rounded-xl p-5">
-        <summary class="cursor-pointer font-semibold">{{ q }}</summary>
-        <p class="mt-3 text-violet-200/80 text-sm leading-relaxed">{{ a }}</p>
+      <details class="card p-5">
+        <summary class="font-semibold cursor-pointer">А где принимать оплату?</summary>
+        <p class="mt-3 text-sm text-violet-200/70 leading-relaxed">
+          Сейчас — где угодно (СБП, перевод по номеру карты, кэш). В Lessio
+          ставишь галочку «оплачено» в карточке клиента. Дашборд автоматом
+          считает доход за месяц. Встроенные платежи через ЮKassa добавим
+          когда будет юр.лицо.
+        </p>
       </details>
-      {% endfor %}
+      <details class="card p-5">
+        <summary class="font-semibold cursor-pointer">Это не Telegram-бот?</summary>
+        <p class="mt-3 text-sm text-violet-200/70 leading-relaxed">
+          Нет, это веб-сайт. В РФ Telegram частично заблокирован, ботам
+          приходится через VPN — клиент скорее всего не дойдёт. Web-страница
+          открывается у всех всегда. Telegram-канал уведомлений тоже сделаем,
+          когда инфра разрешится.
+        </p>
+      </details>
+      <details class="card p-5">
+        <summary class="font-semibold cursor-pointer">Что если у меня уже есть Google Calendar?</summary>
+        <p class="mt-3 text-sm text-violet-200/70 leading-relaxed">
+          Подключаешь его в настройках — Lessio читает твои busy-times и
+          вычитает из публичного расписания. Клиенты не смогут забронировать
+          то время, когда у тебя в GCal что-то стоит.
+        </p>
+      </details>
+      <details class="card p-5">
+        <summary class="font-semibold cursor-pointer">А если клиент захочет отменить?</summary>
+        <p class="mt-3 text-sm text-violet-200/70 leading-relaxed">
+          У каждого клиента после записи — личная magic-link ссылка
+          (getdoday.ru/lessio/manage/&lt;token&gt;). Может отменить или
+          перенести без твоего участия. Тебе придёт уведомление.
+        </p>
+      </details>
+      <details class="card p-5">
+        <summary class="font-semibold cursor-pointer">Может тут быть мой бренд / лого?</summary>
+        <p class="mt-3 text-sm text-violet-200/70 leading-relaxed">
+          В MVP — эмодзи-аватар + твой ник в ссылке (getdoday.ru/u/anna_english).
+          После первых 10 платящих tutor'ов добавим custom domain (anna.ru →
+          твоя страница) и логотип-загрузку.
+        </p>
+      </details>
+      <details class="card p-5">
+        <summary class="font-semibold cursor-pointer">А что насчёт самозанятых?</summary>
+        <p class="mt-3 text-sm text-violet-200/70 leading-relaxed">
+          CSV-экспорт из раздела «Доход» совместим с импортом в «Мой Налог».
+          В конце месяца — три клика, чек сформирован.
+        </p>
+      </details>
     </div>
   </section>
 
-  <!-- Footer -->
-  <footer class="text-center text-sm text-violet-300/50 pt-10 border-t border-white/5">
-    <p class="mb-2">Lessio · один из <a href="/" class="underline hover:text-white">проектов Doday Studio</a></p>
-    <p>
-      <a href="/" class="underline hover:text-white">← Все проекты студии</a> ·
-      <a href="/doday" class="underline hover:text-white">Doday Tasks (туду-лист)</a> ·
-      <a href="mailto:doday.support@gmail.com" class="underline hover:text-white">doday.support@gmail.com</a>
+  <!-- FINAL CTA -->
+  <section class="px-5 py-16 max-w-3xl mx-auto text-center">
+    <h2 class="text-3xl md:text-4xl font-extrabold mb-4">
+      Давай ты будешь первым
+    </h2>
+    <p class="text-violet-200/70 mb-8 max-w-xl mx-auto">
+      Регистрация — 30 секунд. Если что-то не нравится — пиши лично, чиню
+      сразу. Сейчас ещё мало tutors, можно влиять на продукт.
+    </p>
+    <a href="/lessio/auth/register"
+       class="inline-block px-8 py-4 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-bold text-lg hover:opacity-90 transition glow">
+      Создать страницу бесплатно →
+    </a>
+    <p class="text-xs text-violet-300/40 mt-4">
+      Уже есть аккаунт? <a href="/auth/login" class="underline">Войти</a>
+    </p>
+  </section>
+
+  <footer class="px-5 py-10 max-w-5xl mx-auto border-t border-white/5 text-center text-sm text-violet-300/50">
+    <p class="mb-2">
+      <a href="/" class="underline hover:text-violet-200">Doday Studio</a> ·
+      <a href="/doday" class="underline hover:text-violet-200">Doday Tasks (туду-лист)</a> ·
+      <a href="mailto:doday.support@gmail.com" class="underline hover:text-violet-200">doday.support@gmail.com</a>
+    </p>
+    <p class="text-xs text-violet-300/30">
+      Lessio — модуль внутри Doday Studio. Хостинг РФ, данные на серверах в Москве.
     </p>
   </footer>
 </main>
