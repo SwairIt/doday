@@ -29,6 +29,24 @@
   </div>
 </section>
 
+{% if total_count > 0 %}
+{# ── Charts grid ─────────────────────────────────────────────────── #}
+<section class="grid lg:grid-cols-3 gap-4 mb-8">
+  <div class="lg:col-span-2 bg-white/5 border border-white/10 rounded-2xl p-5">
+    <h3 class="text-sm font-bold text-violet-200/90 mb-3">Доход по месяцам · 6 мес</h3>
+    <div class="h-64"><canvas id="chart-monthly"></canvas></div>
+  </div>
+  <div class="bg-white/5 border border-white/10 rounded-2xl p-5">
+    <h3 class="text-sm font-bold text-violet-200/90 mb-3">Топ-услуги</h3>
+    <div class="h-64"><canvas id="chart-services"></canvas></div>
+  </div>
+  <div class="lg:col-span-3 bg-white/5 border border-white/10 rounded-2xl p-5">
+    <h3 class="text-sm font-bold text-violet-200/90 mb-3">Встречи по неделям · 8 нед</h3>
+    <div class="h-56"><canvas id="chart-weekly"></canvas></div>
+  </div>
+</section>
+{% endif %}
+
 <h2 class="text-xl font-bold mb-4">Разбивка по услугам</h2>
 
 {% if service_breakdown %}
@@ -62,4 +80,88 @@
     Conversion rate (views → bookings) появится когда подключите Yandex.Metrika.
   </p>
 </aside>
+
+{% if total_count > 0 %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  (() => {
+    const violet = 'rgba(167, 139, 250, 0.85)';
+    const violetSoft = 'rgba(167, 139, 250, 0.25)';
+    const emerald = 'rgba(52, 211, 153, 0.85)';
+    const pink = 'rgba(244, 114, 182, 0.85)';
+    const palette = [violet, emerald, pink, 'rgba(96, 165, 250, 0.85)',
+                     'rgba(251, 191, 36, 0.85)', 'rgba(248, 113, 113, 0.85)'];
+    const gridColor = 'rgba(255, 255, 255, 0.05)';
+    const tickColor = 'rgba(196, 181, 253, 0.55)';
+
+    const commonScales = {
+      x: { grid: { color: gridColor }, ticks: { color: tickColor, font: { size: 10 } } },
+      y: { grid: { color: gridColor }, ticks: { color: tickColor, font: { size: 10 } }, beginAtZero: true },
+    };
+    const commonOpts = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: tickColor, font: { size: 11 } } } },
+    };
+
+    new Chart(document.getElementById('chart-monthly'), {
+      type: 'bar',
+      data: {
+        labels: {{ charts.monthly_labels | tojson }},
+        datasets: [
+          { label: 'Доход, ₽', data: {{ charts.monthly_revenue | tojson }}, backgroundColor: emerald, borderRadius: 6 },
+          { label: 'Встреч', data: {{ charts.monthly_count | tojson }}, backgroundColor: violetSoft, borderRadius: 6, yAxisID: 'y2' },
+        ],
+      },
+      options: {
+        ...commonOpts,
+        scales: {
+          ...commonScales,
+          y2: { position: 'right', grid: { drawOnChartArea: false }, ticks: { color: tickColor, font: { size: 10 } }, beginAtZero: true },
+        },
+      },
+    });
+
+    new Chart(document.getElementById('chart-weekly'), {
+      type: 'line',
+      data: {
+        labels: {{ charts.weekly_labels | tojson }},
+        datasets: [{
+          label: 'Встречи',
+          data: {{ charts.weekly_count | tojson }},
+          borderColor: violet,
+          backgroundColor: violetSoft,
+          fill: true,
+          tension: 0.35,
+          pointRadius: 4,
+          pointBackgroundColor: pink,
+        }],
+      },
+      options: { ...commonOpts, scales: commonScales },
+    });
+
+    {% if charts.doughnut_counts %}
+    new Chart(document.getElementById('chart-services'), {
+      type: 'doughnut',
+      data: {
+        labels: {{ charts.doughnut_labels | tojson }},
+        datasets: [{
+          data: {{ charts.doughnut_counts | tojson }},
+          backgroundColor: palette,
+          borderColor: 'rgba(15, 10, 31, 0.9)',
+          borderWidth: 2,
+        }],
+      },
+      options: {
+        ...commonOpts,
+        plugins: {
+          legend: { position: 'bottom', labels: { color: tickColor, font: { size: 10 }, padding: 8, boxWidth: 12 } },
+        },
+        cutout: '60%',
+      },
+    });
+    {% endif %}
+  })();
+</script>
+{% endif %}
 {% endblock %}

@@ -944,6 +944,61 @@ async def stats_page(
     now = datetime.now(UTC)
     last_30d = sum(1 for b in bookings if b.starts_at >= now - timedelta(days=30))
 
+    # Monthly revenue, последние 6 месяцев (включая текущий)
+    months_labels: list[str] = []
+    months_revenue: list[int] = []
+    months_count: list[int] = []
+    # шагаем по началам месяцев назад от текущего
+    cur_y, cur_m = now.year, now.month
+    monthly_buckets: list[tuple[int, int]] = []
+    for _ in range(6):
+        monthly_buckets.append((cur_y, cur_m))
+        cur_m -= 1
+        if cur_m == 0:
+            cur_m = 12
+            cur_y -= 1
+    monthly_buckets.reverse()
+    for y, mm in monthly_buckets:
+        revenue = (
+            sum(
+                b.price_kopecks
+                for b in bookings
+                if b.starts_at.year == y and b.starts_at.month == mm and b.payment_status == "paid"
+            )
+            // 100
+        )
+        count = sum(1 for b in bookings if b.starts_at.year == y and b.starts_at.month == mm)
+        months_labels.append(f"{mm:02d}.{y}")
+        months_revenue.append(revenue)
+        months_count.append(count)
+
+    # Weekly count, последние 8 недель (включая текущую)
+    weeks_labels: list[str] = []
+    weeks_count: list[int] = []
+    today_local = now.date()
+    cur_week_monday = today_local - timedelta(days=today_local.isoweekday() - 1)
+    week_starts = [cur_week_monday - timedelta(days=7 * i) for i in range(8)]
+    week_starts.reverse()
+    for ws in week_starts:
+        we = ws + timedelta(days=7)
+        cnt = sum(1 for b in bookings if ws <= b.starts_at.date() < we)
+        weeks_labels.append(ws.strftime("%d.%m"))
+        weeks_count.append(cnt)
+
+    # Service breakdown — для doughnut (top 6)
+    doughnut_labels = [str(s["title"])[:30] for s in service_breakdown[:6]]
+    doughnut_counts = [int(s["count"]) for s in service_breakdown[:6]]
+
+    charts = {
+        "monthly_labels": months_labels,
+        "monthly_revenue": months_revenue,
+        "monthly_count": months_count,
+        "weekly_labels": weeks_labels,
+        "weekly_count": weeks_count,
+        "doughnut_labels": doughnut_labels,
+        "doughnut_counts": doughnut_counts,
+    }
+
     return _templates.TemplateResponse(
         request,
         "lessio/app/stats.html",
@@ -955,6 +1010,7 @@ async def stats_page(
             "total_pending": total_pending,
             "service_breakdown": service_breakdown,
             "last_30d": last_30d,
+            "charts": charts,
         },
     )
 
