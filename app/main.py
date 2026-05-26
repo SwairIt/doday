@@ -184,6 +184,47 @@ async def _csrf_origin_check(
     return await call_next(request)
 
 
+# Anonymous public Lessio paths — readable без auth, поэтому ленятся бот-краулерам.
+# Лимит на app-уровне: 120 req/min с IP (нормальный читатель — 5-15 req/min,
+# bot-флуд = блок). nginx уровень был бы лучше, но без sudo на FastPanel-сервере
+# — это резервная защита от DDoS на статические render'ы.
+_ANON_LESSIO_PREFIXES = (
+    "/lessio/help",
+    "/lessio/blog",
+    "/lessio/dlya-",
+    "/lessio/alternativa-",
+    "/lessio/oplata-",
+    "/u/",
+)
+
+
+@app.middleware("http")
+async def _lessio_anon_rate_limit(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
+    """Rate-limit anonymous Lessio public paths (60 req/min с IP).
+
+    Только GET. POST на /u/<slug>/book имеет свою защиту через slot-conflict
+    и CSRF — отдельно тут не лимитируем.
+    """
+    from app.auth.rate_limit import hit
+
+    if request.method != "GET":
+        return await call_next(request)
+    path = request.url.path
+    if not any(path.startswith(p) for p in _ANON_LESSIO_PREFIXES):
+        return await call_next(request)
+    ip = request.client.host if request.client else "unknown"
+    # 120 в минуту — щедро для людей, блок ботов вообще-абуза.
+    if not hit(f"anon_lessio:{ip}", max_calls=120, per_seconds=60):
+        return PlainTextResponse(
+            "Слишком много запросов. Подождите минуту.",
+            status_code=429,
+            headers={"Retry-After": "60"},
+        )
+    return await call_next(request)
+
+
 # Defence-in-depth: nginx adds these too, but if someone hits uvicorn directly
 # (or runs without nginx for a quick test), we still ship safe defaults.
 @app.middleware("http")
@@ -308,7 +349,63 @@ async def _pretty_404(
 
 @app.get("/health")
 async def health() -> dict[str, str]:
+    """Lightweight liveness probe — uvicorn started, no DB check."""
     return {"status": "ok"}
+
+
+@app.get("/health/deep")
+async def health_deep(
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> Response:
+    """Deep health-check для uptime-monitor: проверяет DB + основные сервисы.
+
+    Возвращает 200 если всё ок, 503 при первом failure. Используется как
+    target для Better Stack / UptimeRobot — алёрт срабатывает если 2 из 3
+    последовательных проверок fail'ятся.
+    """
+    from sqlalchemy import text
+
+    checks: dict[str, str] = {}
+    overall_ok = True
+
+    # 1. DB-ping — простая «SELECT 1» через получаемую сессию
+    try:
+        result = await session.execute(text("SELECT 1"))
+        if result.scalar() == 1:
+            checks["db"] = "ok"
+        else:
+            checks["db"] = "unexpected_result"
+            overall_ok = False
+    except Exception as exc:  # health-check намеренно ловит любые ошибки
+        checks["db"] = f"fail: {type(exc).__name__}"
+        overall_ok = False
+
+    # 2. Lessio: что хотя бы 1 demo-tutor существует — sanity-check seeds
+    try:
+        from app.lessio.models import LessioTutorProfile
+
+        demo = (
+            await session.execute(
+                select(LessioTutorProfile).where(LessioTutorProfile.slug == "demo")
+            )
+        ).scalar_one_or_none()
+        checks["lessio_demo"] = "ok" if demo is not None else "missing"
+    except Exception as exc:
+        checks["lessio_demo"] = f"fail: {type(exc).__name__}"
+        overall_ok = False
+
+    # 3. Env sanity — критичные переменные заданы (мы не светим их значения)
+    env_required = ("smtp_host", "telegram_bot_token")
+    for key in env_required:
+        val = getattr(_settings, key, "")
+        checks[f"env.{key}"] = "set" if val else "missing"
+        # missing не критично для liveness — но сигнал в JSON
+
+    status_code = 200 if overall_ok else 503
+    return JSONResponse(
+        {"status": "ok" if overall_ok else "degraded", "checks": checks},
+        status_code=status_code,
+    )
 
 
 def _read_git_sha() -> str:

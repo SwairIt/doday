@@ -20,56 +20,52 @@
 
 ## ⚠️ Требует ручных действий в проде
 
-### 1. SPF / DKIM / DMARC для домена `getdoday.ru`
+### 1. SPF / DKIM для домена `getdoday.ru` (через Resend)
 
-Без этих DNS-записей письма Lessio попадают в спам (особенно на mail.ru / yandex.ru).
+**Текущее состояние** (проверено `dig` 2026-05-26):
+- ✅ SMTP уже на `smtp.resend.com:587` (отлично!)
+- ✅ `_dmarc.getdoday.ru` — есть базовый `v=DMARC1; p=none;`
+- ❌ SPF (TXT на корневой) — **отсутствует**
+- ❌ DKIM (Resend keys) — **отсутствуют**
 
-**Что сейчас:** письма шлются через SMTP-сервер из `SMTP_HOST=...` (.env на проде).
-Если это Gmail или ваш собственный — нужны записи ниже.
+Без SPF/DKIM письма Lessio будут падать в спам на mail.ru / yandex.ru.
 
-**SPF** — TXT-запись на корневой домен. Разрешает указанным серверам отправлять
-от вашего домена.
+**Что делать (5-10 минут):**
 
-```
-Имя:       @  (или getdoday.ru)
-Тип:       TXT
-Значение:  v=spf1 include:_spf.google.com ~all
-```
+1. Зайти в [resend.com/domains](https://resend.com/domains) → ваш домен `getdoday.ru` → Verify.
 
-Если SMTP не Gmail — замените `include:_spf.google.com` на ваш `include:smtp.provider.com`.
+2. Resend покажет точные DNS-записи для вашего аккаунта — обычно 3-4 штуки:
+   - **MX**: `send.getdoday.ru` → `feedback-smtp.eu-west-1.amazonses.com` (или ваш регион)
+     Priority: 10
+   - **TXT SPF на `send.getdoday.ru`**: `v=spf1 include:amazonses.com ~all`
+   - **TXT DKIM на `resend._domainkey.getdoday.ru`**:
+     длинный `v=DKIM1; k=rsa; p=MIGfMA0...`
 
-**DKIM** — добавляет подпись к письмам, доказывает что письмо реально от вас.
+3. Параллельно обновить корневой `_dmarc`:
+   ```
+   Имя:       _dmarc.getdoday.ru
+   Тип:       TXT
+   Значение:  v=DMARC1; p=none; rua=mailto:doday.support@gmail.com; aspf=r; adkim=r
+   ```
+   На 2 недели `p=none` (мониторинг), потом `p=quarantine`, ещё через месяц `p=reject`.
 
-В Google Workspace: Admin Console → Apps → Gmail → Authenticate email → Generate DKIM key.
-Получите запись типа:
+4. Добавить эти записи через DNS-провайдера домена `getdoday.ru` (Reg.ru / Cloudflare / etc).
 
-```
-Имя:       google._domainkey.getdoday.ru
-Тип:       TXT
-Значение:  v=DKIM1; k=rsa; p=MIGfMA0...  (длинная строка)
-```
+5. В Resend Dashboard нажать **Verify** — обычно валидируется за 5-15 минут.
 
-**DMARC** — политика что делать с письмами не прошедшими SPF/DKIM.
+6. После verification — отправить тестовый email через Lessio booking, проверить
+   что письмо приходит **без** «via amazonses.com» в From и не в Спам:
+   ```bash
+   # Тест: отправить test booking на свой реальный email через demo-tutor
+   curl https://getdoday.ru/u/demo
+   # → выбрать слот, ввести свой email, проверить inbox
+   ```
 
-```
-Имя:       _dmarc.getdoday.ru
-Тип:       TXT
-Значение:  v=DMARC1; p=none; rua=mailto:doday.support@gmail.com
-```
-
-`p=none` на старте (только мониторинг). Через 2 недели после первого пакета писем —
-поменять на `p=quarantine`, ещё через месяц — `p=reject`.
-
-**Проверить настройку:** [mxtoolbox.com/spf.aspx](https://mxtoolbox.com/spf.aspx) +
-[mxtoolbox.com/dkim.aspx](https://mxtoolbox.com/dkim.aspx).
-
-**Альтернатива (быстрее):** перейти на транзакционного провайдера:
-- **Resend** (modernest, $20/мес за 50k писем, SPF/DKIM auto)
-- **Brevo / Sendinblue** (free до 300 писем/день)
-- **Mailgun** (3-5k писем/мес free first 3 months)
-
-Для перехода — поменять `SMTP_HOST=smtp.resend.com`, добавить TXT-записи которые
-они выдадут.
+**Проверить SPF/DKIM после настройки:**
+- [mxtoolbox.com/SuperTool.aspx?run=spf:getdoday.ru](https://mxtoolbox.com/SuperTool.aspx?run=spf:getdoday.ru)
+- [mxtoolbox.com/SuperTool.aspx?run=dkim:resend._domainkey.getdoday.ru](https://mxtoolbox.com/SuperTool.aspx?run=dkim:resend._domainkey.getdoday.ru)
+- [mail-tester.com](https://www.mail-tester.com) — отправить туда test email из Lessio
+  и получить score (должно быть 9-10/10).
 
 ### 2. Реальный тест Stars-платежа
 
@@ -89,23 +85,53 @@
 
 Если что-то не сработало — смотреть Sentry + logs `lessio_stars_*`.
 
-### 3. DB бэкапы
+### 3. DB бэкапы ✅ Настроено
 
-Managed PostgreSQL обычно делает auto-backup. Проверить у провайдера:
-- Retention 7-30 дней.
-- Можно ли восстановить на конкретный timestamp (PITR).
-- Записать в README команду для восстановления.
+**Cron уже работает** (добавлено 2026-05-26):
+- Скрипт: `/var/www/getdoday/data/pg_backup.sh`
+- Crontab: `30 4 * * *` (ежедневно в 04:30 МСК)
+- Retention: **7 daily backups** автоматически
+- Storage: `/var/www/getdoday/data/backups/doday-YYYY-MM-DD_HHMM.sql.gz`
+- Лог: `/tmp/pg-backup.log`
 
-Если backup нет — настроить через `pg_dump` cron на отдельный bucket.
+**Восстановление из бэкапа:**
+```bash
+ssh getdoday@getdoday.ru
+# Найти нужный backup
+ls -la /var/www/getdoday/data/backups/
+# Распаковать и применить
+gunzip -c /var/www/getdoday/data/backups/doday-YYYY-MM-DD_HHMM.sql.gz | \
+  psql "$(grep '^DATABASE_URL=' /var/www/getdoday/data/www/getdoday.ru/app/.env | \
+         cut -d= -f2- | sed 's|postgresql+asyncpg|postgresql|')"
+```
+
+**Дополнительно** — раз в месяц копировать самый свежий backup на внешний storage
+(Yandex Object Storage / Selectel S3) на случай если пропадёт весь VPS.
 
 ### 4. Мониторинг
 
-- **Sentry** — проверить что `SENTRY_DSN` задан в `.env` на проде, в Dashboard'е
-  Sentry видны логи + ошибки.
-- **Uptime monitor** (Better Stack / UptimeRobot бесплатно): пинговать
-  `https://getdoday.ru/health` каждую минуту, алёрт в Telegram-канал при `down`.
-- **Sentry-alert на spike `lessio_unpaid_spike`** — если >50 unpaid bookings за
-  сутки, прислать на email/Telegram (через Sentry alert rules).
+**Sentry** ✅ настроен (`SENTRY_DSN` в `.env` на проде задан).
+Сейчас ловит:
+- Все `logger.exception(...)` через SDK integration
+- Stars pre_checkout rejects (как `warning`-сообщения)
+- Stars apply_successful_payment fails (как `error` с full stacktrace + breadcrumbs)
+- Любые HTTP 500 через FastAPI integration
+
+**Uptime monitor — рекомендация:**
+
+Зарегистрироваться в [Better Stack](https://betterstack.com) (free 10 monitors) и
+добавить **два** монитора:
+
+1. **`https://getdoday.ru/health`** — liveness, 1 раз/мин. Алёрт если 3 fail подряд.
+2. **`https://getdoday.ru/health/deep`** — DB+seeds check, 1 раз/5 мин.
+   Алёрт если 2 fail подряд. Этот вернёт 503 если БД упала или demo-tutor пропал.
+
+Better Stack может слать алёрты в Telegram-канал или на phone.
+
+**Sentry alert rules** — настроить в Dashboard:
+- `lessio_unpaid_spike` warning logs → email/Telegram (spam-bot detection)
+- любой `apply_successful_payment failed` → немедленно email (потерянный платёж)
+- > 5 errors за 5 минут → escalate
 
 ### 5. Telegram bot `/setdescription`
 
@@ -117,17 +143,30 @@ Managed PostgreSQL обычно делает auto-backup. Проверить у 
 
 Эти данные не managed через API, только @BotFather'ом руками.
 
-### 6. Аудит rate-limit правил
+### 6. Аудит rate-limit правил ✅ Все слои закрыты
 
-Сейчас:
-- `/lessio/auth/register` — **5 в минуту с IP** (anti-spam-bot, можно строже для prod)
-- `/lessio/auth/login` — **10 в минуту с пары (IP, email)** (anti-brute-force)
-- `/lessio/app/*` (cabinet) — без rate-limit (юзер уже аутентифицирован)
-- `/u/<slug>` (публичная) — без rate-limit (cache внутри 5 мин на slots)
-- `/u/<slug>/book` (booking) — без rate-limit (защита через CSRF + slot-conflict)
+Сейчас (3 слоя):
+- **`/lessio/auth/register`** — 5 req/min с IP → 429
+- **`/lessio/auth/login`** — 10 req/min с (IP, email) → 429 + reset на успех
+- **`/lessio/help/*`, `/lessio/blog/*`, `/lessio/dlya-*`, `/u/*`** —
+  **120 req/min с IP** через app-middleware (anti-DDoS на статический render)
+- **`/lessio/app/*`** (cabinet) — без rate-limit (аутентифицированный юзер)
+- **`/u/<slug>/book`** (booking POST) — без rate-limit, защита через CSRF + slot-conflict
 
-На больших объёмах добавить nginx-level rate-limit для anonymous endpoints
-(`/u/`, `/lessio/blog`, `/lessio/help` — по 60-100 req/s с IP).
+**На больших объёмах** (1000+ DAU) — добавить nginx-level rate-limit zone:
+```nginx
+# В /etc/nginx/conf.d/getdoday.ru.conf или fastpanel конфиге:
+limit_req_zone $binary_remote_addr zone=lessio_anon:10m rate=60r/m;
+
+location ~ ^/(lessio/(help|blog|dlya-|alternativa-|oplata-)|u/) {
+    limit_req zone=lessio_anon burst=20 nodelay;
+    proxy_pass http://127.0.0.1:8011;
+    # ... стандартные proxy headers
+}
+```
+
+Требует sudo (или FastPanel UI для редактирования). На текущих объёмах app-middleware
+достаточно.
 
 ## Команды для smoke-теста после деплоя
 

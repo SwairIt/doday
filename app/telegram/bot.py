@@ -432,20 +432,63 @@ async def on_pre_checkout_query(update: Update, _: ContextTypes.DEFAULT_TYPE) ->
 
     We verify the signed payload + amount sanity; on mismatch, answer with a
     user-facing reason so Telegram cancels the purchase before deducting Stars.
+
+    Stars-flow observability: structured-log по каждому событию + Sentry breadcrumb.
+    Когда первый реальный платёж придёт в прод и что-то не сработает —
+    Sentry покажет полный flow до ошибки.
     """
     from app.billing.stars import validate_pre_checkout
 
     query = update.pre_checkout_query
     if query is None:
         return
-    ok, reason, _product = validate_pre_checkout(query.invoice_payload, query.total_amount)
+
+    # Sentry breadcrumb (silent если SENTRY_DSN не задан)
+    try:
+        import sentry_sdk
+
+        sentry_sdk.add_breadcrumb(
+            category="stars.pre_checkout",
+            message=f"pre_checkout received: amount={query.total_amount}XTR",
+            level="info",
+            data={
+                "from_user_id": query.from_user.id if query.from_user else None,
+                "currency": query.currency,
+                "total_amount": query.total_amount,
+                "payload_prefix": query.invoice_payload[:40],
+            },
+        )
+    except Exception:  # noqa: S110 — Sentry опционален, не блокируем обработку
+        pass
+
+    ok, reason, product = validate_pre_checkout(query.invoice_payload, query.total_amount)
+    logger.info(
+        "stars_pre_checkout",
+        extra={
+            "from_user_id": query.from_user.id if query.from_user else None,
+            "amount": query.total_amount,
+            "ok": ok,
+            "reason": reason,
+            "product_code": product.code if product else None,
+        },
+    )
     try:
         if ok:
             await query.answer(ok=True)
         else:
             await query.answer(ok=False, error_message=reason or "Платёж отклонён")
+            # Reject не error, но capture для аудита — спам или баг в payload?
+            try:
+                import sentry_sdk
+
+                sentry_sdk.capture_message(
+                    f"Stars pre_checkout rejected: {reason}",
+                    level="warning",
+                )
+            except Exception:  # noqa: S110 — Sentry опционален
+                pass
     except Exception as e:
-        logger.error("pre_checkout answer failed: %s", e)
+        logger.exception("pre_checkout answer failed: %s", e)
 
 
 async def on_successful_payment(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
@@ -455,6 +498,34 @@ async def on_successful_payment(update: Update, _: ContextTypes.DEFAULT_TYPE) ->
     if update.message is None or update.message.successful_payment is None:
         return
     sp = update.message.successful_payment
+
+    # Structured success log — для grep'а в /tmp/uvicorn.log
+    logger.info(
+        "stars_payment_received",
+        extra={
+            "telegram_payment_charge_id": sp.telegram_payment_charge_id,
+            "provider_payment_charge_id": sp.provider_payment_charge_id,
+            "stars_amount": sp.total_amount,
+            "payload_prefix": sp.invoice_payload[:40],
+            "from_user_id": update.message.from_user.id if update.message.from_user else None,
+        },
+    )
+    try:
+        import sentry_sdk
+
+        sentry_sdk.set_tag("stars_payment", "received")
+        sentry_sdk.add_breadcrumb(
+            category="stars.successful_payment",
+            message=f"successful_payment: {sp.total_amount}XTR",
+            level="info",
+            data={
+                "charge_id": sp.telegram_payment_charge_id,
+                "amount": sp.total_amount,
+            },
+        )
+    except Exception:  # noqa: S110 — Sentry опционален
+        pass
+
     sm = _get_sessionmaker()
     async with sm() as session:
         try:
@@ -466,9 +537,17 @@ async def on_successful_payment(update: Update, _: ContextTypes.DEFAULT_TYPE) ->
                 stars_amount=sp.total_amount,
             )
             await session.commit()
-        except Exception as e:
+        except Exception:
             await session.rollback()
-            logger.exception("apply_successful_payment failed: %s", e)
+            # logger.exception → Sentry auto-capture благодаря SentrySDK integration
+            logger.exception(
+                "apply_successful_payment failed",
+                extra={
+                    "charge_id": sp.telegram_payment_charge_id,
+                    "amount": sp.total_amount,
+                    "payload_prefix": sp.invoice_payload[:40],
+                },
+            )
             await _reply(
                 update,
                 "⚠ Платёж получен, но не смог обновить тариф автоматически. "
