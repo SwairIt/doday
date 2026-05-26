@@ -2,211 +2,252 @@
 {% block title %}Настройки · Lessio{% endblock %}
 {% block content %}
 <header class="mb-8">
-  <h1 class="text-3xl font-extrabold mb-1">Настройки</h1>
-  <p class="text-violet-200/60 text-sm">Профиль, видеоссылка, уведомления</p>
+  <h1 class="text-3xl md:text-4xl font-extrabold mb-1">Настройки</h1>
+  <p class="text-violet-200/60 text-sm">Профиль, расписание, уведомления, интеграции</p>
 </header>
-
-{% if request.query_params.get('saved') %}
-<div class="mb-6 px-4 py-3 rounded-xl bg-emerald-500/15 text-emerald-300 text-sm">
-  ✓ Сохранено
-</div>
-{% endif %}
 
 {% if error %}
 <div class="mb-6 px-4 py-3 rounded-xl bg-rose-500/15 text-rose-300 text-sm">{{ error }}</div>
 {% endif %}
 
-<form method="post" action="/lessio/app/settings"
-      class="space-y-6 bg-white/5 border border-white/10 rounded-2xl p-6">
+{# Tab navigation — Alpine.js, persists через URL #hash для F5-stability #}
+<div x-data="{
+       tab: (window.location.hash || '#profile').slice(1),
+       setTab(t) { this.tab = t; window.location.hash = t; }
+     }"
+     class="space-y-6">
 
-  <fieldset class="space-y-4 border-b border-white/10 pb-6">
-    <legend class="text-sm font-semibold text-violet-200/80">Публичный профиль</legend>
+  <nav class="flex flex-wrap gap-1 p-1 bg-white/5 rounded-xl border border-white/10">
+    {% set tabs = [
+        ('profile', '👤', 'Профиль'),
+        ('meetings', '🎥', 'Встречи'),
+        ('notifications', '🔔', 'Уведомления'),
+        ('integrations', '🔌', 'Интеграции'),
+    ] %}
+    {% for tab_id, icon, label in tabs %}
+    <button type="button"
+            x-on:click.prevent="setTab('{{ tab_id }}')"
+            x-bind:class="tab === '{{ tab_id }}' ? 'bg-gradient-to-r from-violet-500/30 to-pink-500/20 text-violet-100' : 'text-violet-300/70 hover:text-violet-200'"
+            class="flex-1 min-w-[110px] px-3 py-2.5 rounded-lg text-sm font-semibold transition">
+      <span class="mr-1">{{ icon }}</span>{{ label }}
+    </button>
+    {% endfor %}
+  </nav>
 
-    <label class="block">
-      <span class="text-sm font-semibold mb-1.5 block">Публичная ссылка</span>
-      <div class="flex items-center gap-2">
-        <span class="text-violet-300/60 text-sm whitespace-nowrap">getdoday.ru/u/</span>
-        <input name="slug" type="text" required minlength="3" maxlength="50"
-               pattern="[a-z0-9][a-z0-9_\-]{2,49}"
-               value="{{ profile.slug }}"
-               class="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
-      </div>
-      <span class="text-xs text-amber-300/70 mt-1 block">
-        ⚠️ Меняя slug, вы потеряете SEO-вес страницы — клиенты не найдут по старой ссылке.
-      </span>
-    </label>
+  <form method="post" action="/lessio/app/settings" class="space-y-6">
 
-    <label class="block">
-      <span class="text-sm font-semibold mb-1.5 block">Имя на странице</span>
-      <input name="display_name" type="text" required maxlength="100"
-             value="{{ profile.display_name }}"
-             class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
-    </label>
+    {# ── TAB: Profile ───────────────────────────────────────────── #}
+    <section x-show="tab === 'profile'" x-transition class="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-5">
+      <header>
+        <h2 class="text-lg font-bold mb-1">👤 Профиль</h2>
+        <p class="text-xs text-violet-300/60">Как клиенты видят вас на публичной странице.</p>
+      </header>
 
-    <div class="grid sm:grid-cols-2 gap-4">
       <label class="block">
-        <span class="text-sm font-semibold mb-1.5 block">Эмодзи-аватар</span>
-        <input name="avatar_emoji" type="text" maxlength="8"
-               value="{{ profile.avatar_emoji }}" placeholder="👨‍🏫"
-               class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400 text-2xl text-center">
+        <span class="text-sm font-semibold mb-1.5 block">Публичная ссылка</span>
+        <div class="flex items-center gap-2">
+          <span class="text-violet-300/60 text-sm whitespace-nowrap">getdoday.ru/u/</span>
+          <input name="slug" type="text" required minlength="3" maxlength="50"
+                 pattern="[a-z0-9][a-z0-9_\-]{2,49}"
+                 value="{{ profile.slug }}"
+                 class="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
+        </div>
+        <span class="text-xs text-amber-300/70 mt-1 block">
+          ⚠️ Меняя slug, теряете SEO старой ссылки — клиенты не найдут.
+        </span>
       </label>
+
       <label class="block">
-        <span class="text-sm font-semibold mb-1.5 block">Что преподаёшь</span>
-        <select name="niche" required
+        <span class="text-sm font-semibold mb-1.5 block">Имя на странице</span>
+        <input name="display_name" type="text" required maxlength="100"
+               value="{{ profile.display_name }}"
+               class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
+      </label>
+
+      <div class="grid sm:grid-cols-2 gap-4">
+        <label class="block">
+          <span class="text-sm font-semibold mb-1.5 block">Эмодзи-аватар</span>
+          <input name="avatar_emoji" type="text" maxlength="8"
+                 value="{{ profile.avatar_emoji }}" placeholder="👨‍🏫"
+                 class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400 text-2xl text-center">
+          <span class="text-xs text-violet-300/40 mt-1 block">Используется на странице + OG-image</span>
+        </label>
+        <label class="block">
+          <span class="text-sm font-semibold mb-1.5 block">Что преподаёшь</span>
+          <select name="niche" required
+                  class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
+            {% set niche_options = [
+                ('english', 'Английский / иностранные'),
+                ('ielts', 'IELTS / TOEFL / экзамены'),
+                ('math', 'Математика / физика'),
+                ('school', 'Школа / ЕГЭ / ОГЭ'),
+                ('fitness', 'Фитнес / тренер'),
+                ('psychology', 'Психология / коучинг'),
+                ('yoga', 'Йога / медитация'),
+                ('other', 'Что-то другое'),
+            ] %}
+            {% for val, label in niche_options %}
+            <option value="{{ val }}" {% if profile.niche == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      </div>
+
+      <label class="block">
+        <span class="text-sm font-semibold mb-1.5 block">О себе</span>
+        <textarea name="bio" rows="5" maxlength="1000"
+                  placeholder="Опыт, методики, кому подходит. До 1000 символов."
+                  class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg resize-none focus:outline-none focus:border-violet-400">{{ profile.bio or '' }}</textarea>
+      </label>
+
+      <label class="block">
+        <span class="text-sm font-semibold mb-1.5 block">Часовой пояс</span>
+        <select name="timezone" required
                 class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
-          {% set niche_options = [
-              ('english', 'Английский / иностранные'),
-              ('ielts', 'IELTS / TOEFL / экзамены'),
-              ('math', 'Математика / физика'),
-              ('school', 'Школа / ЕГЭ / ОГЭ'),
-              ('fitness', 'Фитнес / тренер'),
-              ('psychology', 'Психология / коучинг'),
-              ('yoga', 'Йога / медитация'),
-              ('other', 'Что-то другое'),
-          ] %}
-          {% for val, label in niche_options %}
-          <option value="{{ val }}" {% if profile.niche == val %}selected{% endif %}>{{ label }}</option>
+          {% for tz_value, tz_label in lessio_timezones %}
+          <option value="{{ tz_value }}" {% if profile.timezone == tz_value %}selected{% endif %}>{{ tz_label }}</option>
           {% endfor %}
         </select>
+        <span class="text-xs text-violet-300/40 mt-1 block">
+          В этой зоне отображаются Today / Calendar / Income. Клиенты видят слоты в своей зоне (через JS).
+        </span>
       </label>
+    </section>
+
+    {# ── TAB: Meetings & schedule ──────────────────────────────── #}
+    <section x-show="tab === 'meetings'" x-transition class="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-5">
+      <header>
+        <h2 class="text-lg font-bold mb-1">🎥 Встречи и расписание</h2>
+        <p class="text-xs text-violet-300/60">Правила бронирования + видеоссылка.</p>
+      </header>
+
+      <label class="block">
+        <span class="text-sm font-semibold mb-1.5 block">Шаблон видеоссылки</span>
+        <input name="default_meeting_url_template" type="url" maxlength="500"
+               placeholder="https://meet.google.com/abc-defg-hij  ·  пусто = Jitsi auto"
+               value="{{ profile.default_meeting_url_template or '' }}"
+               class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
+        <span class="text-xs text-violet-300/40 mt-1 block">
+          Подставляется в подтверждение booking если у услуги нет своей ссылки.
+          Оставите пустым — сгенерируем уникальную <b class="text-violet-200">Jitsi-комнату</b> на каждую встречу (бесплатно, без регистрации).
+        </span>
+      </label>
+
+      <div class="grid sm:grid-cols-2 gap-4">
+        <label class="block">
+          <span class="text-sm font-semibold mb-1.5 block">Минимум часов до записи</span>
+          <input name="booking_lead_hours" type="number" min="0" max="720"
+                 value="{{ profile.booking_lead_hours }}"
+                 class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
+          <span class="text-xs text-violet-300/40 mt-1 block">
+            Клиент не сможет забронировать раньше N часов. Дефолт 2.
+          </span>
+        </label>
+
+        <label class="block">
+          <span class="text-sm font-semibold mb-1.5 block">Отпуск до</span>
+          <input name="vacation_until" type="datetime-local"
+                 value="{{ profile.vacation_until.strftime('%Y-%m-%dT%H:%M') if profile.vacation_until else '' }}"
+                 class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
+          <span class="text-xs text-violet-300/40 mt-1 block">
+            Скрывает все слоты до этой даты.
+          </span>
+        </label>
+      </div>
+
+      <aside class="bg-violet-500/5 border border-violet-400/20 rounded-lg p-3 text-xs text-violet-200/70">
+        Рабочие дни и часы настраиваются на странице
+        <a href="/lessio/app/schedule" class="underline text-violet-300">⏰ Расписание</a>.
+      </aside>
+    </section>
+
+    {# ── TAB: Notifications ────────────────────────────────────── #}
+    <section x-show="tab === 'notifications'" x-transition class="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-5">
+      <header>
+        <h2 class="text-lg font-bold mb-1">🔔 Уведомления</h2>
+        <p class="text-xs text-violet-300/60">Куда слать «новая запись», ежедневный digest, отмены.</p>
+      </header>
+
+      <label class="block">
+        <span class="text-sm font-semibold mb-1.5 block">Email для уведомлений</span>
+        <input name="notification_email" type="email" maxlength="255"
+               placeholder="me@example.com"
+               value="{{ profile.notification_email or '' }}"
+               class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
+        <span class="text-xs text-violet-300/40 mt-1 block">
+          Пусто — уведомления tutor'у не идут (только клиенту автоматом).
+        </span>
+      </label>
+
+      <div class="bg-white/[.03] rounded-lg p-4 space-y-2 text-xs text-violet-200/70">
+        <p class="font-semibold text-violet-100">Что приходит на этот email автоматически:</p>
+        <ul class="space-y-1">
+          <li>🎯 «Новая запись» при каждом booking</li>
+          <li>❌ «Клиент отменил» при cancel через magic-link</li>
+          <li>☀️ «Сегодня у вас N встреч» — daily digest в 06:00 UTC (≈09:00 MSK)</li>
+        </ul>
+      </div>
+    </section>
+
+    {# ── TAB: Integrations ─────────────────────────────────────── #}
+    <section x-show="tab === 'integrations'" x-transition class="space-y-4">
+
+      {# iCal subscription #}
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-6">
+        <h2 class="text-lg font-bold mb-2">📅 Подписка на календарь (.ics)</h2>
+        <p class="text-sm text-violet-200/70 mb-3">
+          Подпишитесь URL'ом в Apple Calendar / Outlook / Google Calendar — все встречи в нативном календаре, обновление каждые 15–30 минут.
+        </p>
+        <div class="flex items-center gap-2" x-data="{ copied: false }">
+          <input type="text" value="{{ ical_url }}" readonly
+                 class="flex-1 px-3 py-2 bg-black/30 border border-white/10 rounded-lg text-xs text-violet-100 font-mono"
+                 onclick="this.select()">
+          <button type="button"
+                  x-on:click="navigator.clipboard.writeText('{{ ical_url }}'); copied = true; setTimeout(() => copied=false, 1500)"
+                  class="px-3 py-2 bg-white/10 rounded-lg text-sm hover:bg-white/20 transition whitespace-nowrap">
+            <span x-show="!copied">📋 Копировать</span>
+            <span x-show="copied" x-cloak>✓</span>
+          </button>
+        </div>
+        <p class="text-xs text-violet-300/40 mt-2">
+          Не делитесь — ссылка содержит секретный токен.
+        </p>
+      </div>
+
+      {# Google Calendar OAuth #}
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-6">
+        <h2 class="text-lg font-bold mb-2">🗓 Google Calendar (busy-times sync)</h2>
+        <p class="text-sm text-violet-200/70 mb-4">
+          Подключение позволит вычитать ваши встречи из Google Calendar из публичного расписания.
+          Клиенты не смогут забронировать когда вы заняты. Read-only — мы только читаем busy-times.
+        </p>
+        {% if profile.google_calendar_refresh_token %}
+        <div class="flex flex-wrap items-center gap-3">
+          <span class="px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-lg text-sm font-semibold">
+            ✓ Подключено
+          </span>
+          <form method="post" action="/lessio/oauth/google/disconnect" class="inline">
+            <button class="px-4 py-2 bg-rose-500/20 text-rose-300 rounded-lg text-sm font-semibold hover:bg-rose-500/30 transition">
+              Отключить
+            </button>
+          </form>
+        </div>
+        {% else %}
+        <a href="/lessio/oauth/google/connect"
+           class="inline-block px-5 py-2.5 bg-white text-gray-800 rounded-xl font-semibold text-sm hover:bg-gray-100 transition">
+          🗓 Подключить Google Calendar
+        </a>
+        {% endif %}
+      </div>
+    </section>
+
+    {# Sticky save button — visible на всех табах кроме Integrations #}
+    <div x-show="tab !== 'integrations'" x-transition class="sticky bottom-4 z-10">
+      <button class="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-bold hover:opacity-90 transition shadow-lg shadow-violet-500/30">
+        💾 Сохранить
+      </button>
     </div>
 
-    <label class="block">
-      <span class="text-sm font-semibold mb-1.5 block">О себе</span>
-      <textarea name="bio" rows="4" maxlength="1000"
-                class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg resize-none focus:outline-none focus:border-violet-400">{{ profile.bio or '' }}</textarea>
-      <span class="text-xs text-violet-300/40 mt-1 block">До 1000 символов</span>
-    </label>
-
-    <label class="block">
-      <span class="text-sm font-semibold mb-1.5 block">Часовой пояс</span>
-      <select name="timezone" required
-              class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
-        {% for tz_value, tz_label in lessio_timezones %}
-        <option value="{{ tz_value }}" {% if profile.timezone == tz_value %}selected{% endif %}>{{ tz_label }}</option>
-        {% endfor %}
-      </select>
-      <span class="text-xs text-violet-300/40 mt-1 block">
-        В этой зоне отображаются ваш Today / Calendar / Income. Клиенты видят время
-        в своей зоне автоматически (через браузерный Intl).
-      </span>
-    </label>
-  </fieldset>
-
-  <fieldset class="space-y-4">
-    <legend class="text-sm font-semibold text-violet-200/80">Встречи и уведомления</legend>
-
-    <label class="block">
-      <span class="text-sm font-semibold mb-1.5 block">Шаблон видеоссылки</span>
-      <input name="default_meeting_url_template" type="url" maxlength="500"
-             placeholder="https://meet.google.com/abc-defg-hij (или оставьте пустым — Jitsi auto)"
-             value="{{ profile.default_meeting_url_template or '' }}"
-             class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
-      <span class="text-xs text-violet-300/40 mt-1 block">
-        Подставляется в подтверждение booking'а если у услуги нет своей ссылки.
-        Если оставите пустым — сгенерируем уникальную Jitsi-ссылку на каждую встречу
-        (бесплатно, без регистрации, открывается в браузере).
-      </span>
-    </label>
-
-    <label class="block">
-      <span class="text-sm font-semibold mb-1.5 block">Минимум часов до записи</span>
-      <input name="booking_lead_hours" type="number" min="0" max="720"
-             value="{{ profile.booking_lead_hours }}"
-             class="w-32 px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
-      <span class="text-xs text-violet-300/40 mt-1 block">
-        Клиент не может забронировать раньше чем за N часов до начала. Защита от
-        «через 5 минут можно?». 0 — можно сразу. Дефолт 2.
-      </span>
-    </label>
-
-    <label class="block">
-      <span class="text-sm font-semibold mb-1.5 block">Отпуск до (опционально)</span>
-      <input name="vacation_until" type="datetime-local"
-             value="{{ profile.vacation_until.strftime('%Y-%m-%dT%H:%M') if profile.vacation_until else '' }}"
-             class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
-      <span class="text-xs text-violet-300/40 mt-1 block">
-        Если задано — все слоты до этой даты скрыты от клиентов
-        (отпуск / болезнь / релокейт). Оставить пустым = убрать отпуск.
-      </span>
-    </label>
-
-    <label class="block">
-      <span class="text-sm font-semibold mb-1.5 block">Email для уведомлений</span>
-      <input name="notification_email" type="email" maxlength="255"
-             placeholder="me@example.com"
-             value="{{ profile.notification_email or '' }}"
-             class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
-      <span class="text-xs text-violet-300/40 mt-1 block">
-        Куда слать «новая запись» / «клиент отменил». Если пусто — уведомления tutor'у не идут.
-      </span>
-    </label>
-  </fieldset>
-
-  <button class="px-6 py-3 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-bold hover:opacity-90 transition">
-    Сохранить
-  </button>
-</form>
-
-{# Google Calendar OAuth — Phase 2 опц. фича. Скрыто если OAuth не настроен. #}
-{% if request.query_params.get('gcal') == 'connected' %}
-<div class="mt-6 px-4 py-3 rounded-xl bg-emerald-500/15 text-emerald-300 text-sm">
-  ✓ Google Calendar подключён — busy-times будут вычитаться из свободных слотов.
+  </form>
 </div>
-{% elif request.query_params.get('gcal') == 'disconnected' %}
-<div class="mt-6 px-4 py-3 rounded-xl bg-amber-500/15 text-amber-300 text-sm">
-  Google Calendar отключён.
-</div>
-{% elif request.query_params.get('gcal_error') %}
-<div class="mt-6 px-4 py-3 rounded-xl bg-rose-500/15 text-rose-300 text-sm">
-  Ошибка подключения Google Calendar: {{ request.query_params.get('gcal_error') }}
-</div>
-{% endif %}
-
-<section class="mt-8 bg-white/5 border border-white/10 rounded-2xl p-6">
-  <h2 class="text-lg font-bold mb-2">Подписка на календарь (.ics)</h2>
-  <p class="text-sm text-violet-200/70 mb-3">
-    Скопируйте URL и подпишитесь в Apple Calendar / Outlook / Google Calendar —
-    все ваши встречи появятся в нативном календаре (обновление каждые 15–30 минут).
-  </p>
-  <div class="flex items-center gap-2">
-    <input type="text" value="{{ ical_url }}" readonly
-           class="flex-1 px-3 py-2 bg-black/30 border border-white/10 rounded-lg text-xs text-violet-100 font-mono"
-           onclick="this.select()">
-    <button type="button"
-            onclick="navigator.clipboard.writeText('{{ ical_url }}'); this.textContent='✓';"
-            class="px-3 py-2 bg-white/10 rounded-lg text-sm hover:bg-white/20 transition">
-      Копировать
-    </button>
-  </div>
-  <p class="text-xs text-violet-300/40 mt-2">
-    Не делитесь этой ссылкой — она содержит секретный токен с доступом к вашим встречам.
-  </p>
-</section>
-
-<section class="mt-8 bg-white/5 border border-white/10 rounded-2xl p-6">
-  <h2 class="text-lg font-bold mb-2">Google Calendar (опционально)</h2>
-  <p class="text-sm text-violet-200/70 mb-4">
-    Подключение позволит вычитать ваши встречи из Google Calendar из публичного
-    расписания — клиенты не смогут забронировать время, когда вы заняты.
-    Read-only: мы только читаем busy-times, ничего не пишем.
-  </p>
-  {% if profile.google_calendar_refresh_token %}
-  <div class="flex flex-wrap items-center gap-3">
-    <span class="px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-lg text-sm font-semibold">
-      ✓ Подключено
-    </span>
-    <form method="post" action="/lessio/oauth/google/disconnect" class="inline">
-      <button class="px-4 py-2 bg-rose-500/20 text-rose-300 rounded-lg text-sm font-semibold hover:bg-rose-500/30 transition">
-        Отключить
-      </button>
-    </form>
-  </div>
-  {% else %}
-  <a href="/lessio/oauth/google/connect"
-     class="inline-block px-5 py-2.5 bg-white text-gray-800 rounded-xl font-semibold text-sm hover:bg-gray-100 transition">
-    🗓 Подключить Google Calendar
-  </a>
-  {% endif %}
-</section>
 {% endblock %}
