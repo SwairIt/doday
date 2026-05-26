@@ -47,7 +47,9 @@ from app.labels.router import router as labels_router
 from app.labels.router import task_labels_router
 from app.lessio.admin import router as lessio_admin_router
 from app.lessio.cabinet_router import router as lessio_cabinet_router
+from app.lessio.help.router import router as lessio_help_router
 from app.lessio.router import router as lessio_router
+from app.lessio.seo_pages import router as lessio_seo_router
 from app.lessio.web_router import cron_router as lessio_cron_router
 from app.lessio.web_router import public_router as lessio_public_router
 from app.lessio.web_router import router as lessio_web_router
@@ -251,6 +253,8 @@ app.include_router(taptower_router)
 app.include_router(lessio_router)
 app.include_router(lessio_web_router)
 app.include_router(lessio_cabinet_router)
+app.include_router(lessio_help_router)
+app.include_router(lessio_seo_router)
 app.include_router(lessio_public_router)
 app.include_router(lessio_cron_router)
 app.include_router(lessio_admin_router)
@@ -358,15 +362,20 @@ async def robots_txt() -> PlainTextResponse:
 
 @app.get("/sitemap.xml", include_in_schema=False)
 async def sitemap_xml(session: AsyncSession = Depends(get_session)) -> Response:  # noqa: B008
-    """Static marketing/help pages + every active Lessio tutor's public page."""
+    """Static marketing/help pages + every active Lessio tutor's public page +
+    Lessio help-center и niche-landings."""
     from app.help.articles import ARTICLES
+    from app.lessio.help.articles import ARTICLES as LESSIO_ARTICLES
     from app.lessio.models import LessioTutorProfile
 
     base = _settings.app_base_url.rstrip("/")
-    static_paths = [
+    # priority 1.0 — главная; 0.8 — топ-2 продуктовых лендинга; 0.7 — остальное
+    static_high_paths = [
         "/",
         "/doday",
         "/lessio",
+    ]
+    static_medium_paths = [
         "/for-students",
         "/for-teachers",
         "/todoist-alternative",
@@ -374,10 +383,17 @@ async def sitemap_xml(session: AsyncSession = Depends(get_session)) -> Response:
         "/changelog",
         "/roadmap",
         "/help",
+        "/lessio/help",
+        "/lessio/dlya-repetitorov",
+        "/lessio/dlya-trenerov",
+        "/lessio/dlya-psihologov",
+        "/lessio/alternativa-calendly",
+        "/lessio/oplata-cherez-telegram",
         "/privacy",
         "/terms",
     ]
-    article_paths = [f"/help/{a['slug']}" for a in ARTICLES]
+    doday_article_paths = [f"/help/{a['slug']}" for a in ARTICLES]
+    lessio_article_paths = [f"/lessio/help/{a['slug']}" for a in LESSIO_ARTICLES]
 
     active_tutor_slugs = (
         (
@@ -390,10 +406,16 @@ async def sitemap_xml(session: AsyncSession = Depends(get_session)) -> Response:
     )
     tutor_paths = [f"/u/{slug}" for slug in active_tutor_slugs]
 
+    url_priority: list[tuple[str, str]] = (
+        [(p, "1.0") for p in static_high_paths]
+        + [(p, "0.8") for p in static_medium_paths]
+        + [(p, "0.6") for p in doday_article_paths + lessio_article_paths]
+        + [(p, "0.7") for p in tutor_paths]
+    )
+
     items = "".join(
-        f"<url><loc>{base}{p}</loc><changefreq>weekly</changefreq>"
-        f"<priority>{'1.0' if p == '/' else '0.7'}</priority></url>"
-        for p in static_paths + article_paths + tutor_paths
+        f"<url><loc>{base}{p}</loc><changefreq>weekly</changefreq><priority>{prio}</priority></url>"
+        for p, prio in url_priority
     )
     body = (
         '<?xml version="1.0" encoding="UTF-8"?>'

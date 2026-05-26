@@ -148,6 +148,9 @@ ignore = [
 "alembic/versions/0041_lessio_telegram_only_users.py" = ["RUF001", "RUF002", "RUF003"]  # Russian in migration docstring
 "alembic/versions/0042_lessio_web_expansion.py" = ["RUF001", "RUF002", "RUF003"]  # Russian in migration docstring/comments
 "app/lessio/telegram_handlers.py" = ["RUF001", "RUF002", "RUF003"]  # Russian welcome message + comments
+"app/lessio/help/articles.py" = ["RUF001", "RUF002", "RUF003"]    # Russian article titles/summaries/bodies + comments
+"app/lessio/help/router.py" = ["RUF001", "RUF002", "RUF003"]      # Russian docstrings + 404 message
+"app/lessio/seo_pages.py" = ["RUF001", "RUF002", "RUF003"]        # Russian SEO meta titles/descriptions + docstrings
 
 [tool.mypy]
 python_version = "3.12"

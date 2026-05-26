@@ -1,0 +1,45 @@
+{# Lessio Help Center — index. Финальный дизайн в N2. Этот заглушечный шаблон
+   сделан, чтобы N1 тесты (route + search + sitemap) проходили. #}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Помощь · Lessio</title>
+<meta name="description" content="База знаний Lessio: {{ total_count }} статей про публичную страницу, услуги, расписание, оплату, интеграции.">
+<link rel="canonical" href="https://getdoday.ru/lessio/help">
+</head>
+<body>
+<h1>Помощь Lessio</h1>
+<form method="get" action="/lessio/help">
+  <input name="q" value="{{ search_query }}" placeholder="Поиск по статьям">
+  <button type="submit">Найти</button>
+</form>
+
+{% if search_results is not none %}
+  <h2>Результаты поиска «{{ search_query }}»</h2>
+  {% if search_results %}
+  <ul>
+    {% for a in search_results %}
+    <li><a href="/lessio/help/{{ a.slug }}">{{ a.title }}</a> — {{ a.summary }}</li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>Ничего не нашлось. Попробуйте другие слова.</p>
+  {% endif %}
+{% else %}
+  {% for cat_name, cat_icon in categories %}
+    {% set arts = by_category.get(cat_name, []) %}
+    {% if arts %}
+    <section>
+      <h2>{{ cat_icon }} {{ cat_name }}</h2>
+      <ul>
+        {% for a in arts %}
+        <li><a href="/lessio/help/{{ a.slug }}">{{ a.title }}</a> — {{ a.summary }}</li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+  {% endfor %}
+{% endif %}
+</body>
+</html>

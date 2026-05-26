@@ -1,0 +1,27 @@
+{# Lessio Help Center — article. Финальный дизайн в N2. Заглушечный шаблон. #}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>{{ article.title }} · Помощь Lessio</title>
+<meta name="description" content="{{ article.summary }}">
+<link rel="canonical" href="https://getdoday.ru/lessio/help/{{ article.slug }}">
+</head>
+<body>
+<nav><a href="/lessio/help">← Все статьи</a></nav>
+<h1>{{ article.title }}</h1>
+<p><em>{{ article.summary }}</em></p>
+<article>{{ article.body | safe }}</article>
+
+{% if related %}
+<aside>
+  <h3>Похожее</h3>
+  <ul>
+    {% for a in related %}
+    <li><a href="/lessio/help/{{ a.slug }}">{{ a.title }}</a></li>
+    {% endfor %}
+  </ul>
+</aside>
+{% endif %}
+</body>
+</html>
