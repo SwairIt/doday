@@ -150,6 +150,52 @@ def _force_ipv4_resolve() -> None:
     asyncio.base_events.BaseEventLoop.getaddrinfo = _v4_async  # type: ignore[method-assign]
 
 
+def _make_telegram_request() -> Any:
+    """Build python-telegram-bot HTTPXRequest с custom-backend для api.telegram.org.
+
+    Почему этот хак нужен:
+    Системный DNS отдаёт 149.154.166.110 — заблокирован с прода (RKN/firewall).
+    Только 149.154.167.220 доступен (проверено bash /dev/tcp + curl --resolve).
+
+    Monkey-patch на `socket.getaddrinfo` + `asyncio.BaseEventLoop.getaddrinfo` —
+    работает для прямого `asyncio.open_connection`, НО httpx через httpcore→anyio
+    использует свой DNS-resolution который игнорирует patch'и (по неясной
+    причине; возможно internal cache).
+
+    Решение: подменяем `httpcore.AsyncConnectionPool._network_backend` на наш
+    собственный backend, который при `connect_tcp(host=api.telegram.org, ...)`
+    реально connects к hardcoded-IP, но всё остальное (TLS handshake с
+    SNI=api.telegram.org → cert validates against api.telegram.org) — стандартно.
+
+    Это **полностью** secure (SSL не отключаем), и работает на dev-машине
+    тоже (там host == IP оставляется как был).
+    """
+    import httpx
+    from httpcore._backends.auto import AutoBackend
+    from telegram.request import HTTPXRequest
+
+    class _HardcodedIPBackend(AutoBackend):
+        async def connect_tcp(
+            self,
+            host: Any,
+            port: Any,
+            *args: Any,
+            **kwargs: Any,
+        ) -> Any:
+            if host in _FORCED_HOSTS:
+                # Override TCP target to known-working IP; SNI/cert-validation
+                # уровень выше использует оригинальный hostname → secure
+                host = _TELEGRAM_API_IPS[0]
+            return await super().connect_tcp(host, port, *args, **kwargs)
+
+    transport = httpx.AsyncHTTPTransport()
+    # Override _network_backend — мутируем приватный API httpcore,
+    # но это самый чистый способ без полной реимплементации transport'а
+    transport._pool._network_backend = _HardcodedIPBackend()
+
+    return HTTPXRequest(httpx_kwargs={"transport": transport})
+
+
 # Single async engine + sessionmaker reused across handlers — bot долгоживущий.
 _engine = None
 _sessionmaker: async_sessionmaker[AsyncSession] | None = None
@@ -728,6 +774,11 @@ def build_doday_app() -> Application[Any, Any, Any, Any, Any, Any]:
             settings.telegram_proxy_url
         )
         logger.info("Doday bot using proxy: %s", settings.telegram_proxy_url.split("@")[-1])
+    else:
+        # Custom transport который connects к hardcoded-IP минуя сломанный DNS
+        # на проде. См. _make_telegram_request docstring.
+        req = _make_telegram_request()
+        builder = builder.request(req).get_updates_request(req)
     application: Application[Any, Any, Any, Any, Any, Any] = builder.build()
     application.add_handler(CommandHandler("start", cmd_start))
     application.add_handler(CommandHandler("help", cmd_help))
@@ -789,6 +840,10 @@ def build_lessio_app() -> Application[Any, Any, Any, Any, Any, Any] | None:
             settings.telegram_proxy_url
         )
         logger.info("Lessio bot using proxy: %s", settings.telegram_proxy_url.split("@")[-1])
+    else:
+        # Custom transport — обходит сломанный DNS на проде (см. _make_telegram_request)
+        req = _make_telegram_request()
+        builder = builder.request(req).get_updates_request(req)
     application: Application[Any, Any, Any, Any, Any, Any] = builder.build()
     from app.lessio.telegram_handlers import register_handlers as register_lessio_handlers
 
