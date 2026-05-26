@@ -4,6 +4,54 @@
 
 ---
 
+## 2026-05-27 — Ночная сессия: Lessio login fix + /u/demo + Doday URL refactor + 5 Phase 3 фич
+
+Юзер заметил баги (после login попадал в Doday cabinet, /u/demo 404), потом дал полную автономию «работай ночь, придумывай фишки». Старт ~23:45 МСК 2026-05-26.
+
+**Bugfix sprint (Lessio auth + demo) — c9aa709:**
+- /lessio/auth/login + /lessio/auth/logout (Lessio-scoped, не trogает Doday auth)
+- lessio_login.html template
+- Re-wire nav «Войти» в landing + register footer + cabinet logout form (все указывают на Lessio URLs)
+- scripts/lessio_seed_demo.py — idempotent создаёт реального demo-tutor'а (lessio_demo@auto.lessio, /u/demo, 2 услуги, 3 reviews для aggregateRating)
+- Запущен SSH на проде → /u/demo живой
+- 5 E2E test'ов (full register→logout→login flow + nav-regex-guard против регрессии)
+
+**Doday URL refactor batch 2A — 68b8060:**
+- User: «все страницы которые были раньше теперь будут с префиксом doday». 
+- Сделано минимально-инвазивно (только cabinet, visible to user):
+  - views_router /app → /doday/app
+  - htmx_router /htmx → /doday/htmx
+  - auth login redirect → /doday/app/today
+  - 301-redirect middleware для legacy /app/* и /htmx/* (SEO-safe, старые закладки + emails работают)
+- scripts/refactor_doday_prefix.py — переиспользуемый regex-based rewriter (с look-behind '(?<![\\w-])/app/' чтобы исключить /lessio/app/)
+- Mass find-replace: ~171 файла обновлено (templates + tests + scripts)
+- НЕ перенесено пока: /api/*, /auth/* (Doday-shared), marketing pages (/pricing, /help, /changelog etc) — следующий batch.
+- 2 теста чинены вручную (test_app_shell follow_redirects, test_digest URL).
+- Полный suite: **1045 passed**.
+
+**Phase 3 фичи — a6c800a (3 chunks, 4 миграции 0043-0046, 12 новых TDD):**
+
+1. **Jitsi auto-meeting URLs** — если ни у service ни у tutor нет meeting_url template, create_booking auto-generates `https://meet.jit.si/lessio-<booking_uuid>`. Бесплатно, без OAuth, клиент сразу получает clickable link в email.
+
+2. **Booking lead-time + vacation mode** (migration 0045):
+   - LessioTutorProfile.booking_lead_hours: int = 2 — клиент не может забронировать раньше чем за N часов
+   - LessioTutorProfile.vacation_until: datetime | None — все слоты до этой даты скрыты (отпуск/болезнь)
+   - find_free_slots применяет оба фильтра, settings.html UI добавлен
+
+3. **iCal feed для tutor'а** (RFC5545):
+   - GET /lessio/app/calendar.ics?token=<Fernet(profile.id)> → text/calendar
+   - VEVENT per confirmed/completed booking, CRLF + escape chars
+   - Tutor подписывается в Apple Calendar / Outlook / Google Calendar — refresh 15-30 мин
+   - settings.html: subscribe URL + copy button
+
+4. **Per-service emoji icons** (migration 0046): LessioService.icon_emoji default '💼'.
+
+**Тесты Phase 3:** 184 Lessio passing (12 новых: 3 jitsi + 5 lead-vacation + 4 ical). Doday-suite full: 1045 passing.
+
+**Коммиты:** c9aa709 (Lessio auth fix) → 68b8060 (Doday URL refactor 2A) → a6c800a (Phase 3 фичи).
+
+---
+
 ## 2026-05-26 — Lessio Production Polish: Welcome + Digest + Stats + PWA + GCal scaffolding
 
 Юзер сказал «делай всё» после списка возможных улучшений → 4 batch'а автономно:
