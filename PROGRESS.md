@@ -4,6 +4,55 @@
 
 ---
 
+## 2026-05-26 (late) — Lessio Help Center + 5 SEO landings (5 chunks)
+
+Юзер: «Продумай еще улучшения, сделай дофига seo, помощь (так же как с doday, помощь можно открыть и там дофигище статей как пользоваться и можно еще найти по поисковику)». Полная автономия.
+
+**N1 (14a6431) — Backend каркас:**
+- `app/lessio/help/articles.py` — TypedDict с 8 категориями (Начало/Профиль/Услуги/Расписание/Оплата/Клиенты/Интеграции/Продвинутое)
+- `app/lessio/help/router.py` — /lessio/help + /lessio/help/{slug} + ?q=search + articles.json
+- search_articles: scoring title(10) > keywords(8) > summary(5) > body(1)
+- `app/lessio/seo_pages.py` — 5 niche-landings (заглушки meta)
+- Sitemap: +28 help + 5 niche, priority-tiers (1.0/0.8/0.6)
+- 10/10 тестов
+
+**N2 (6d56959) — Шаблоны:**
+- `_base_marketing.html` — публичный layout с header+footer, OG/Twitter cards, .prose-lessio CSS для статей
+- help/index.html — hero + search + категорийный grid + empty/results states + CTA-card
+- help/article.html — sticky sidebar nav + breadcrumbs + prose + related + CTA-card
+- JSON-LD Article + BreadcrumbList на каждой странице
+
+**N3 (c8d1ea6) — Контент 28 статей (1225 строк HTML):**
+Полноценный контент с конкретными примерами: CSV-формат, RFC5545, OAuth-flow, DST,
+Stars-курс, кросс-ссылки между статьями. Темы — от quick-start и payments-stars
+до advanced-настроек (vacation, lead-time, GCal-sync, ical-feed, pwa-install, SEO).
+
+**N4 (83ba7b0) — SEO landings контент (875 строк):**
+- /lessio/dlya-repetitorov — JSON-LD Service+FAQPage, 4 предметные ниши, 6 FAQ
+- /lessio/dlya-trenerov — 4 дисциплины (йога/фитнес/единоборства/бег)
+- /lessio/dlya-psihologov — упор на конфиденциальность, 4 практики
+- /lessio/alternativa-calendly — comparison-table 13 параметров, 5-step migration guide
+- /lessio/oplata-cherez-telegram — JSON-LD HowTo, сравнительная таблица Stars vs ЮKassa
++3 теста (13/13 зелёные)
+
+**N5 (56d7d42) — Final polish:**
+- /lessio landing: JSON-LD SoftwareApplication + Organization
+- 4-card cross-link секция → 4 niche-landings (Browse-More)
+- 4-col footer с 12 внутренними ссылками
+- robots.txt: явный Allow для всех публичных Lessio-страниц
++2 теста (15/15 зелёные, 203 lessio total)
+
+**Прод-статус:** SHA 56d7d42, **35 lessio-URL в sitemap**:
+- 2 главные (`/lessio`, `/lessio/help`)
+- 5 SEO niche-landings
+- 28 help-articles
+- + индексированы публичные tutor-страницы /u/<slug>
+
+Все JSON-LD типы: SoftwareApplication, Organization, Service, FAQPage, Article,
+BreadcrumbList, CollectionPage, HowTo, BusinessAudience.
+
+---
+
 ## 2026-05-26 — @LessioBot максимальная доработка (из Lessio-archive сессии)
 
 Юзер передал bot-setup из архивной Lessio-сессии (`c:\www-Yaroslav\Lessio`,
