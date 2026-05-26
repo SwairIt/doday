@@ -1,8 +1,138 @@
-{# Заглушечный SEO-лендинг — наполнение в N4. #}
-<!DOCTYPE html>
-<html lang="ru"><head><meta charset="utf-8">
-<title>{{ page_title }}</title>
-<meta name="description" content="{{ page_description }}">
-<link rel="canonical" href="{{ meta.canonical }}">
-</head><body><h1>{{ page_title }}</h1><p>{{ page_description }}</p>
-<p><a href="/lessio">Открыть Lessio →</a></p></body></html>
+{% extends "lessio/_base_marketing.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block description %}{{ page_description }}{% endblock %}
+{% block canonical %}<link rel="canonical" href="{{ meta.canonical }}">{% endblock %}
+
+{% block head_extra %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Service",
+  "name": "Lessio для онлайн-тренеров",
+  "description": "{{ page_description }}",
+  "url": "{{ meta.canonical }}",
+  "provider": {"@type": "Organization", "name": "Lessio", "url": "https://getdoday.ru/lessio"},
+  "areaServed": {"@type": "Country", "name": "Россия"},
+  "serviceType": "Запись и приём оплаты для онлайн-тренеров",
+  "audience": {"@type": "BusinessAudience", "audienceType": "Фитнес-тренеры, йога-инструкторы, тренеры по единоборствам"}
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"Подходит ли для йоги и пилатеса с группой?",
+     "acceptedAnswer":{"@type":"Answer","text":"Да. В услуге включаете «Групповое занятие», ставите максимум участников (до 50). Слот остаётся видимым пока не заполнится."}},
+    {"@type":"Question","name":"Можно использовать в качестве замены Mindbody?",
+     "acceptedAnswer":{"@type":"Answer","text":"Для соло-тренера с 1-30 клиентами — да. Mindbody лучше для зала с расписанием классов, инструкторами и оборудованием — там его сложно заменить."}},
+    {"@type":"Question","name":"А если ученик не пришёл — что с оплатой?",
+     "acceptedAnswer":{"@type":"Answer","text":"Если оплачено через Telegram Stars — возврат в течение 21 дня через @BotFather. Если оплата ручная (наличные/СБП) — на ваше усмотрение."}},
+    {"@type":"Question","name":"Нужен ли мне свой Zoom?",
+     "acceptedAnswer":{"@type":"Answer","text":"Не обязательно. Lessio генерирует уникальную Jitsi-ссылку для каждой встречи. Если у вас уже есть Zoom Personal Meeting — вставьте его шаблон в настройки."}}
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="max-w-5xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-16 text-center">
+  <p class="text-xs uppercase tracking-widest gradient-text font-semibold mb-3">Для онлайн-тренеров</p>
+  <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-5 leading-tight">
+    Запись и оплата<br>для онлайн-тренеров
+  </h1>
+  <p class="text-xl text-violet-200/80 max-w-2xl mx-auto leading-relaxed mb-8">
+    Клиент сам выбирает время через вашу публичную страницу, платит Stars,
+    автоматом получает напоминания и ссылку на Jitsi.
+  </p>
+  <div class="flex flex-wrap justify-center gap-3">
+    <a href="/lessio/auth/register" class="px-7 py-3.5 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-bold text-base hover:opacity-90 transition shadow-lg shadow-violet-500/30">
+      Создать профиль →
+    </a>
+    <a href="/u/demo" class="px-7 py-3.5 bg-white/10 border border-white/20 rounded-xl font-bold text-base hover:bg-white/20 transition">
+      👁 Пример страницы
+    </a>
+  </div>
+  <p class="mt-5 text-xs text-violet-300/50">Бесплатно · 5 минут до первого слота</p>
+</section>
+
+<section class="max-w-5xl mx-auto px-4 sm:px-6 py-10">
+  <h2 class="text-2xl md:text-3xl font-extrabold text-center mb-10">Что включено</h2>
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% set blocks = [
+      ('💪', 'Индивидуальные и групповые', 'Создайте отдельные услуги. Групповая йога до 50 участников — слот остаётся открытым пока не заполнится.'),
+      ('⏰', 'Буфер между занятиями', '5-15 минут между клиентами на воду / переодевание / запись заметок.'),
+      ('📅', 'Расписание по дням', 'Можете сделать «утренние слоты вторник-четверг + вечерние пятница-воскресенье».'),
+      ('🎥', 'Jitsi автоматом', 'Не нужен Zoom Pro. Под каждое занятие — уникальная Jitsi-комната, бесплатно, работает в РФ.'),
+      ('💳', 'Оплата без эквайринга', 'Telegram Stars — клиент платит любой картой через мессенджер. Деньги мгновенно.'),
+      ('📊', 'Стата по доходу', 'Доход по месяцам, топ-услуги, средний чек. Доступно с первого месяца.'),
+    ] %}
+    {% for icon, title, descr in blocks %}
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-violet-400/30 transition">
+      <div class="text-3xl mb-2">{{ icon }}</div>
+      <h3 class="font-bold mb-2">{{ title }}</h3>
+      <p class="text-sm text-violet-200/70 leading-relaxed">{{ descr }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+  <h2 class="text-2xl md:text-3xl font-extrabold text-center mb-8">Под какую дисциплину</h2>
+  <div class="grid sm:grid-cols-2 gap-4 prose-lessio">
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-5">
+      <h3 class="!mt-0">🧘 Йога / медитация</h3>
+      <p>Групповые занятия до 50 участников. Подходит для «вечерней практики» или «классы по понедельникам». Длительность 60-90 мин.</p>
+    </div>
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-5">
+      <h3 class="!mt-0">🏋️ Фитнес / силовые</h3>
+      <p>Индивидуальные тренировки 1×1. Пакет 8 занятий со скидкой + пробное за полцены. Lead-time 4-6 часов.</p>
+    </div>
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-5">
+      <h3 class="!mt-0">🥊 Единоборства</h3>
+      <p>Бокс, тайский, кикбоксинг. Описание услуги — оборудование, стаж, тип нагрузки. Долгие 90-минутные сессии.</p>
+    </div>
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-5">
+      <h3 class="!mt-0">🏃 Бег / трейл / триатлон</h3>
+      <p>Консультации по технике, разбор тренировок, план подготовки к старту. Группы до 8 учеников онлайн.</p>
+    </div>
+  </div>
+</section>
+
+<section class="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+  <h2 class="text-2xl md:text-3xl font-extrabold text-center mb-8">FAQ</h2>
+  <div class="space-y-3">
+    {% set faqs = [
+      ('Подходит ли для йоги/пилатеса с группой?', 'Да. В услуге активируете «Групповое занятие», ставите максимум участников (до 50). Слот остаётся видимым на публичной странице пока не заполнится — каждый новый клиент видит «3/8 мест». Подробнее: /lessio/help/group-sessions'),
+      ('Можно ли заменить Mindbody?', 'Для соло-тренера на 1-30 клиентов — да. Mindbody лучше для зала со штатом инструкторов, оборудованием и аренда-логикой — Lessio это не покрывает.'),
+      ('Если клиент не пришёл — что с оплатой?', 'Если оплачено через Stars — возврат через @BotFather в течение 21 дня. Если оплата отмечена вручную (нал/СБП) — на ваше усмотрение, в Lessio просто снимаете флажок «Оплачено».'),
+      ('А если интернет упадёт?', 'Включите Vacation на день — публичная страница продолжает работать, но слотов нет. Существующие записи отмените через клик в кабинете, клиенту уйдёт автоматическое письмо.'),
+      ('Сколько комиссия?', 'Lessio комиссии не берёт. Telegram удерживает свою часть с Stars (точный процент меняется, обычно 5-10%) — это видно при выводе на TON-кошелёк.'),
+      ('Можно ли давать ссылку через Instagram bio?', 'Конечно. URL вида getdoday.ru/u/your-name работает везде. Если страница не индексируется в Instagram — это ограничение Instagram, не Lessio.'),
+    ] %}
+    {% for q, a in faqs %}
+    <details class="bg-white/5 border border-white/10 rounded-2xl group">
+      <summary class="cursor-pointer p-5 font-bold list-none flex items-start justify-between gap-3">
+        <span>{{ q }}</span>
+        <span class="text-violet-300/60 group-open:rotate-180 transition flex-shrink-0">▼</span>
+      </summary>
+      <div class="px-5 pb-5 text-violet-200/75 leading-relaxed">{{ a }}</div>
+    </details>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+  <div class="bg-gradient-to-br from-violet-500/15 to-pink-500/15 border border-violet-400/20 rounded-3xl p-8 sm:p-12 text-center relative overflow-hidden">
+    <div class="absolute -top-32 -right-32 w-72 h-72 bg-violet-500/30 rounded-full blur-3xl"></div>
+    <h2 class="text-2xl md:text-3xl font-extrabold mb-3 relative">Готовы стартовать?</h2>
+    <p class="text-violet-200/75 mb-6 relative">
+      Без карт, без подписки, без эквайринга. 5 минут до первого клиента.
+    </p>
+    <a href="/lessio/auth/register" class="inline-block px-7 py-3.5 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-bold hover:opacity-90 transition relative">
+      Создать профиль →
+    </a>
+  </div>
+</section>
+{% endblock %}

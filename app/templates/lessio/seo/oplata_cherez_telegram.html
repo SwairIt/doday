@@ -1,8 +1,201 @@
-{# Заглушечный SEO-лендинг — наполнение в N4. #}
-<!DOCTYPE html>
-<html lang="ru"><head><meta charset="utf-8">
-<title>{{ page_title }}</title>
-<meta name="description" content="{{ page_description }}">
-<link rel="canonical" href="{{ meta.canonical }}">
-</head><body><h1>{{ page_title }}</h1><p>{{ page_description }}</p>
-<p><a href="/lessio">Открыть Lessio →</a></p></body></html>
+{% extends "lessio/_base_marketing.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block description %}{{ page_description }}{% endblock %}
+{% block canonical %}<link rel="canonical" href="{{ meta.canonical }}">{% endblock %}
+
+{% block head_extra %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "Как принимать оплату через Telegram Stars",
+  "description": "{{ page_description }}",
+  "url": "{{ meta.canonical }}",
+  "inLanguage": "ru",
+  "step": [
+    {"@type": "HowToStep", "position": 1, "name": "Регистрация в Lessio", "text": "Создайте профиль на /lessio/auth/register."},
+    {"@type": "HowToStep", "position": 2, "name": "Настройка услуг", "text": "Укажите цены в рублях — Telegram Stars-эквивалент посчитается автоматом."},
+    {"@type": "HowToStep", "position": 3, "name": "Поделиться ссылкой", "text": "Отправьте клиенту getdoday.ru/u/your-name. Он выбирает время и платит Stars в Telegram."},
+    {"@type": "HowToStep", "position": 4, "name": "Получить деньги", "text": "Stars начисляются мгновенно на ваш бот-баланс. Вывод — через @BotFather в TON или потратить внутри Telegram."}
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"Telegram Stars — это что?",
+     "acceptedAnswer":{"@type":"Answer","text":"Внутренняя валюта Telegram, через которую можно принимать оплату от пользователей. 1 Star ≈ 1.2 ₽. Покупаются клиентом через Apple Pay / Google Pay / VISA / Mir прямо в мессенджере."}},
+    {"@type":"Question","name":"Нужно ли быть ИП?",
+     "acceptedAnswer":{"@type":"Answer","text":"Нет. Stars работают и для физлиц, и для самозанятых, и для ИП. Telegram не требует регистрации бизнеса для приёма Stars."}},
+    {"@type":"Question","name":"Как вывести Stars в рубли?",
+     "acceptedAnswer":{"@type":"Answer","text":"Через @BotFather → /mybots → Stars → вывод в TON-кошелёк. Оттуда обмен на ₽ через P2P-биржи (Garantex, биржи DEX)."}},
+    {"@type":"Question","name":"Какая комиссия Telegram?",
+     "acceptedAnswer":{"@type":"Answer","text":"Telegram удерживает свою часть с Stars (5-15% в зависимости от способа покупки клиентом). Lessio комиссии не берёт."}},
+    {"@type":"Question","name":"Можно ли вернуть деньги клиенту?",
+     "acceptedAnswer":{"@type":"Answer","text":"Да, через @BotFather в течение 21 дня после оплаты. Stars возвращаются на баланс клиента, в Lessio статус снимается вручную."}}
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="max-w-5xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-16 text-center">
+  <p class="text-xs uppercase tracking-widest gradient-text font-semibold mb-3">Оплата через Telegram Stars</p>
+  <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-5 leading-tight">
+    Приём оплаты через<br>Telegram для учителей
+  </h1>
+  <p class="text-xl text-violet-200/80 max-w-2xl mx-auto leading-relaxed mb-8">
+    Без эквайринга, расчётного счёта и ОКВЭД. Клиент платит в мессенджере
+    любой картой мира — деньги падают на ваш Stars-баланс мгновенно.
+  </p>
+  <div class="flex flex-wrap justify-center gap-3">
+    <a href="/lessio/auth/register" class="px-7 py-3.5 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-bold text-base hover:opacity-90 transition shadow-lg shadow-violet-500/30">
+      Начать принимать Stars →
+    </a>
+    <a href="#how-it-works" class="px-7 py-3.5 bg-white/10 border border-white/20 rounded-xl font-bold text-base hover:bg-white/20 transition">
+      ⚡ Как работает
+    </a>
+  </div>
+</section>
+
+<section id="how-it-works" class="max-w-5xl mx-auto px-4 sm:px-6 py-10">
+  <h2 class="text-2xl md:text-3xl font-extrabold text-center mb-10">Как работает Stars-оплата</h2>
+  <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    {% set steps = [
+      ('1', '📅', 'Клиент бронирует', 'Выбирает время на вашей странице getdoday.ru/u/&lt;имя&gt;'),
+      ('2', '💌', 'Получает invoice', 'В Telegram приходит invoice с суммой в Stars (~цена/1.2)'),
+      ('3', '💳', 'Платит в один тап', 'Apple Pay / Google Pay / Mir / Visa внутри Telegram'),
+      ('4', '✅', 'Вы получаете деньги', 'Stars мгновенно на бот-балансе. Запись отмечена «Оплачено»'),
+    ] %}
+    {% for num, icon, title, descr in steps %}
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-5 text-center">
+      <div class="text-3xl mb-2">{{ icon }}</div>
+      <div class="text-xs uppercase tracking-wider text-violet-300/60 mb-1">Шаг {{ num }}</div>
+      <h3 class="font-bold mb-2">{{ title }}</h3>
+      <p class="text-sm text-violet-200/70">{{ descr | safe }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+  <h2 class="text-2xl md:text-3xl font-extrabold text-center mb-8">Почему Stars, а не ЮKassa</h2>
+  <div class="grid sm:grid-cols-2 gap-4 prose-lessio">
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-5">
+      <h3 class="!mt-0">✓ Без ИП и расчётного счёта</h3>
+      <p>ЮKassa, Tinkoff Касса, Сбер.Бизнес — все требуют статус юрлица или ИП. Stars работают для физлиц и самозанятых без бумажек.</p>
+    </div>
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-5">
+      <h3 class="!mt-0">✓ Без ограничения 18+</h3>
+      <p>У 14-летнего самозанятого нет Госуслуг-аккаунта и доступа к взрослым эквайрингам. Stars — единственный путь для подростков-репетиторов.</p>
+    </div>
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-5">
+      <h3 class="!mt-0">✓ Принимает карты любых стран</h3>
+      <p>Российский клиент, живущий за границей, может оплатить вам с тамошней Visa/MC через свой Telegram. Mir, UnionPay, Apple Pay, Google Pay.</p>
+    </div>
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-5">
+      <h3 class="!mt-0">✓ Не уходит со страницы</h3>
+      <p>Stars-checkout встроен в Telegram. Клиент не делает redirect на 3D Secure, не вводит CVC заново — конверсия выше на 20-40%.</p>
+    </div>
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-5">
+      <h3 class="!mt-0">✓ Без чарджбэков</h3>
+      <p>Telegram Stars не дают клиенту инициировать чарджбэк через банк. Возврат возможен только по вашей инициативе через @BotFather.</p>
+    </div>
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-5">
+      <h3 class="!mt-0">✓ Бесплатное подключение</h3>
+      <p>ЮKassa — 2.5-3.5% комиссия + 0₽ ежемесячно. Stars — Telegram удерживает 5-15% при выводе. На малых оборотах Stars выходит выгоднее.</p>
+    </div>
+  </div>
+</section>
+
+<section class="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+  <h2 class="text-2xl md:text-3xl font-extrabold text-center mb-8">Сколько вы получите с 1500 ₽ услуги</h2>
+  <div class="bg-white/5 border border-white/10 rounded-2xl p-6 prose-lessio max-w-none">
+    <table>
+      <tr>
+        <th>Параметр</th>
+        <th>Stars (через Lessio)</th>
+        <th>ЮKassa</th>
+        <th>Перевод на карту</th>
+      </tr>
+      <tr>
+        <td>Цена услуги</td>
+        <td>1500 ₽</td>
+        <td>1500 ₽</td>
+        <td>1500 ₽</td>
+      </tr>
+      <tr>
+        <td>Комиссия платёжной системы</td>
+        <td>~10-15% Telegram</td>
+        <td>~3% ЮKassa</td>
+        <td>0%</td>
+      </tr>
+      <tr>
+        <td>Налог (самозанятость)</td>
+        <td>4% (от физ.) / 6% (от юр.)</td>
+        <td>4% / 6%</td>
+        <td>4% / 6%</td>
+      </tr>
+      <tr>
+        <td>Чистыми, ₽</td>
+        <td>~1224 ₽</td>
+        <td>~1395 ₽</td>
+        <td>~1440 ₽</td>
+      </tr>
+      <tr>
+        <td>Нужно ли ИП</td>
+        <td><strong class="text-emerald-300">Нет</strong></td>
+        <td><strong class="text-amber-300">Нужна самозанятость+</strong></td>
+        <td><strong class="text-emerald-300">Нет</strong></td>
+      </tr>
+      <tr>
+        <td>Автоматизация</td>
+        <td><strong class="text-emerald-300">Полная</strong></td>
+        <td><strong class="text-amber-300">Полная (если настроено)</strong></td>
+        <td><strong class="text-rose-300">Ручная — переписка, чек</strong></td>
+      </tr>
+    </table>
+    <p class="text-xs text-violet-300/50 mt-3"><em>Цифры приблизительные. Точная комиссия Telegram при выводе зависит от способа клиента (Apple Pay / Visa / Stripe-как-Stars).</em></p>
+  </div>
+</section>
+
+<section class="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+  <h2 class="text-2xl md:text-3xl font-extrabold text-center mb-8">FAQ</h2>
+  <div class="space-y-3">
+    {% set faqs = [
+      ('Telegram Stars — это что?', 'Внутренняя валюта Telegram. 1 Star ≈ 1.2 ₽ gross. Клиенты покупают Stars в мессенджере через Apple Pay / Google Pay / VISA / Mir и могут потратить на ваши услуги через invoice от вашего бота.'),
+      ('Нужно ли быть ИП или самозанятым?', 'Для приёма Stars — нет. Но если вы получаете деньги регулярно — лучше оформить самозанятость через приложение «Мой налог» (бесплатно, без бумаг). Lessio даёт CSV-выгрузку, которую можно загружать как чеки.'),
+      ('Как вывести Stars в рубли?', 'Через @BotFather → /mybots → ваш бот → Payments → Refunds and Withdrawals → вывод на TON-кошелёк. Оттуда — обмен на ₽ через P2P-биржи. На балансе можно копить и тратить внутри Telegram (бусты, премиум).'),
+      ('Какая реальная комиссия Telegram?', 'Зависит от способа оплаты клиента — обычно 5-15% (Apple Pay чаще даёт 30% out of Stars, Google Pay чаще 15%). Точную цифру вы увидите при выводе в кабинете @BotFather.'),
+      ('Можно ли вернуть деньги клиенту?', 'Да — в течение 21 дня через @BotFather → ваш бот → /refund. Stars возвращаются на баланс клиента мгновенно. После возврата в Lessio снимаете отметку «Оплачено» вручную.'),
+      ('А чек ФНС?', 'Stars-платежи Telegram не выписывает чеки автоматически. Для самозанятых: вручную проводите доход через «Мой налог», используя данные из Lessio CSV (booking_id, дата, сумма).'),
+      ('Что если Telegram заблокируют в РФ?', 'Тогда механизм перестанет работать — это системный риск. Lessio в этом случае позволит принимать ручные платежи (отмечать «Оплачено» от руки) — но это уже не автоматизация.'),
+    ] %}
+    {% for q, a in faqs %}
+    <details class="bg-white/5 border border-white/10 rounded-2xl group">
+      <summary class="cursor-pointer p-5 font-bold list-none flex items-start justify-between gap-3">
+        <span>{{ q }}</span>
+        <span class="text-violet-300/60 group-open:rotate-180 transition flex-shrink-0">▼</span>
+      </summary>
+      <div class="px-5 pb-5 text-violet-200/75 leading-relaxed">{{ a }}</div>
+    </details>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+  <div class="bg-gradient-to-br from-violet-500/15 to-pink-500/15 border border-violet-400/20 rounded-3xl p-8 sm:p-12 text-center relative overflow-hidden">
+    <div class="absolute -top-32 -right-32 w-72 h-72 bg-violet-500/30 rounded-full blur-3xl"></div>
+    <h2 class="text-2xl md:text-3xl font-extrabold mb-3 relative">Принимать Stars за час</h2>
+    <p class="text-violet-200/75 mb-6 relative">
+      5 минут — настройка профиля и услуг. Лессио сразу даёт публичную ссылку и Stars-кнопку.
+    </p>
+    <a href="/lessio/auth/register" class="inline-block px-7 py-3.5 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-bold hover:opacity-90 transition relative">
+      Начать →
+    </a>
+  </div>
+</section>
+{% endblock %}

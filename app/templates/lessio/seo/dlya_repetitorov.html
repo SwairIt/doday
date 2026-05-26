@@ -1,8 +1,180 @@
-{# Заглушечный SEO-лендинг — наполнение в N4. #}
-<!DOCTYPE html>
-<html lang="ru"><head><meta charset="utf-8">
-<title>{{ page_title }}</title>
-<meta name="description" content="{{ page_description }}">
-<link rel="canonical" href="{{ meta.canonical }}">
-</head><body><h1>{{ page_title }}</h1><p>{{ page_description }}</p>
-<p><a href="/lessio">Открыть Lessio →</a></p></body></html>
+{% extends "lessio/_base_marketing.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block description %}{{ page_description }}{% endblock %}
+{% block canonical %}<link rel="canonical" href="{{ meta.canonical }}">{% endblock %}
+
+{% block head_extra %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Service",
+  "name": "Lessio для репетиторов",
+  "description": "{{ page_description }}",
+  "url": "{{ meta.canonical }}",
+  "provider": {"@type": "Organization", "name": "Lessio", "url": "https://getdoday.ru/lessio"},
+  "areaServed": {"@type": "Country", "name": "Россия"},
+  "serviceType": "Запись и приём оплаты для репетиторов онлайн",
+  "audience": {"@type": "BusinessAudience", "audienceType": "Репетиторы, преподаватели иностранных языков, школа, ЕГЭ"}
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"Сколько стоит Lessio для репетиторов?",
+     "acceptedAnswer":{"@type":"Answer","text":"На стадии запуска бесплатно. Действующие профили перейдут в Free навсегда, когда введём платный тариф."}},
+    {"@type":"Question","name":"Можно ли принимать оплату через карту Мир?",
+     "acceptedAnswer":{"@type":"Answer","text":"Да, через Telegram Stars: клиент покупает Stars в Telegram любой картой Мир/Visa/MC, переводит вам. Без эквайринга и расчётного счёта."}},
+    {"@type":"Question","name":"Подходит ли для подготовки к ЕГЭ?",
+     "acceptedAnswer":{"@type":"Answer","text":"Да. Можете создать длинные услуги (90/120 мин), отдельные пакеты, групповые занятия до 50 человек. Lead-time 24 часа защищает от спонтанных записей."}},
+    {"@type":"Question","name":"Я работаю в Telegram-канале, не хочу сайт. Подойдёт?",
+     "acceptedAnswer":{"@type":"Answer","text":"Идеально — Lessio даёт вам публичную страницу /u/<slug>, которую вы шарите в канале. Клиенту не нужно регистрироваться, чтобы записаться."}},
+    {"@type":"Question","name":"Сколько занимает первая настройка?",
+     "acceptedAnswer":{"@type":"Answer","text":"5 минут: регистрация → профиль → 1-2 услуги → расписание. После этого даёте ссылку клиенту."}}
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="max-w-5xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-16 text-center">
+  <p class="text-xs uppercase tracking-widest gradient-text font-semibold mb-3">Для репетиторов</p>
+  <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-5 leading-tight">
+    Записи и оплата<br>для онлайн-репетиторов
+  </h1>
+  <p class="text-xl text-violet-200/80 max-w-2xl mx-auto leading-relaxed mb-8">
+    Публичная страница, на которой ученик сам выбирает время и платит.
+    Без сайта, без переводов на сбер, без таблиц в Excel.
+  </p>
+  <div class="flex flex-wrap justify-center gap-3">
+    <a href="/lessio/auth/register" class="px-7 py-3.5 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-bold text-base hover:opacity-90 transition shadow-lg shadow-violet-500/30">
+      Создать профиль бесплатно →
+    </a>
+    <a href="/u/demo" class="px-7 py-3.5 bg-white/10 border border-white/20 rounded-xl font-bold text-base hover:bg-white/20 transition">
+      👁 Посмотреть пример страницы
+    </a>
+  </div>
+  <p class="mt-5 text-xs text-violet-300/50">
+    Без карт · регистрация в 1 клик · 5 минут до первой ссылки
+  </p>
+</section>
+
+<section class="max-w-5xl mx-auto px-4 sm:px-6 py-10">
+  <h2 class="text-2xl md:text-3xl font-extrabold text-center mb-10">Что репетитор получает</h2>
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% set blocks = [
+      ('📅', 'Публичная страница записи', 'Ссылка getdoday.ru/u/&lt;имя&gt; — отправляете в любой мессенджер. Клиент сам видит свободные слоты и записывается.'),
+      ('💳', 'Оплата в Telegram Stars', 'Без эквайринга, без РФ-карт. Клиент платит звёздами в Telegram, деньги падают на ваш Stars-баланс.'),
+      ('🎥', 'Автоссылки на видеовстречу', 'Jitsi-комната под каждое занятие генерируется автоматом. Или вставьте свой Zoom/Meet.'),
+      ('📧', 'Письма-напоминания', 'Клиенту: подтверждение → за 24ч → за час. Вам — daily digest «сегодня N встреч».'),
+      ('🗓 ', 'Sync с Google Calendar', 'Lessio читает ваши busy-times из GCal — клиент не запишется когда вы заняты.'),
+      ('⭐', 'Отзывы клиентов', 'После встречи клиент получает запрос отзыва. Звёзды видны в выдаче Google.'),
+    ] %}
+    {% for icon, title, descr in blocks %}
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-violet-400/30 transition">
+      <div class="text-3xl mb-2">{{ icon }}</div>
+      <h3 class="font-bold mb-2">{{ title }}</h3>
+      <p class="text-sm text-violet-200/70 leading-relaxed">{{ descr|safe }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+  <h2 class="text-2xl md:text-3xl font-extrabold text-center mb-8">Под какие предметы заточено</h2>
+  <div class="grid sm:grid-cols-2 gap-4 prose-lessio">
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-5">
+      <h3 class="!mt-0">🇬🇧 Иностранные языки</h3>
+      <p>Английский, немецкий, французский, испанский, китайский. Возможность
+         задать разные цены для уровней (A1 / B2 / C1) — просто создайте
+         несколько услуг.</p>
+    </div>
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-5">
+      <h3 class="!mt-0">📝 IELTS / TOEFL / экзамены</h3>
+      <p>Пробное занятие 30 мин дешевле + основное 90 мин. Lead-time 24 часа
+         — клиент готовит вопросы заранее. Пакет 8 занятий со скидкой.</p>
+    </div>
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-5">
+      <h3 class="!mt-0">🧮 Математика и физика</h3>
+      <p>Длинные занятия (90–120 мин) для глубокого разбора задач. Описание
+         услуги — какой класс / какие темы / какой формат материала.</p>
+    </div>
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-5">
+      <h3 class="!mt-0">🎓 Школа / ЕГЭ / ОГЭ</h3>
+      <p>Подготовка к экзаменам — серии занятий по чёткому графику.
+         <a href="/lessio/help/csv-export">CSV-выгрузка</a> для отчётов
+         родителям. Daily digest помогает не пропустить ни одного ученика.</p>
+    </div>
+  </div>
+</section>
+
+<section class="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+  <h2 class="text-2xl md:text-3xl font-extrabold text-center mb-8">Как это работает за 5 минут</h2>
+  <ol class="space-y-4">
+    {% set steps = [
+      ('1', 'Регистрация', 'Email + пароль на /lessio/auth/register. Без подтверждений и SMS.'),
+      ('2', 'Профиль', 'Имя на странице, эмодзи, ниша, био. Часовой пояс определится автоматом.'),
+      ('3', 'Услуги', 'Lessio создаст 1-2 стандартных под вашу нишу — отредактируйте цены и длительность.'),
+      ('4', 'Расписание', 'Какие дни недели и часы работаете. Lead-time и буфер настраиваются отдельно.'),
+      ('5', 'Поделиться', 'Скопировали ссылку из кабинета — отправили клиенту в Telegram/WhatsApp/Instagram.'),
+    ] %}
+    {% for num, title, descr in steps %}
+    <li class="flex gap-4 bg-white/5 border border-white/10 rounded-2xl p-5">
+      <div class="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center font-extrabold flex-shrink-0">{{ num }}</div>
+      <div>
+        <h3 class="font-bold mb-1">{{ title }}</h3>
+        <p class="text-sm text-violet-200/70">{{ descr }}</p>
+      </div>
+    </li>
+    {% endfor %}
+  </ol>
+  <div class="text-center mt-8">
+    <a href="/lessio/help/quick-start" class="text-violet-300 underline hover:text-violet-200">
+      Подробный гайд по онбордингу →
+    </a>
+  </div>
+</section>
+
+<section class="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+  <h2 class="text-2xl md:text-3xl font-extrabold text-center mb-8">Частые вопросы</h2>
+  <div class="space-y-3" x-data="{ open: null }">
+    {% set faqs = [
+      ('Сколько стоит Lessio?', 'На стадии запуска бесплатно. Когда введём платный тариф — действующие профили перейдут в Free навсегда. Гарантия письменно в email перед сменой условий.'),
+      ('Можно ли принимать оплату через карту Мир?', 'Да — через Telegram Stars. Клиент покупает Stars в Telegram своим Mir/Visa/MC, переводит вам. Без эквайринга, расчётного счёта и ОКВЭД.'),
+      ('Подойдёт для подготовки к ЕГЭ/ОГЭ?', 'Идеально. Длинные занятия (90 мин), пакеты со скидкой, групповые до 50 человек. Lead-time 24 часа защищает от спонтанных записей за час.'),
+      ('У меня уже есть Calendly. Зачем менять?', 'Если Calendly работает — оставайтесь. Но он не принимает оплату в РФ без долларового эквайринга, не понимает русский интерфейс и стоит $10-15/мес.'),
+      ('А что с самозанятостью и налогами?', 'Lessio не сдаёт за вас отчёты — вы получаете деньги, остальное на вас. Используйте CSV-выгрузку (Lessio даёт её) для приложения «Мой налог».'),
+      ('Что если интернет упадёт?', 'Поставьте Vacation на день — слоты исчезнут из публички. Существующие записи можно отменить через клик в кабинете, клиенту уйдёт письмо.'),
+    ] %}
+    {% for q, a in faqs %}
+    <details class="bg-white/5 border border-white/10 rounded-2xl group">
+      <summary class="cursor-pointer p-5 font-bold list-none flex items-start justify-between gap-3">
+        <span>{{ q }}</span>
+        <span class="text-violet-300/60 group-open:rotate-180 transition flex-shrink-0">▼</span>
+      </summary>
+      <div class="px-5 pb-5 text-violet-200/75 leading-relaxed">{{ a }}</div>
+    </details>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+  <div class="bg-gradient-to-br from-violet-500/15 to-pink-500/15 border border-violet-400/20 rounded-3xl p-8 sm:p-12 text-center relative overflow-hidden">
+    <div class="absolute -top-32 -right-32 w-72 h-72 bg-violet-500/30 rounded-full blur-3xl"></div>
+    <h2 class="text-2xl md:text-3xl font-extrabold mb-3 relative">Готовы попробовать?</h2>
+    <p class="text-violet-200/75 mb-6 relative">
+      5 минут — и вы получаете публичную страницу записи, которую можно сразу шарить клиентам.
+    </p>
+    <div class="flex flex-wrap justify-center gap-3 relative">
+      <a href="/lessio/auth/register" class="px-7 py-3.5 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-bold hover:opacity-90 transition">
+        Создать профиль →
+      </a>
+      <a href="/lessio/help" class="px-7 py-3.5 bg-white/10 border border-white/20 rounded-xl font-bold hover:bg-white/20 transition">
+        📚 Помощь
+      </a>
+    </div>
+  </div>
+</section>
+{% endblock %}
