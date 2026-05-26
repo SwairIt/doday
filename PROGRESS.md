@@ -4,6 +4,46 @@
 
 ---
 
+## 2026-05-26 (bot-fix) — КРИТИЧЕСКИЙ блокер закрыт: bot worker оживлён (3fd09f3)
+
+**Контекст:** verification suite (V1-V8) выявил что `@LessioBot` (он же `mylessiobot`)
+**мёртв с 25 мая** — все попытки connect к api.telegram.org timeout'или. Что значит
+Stars-payment'ы не обрабатываются.
+
+**Корневая причина:**
+- DNS api.telegram.org → 149.154.166.110 — заблокирован с прода (RKN/firewall)
+- Только 149.154.167.220 — рабочий IP с этого VPS
+- Старый monkey-patch на `socket.getaddrinfo` + `asyncio.BaseEventLoop.getaddrinfo`
+  работал для `asyncio.open_connection` (verified), НО httpx через httpcore→anyio
+  использует собственный DNS-mechanism который игнорирует patch
+- Bash `/dev/tcp` + `curl --resolve` — работают за 146ms. `httpx.AsyncClient.get` —
+  ConnectTimeout через 15с
+
+**Решение** (`app/telegram/bot.py:_make_telegram_request`):
+- Custom `HardcodedIPBackend(httpcore._backends.auto.AutoBackend)` override'ит
+  `connect_tcp(host, port, ...)`: если host=api.telegram.org → реально connect к
+  hardcoded `.167.220`, SSL handshake уровнем выше с `server_hostname=api.telegram.org`
+  → cert validation проходит, secure
+- Mutates `transport._pool._network_backend` для обоих bots
+- В `Application.builder()` передаётся через `.request(req).get_updates_request(req)`
+
+**Verified в проде (3fd09f3):**
+- `@DodayTaskBot` getMe OK, polling работает (HTTP/1.1 200 OK на getUpdates)
+- `@mylessiobot` getMyCommands → **6 commands** (start/menu/help/about/privacy/feedback)
+- getMyShortDescription → set
+- post_init отработал, set_my_commands прошёл
+
+**Параллельно дофиксил:**
+- Hardcoded `LessioBot` → `mylessiobot` в 5 файлах (footer/index/help/articles) —
+  все `t.me/...` deeplinks теперь рабочие
+- bot-watchdog cron включён (был DISABLED)
+- DISABLE_TELEGRAM_IPV4_PATCH=1 → =0 на проде
+
+**docs/YOUR-LAUNCH-PLAN.md обновлён** — bot-блокер удалён из критических.
+Definition of done: тестовая аудитория 100-300 чел → **готово**.
+
+---
+
 ## 2026-05-26 (closeout) — Prod-readiness wave 2: monitoring + backups + observability (27ec297)
 
 **Code (`27ec297`):**

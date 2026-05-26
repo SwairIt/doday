@@ -26,80 +26,28 @@
 
 ---
 
-## 🔴 КРИТИЧЕСКИЙ блокер для Stars-оплаты — bot не работает
+## ✅ Bot работает (починено commit 3fd09f3)
 
-### Проблема
+Был критический блокер: bot worker timeout'ил на connect к api.telegram.org с 25 мая.
 
-`@mylessiobot` (он же Lessio) **не отвечает** с 25 мая. В логах:
+**Корневая причина:**
+- DNS api.telegram.org → 149.154.166.110 — заблокирован с прода (RKN/firewall провайдера)
+- Только 149.154.167.220 — рабочий IP
+- Monkey-patch на `socket.getaddrinfo` работал для `asyncio.open_connection`, но
+  `httpx` через `httpcore`→`anyio` использовал собственный resolution mechanism
+  который игнорировал patch
 
-```
-ERROR doday.telegram: Both bots failed to start — Timed out
-```
+**Решение в `app/telegram/bot.py` (`_make_telegram_request`):**
+- Custom `HardcodedIPBackend(httpcore.AutoBackend)` override'ит `connect_tcp`
+- Если host=`api.telegram.org` → connects к hardcoded `.167.220`
+- SSL handshake уровнем выше с `server_hostname=api.telegram.org` → cert валиден
+- Передаётся в `Application.builder().request(req).get_updates_request(req)`
 
-Что значит: пока bot мертв, оплата через Telegram Stars **не сработает**. Клиент заплатит, но
-booking не отметится «оплачено» автоматически (нужно вручную).
-
-### Что я уже пробовал (не помогло)
-
-- Поменял порядок hardcoded-IP в `app/telegram/bot.py` — рабочий `.167.220` первым
-- Включил cron-watchdog (был DISABLED)
-- Убрал `DISABLE_TELEGRAM_IPV4_PATCH=1` → `=0`
-- Очистил `__pycache__`, перезапустил bot
-
-Что подтверждено:
-- `socket.getaddrinfo` patched корректно
-- `asyncio.open_connection("api.telegram.org", 443)` — работает за 200ms
-- `curl --resolve api.telegram.org:443:149.154.167.220 https://api.telegram.org/` — работает за 146ms
-- **Но** `httpx.AsyncClient.get("https://api.telegram.org/")` — `ConnectTimeout` через 15с
-
-Это значит `httpx` (через `httpcore` → `anyio`) использует **другой mechanism** для resolve
-который игнорирует наш monkey-patch на `socket` и `loop.getaddrinfo`.
-
-### Варианты фикса (по сложности)
-
-#### Вариант A: HTTP-прокси (15 минут, рекомендую)
-
-Купить дешёвый европейский VPS-прокси ($3-5/мес) или использовать
-[Tinyproxy](https://tinyproxy.github.io) на отдельной VPS, прописать в `.env`:
-
-```
-HTTPS_PROXY=http://user:pass@proxy.your-vps.com:8080
-```
-
-`httpx` автоматически использует proxy при наличии env-var. Bot пойдёт к Telegram через прокси
-из работающей сети. Без monkey-patch'а.
-
-Готовые сервисы:
-- [Webshare.io](https://webshare.io) — 10 free proxies, EU/US
-- [Proxyseller.com](https://proxyseller.com) — РФ residential
-
-#### Вариант B: MTProxy
-
-Telegram-специфичный прокси, разработан для обхода блокировок. Можно поднять свой через
-@MTProxybot или использовать публичный (нестабильны).
-
-В коде нужно добавить в `Application.builder()`:
-```python
-.proxy_url("https://your-mtproxy.com:443")
-```
-
-#### Вариант C: переместить bot на отдельный VPS вне РФ
-
-EU-VPS ($4-6/мес) с открытым доступом к api.telegram.org. Запустить там только bot worker,
-DB connection к managed PG через интернет. Самое надёжное долгосрочное.
-
-#### Вариант D: разобраться почему `httpx` игнорит monkey-patch
-
-Нужно копать `anyio.getaddrinfo` или `anyio._backends._asyncio.connect_tcp`. Если найдёшь —
-patch на этом уровне сработает. Часы исследования.
-
-### До тех пор пока bot не починен
-
-Клиенты могут бронировать (web-сайт работает). Но **Stars-оплата не сработает** — нужно либо:
-- Отметить оплату вручную (через `Сегодня → клиент → Отметить оплачено`)
-- Принимать оплату через СБП / нал
-
-Для тестовой аудитории на 10-50 человек — приемлемо. Для широкого запуска — фикс **обязателен**.
+**Проверено в проде (после 3fd09f3):**
+- `@DodayTaskBot` (Doday) — getMe OK, polling работает
+- `@mylessiobot` (Lessio) — 6 commands зарегистрированы, short_description установлен,
+  post_init отработал
+- Stars-payment handlers подключены и готовы принимать платежи
 
 ---
 
@@ -265,9 +213,9 @@ curl -s "https://api.telegram.org/bot$LESSIO_BOT_TOKEN/getMyCommands?language_co
 | Сценарий | Готово? |
 |---|---|
 | Приватный анонс (10-50 знакомых, бесплатные занятия) | ✅ **готово** |
-| Тестовая аудитория Telegram-канала (100-300 чел) | ⚠️ **только после фикса bot** для оплаты |
-| Маркетинг через биржу / контекст | ⚠️ **bot fix + SPF/DKIM + Better Stack** |
-| Stars-оплата работает end-to-end | ❌ **блокер: bot down** |
+| Тестовая аудитория Telegram-канала (100-300 чел) | ✅ **готово** (bot fixed) |
+| Маркетинг через биржу / контекст | ⚠️ Нужны SPF/DKIM + Better Stack monitor |
+| Stars-оплата работает end-to-end | ✅ **готово к тесту** (рекомендую сначала тест см. п.5) |
 
 ---
 
