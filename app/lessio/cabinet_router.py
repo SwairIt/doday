@@ -293,7 +293,9 @@ async def services_create(
     user: RequiredUser,
     title: Annotated[str, Form()],
     duration_minutes: Annotated[int, Form()],
-    price_kopecks: Annotated[int, Form()],
+    price_kopecks: Annotated[int, Form()] = 0,
+    price_rub: Annotated[int | None, Form()] = None,
+    description: Annotated[str | None, Form()] = None,
     icon_emoji: Annotated[str, Form()] = "💼",
     is_group_session: Annotated[bool, Form()] = False,
     max_attendees: Annotated[int, Form()] = 1,
@@ -302,15 +304,20 @@ async def services_create(
     profile = await _require_profile(session, user.id)
     if duration_minutes < 5 or duration_minutes > 480:
         raise HTTPException(400, "Длительность от 5 до 480 минут")
-    if price_kopecks < 0:
+    # Prefer price_rub (новый friendly-input) если задан; иначе fallback на price_kopecks
+    if price_rub is not None and price_rub > 0:
+        final_kopecks = price_rub * 100
+    else:
+        final_kopecks = price_kopecks
+    if final_kopecks < 0:
         raise HTTPException(400, "Цена не может быть отрицательной")
-    # Stars = ₽ × 100 / 120 ≈ kopecks / 120. Round to nearest.
-    price_stars = max(1, price_kopecks // 120)
+    price_stars = max(1, final_kopecks // 120)
     service = LessioService(
         tutor_id=profile.id,
         title=title[:120],
+        description=(description or None) and description[:500],
         duration_minutes=duration_minutes,
-        price_kopecks=price_kopecks,
+        price_kopecks=final_kopecks,
         price_stars=price_stars,
         icon_emoji=(icon_emoji or "💼")[:8],
         is_group_session=bool(is_group_session),
@@ -318,7 +325,7 @@ async def services_create(
     )
     session.add(service)
     await session.commit()
-    return RedirectResponse("/lessio/app/services", status_code=303)
+    return RedirectResponse("/lessio/app/services?toast=service_created", status_code=303)
 
 
 @router.post(
@@ -344,7 +351,8 @@ async def services_toggle_active(
         raise HTTPException(404, "Услуга не найдена")
     service.is_active = not service.is_active
     await session.commit()
-    return RedirectResponse("/lessio/app/services", status_code=303)
+    toast = "service_shown" if service.is_active else "service_hidden"
+    return RedirectResponse(f"/lessio/app/services?toast={toast}", status_code=303)
 
 
 @router.post(
@@ -357,7 +365,10 @@ async def services_edit(
     user: RequiredUser,
     title: Annotated[str, Form()],
     duration_minutes: Annotated[int, Form()],
-    price_kopecks: Annotated[int, Form()],
+    price_kopecks: Annotated[int, Form()] = 0,
+    price_rub: Annotated[int | None, Form()] = None,
+    description: Annotated[str | None, Form()] = None,
+    icon_emoji: Annotated[str | None, Form()] = None,
     session: AsyncSession = Depends(get_session),  # noqa: B008
 ) -> Response:
     profile = await _require_profile(session, user.id)
@@ -373,14 +384,22 @@ async def services_edit(
         raise HTTPException(404, "Услуга не найдена")
     if duration_minutes < 5 or duration_minutes > 480:
         raise HTTPException(400, "Длительность от 5 до 480 минут")
-    if price_kopecks < 0:
+    if price_rub is not None and price_rub > 0:
+        final_kopecks = price_rub * 100
+    else:
+        final_kopecks = price_kopecks
+    if final_kopecks < 0:
         raise HTTPException(400, "Цена не может быть отрицательной")
     service.title = title[:120]
     service.duration_minutes = duration_minutes
-    service.price_kopecks = price_kopecks
-    service.price_stars = max(1, price_kopecks // 120)
+    service.price_kopecks = final_kopecks
+    service.price_stars = max(1, final_kopecks // 120)
+    if description is not None:
+        service.description = description[:500] or None
+    if icon_emoji is not None and icon_emoji.strip():
+        service.icon_emoji = icon_emoji.strip()[:8]
     await session.commit()
-    return RedirectResponse("/lessio/app/services", status_code=303)
+    return RedirectResponse("/lessio/app/services?toast=saved", status_code=303)
 
 
 # ── Clients ───────────────────────────────────────────────────────────
