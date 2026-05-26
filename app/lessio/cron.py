@@ -149,6 +149,73 @@ async def mark_completed_bookings(session: AsyncSession) -> dict[str, Any]:
 dispatch_review_requests = mark_completed_bookings
 
 
+async def audit_unpaid_bookings(session: AsyncSession) -> dict[str, Any]:
+    """Метрика «сколько висит неоплаченных bookings».
+
+    НЕ отменяем автоматически — tutor может принимать оплату нал/СБП на самой
+    встрече, и cron-cancel сломает его flow. Зато считаем по 3 категориям:
+
+    - `future_unpaid` — впереди, может быть нормально (ещё не пришло время)
+    - `stale_unpaid_24h` — впереди но висит >24ч с момента бронирования
+    - `past_unpaid` — прошедшие, должны были провести и отметить «оплачено»
+
+    Цифры идут в structlog → Sentry alert если резко выросли (spam-bots).
+    Tutor видит свои unpaid в кабинете (Сегодня / Клиенты — payment_status).
+    """
+    now = datetime.now(UTC)
+    stale_cutoff = now - timedelta(hours=24)
+
+    future_unpaid = (
+        (
+            await session.execute(
+                select(LessioBooking).where(
+                    LessioBooking.status == "confirmed",
+                    LessioBooking.payment_status == "unpaid",
+                    LessioBooking.starts_at > now,
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    stale_unpaid_24h = [b for b in future_unpaid if b.created_at < stale_cutoff]
+
+    past_unpaid = (
+        (
+            await session.execute(
+                select(LessioBooking).where(
+                    LessioBooking.status == "confirmed",
+                    LessioBooking.payment_status == "unpaid",
+                    LessioBooking.starts_at <= now,
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    _log.info(
+        "lessio_unpaid_audit",
+        future_unpaid=len(future_unpaid),
+        stale_unpaid_24h=len(stale_unpaid_24h),
+        past_unpaid=len(past_unpaid),
+    )
+    # Sentry-alert threshold — резкий рост может означать спам-bot бронирующий
+    # слоты без оплаты. 50+ unpaid за сутки на новой инсталляции — anomaly.
+    if len(stale_unpaid_24h) > 50:
+        _log.warning(
+            "lessio_unpaid_spike",
+            stale_unpaid_24h=len(stale_unpaid_24h),
+            message="Possible spam-bot bookings — manual review recommended",
+        )
+    return {
+        "future_unpaid": len(future_unpaid),
+        "stale_unpaid_24h": len(stale_unpaid_24h),
+        "past_unpaid": len(past_unpaid),
+    }
+
+
 async def dispatch_daily_digests(session: AsyncSession) -> dict[str, Any]:
     """Утренний digest: для каждого tutor'а с notification_email и confirmed-bookings
     на сегодня (в его tz) → шлём список встреч.

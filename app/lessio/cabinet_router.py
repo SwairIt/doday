@@ -88,6 +88,24 @@ async def today(
     # ── Onboarding-checklist — 5 шагов до полной готовности профиля.
     # Скрывается с UI если все 5 ✓ (карточка не рендерится).
     checklist = await _compute_onboarding_checklist(session, profile)
+
+    # ── Неоплаченные предстоящие — видимость, чтобы tutor не упустил
+    # bookings со status=confirmed AND payment_status=unpaid AND starts_at > now
+    unpaid_upcoming_count = len(
+        (
+            await session.execute(
+                select(LessioBooking).where(
+                    LessioBooking.tutor_id == profile.id,
+                    LessioBooking.status == "confirmed",
+                    LessioBooking.payment_status == "unpaid",
+                    LessioBooking.starts_at > datetime.now(UTC),
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+
     return _templates.TemplateResponse(
         request,
         "lessio/app/today.html",
@@ -97,6 +115,7 @@ async def today(
             "booking_views": booking_views,
             "active_nav": "today",
             "onboarding": checklist,
+            "unpaid_upcoming_count": unpaid_upcoming_count,
         },
     )
 

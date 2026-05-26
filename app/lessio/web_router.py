@@ -23,6 +23,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.deps import CurrentUser, RequiredUser
+from app.auth.rate_limit import client_key, hit, reset
 from app.auth.schemas import RegisterIn
 from app.auth.service import EmailAlreadyExists, register_user
 from app.db import get_session
@@ -79,6 +80,16 @@ async def lessio_login_submit(
 ) -> Response:
     from app.auth.service import InvalidCredentials, authenticate
 
+    ip = request.client.host if request.client else None
+    rl_key = client_key(ip, f"lessio_login:{email.lower()}")
+    if not hit(rl_key, max_calls=10, per_seconds=60):
+        return _templates.TemplateResponse(
+            request,
+            "lessio/auth/lessio_login.html",
+            {"error": "Слишком много попыток входа. Подождите минуту."},
+            status_code=429,
+        )
+
     try:
         user = await authenticate(session, email, password)
     except InvalidCredentials:
@@ -88,6 +99,7 @@ async def lessio_login_submit(
             {"error": "Неверный email или пароль"},
             status_code=401,
         )
+    reset(rl_key)  # сбросить счётчик после успешного входа
     request.session.clear()
     request.session["user_id"] = str(user.id)
     # Если у user'а ещё нет LessioTutorProfile — _require_profile отправит на setup-profile
@@ -108,6 +120,17 @@ async def lessio_register_submit(
     password: Annotated[str, Form()],
     session: AsyncSession = Depends(get_session),  # noqa: B008
 ) -> Response:
+    ip = request.client.host if request.client else None
+    # Лимит регистрации привязан к IP — 5 попыток в минуту с одного айпи.
+    # Защита от bot-флуда / massre-account создания.
+    if not hit(client_key(ip, "lessio_register"), max_calls=5, per_seconds=60):
+        return _templates.TemplateResponse(
+            request,
+            "lessio/auth/lessio_register.html",
+            {"error": "Слишком много регистраций с одного IP. Попробуйте через минуту."},
+            status_code=429,
+        )
+
     try:
         payload = RegisterIn(email=email.lower().strip(), password=password)
     except ValidationError:
@@ -575,6 +598,7 @@ async def cron_dispatch_reminders(
 ) -> dict[str, Any]:
     from app.config import get_settings
     from app.lessio.cron import (
+        audit_unpaid_bookings,
         dispatch_daily_digests,
         dispatch_reminders,
         mark_completed_bookings,
@@ -589,8 +613,15 @@ async def cron_dispatch_reminders(
     r1 = await dispatch_reminders(session, hours=1)
     completed = await mark_completed_bookings(session)
     digests = await dispatch_daily_digests(session)
+    unpaid = await audit_unpaid_bookings(session)
     await session.commit()
-    return {"24h": r24, "1h": r1, "completed": completed, "digests": digests}
+    return {
+        "24h": r24,
+        "1h": r1,
+        "completed": completed,
+        "digests": digests,
+        "unpaid_audit": unpaid,
+    }
 
 
 # ── Google Calendar OAuth (Phase 2 optional) ──────────────────────────
