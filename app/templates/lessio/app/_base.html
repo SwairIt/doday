@@ -9,6 +9,7 @@
   <link rel="manifest" href="/lessio/app/manifest.webmanifest">
   <meta name="theme-color" content="#7c3aed">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
   <style>
     body {
       background: linear-gradient(180deg, #0f0a1f 0%, #1a0f3d 60%, #2e1065 100%);
@@ -17,43 +18,132 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
     .nav-link {
-      display: block;
+      display: flex;
+      align-items: center;
+      gap: .55rem;
       padding: .6rem .9rem;
       border-radius: .6rem;
-      color: rgba(245, 243, 255, .6);
-      transition: background .1s, color .1s;
+      color: rgba(245, 243, 255, .65);
+      font-size: .9rem;
+      transition: background .12s, color .12s, transform .12s;
     }
-    .nav-link:hover { background: rgba(255, 255, 255, .05); color: rgba(245, 243, 255, .9); }
-    .nav-link.active { background: rgba(167, 139, 250, .15); color: #a78bfa; }
+    .nav-link:hover {
+      background: rgba(255, 255, 255, .06);
+      color: rgba(245, 243, 255, .95);
+    }
+    .nav-link.active {
+      background: linear-gradient(135deg, rgba(167,139,250,.18), rgba(244,114,182,.12));
+      color: #c4b5fd;
+      box-shadow: 0 0 0 1px rgba(167,139,250,.2);
+    }
+    .nav-link-emoji { font-size: 1rem; width: 1.25rem; text-align: center; }
+    /* Toast — animate-in slideDown + auto-dismiss 4s */
+    @keyframes toastIn {
+      from { transform: translateY(-12px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .toast { animation: toastIn .25s ease-out; }
   </style>
 </head>
 <body class="antialiased">
-<div class="md:grid md:grid-cols-[220px_1fr] min-h-screen">
+
+{# Toast container — reads ?toast=<key>&toast_type=<ok|warn|err> query param.
+   Auto-dismisses after 4s via Alpine. Strip URL после показа чтобы F5 не повторял. #}
+<div x-data="{
+       toast: null,
+       init() {
+         const url = new URL(window.location.href);
+         const t = url.searchParams.get('toast');
+         if (t) {
+           const messages = {
+             saved: ['✓ Сохранено', 'ok'],
+             paid: ['💰 Отмечено оплачено', 'ok'],
+             unpaid: ['🔄 Снято оплачено', 'ok'],
+             gcal_connected: ['✓ Google Calendar подключён', 'ok'],
+             gcal_disconnected: ['Google Calendar отключён', 'warn'],
+             imported: ['✓ Клиенты импортированы', 'ok'],
+             service_added: ['✓ Услуга добавлена', 'ok'],
+             service_updated: ['✓ Услуга обновлена', 'ok'],
+             service_toggled: ['🔄 Статус услуги изменён', 'ok'],
+             slug_taken: ['⚠️ Этот slug уже занят другим репетитором', 'err'],
+             invalid_input: ['⚠️ Проверьте корректность данных', 'err'],
+           };
+           const [msg, kind] = messages[t] || [t, 'ok'];
+           this.toast = { msg, kind };
+           // Strip toast params from URL чтобы F5 не показывал повторно
+           url.searchParams.delete('toast');
+           url.searchParams.delete('toast_type');
+           // Также strip ?saved=1 (legacy), ?gcal=, ?imported=, и query counters
+           ['saved','gcal','imported','created','updated','skipped','welcome'].forEach(k => url.searchParams.delete(k));
+           const newPath = url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : '');
+           history.replaceState(null, '', newPath);
+           setTimeout(() => { this.toast = null; }, 4000);
+         }
+       }
+     }"
+     class="fixed top-5 right-5 z-50 max-w-md">
+  <template x-if="toast">
+    <div class="toast px-4 py-3 rounded-xl shadow-lg backdrop-blur-md border text-sm font-semibold"
+         :class="{
+           'bg-emerald-500/20 border-emerald-400/40 text-emerald-100': toast.kind === 'ok',
+           'bg-amber-500/20 border-amber-400/40 text-amber-100': toast.kind === 'warn',
+           'bg-rose-500/20 border-rose-400/40 text-rose-100': toast.kind === 'err',
+         }"
+         x-text="toast.msg"
+         x-on:click="toast = null">
+    </div>
+  </template>
+</div>
+
+<div class="md:grid md:grid-cols-[230px_1fr] min-h-screen">
   <aside class="border-b md:border-b-0 md:border-r border-white/5 p-4 bg-black/20">
     <a href="/lessio" class="block text-xl font-extrabold mb-6">
       <span style="background:linear-gradient(135deg,#a78bfa,#f472b6);-webkit-background-clip:text;background-clip:text;color:transparent;">
         ✦ Lessio
       </span>
     </a>
-    <nav class="space-y-1 text-sm">
-      <a href="/lessio/app/today" class="nav-link {% if active_nav == 'today' %}active{% endif %}">📅 Сегодня</a>
-      <a href="/lessio/app/calendar" class="nav-link {% if active_nav == 'calendar' %}active{% endif %}">📆 Календарь</a>
-      <a href="/lessio/app/clients" class="nav-link {% if active_nav == 'clients' %}active{% endif %}">👥 Клиенты</a>
-      <a href="/lessio/app/services" class="nav-link {% if active_nav == 'services' %}active{% endif %}">💼 Услуги</a>
-      <a href="/lessio/app/schedule" class="nav-link {% if active_nav == 'schedule' %}active{% endif %}">⏰ Расписание</a>
-      <a href="/lessio/app/income" class="nav-link {% if active_nav == 'income' %}active{% endif %}">💰 Доход</a>
-      <a href="/lessio/app/stats" class="nav-link {% if active_nav == 'stats' %}active{% endif %}">📊 Статистика</a>
-      <a href="/lessio/app/settings" class="nav-link {% if active_nav == 'settings' %}active{% endif %}">⚙️ Настройки</a>
+    <nav class="space-y-0.5">
+      <a href="/lessio/app/today" class="nav-link {% if active_nav == 'today' %}active{% endif %}">
+        <span class="nav-link-emoji">📅</span><span>Сегодня</span>
+      </a>
+      <a href="/lessio/app/calendar" class="nav-link {% if active_nav == 'calendar' %}active{% endif %}">
+        <span class="nav-link-emoji">📆</span><span>Календарь</span>
+      </a>
+      <a href="/lessio/app/clients" class="nav-link {% if active_nav == 'clients' %}active{% endif %}">
+        <span class="nav-link-emoji">👥</span><span>Клиенты</span>
+      </a>
+      <a href="/lessio/app/services" class="nav-link {% if active_nav == 'services' %}active{% endif %}">
+        <span class="nav-link-emoji">💼</span><span>Услуги</span>
+      </a>
+      <a href="/lessio/app/schedule" class="nav-link {% if active_nav == 'schedule' %}active{% endif %}">
+        <span class="nav-link-emoji">⏰</span><span>Расписание</span>
+      </a>
+      <a href="/lessio/app/income" class="nav-link {% if active_nav == 'income' %}active{% endif %}">
+        <span class="nav-link-emoji">💰</span><span>Доход</span>
+      </a>
+      <a href="/lessio/app/stats" class="nav-link {% if active_nav == 'stats' %}active{% endif %}">
+        <span class="nav-link-emoji">📊</span><span>Статистика</span>
+      </a>
+      <a href="/lessio/app/settings" class="nav-link {% if active_nav == 'settings' %}active{% endif %}">
+        <span class="nav-link-emoji">⚙️</span><span>Настройки</span>
+      </a>
     </nav>
-    <div class="mt-8 px-3 py-2 bg-white/5 rounded-lg text-xs">
-      <div class="text-violet-300/60 mb-1">Публичная ссылка</div>
+    <div class="mt-6 px-3 py-3 bg-gradient-to-br from-violet-500/10 to-pink-500/5 rounded-xl border border-violet-400/20 text-xs"
+         x-data="{ copied: false }">
+      <div class="text-violet-300/60 mb-1.5 flex items-center justify-between">
+        <span>🔗 Публичная ссылка</span>
+        <button type="button"
+                x-on:click="navigator.clipboard.writeText('https://getdoday.ru/u/{{ profile.slug }}'); copied = true; setTimeout(() => copied=false, 1500)"
+                class="text-violet-300/60 hover:text-violet-200 text-[10px] font-semibold uppercase tracking-wider"
+                x-text="copied ? '✓ скопировано' : 'копировать'"></button>
+      </div>
       <a href="/u/{{ profile.slug }}" target="_blank" rel="noopener"
-         class="text-violet-300 break-all hover:text-violet-200">
+         class="text-violet-200 break-all hover:text-white font-mono text-xs">
         /u/{{ profile.slug }}
       </a>
     </div>
     <form method="post" action="/lessio/auth/logout" class="mt-4">
-      <button class="text-xs text-violet-300/40 hover:text-violet-300/80">Выйти →</button>
+      <button class="text-xs text-violet-300/40 hover:text-violet-300/80 transition">Выйти →</button>
     </form>
   </aside>
 

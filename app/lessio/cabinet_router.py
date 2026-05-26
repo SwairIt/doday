@@ -257,7 +257,7 @@ async def settings_submit(
         base = _gs().app_base_url.rstrip("/")
         await ping_indexnow(urls=[f"{base}/u/{profile.slug}"])
 
-    return RedirectResponse("/lessio/app/settings?saved=1", status_code=303)
+    return RedirectResponse("/lessio/app/settings?toast=saved", status_code=303)
 
 
 # ── Services CRUD ─────────────────────────────────────────────────────
@@ -455,7 +455,7 @@ async def schedule_submit(
     profile.work_end_minute = work_end_hour * 60
     profile.buffer_minutes = buffer_minutes
     await session.commit()
-    return RedirectResponse("/lessio/app/schedule?saved=1", status_code=303)
+    return RedirectResponse("/lessio/app/schedule?toast=saved", status_code=303)
 
 
 # ── Calendar (month view) ─────────────────────────────────────────────
@@ -636,12 +636,16 @@ async def toggle_paid(
     if booking.payment_status == "paid":
         booking.payment_status = "unpaid"
         booking.paid_at = None
+        toast = "unpaid"
     else:
         booking.payment_status = "paid"
         booking.paid_at = datetime.now(UTC)
+        toast = "paid"
     await session.commit()
     referer = request.headers.get("referer", "/lessio/app/income")
-    return RedirectResponse(referer, status_code=303)
+    # Append toast query-param (preserve existing query if any)
+    sep = "&" if "?" in referer else "?"
+    return RedirectResponse(f"{referer}{sep}toast={toast}", status_code=303)
 
 
 @router.get(
@@ -958,7 +962,7 @@ async def clients_import_submit(
             created += 1
     await session.commit()
     return RedirectResponse(
-        f"/lessio/app/clients?imported=1&created={created}&updated={updated}&skipped={skipped}",
+        f"/lessio/app/clients?toast=imported&created={created}&updated={updated}&skipped={skipped}",
         status_code=303,
     )
 

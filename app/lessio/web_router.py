@@ -673,7 +673,7 @@ async def oauth_google_callback(
         raise HTTPException(404, "Tutor profile not found")
     profile.google_calendar_refresh_token = encrypt_refresh_token(refresh_token)
     await session.commit()
-    return RedirectResponse("/lessio/app/settings?gcal=connected", status_code=303)
+    return RedirectResponse("/lessio/app/settings?toast=gcal_connected", status_code=303)
 
 
 @router.post("/oauth/google/disconnect", include_in_schema=False)
@@ -691,7 +691,7 @@ async def oauth_google_disconnect(
         raise HTTPException(404, "Tutor profile not found")
     profile.google_calendar_refresh_token = None
     await session.commit()
-    return RedirectResponse("/lessio/app/settings?gcal=disconnected", status_code=303)
+    return RedirectResponse("/lessio/app/settings?toast=gcal_disconnected", status_code=303)
 
 
 @_public_router.get("/u/{slug}/og.svg", include_in_schema=False)

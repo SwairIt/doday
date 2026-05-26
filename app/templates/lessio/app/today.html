@@ -1,63 +1,133 @@
 {% extends "lessio/app/_base.html" %}
 {% block title %}Сегодня · Lessio{% endblock %}
 {% block content %}
-<header class="mb-8">
-  <h1 class="text-3xl font-extrabold mb-1">Привет, {{ profile.display_name }}!</h1>
-  <p class="text-violet-200/60 text-sm">
-    {{ bookings | length }} встреч сегодня
-  </p>
+<header class="mb-8 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <h1 class="text-3xl md:text-4xl font-extrabold mb-1">Привет, {{ profile.display_name }}! 👋</h1>
+    {% if booking_views %}
+    <p class="text-violet-200/60 text-sm">
+      Сегодня {{ booking_views | length }}
+      {{ 'встреча' if booking_views|length == 1 else 'встречи' if 2 <= booking_views|length <= 4 else 'встреч' }}
+      · следующая в <b class="text-violet-200">{{ booking_views[0].time_local }}</b>
+    </p>
+    {% else %}
+    <p class="text-violet-200/60 text-sm">
+      🌤 Свободный день — поделитесь
+      <a href="/u/{{ profile.slug }}" target="_blank" class="text-violet-300 underline hover:text-violet-200">страницей</a>
+      в соцсетях
+    </p>
+    {% endif %}
+  </div>
+  <a href="/lessio/app/calendar"
+     class="text-sm px-3 py-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition">
+    Календарь →
+  </a>
 </header>
 
 {% if booking_views %}
 <section class="space-y-3">
   {% for view in booking_views %}
   {% set b = view.obj %}
-  <article class="bg-white/5 border border-white/10 rounded-2xl p-5 flex flex-wrap items-start gap-4">
-    <div class="min-w-[80px]">
-      <div class="text-2xl font-extrabold">{{ view.time_local }}</div>
-      <div class="text-xs text-violet-300/60">
+  <article class="bg-gradient-to-br from-white/[.06] to-white/[.03] border border-white/10 rounded-2xl p-5 flex flex-wrap items-start gap-4 hover:border-violet-400/30 transition">
+    <div class="min-w-[90px]">
+      <div class="text-3xl font-extrabold tracking-tight">{{ view.time_local }}</div>
+      <div class="text-xs text-violet-300/60 mt-1">
         {{ b.duration_minutes }} мин · ({{ view.tz_label }})
       </div>
     </div>
     <div class="flex-1 min-w-[200px]">
       <div class="font-bold text-lg">{{ b.client_full_name }}</div>
-      <div class="text-sm text-violet-300/70">{{ b.client_email }}</div>
+      <div class="text-sm text-violet-300/70 flex items-center gap-2 flex-wrap">
+        <a href="mailto:{{ b.client_email }}" class="hover:text-violet-200">📧 {{ b.client_email }}</a>
+      </div>
       {% if b.notes %}
-      <div class="text-xs text-violet-200/50 mt-2 italic">«{{ b.notes }}»</div>
+      <div class="text-xs text-violet-200/55 mt-2 italic bg-white/5 rounded-md px-2.5 py-1.5 max-w-md">
+        💬 «{{ b.notes }}»
+      </div>
       {% endif %}
     </div>
-    <div class="text-right space-y-1">
-      <div class="text-sm font-semibold">
+    <div class="text-right space-y-2 min-w-[160px]">
+      <div class="text-base font-bold">
         {{ "{:,}".format(b.price_kopecks // 100).replace(',', ' ') }} ₽
       </div>
-      <div class="text-xs">
-        {% if b.payment_status == 'paid' %}
-          <span class="text-emerald-300">✓ оплачено</span>
-        {% else %}
-          <span class="text-amber-300">не оплачено</span>
-        {% endif %}
-      </div>
+      <form method="post" action="/lessio/app/bookings/{{ b.id }}/toggle-paid" class="inline w-full">
+        <button type="submit"
+                class="w-full text-xs px-2.5 py-1.5 rounded-lg font-semibold transition
+                       {% if b.payment_status == 'paid' %}
+                         bg-emerald-500/25 text-emerald-200 hover:bg-emerald-500/40
+                       {% else %}
+                         bg-amber-500/25 text-amber-200 hover:bg-amber-500/40
+                       {% endif %}">
+          {% if b.payment_status == 'paid' %}✓ Оплачено{% else %}Отметить оплату{% endif %}
+        </button>
+      </form>
       {% if b.meeting_url %}
       <a href="{{ b.meeting_url }}" target="_blank" rel="noopener"
-         class="inline-block mt-2 px-3 py-1.5 text-xs bg-violet-500/20 text-violet-200 rounded-lg hover:bg-violet-500/30 transition">
-        Открыть встречу
+         class="block w-full text-center text-xs px-2.5 py-1.5 bg-violet-500/25 text-violet-200 rounded-lg font-semibold hover:bg-violet-500/40 transition">
+        🎥 Открыть встречу
       </a>
       {% endif %}
     </div>
   </article>
   {% endfor %}
 </section>
-{% else %}
-<section class="bg-white/5 border border-white/10 rounded-2xl p-10 text-center">
-  <div class="text-5xl mb-4" aria-hidden="true">🌤️</div>
-  <h2 class="text-xl font-bold mb-2">Сегодня встреч пока нет</h2>
-  <p class="text-violet-200/60 mb-6 max-w-md mx-auto">
-    Поделись публичной ссылкой с клиентами, чтобы они могли записаться сами.
-  </p>
-  <a href="/u/{{ profile.slug }}" target="_blank" rel="noopener"
-     class="inline-block px-5 py-2.5 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-semibold text-sm hover:opacity-90 transition">
-    Открыть мою страницу →
+
+<aside class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+  <a href="/lessio/app/calendar" class="bg-white/5 border border-white/10 rounded-xl p-3 hover:border-violet-400/30 transition">
+    <div class="text-2xl mb-1">📆</div>
+    <div class="text-xs text-violet-300/60">Календарь</div>
   </a>
+  <a href="/lessio/app/clients" class="bg-white/5 border border-white/10 rounded-xl p-3 hover:border-violet-400/30 transition">
+    <div class="text-2xl mb-1">👥</div>
+    <div class="text-xs text-violet-300/60">Клиенты</div>
+  </a>
+  <a href="/lessio/app/income" class="bg-white/5 border border-white/10 rounded-xl p-3 hover:border-violet-400/30 transition">
+    <div class="text-2xl mb-1">💰</div>
+    <div class="text-xs text-violet-300/60">Доход</div>
+  </a>
+  <a href="/u/{{ profile.slug }}" target="_blank" class="bg-violet-500/10 border border-violet-400/30 rounded-xl p-3 hover:bg-violet-500/20 transition">
+    <div class="text-2xl mb-1">🔗</div>
+    <div class="text-xs text-violet-200">Моя страница</div>
+  </a>
+</aside>
+{% else %}
+<section class="bg-gradient-to-br from-violet-500/5 to-pink-500/5 border border-violet-400/20 rounded-2xl p-10 text-center">
+  <div class="text-6xl mb-4" aria-hidden="true">🌤</div>
+  <h2 class="text-2xl font-bold mb-2">Сегодня встреч нет</h2>
+  <p class="text-violet-200/70 mb-6 max-w-md mx-auto leading-relaxed">
+    Поделитесь публичной ссылкой — клиент сам выберет время.<br>
+    Email с подтверждением и напоминаниями отправится автоматом.
+  </p>
+  <div class="flex flex-wrap justify-center gap-3" x-data="{ copied: false }">
+    <button type="button"
+            x-on:click="navigator.clipboard.writeText('https://getdoday.ru/u/{{ profile.slug }}'); copied = true; setTimeout(() => copied=false, 2000)"
+            class="px-5 py-2.5 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-semibold text-sm hover:opacity-90 transition">
+      <span x-show="!copied">📋 Скопировать ссылку</span>
+      <span x-show="copied" x-cloak>✓ Скопировано</span>
+    </button>
+    <a href="/u/{{ profile.slug }}" target="_blank" rel="noopener"
+       class="px-5 py-2.5 bg-white/10 border border-white/20 rounded-xl font-semibold text-sm hover:bg-white/20 transition">
+      👁 Посмотреть как клиент
+    </a>
+  </div>
 </section>
+
+<aside class="mt-8 grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+  <a href="/lessio/app/services" class="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-violet-400/30 transition">
+    <div class="text-2xl mb-1.5">💼</div>
+    <div class="font-semibold">Настроить услуги</div>
+    <div class="text-xs text-violet-300/60 mt-1">Названия, длительность, цены</div>
+  </a>
+  <a href="/lessio/app/schedule" class="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-violet-400/30 transition">
+    <div class="text-2xl mb-1.5">⏰</div>
+    <div class="font-semibold">Рабочие часы</div>
+    <div class="text-xs text-violet-300/60 mt-1">Дни, часы, буфер между встречами</div>
+  </a>
+  <a href="/lessio/app/settings" class="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-violet-400/30 transition">
+    <div class="text-2xl mb-1.5">⚙️</div>
+    <div class="font-semibold">Профиль и настройки</div>
+    <div class="text-xs text-violet-300/60 mt-1">Фото, описание, видеоссылка</div>
+  </a>
+</aside>
 {% endif %}
 {% endblock %}
