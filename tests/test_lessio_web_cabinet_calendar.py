@@ -71,3 +71,49 @@ async def test_calendar_explicit_month_shows_bookings(
     assert resp.status_code == 200
     # На 15-м числе должна быть метка
     assert "CalClient" in resp.text or "14:00" in resp.text or "15" in resp.text
+
+
+async def test_calendar_week_view_renders(client: AsyncClient, db_session: AsyncSession) -> None:
+    await _setup(client, tg_id=75000003)
+    resp = await client.get("/lessio/app/calendar?view=week&date_param=2026-06-15")
+    assert resp.status_code == 200
+    # week view рисует Пн—Вс заголовки + часы из расписания
+    body = resp.text
+    assert "Пн" in body and "Вс" in body
+    # диапазон даты в подзаголовке: "15.06 — 21.06.2026" (понедельник 15.06.2026)
+    assert "15.06" in body
+
+
+async def test_calendar_day_view_shows_booking(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    slug = await _setup(client, tg_id=75000004)
+    profile = (
+        await db_session.execute(select(LessioTutorProfile).where(LessioTutorProfile.slug == slug))
+    ).scalar_one()
+    service = (
+        (
+            await db_session.execute(
+                select(LessioService).where(LessioService.tutor_id == profile.id)
+            )
+        )
+        .scalars()
+        .first()
+    )
+    with patch("app.lessio.service.send_booking_emails", new_callable=AsyncMock):
+        await create_booking(
+            db_session,
+            tutor=profile,
+            service=service,
+            slot=datetime(2026, 6, 15, 14, 0, tzinfo=UTC),
+            client_email="dv@e.com",
+            client_full_name="DayClient",
+            client_phone=None,
+        )
+        await db_session.commit()
+
+    resp = await client.get("/lessio/app/calendar?view=day&date_param=2026-06-15")
+    assert resp.status_code == 200
+    body = resp.text
+    assert "DayClient" in body
+    assert "14:00" in body

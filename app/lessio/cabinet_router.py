@@ -519,27 +519,117 @@ def _parse_month(s: str | None) -> tuple[int, int]:
         return today.year, today.month
 
 
+def _parse_iso_date(s: str | None) -> date:
+    if not s:
+        return datetime.now(UTC).date()
+    try:
+        return date.fromisoformat(s)
+    except ValueError:
+        return datetime.now(UTC).date()
+
+
 @router.get("/calendar", response_class=HTMLResponse, include_in_schema=False)
 async def calendar_page(
     request: Request,
     user: RequiredUser,
     month: str | None = None,
+    view: str = "month",
+    date_param: str | None = None,
     session: AsyncSession = Depends(get_session),  # noqa: B008
 ) -> Response:
     profile = await _require_profile(session, user.id)
-    year, mo = _parse_month(month)
-    first = datetime(year, mo, 1, tzinfo=UTC)
-    last_day_num = calendar.monthrange(year, mo)[1]
-    last = datetime(year, mo, last_day_num, 23, 59, 59, tzinfo=UTC)
+    today_utc = datetime.now(UTC).date()
 
-    bookings = (
+    if view not in {"month", "week", "day"}:
+        view = "month"
+
+    if view == "month":
+        year, mo = _parse_month(month)
+        first = datetime(year, mo, 1, tzinfo=UTC)
+        last_day_num = calendar.monthrange(year, mo)[1]
+        last = datetime(year, mo, last_day_num, 23, 59, 59, tzinfo=UTC)
+
+        bookings = (
+            (
+                await session.execute(
+                    select(LessioBooking)
+                    .where(
+                        LessioBooking.tutor_id == profile.id,
+                        LessioBooking.starts_at >= first,
+                        LessioBooking.starts_at <= last,
+                    )
+                    .order_by(LessioBooking.starts_at)
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        by_day: dict[int, list[LessioBooking]] = {}
+        for b in bookings:
+            by_day.setdefault(b.starts_at.day, []).append(b)
+
+        first_weekday = first.isoweekday()
+        leading_blanks = first_weekday - 1
+        days_grid: list[date | None] = [None] * leading_blanks
+        for d in range(1, last_day_num + 1):
+            days_grid.append(date(year, mo, d))
+        while len(days_grid) % 7 != 0:
+            days_grid.append(None)
+
+        prev_month = (mo - 1) or 12
+        prev_year = year if mo > 1 else year - 1
+        next_month = (mo % 12) + 1
+        next_year = year if mo < 12 else year + 1
+        month_label = f"{year}-{mo:02d}"
+
+        return _templates.TemplateResponse(
+            request,
+            "lessio/app/calendar.html",
+            {
+                "profile": profile,
+                "active_nav": "calendar",
+                "view": "month",
+                "year": year,
+                "month": mo,
+                "month_label": month_label,
+                "prev_link": f"/lessio/app/calendar?view=month&month={prev_year}-{prev_month:02d}",
+                "next_link": f"/lessio/app/calendar?view=month&month={next_year}-{next_month:02d}",
+                "today_link": "/lessio/app/calendar",
+                "week_link": f"/lessio/app/calendar?view=week&date_param={today_utc.isoformat()}",
+                "day_link": f"/lessio/app/calendar?view=day&date_param={today_utc.isoformat()}",
+                "days_grid": days_grid,
+                "by_day": by_day,
+                "today": today_utc,
+            },
+        )
+
+    # week / day views — hourly grid
+    anchor = _parse_iso_date(date_param)
+    if view == "week":
+        monday = anchor - timedelta(days=anchor.isoweekday() - 1)
+        days = [monday + timedelta(days=i) for i in range(7)]
+        prev_anchor = monday - timedelta(days=7)
+        next_anchor = monday + timedelta(days=7)
+        range_label = (
+            f"{monday.strftime('%d.%m')} — {(monday + timedelta(days=6)).strftime('%d.%m.%Y')}"
+        )
+    else:  # day
+        days = [anchor]
+        prev_anchor = anchor - timedelta(days=1)
+        next_anchor = anchor + timedelta(days=1)
+        range_label = anchor.strftime("%A, %d.%m.%Y")
+
+    range_start = datetime.combine(days[0], datetime.min.time(), tzinfo=UTC)
+    range_end = datetime.combine(days[-1], datetime.max.time(), tzinfo=UTC)
+    bookings_seq = (
         (
             await session.execute(
                 select(LessioBooking)
                 .where(
                     LessioBooking.tutor_id == profile.id,
-                    LessioBooking.starts_at >= first,
-                    LessioBooking.starts_at <= last,
+                    LessioBooking.starts_at >= range_start,
+                    LessioBooking.starts_at <= range_end,
                 )
                 .order_by(LessioBooking.starts_at)
             )
@@ -547,38 +637,43 @@ async def calendar_page(
         .scalars()
         .all()
     )
+    by_date: dict[date, list[LessioBooking]] = {d: [] for d in days}
+    for b in bookings_seq:
+        bd = b.starts_at.date()
+        if bd in by_date:
+            by_date[bd].append(b)
 
-    by_day: dict[int, list[LessioBooking]] = {}
-    for b in bookings:
-        by_day.setdefault(b.starts_at.day, []).append(b)
+    start_hour = profile.work_start_minute // 60
+    end_hour = (profile.work_end_minute + 59) // 60
+    if end_hour <= start_hour:
+        start_hour, end_hour = 8, 22
+    hours = list(range(start_hour, end_hour))
 
-    first_weekday = first.isoweekday()
-    leading_blanks = first_weekday - 1
-    days_grid: list[date | None] = [None] * leading_blanks
-    for d in range(1, last_day_num + 1):
-        days_grid.append(date(year, mo, d))
-    while len(days_grid) % 7 != 0:
-        days_grid.append(None)
+    today_link = f"/lessio/app/calendar?view={view}&date_param={today_utc.isoformat()}"
+    prev_link = f"/lessio/app/calendar?view={view}&date_param={prev_anchor.isoformat()}"
+    next_link = f"/lessio/app/calendar?view={view}&date_param={next_anchor.isoformat()}"
+    month_link = f"/lessio/app/calendar?view=month&month={anchor.year}-{anchor.month:02d}"
+    week_link = f"/lessio/app/calendar?view=week&date_param={anchor.isoformat()}"
+    day_link = f"/lessio/app/calendar?view=day&date_param={anchor.isoformat()}"
 
-    prev_month = (mo - 1) or 12
-    prev_year = year if mo > 1 else year - 1
-    next_month = (mo % 12) + 1
-    next_year = year if mo < 12 else year + 1
-    month_label = f"{year}-{mo:02d}"
     return _templates.TemplateResponse(
         request,
         "lessio/app/calendar.html",
         {
             "profile": profile,
             "active_nav": "calendar",
-            "year": year,
-            "month": mo,
-            "month_label": month_label,
-            "prev_link": f"/lessio/app/calendar?month={prev_year}-{prev_month:02d}",
-            "next_link": f"/lessio/app/calendar?month={next_year}-{next_month:02d}",
-            "days_grid": days_grid,
-            "by_day": by_day,
-            "today": datetime.now(UTC).date(),
+            "view": view,
+            "range_label": range_label,
+            "days": days,
+            "hours": hours,
+            "by_date": by_date,
+            "prev_link": prev_link,
+            "next_link": next_link,
+            "today_link": today_link,
+            "month_link": month_link,
+            "week_link": week_link,
+            "day_link": day_link,
+            "today": today_utc,
         },
     )
 
