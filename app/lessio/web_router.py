@@ -158,6 +158,7 @@ async def setup_profile_submit(
     display_name: Annotated[str, Form()],
     niche: Annotated[str, Form()],
     bio: Annotated[str | None, Form()] = None,
+    timezone: Annotated[str | None, Form()] = None,
     session: AsyncSession = Depends(get_session),  # noqa: B008
 ) -> Response:
     existing = (
@@ -177,6 +178,7 @@ async def setup_profile_submit(
             display_name=display_name,
             niche=safe_niche,
             bio=bio,
+            timezone=timezone,
         )
     except OnboardError as exc:
         return _templates.TemplateResponse(

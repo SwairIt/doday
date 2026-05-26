@@ -55,10 +55,63 @@
                 class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg resize-none focus:outline-none focus:border-violet-400/50">{{ bio or '' }}</textarea>
     </label>
 
+    <label class="block">
+      <span class="text-sm font-semibold mb-1.5 block">Часовой пояс</span>
+      <select name="timezone" id="setup-tz-select"
+              class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400/50">
+        <option value="Europe/Kaliningrad">Калининград (UTC+2)</option>
+        <option value="Europe/Moscow" selected>Москва · Санкт-Петербург (UTC+3)</option>
+        <option value="Europe/Samara">Самара (UTC+4)</option>
+        <option value="Asia/Yekaterinburg">Екатеринбург (UTC+5)</option>
+        <option value="Asia/Omsk">Омск (UTC+6)</option>
+        <option value="Asia/Krasnoyarsk">Красноярск (UTC+7)</option>
+        <option value="Asia/Irkutsk">Иркутск (UTC+8)</option>
+        <option value="Asia/Yakutsk">Якутск (UTC+9)</option>
+        <option value="Asia/Vladivostok">Владивосток (UTC+10)</option>
+        <option value="Asia/Magadan">Магадан (UTC+11)</option>
+        <option value="Asia/Kamchatka">Камчатка (UTC+12)</option>
+        <option value="Asia/Almaty">Алматы (UTC+6)</option>
+        <option value="Asia/Tashkent">Ташкент (UTC+5)</option>
+        <option value="Europe/Kyiv">Киев (UTC+2/+3)</option>
+        <option value="Europe/Minsk">Минск (UTC+3)</option>
+        <option value="Europe/Belgrade">Белград (UTC+1/+2)</option>
+        <option value="UTC">UTC</option>
+      </select>
+      <span id="tz-hint" class="text-xs text-violet-300/40 mt-1 block">
+        В этой зоне ты будешь видеть расписание. Клиенты — в своей.
+      </span>
+    </label>
+
     <button class="w-full px-6 py-3.5 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-bold hover:opacity-90 transition">
       Создать профиль →
     </button>
   </form>
+
+  <script>
+    // Auto-detect browser TZ и предложить если её нет в списке
+    (() => {
+      try {
+        const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (!browserTz) return;
+        const select = document.getElementById('setup-tz-select');
+        const hint = document.getElementById('tz-hint');
+        if (!select) return;
+        const found = Array.from(select.options).some(o => o.value === browserTz);
+        if (found) {
+          select.value = browserTz;
+          if (hint) hint.textContent = `🌍 Определили автоматом: ${browserTz}. Меняй если не так.`;
+        } else {
+          // Не в списке — добавим новой option'ом сверху, выберем
+          const opt = document.createElement('option');
+          opt.value = browserTz;
+          opt.textContent = `${browserTz} (определено автоматом)`;
+          select.insertBefore(opt, select.firstChild);
+          select.value = browserTz;
+          if (hint) hint.textContent = `🌍 Определили: ${browserTz}`;
+        }
+      } catch (_) { /* TZ detect не критично */ }
+    })();
+  </script>
 
   <p class="text-center text-sm text-violet-300/40 mt-6">
     Сможешь изменить позже в настройках кабинета

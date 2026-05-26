@@ -79,6 +79,62 @@ async def test_setup_profile_creates_tutor_and_services(
     assert any("Английский" in s.title for s in services)
 
 
+async def test_setup_profile_accepts_browser_timezone(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """Auto-detected TZ из браузера должен сохраниться, если валиден."""
+    await client.post(
+        "/lessio/auth/register",
+        data={"email": "tutor_tz@example.com", "password": "strongpass123"},
+        follow_redirects=False,
+    )
+    resp = await client.post(
+        "/lessio/app/setup-profile",
+        data={
+            "slug": "anna_tz",
+            "display_name": "Anna TZ",
+            "niche": "english",
+            "timezone": "Asia/Yekaterinburg",
+        },
+        follow_redirects=False,
+    )
+    assert resp.status_code in (302, 303)
+    profile = (
+        await db_session.execute(
+            select(LessioTutorProfile).where(LessioTutorProfile.slug == "anna_tz")
+        )
+    ).scalar_one()
+    assert profile.timezone == "Asia/Yekaterinburg"
+
+
+async def test_setup_profile_falls_back_on_invalid_timezone(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    await client.post(
+        "/lessio/auth/register",
+        data={"email": "tutor_badtz@example.com", "password": "strongpass123"},
+        follow_redirects=False,
+    )
+    resp = await client.post(
+        "/lessio/app/setup-profile",
+        data={
+            "slug": "anna_badtz",
+            "display_name": "Anna BadTZ",
+            "niche": "english",
+            "timezone": "NotARealZone/Foo",
+        },
+        follow_redirects=False,
+    )
+    assert resp.status_code in (302, 303)
+    profile = (
+        await db_session.execute(
+            select(LessioTutorProfile).where(LessioTutorProfile.slug == "anna_badtz")
+        )
+    ).scalar_one()
+    # Невалидная TZ → дефолт модели
+    assert profile.timezone == "Europe/Moscow"
+
+
 async def test_setup_profile_rejects_duplicate_slug(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:

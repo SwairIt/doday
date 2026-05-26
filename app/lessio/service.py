@@ -130,18 +130,36 @@ async def create_tutor_profile(
     display_name: str,
     niche: str = "other",
     bio: str | None = None,
+    timezone: str | None = None,
 ) -> LessioTutorProfile:
-    """Создать `LessioTutorProfile` после онбординга. Slug должен быть уникальным."""
+    """Создать `LessioTutorProfile` после онбординга. Slug должен быть уникальным.
+
+    `timezone` — IANA zone-name (e.g. `Europe/Moscow`); если не задан или
+    невалиден — дефолт из модели (`Europe/Moscow`).
+    """
+    from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
     if not validate_slug(slug):
         raise OnboardError(
             "slug должен быть 3-50 символов, только латиница/цифры/дефис/подчёркивание"
         )
+    safe_tz: str | None = None
+    if timezone:
+        try:
+            ZoneInfo(timezone)
+            safe_tz = timezone[:64]
+        except ZoneInfoNotFoundError:
+            safe_tz = None
+    profile_kwargs: dict[str, str] = {}
+    if safe_tz:
+        profile_kwargs["timezone"] = safe_tz
     profile = LessioTutorProfile(
         user_id=user.id,
         slug=slug.lower(),
         display_name=display_name[:100],
         niche=niche if niche else "other",
         bio=(bio or "")[:1000] or None,
+        **profile_kwargs,
     )
     session.add(profile)
     try:
