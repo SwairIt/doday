@@ -91,7 +91,7 @@ async def test_settings_rejects_duplicate_slug(
         follow_redirects=False,
     )
     # Logout, register second
-    await client.post("/auth/logout", follow_redirects=False)
+    await client.post("/lessio/auth/logout", follow_redirects=False)
 
     second_initial = await _setup(client, tg_id=90000003)
 

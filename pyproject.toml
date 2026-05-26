@@ -105,6 +105,7 @@ ignore = [
 "app/pages/roadmap_data.py" = ["RUF001", "RUF002"]    # intentional Cyrillic in roadmap items
 "scripts/load_test.py" = ["RUF001", "RUF002"]         # Russian docstring + comments
 "scripts/build_marketing_html.py" = ["RUF001", "RUF002"]  # Cyrillic in HTML template strings
+"scripts/lessio_seed_demo.py" = ["RUF001", "RUF002", "RUF003"]  # Russian seed data + docstrings
 "app/miniapp/__init__.py" = ["RUF002"]                # intentional Cyrillic in module docstring
 "app/miniapp/auth.py" = ["RUF001", "RUF002", "RUF003"]   # intentional Cyrillic in docstrings/comments
 "app/miniapp/router.py" = ["RUF001", "RUF002", "RUF003"] # intentional Cyrillic in docstrings/comments

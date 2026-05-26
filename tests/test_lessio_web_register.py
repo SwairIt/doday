@@ -95,7 +95,7 @@ async def test_setup_profile_rejects_duplicate_slug(
     assert first.status_code in (302, 303)
 
     # Switch identity: clear session cookie before second register.
-    await client.post("/auth/logout", follow_redirects=False)
+    await client.post("/lessio/auth/logout", follow_redirects=False)
     await client.post(
         "/lessio/auth/register",
         data={"email": "t4@e.com", "password": "strongpass456"},

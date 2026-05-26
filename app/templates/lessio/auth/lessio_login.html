@@ -1,31 +1,31 @@
 {% extends "lessio/_base_auth.html" %}
-{% block title %}Регистрация репетитора · Lessio{% endblock %}
+{% block title %}Вход · Lessio{% endblock %}
 {% block content %}
 <div class="mx-auto max-w-md py-12 px-5">
   <a href="/lessio" class="inline-block text-violet-300/70 text-sm mb-6 hover:text-violet-200">← Lessio</a>
 
-  <h1 class="text-3xl font-extrabold mb-2 gradient-text">Стать репетитором</h1>
-  <p class="text-violet-200/70 mb-6">5 секунд: email + пароль. Дальше — настройка профиля и публичная ссылка.</p>
+  <h1 class="text-3xl font-extrabold mb-2 gradient-text">Вход в кабинет</h1>
+  <p class="text-violet-200/70 mb-6">Управляйте записями, услугами, расписанием.</p>
 
   {% if error %}
   <div class="mb-4 px-4 py-3 rounded-xl bg-rose-500/15 text-rose-300 text-sm">{{ error }}</div>
   {% endif %}
 
-  <form method="post" action="/lessio/auth/register" class="space-y-3">
+  <form method="post" action="/lessio/auth/login" class="space-y-3">
     <input name="email" type="email" required placeholder="email"
            autocomplete="email"
            class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl placeholder:text-violet-300/40 focus:outline-none focus:border-violet-400/50">
-    <input name="password" type="password" required minlength="8" placeholder="пароль (≥8 символов)"
-           autocomplete="new-password"
+    <input name="password" type="password" required placeholder="пароль"
+           autocomplete="current-password"
            class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl placeholder:text-violet-300/40 focus:outline-none focus:border-violet-400/50">
     <button class="w-full px-6 py-3.5 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-bold hover:opacity-90 transition">
-      Создать аккаунт →
+      Войти →
     </button>
   </form>
 
   <p class="text-center text-sm text-violet-300/50 mt-6">
-    Уже есть аккаунт?
-    <a href="/lessio/auth/login" class="underline hover:text-violet-200">Войти</a>
+    Ещё нет аккаунта?
+    <a href="/lessio/auth/register" class="underline hover:text-violet-200">Стать репетитором</a>
   </p>
 </div>
 {% endblock %}

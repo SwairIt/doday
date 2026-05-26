@@ -59,6 +59,48 @@ async def lessio_register_page(request: Request, user: CurrentUser) -> Response:
     return _templates.TemplateResponse(request, "lessio/auth/lessio_register.html", {})
 
 
+# ── Login (Lessio-scoped — отдельно от Doday /auth/login) ────────────
+
+
+@router.get("/auth/login", response_class=HTMLResponse, include_in_schema=False)
+async def lessio_login_page(request: Request, user: CurrentUser) -> Response:
+    """Если уже залогинен — сразу в Lessio cabinet."""
+    if user is not None:
+        return RedirectResponse("/lessio/app/today", status_code=302)
+    return _templates.TemplateResponse(request, "lessio/auth/lessio_login.html", {})
+
+
+@router.post("/auth/login", response_class=HTMLResponse, include_in_schema=False)
+async def lessio_login_submit(
+    request: Request,
+    email: Annotated[str, Form()],
+    password: Annotated[str, Form()],
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> Response:
+    from app.auth.service import InvalidCredentials, authenticate
+
+    try:
+        user = await authenticate(session, email, password)
+    except InvalidCredentials:
+        return _templates.TemplateResponse(
+            request,
+            "lessio/auth/lessio_login.html",
+            {"error": "Неверный email или пароль"},
+            status_code=401,
+        )
+    request.session.clear()
+    request.session["user_id"] = str(user.id)
+    # Если у user'а ещё нет LessioTutorProfile — _require_profile отправит на setup-profile
+    return RedirectResponse("/lessio/app/today", status_code=303)
+
+
+@router.post("/auth/logout", response_class=HTMLResponse, include_in_schema=False)
+async def lessio_logout(request: Request) -> Response:
+    """Lessio-scoped logout — возврат в /lessio landing, не в Doday hub."""
+    request.session.clear()
+    return RedirectResponse("/lessio", status_code=303)
+
+
 @router.post("/auth/register", response_class=HTMLResponse, include_in_schema=False)
 async def lessio_register_submit(
     request: Request,
