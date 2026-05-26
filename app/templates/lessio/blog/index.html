@@ -1,0 +1,144 @@
+{% extends "lessio/_base_marketing.html" %}
+
+{% block title %}Блог Lessio · {{ total_count }} статей о работе репетитором онлайн{% endblock %}
+{% block description %}Гайды, сравнения сервисов и объяснения для онлайн-учителей в РФ: как стать репетитором, сколько брать за час, Telegram Stars vs ЮKassa, Calendly vs Lessio и другие темы.{% endblock %}
+{% block canonical %}<link rel="canonical" href="https://getdoday.ru/lessio/blog">{% endblock %}
+
+{% block head_extra %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Blog",
+  "name": "Блог Lessio",
+  "description": "Блог для онлайн-учителей о работе: сравнения сервисов, гайды, объяснения.",
+  "url": "https://getdoday.ru/lessio/blog",
+  "inLanguage": "ru",
+  "publisher": {"@type": "Organization", "name": "Lessio", "url": "https://getdoday.ru/lessio"},
+  "blogPost": [
+    {% for p in posts %}
+    {"@type": "BlogPosting", "headline": "{{ p.title }}", "url": "https://getdoday.ru/lessio/blog/{{ p.slug }}", "datePublished": "{{ p.published_at }}"}{{ "," if not loop.last }}
+    {% endfor %}
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Lessio", "item": "https://getdoday.ru/lessio"},
+    {"@type": "ListItem", "position": 2, "name": "Блог", "item": "https://getdoday.ru/lessio/blog"}
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="max-w-5xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 pb-10 text-center">
+  <p class="text-xs uppercase tracking-widest gradient-text font-semibold mb-3">Блог Lessio</p>
+  <h1 class="text-4xl md:text-5xl font-extrabold mb-4">О работе онлайн-учителем</h1>
+  <p class="text-violet-200/70 text-lg max-w-2xl mx-auto leading-relaxed">
+    {{ total_count }} статей: сравнения сервисов, гайды по нише, объяснения сложных тем.
+    Для репетиторов, тренеров, психологов и коучей.
+  </p>
+
+  <form method="get" action="/lessio/blog" class="mt-8 max-w-xl mx-auto">
+    <div class="relative">
+      <span class="absolute left-4 top-1/2 -translate-y-1/2 text-violet-300/40 pointer-events-none">🔍</span>
+      <input name="q" type="text"
+             value="{{ search_query }}"
+             placeholder="Поиск по статьям блога"
+             class="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-base focus:outline-none focus:border-violet-400 placeholder:text-violet-300/40">
+    </div>
+  </form>
+</section>
+
+<section class="max-w-5xl mx-auto px-4 sm:px-6 pb-20">
+  {% if search_results is not none %}
+    {# ── Search results mode ─────────────────────────────────────────── #}
+    <header class="mb-6 flex items-baseline justify-between gap-3">
+      <h2 class="text-lg font-bold">
+        Результаты для «<span class="gradient-text">{{ search_query }}</span>»
+      </h2>
+      <span class="text-sm text-violet-300/60">{{ search_results | length }} {{ 'статья' if search_results|length == 1 else 'статьи' if 2 <= search_results|length <= 4 else 'статей' }}</span>
+    </header>
+
+    {% if search_results %}
+      <div class="grid sm:grid-cols-2 gap-4">
+        {% for p in search_results %}
+          <a href="/lessio/blog/{{ p.slug }}"
+             class="bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-violet-400/40 hover:bg-white/[.07] transition flex gap-4">
+            <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500/30 to-pink-500/20 border border-violet-400/30 flex items-center justify-center text-2xl">
+              {{ p.hero_emoji }}
+            </div>
+            <div class="flex-1">
+              <div class="text-[10px] uppercase tracking-wider text-violet-300/50 mb-1">{{ p.category }} · {{ p.reading_min }} мин</div>
+              <h3 class="font-bold mb-1">{{ p.title }}</h3>
+              <p class="text-sm text-violet-200/60">{{ p.summary }}</p>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-10 text-center">
+        <div class="text-5xl mb-4">🔎</div>
+        <h3 class="text-xl font-bold mb-2">Ничего не нашли</h3>
+        <p class="text-violet-200/60 mb-6">Попробуйте другие слова, или загляните в <a href="/lessio/help" class="text-violet-300 underline">базу знаний</a>.</p>
+        <a href="/lessio/blog" class="px-4 py-2 bg-white/10 rounded-lg text-sm hover:bg-white/20 transition">
+          ← Все статьи
+        </a>
+      </div>
+    {% endif %}
+
+  {% else %}
+    {# ── Browse by category ─────────────────────────────────────────── #}
+    {% for cat_name, cat_icon in categories %}
+      {% set arts = by_category.get(cat_name, []) %}
+      {% if arts %}
+      <section class="mb-12">
+        <header class="flex items-baseline gap-3 mb-5">
+          <h2 class="text-2xl font-extrabold">
+            <span class="mr-1">{{ cat_icon }}</span>{{ cat_name }}
+          </h2>
+          <span class="text-xs text-violet-300/50">{{ arts | length }} {{ 'статья' if arts|length == 1 else 'статьи' if 2 <= arts|length <= 4 else 'статей' }}</span>
+        </header>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {% for p in arts %}
+            <a href="/lessio/blog/{{ p.slug }}"
+               class="bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-violet-400/40 hover:bg-white/[.07] hover:-translate-y-0.5 transition flex flex-col gap-3">
+              <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500/25 to-pink-500/20 border border-white/10 flex items-center justify-center text-3xl shrink-0">
+                {{ p.hero_emoji }}
+              </div>
+              <div class="text-[10px] uppercase tracking-wider text-violet-300/50">{{ p.reading_min }} мин чтения</div>
+              <h3 class="font-bold text-base leading-snug">{{ p.title }}</h3>
+              <p class="text-sm text-violet-200/60 leading-relaxed flex-1">{{ p.summary }}</p>
+              <span class="text-xs text-violet-300/70 inline-flex items-center gap-1">
+                Читать →
+              </span>
+            </a>
+          {% endfor %}
+        </div>
+      </section>
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+</section>
+
+<section class="max-w-3xl mx-auto px-4 sm:px-6 pb-20 text-center">
+  <div class="bg-gradient-to-br from-violet-500/10 to-pink-500/10 border border-violet-400/20 rounded-2xl p-10 relative overflow-hidden">
+    <div class="absolute -top-24 -right-24 w-64 h-64 bg-violet-500/30 rounded-full blur-3xl opacity-60"></div>
+    <h2 class="text-2xl md:text-3xl font-extrabold mb-3 relative">Не нашли свою тему?</h2>
+    <p class="text-violet-200/70 mb-6 relative">
+      Напишите — мы пишем статьи по запросам читателей.
+    </p>
+    <div class="flex flex-wrap justify-center gap-3 relative">
+      <a href="mailto:doday.support@gmail.com" class="px-5 py-2.5 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-semibold text-sm hover:opacity-90 transition">
+        ✉️ Предложить тему
+      </a>
+      <a href="/lessio/help" class="px-5 py-2.5 bg-white/10 border border-white/20 rounded-xl font-semibold text-sm hover:bg-white/20 transition">
+        📚 База знаний
+      </a>
+    </div>
+  </div>
+</section>
+{% endblock %}

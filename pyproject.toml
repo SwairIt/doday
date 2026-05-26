@@ -151,6 +151,11 @@ ignore = [
 "app/lessio/help/articles.py" = ["RUF001", "RUF002", "RUF003"]    # Russian article titles/summaries/bodies + comments
 "app/lessio/help/router.py" = ["RUF001", "RUF002", "RUF003"]      # Russian docstrings + 404 message
 "app/lessio/seo_pages.py" = ["RUF001", "RUF002", "RUF003"]        # Russian SEO meta titles/descriptions + docstrings
+"app/lessio/blog/__init__.py" = ["RUF001", "RUF002", "RUF003"]    # Russian docstring
+"app/lessio/blog/_types.py" = ["RUF001", "RUF002", "RUF003"]      # Russian docstring + field comments
+"app/lessio/blog/posts.py" = ["RUF001", "RUF002", "RUF003"]       # Russian blog post titles/summaries + docstrings
+"app/lessio/blog/posts_content.py" = ["RUF001", "RUF002", "RUF003"]  # Russian blog content
+"app/lessio/blog/router.py" = ["RUF001", "RUF002", "RUF003"]      # Russian docstrings + 404 message
 
 [tool.mypy]
 python_version = "3.12"

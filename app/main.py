@@ -46,6 +46,7 @@ from app.hub.router import router as hub_router
 from app.labels.router import router as labels_router
 from app.labels.router import task_labels_router
 from app.lessio.admin import router as lessio_admin_router
+from app.lessio.blog.router import router as lessio_blog_router
 from app.lessio.cabinet_router import router as lessio_cabinet_router
 from app.lessio.help.router import router as lessio_help_router
 from app.lessio.router import router as lessio_router
@@ -255,6 +256,7 @@ app.include_router(lessio_web_router)
 app.include_router(lessio_cabinet_router)
 app.include_router(lessio_help_router)
 app.include_router(lessio_seo_router)
+app.include_router(lessio_blog_router)
 app.include_router(lessio_public_router)
 app.include_router(lessio_cron_router)
 app.include_router(lessio_admin_router)
@@ -357,6 +359,7 @@ async def robots_txt() -> PlainTextResponse:
         "Disallow: /lessio/manage/\n"
         "Allow: /u/\n"
         "Allow: /lessio/help\n"
+        "Allow: /lessio/blog\n"
         "Allow: /lessio/dlya-repetitorov\n"
         "Allow: /lessio/dlya-trenerov\n"
         "Allow: /lessio/dlya-psihologov\n"
@@ -372,6 +375,7 @@ async def sitemap_xml(session: AsyncSession = Depends(get_session)) -> Response:
     """Static marketing/help pages + every active Lessio tutor's public page +
     Lessio help-center и niche-landings."""
     from app.help.articles import ARTICLES
+    from app.lessio.blog.posts import POSTS as LESSIO_BLOG_POSTS
     from app.lessio.help.articles import ARTICLES as LESSIO_ARTICLES
     from app.lessio.models import LessioTutorProfile
 
@@ -391,6 +395,7 @@ async def sitemap_xml(session: AsyncSession = Depends(get_session)) -> Response:
         "/roadmap",
         "/help",
         "/lessio/help",
+        "/lessio/blog",
         "/lessio/dlya-repetitorov",
         "/lessio/dlya-trenerov",
         "/lessio/dlya-psihologov",
@@ -401,6 +406,7 @@ async def sitemap_xml(session: AsyncSession = Depends(get_session)) -> Response:
     ]
     doday_article_paths = [f"/help/{a['slug']}" for a in ARTICLES]
     lessio_article_paths = [f"/lessio/help/{a['slug']}" for a in LESSIO_ARTICLES]
+    lessio_blog_paths = [f"/lessio/blog/{p['slug']}" for p in LESSIO_BLOG_POSTS]
 
     active_tutor_slugs = (
         (
@@ -416,7 +422,7 @@ async def sitemap_xml(session: AsyncSession = Depends(get_session)) -> Response:
     url_priority: list[tuple[str, str]] = (
         [(p, "1.0") for p in static_high_paths]
         + [(p, "0.8") for p in static_medium_paths]
-        + [(p, "0.6") for p in doday_article_paths + lessio_article_paths]
+        + [(p, "0.6") for p in doday_article_paths + lessio_article_paths + lessio_blog_paths]
         + [(p, "0.7") for p in tutor_paths]
     )
 

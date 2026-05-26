@@ -1,0 +1,126 @@
+{% extends "lessio/_base_marketing.html" %}
+
+{% block title %}{{ post.title }}{% endblock %}
+{% block description %}{{ post.summary }}{% endblock %}
+{% block canonical %}<link rel="canonical" href="https://getdoday.ru/lessio/blog/{{ post.slug }}">{% endblock %}
+{% block og_type %}article{% endblock %}
+
+{% block head_extra %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "{{ post.title }}",
+  "description": "{{ post.summary }}",
+  "url": "https://getdoday.ru/lessio/blog/{{ post.slug }}",
+  "datePublished": "{{ post.published_at }}",
+  "dateModified": "{{ post.published_at }}",
+  "inLanguage": "ru",
+  "publisher": {
+    "@type": "Organization",
+    "name": "Lessio",
+    "url": "https://getdoday.ru/lessio",
+    "logo": {"@type": "ImageObject", "url": "https://getdoday.ru/static/lessio/logo.svg"}
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "Doday Studio",
+    "url": "https://getdoday.ru"
+  },
+  "articleSection": "{{ post.category }}",
+  "keywords": "{{ post.keywords | join(', ') }}",
+  "wordCount": {{ post.body | length // 6 }},
+  "timeRequired": "PT{{ post.reading_min }}M"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Lessio", "item": "https://getdoday.ru/lessio"},
+    {"@type": "ListItem", "position": 2, "name": "Блог", "item": "https://getdoday.ru/lessio/blog"},
+    {"@type": "ListItem", "position": 3, "name": "{{ post.title }}", "item": "https://getdoday.ru/lessio/blog/{{ post.slug }}"}
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+  <nav class="text-xs text-violet-300/60 mb-6 flex items-center gap-1.5 flex-wrap">
+    <a href="/lessio" class="hover:text-violet-200">Lessio</a>
+    <span class="opacity-40">›</span>
+    <a href="/lessio/blog" class="hover:text-violet-200">Блог</a>
+    <span class="opacity-40">›</span>
+    <span class="text-violet-200/80">{{ post.category }}</span>
+  </nav>
+
+  <article>
+    <header class="mb-10 text-center">
+      <div class="text-7xl mb-4">{{ post.hero_emoji }}</div>
+      <div class="text-[10px] uppercase tracking-wider text-violet-300/60 mb-3">
+        {{ post.category }} · {{ post.reading_min }} мин чтения · {{ post.published_at }}
+      </div>
+      <h1 class="text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight mb-4">{{ post.title }}</h1>
+      <p class="text-lg md:text-xl text-violet-200/75 leading-relaxed max-w-3xl mx-auto">{{ post.summary }}</p>
+    </header>
+
+    <div class="prose-lessio max-w-3xl mx-auto">
+      {{ post.body | safe }}
+    </div>
+
+    {# ── Mid-article CTA ─────────────────────────────────────────── #}
+    <aside class="mt-12 mx-auto max-w-2xl bg-gradient-to-br from-violet-500/10 to-pink-500/10 border border-violet-400/20 rounded-2xl p-6 sm:p-8 text-center">
+      <h3 class="text-xl font-bold mb-2">Готовы попробовать Lessio?</h3>
+      <p class="text-violet-200/70 mb-4 text-sm">
+        Бесплатно, 5 минут на онбординг, без карт.
+      </p>
+      <div class="flex flex-wrap justify-center gap-3">
+        <a href="/lessio/auth/register" class="px-6 py-2.5 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-bold text-sm hover:opacity-90 transition">
+          Создать профиль →
+        </a>
+        <a href="/u/demo" class="px-6 py-2.5 bg-white/10 border border-white/20 rounded-xl font-bold text-sm hover:bg-white/20 transition">
+          👁 Пример страницы
+        </a>
+      </div>
+    </aside>
+
+    {# ── Related ─────────────────────────────────────────────────── #}
+    {% if related %}
+    <section class="mt-16 max-w-3xl mx-auto">
+      <h3 class="text-sm uppercase tracking-wider text-violet-300/60 mb-4">Похожее в этой категории</h3>
+      <div class="grid sm:grid-cols-3 gap-3">
+        {% for p in related %}
+        <a href="/lessio/blog/{{ p.slug }}"
+           class="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-violet-400/40 hover:bg-white/[.07] transition">
+          <div class="text-2xl mb-2">{{ p.hero_emoji }}</div>
+          <div class="text-[10px] uppercase tracking-wider text-violet-300/40 mb-1">{{ p.reading_min }} мин</div>
+          <div class="font-bold text-sm mb-1">{{ p.title }}</div>
+          <p class="text-xs text-violet-200/60 line-clamp-2">{{ p.summary }}</p>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    {# ── All categories bottom-nav ─────────────────────────────── #}
+    <section class="mt-12 pt-8 border-t border-white/10 max-w-3xl mx-auto">
+      <h3 class="text-sm uppercase tracking-wider text-violet-300/60 mb-4">Другие темы блога</h3>
+      <div class="flex flex-wrap gap-2">
+        {% for cat_name, cat_icon in categories %}
+        <a href="/lessio/blog#{{ cat_name | lower }}"
+           class="px-3 py-1.5 text-xs bg-white/5 border border-white/10 rounded-full hover:bg-white/10 transition">
+          {{ cat_icon }} {{ cat_name }} ({{ by_category.get(cat_name, []) | length }})
+        </a>
+        {% endfor %}
+      </div>
+      <div class="mt-4 text-sm">
+        <a href="/lessio/blog" class="text-violet-300 hover:text-violet-200 underline">← Все статьи блога</a>
+        <span class="mx-2 text-violet-300/40">·</span>
+        <a href="/lessio/help" class="text-violet-300 hover:text-violet-200 underline">📚 База знаний</a>
+      </div>
+    </section>
+  </article>
+</div>
+{% endblock %}
