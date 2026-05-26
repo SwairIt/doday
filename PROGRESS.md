@@ -4,6 +4,40 @@
 
 ---
 
+## 2026-05-26 (final) — Prod-readiness: rate limit + unpaid audit + launch docs (8c74452)
+
+Юзер: «Давай тогда все это доделаем» — после моей prod-готовности оценки.
+
+**P1. Rate limit на Lessio auth** (закрывал зияющую security-дыру):
+- POST `/lessio/auth/register` — 5 попыток/мин с IP → 429
+- POST `/lessio/auth/login` — 10 попыток/мин с пары (IP, email) → 429
+- `reset(rl_key)` после успешного login обнуляет счётчик
+- 4 теста (limiter + email-isolation + reset-on-success)
+- **Verified в проде**: 7-я подряд регистрация на `/lessio/auth/register` → 429 ✓
+
+**P2. Unpaid bookings audit без auto-cancel:**
+- `audit_unpaid_bookings()` в cron — 3 категории (future / stale_24h / past)
+- structlog metric + Sentry-alert на spike >50/сутки (spam-bot guard)
+- UI badge на «Сегодня»: «⏳ N неоплаченных бронирований впереди»
+- НЕ автоматически cancel'им (сломало бы manual оплату нал/СБП)
+- 4 теста
+
+**P3. docs/lessio-production-launch.md:**
+- SPF/DKIM/DMARC DNS-инструкции для getdoday.ru
+- Stars-payment real-test процедура через @LessioBot
+- DB backup retention check
+- Sentry alert rules + Uptime monitor recommendations
+- @BotFather descriptions / аватарка / nginx rate-limit
+
+**Прод-статус:** SHA 8c74452, **18/18 P1+P2 тестов зелёные**, **226+8 = 234 lessio**.
+
+**Готовность к запуску:**
+- Приватный анонс / тестовая аудитория (100-500 чел) — **ГОТОВО** ✅
+- Полноценный маркетинг (контекст + биржа) — нужны DNS-настройки SPF/DKIM
+  и реальный Stars-тест (см. docs/lessio-production-launch.md)
+
+---
+
 ## 2026-05-26 (continued) — 4 фичи которых хотелось сделать (ce1c391)
 
 Юзер: «еще что нибудь сделай, чтобы ты хотел чтобы было». Full autonomy.
