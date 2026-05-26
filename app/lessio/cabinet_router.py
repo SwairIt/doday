@@ -106,7 +106,13 @@ async def settings_page(
     user: RequiredUser,
     session: AsyncSession = Depends(get_session),  # noqa: B008
 ) -> Response:
+    from app.config import get_settings as _gs
+    from app.lessio.google_calendar import encrypt_refresh_token
+
     profile = await _require_profile(session, user.id)
+    ical_token = encrypt_refresh_token(str(profile.id))
+    base = _gs().app_base_url.rstrip("/")
+    ical_url = f"{base}/lessio/app/calendar.ics?token={ical_token}"
     return _templates.TemplateResponse(
         request,
         "lessio/app/settings.html",
@@ -114,6 +120,7 @@ async def settings_page(
             "profile": profile,
             "active_nav": "settings",
             "lessio_timezones": _LESSIO_TIMEZONES,
+            "ical_url": ical_url,
         },
     )
 
@@ -166,6 +173,8 @@ async def settings_submit(
     bio: Annotated[str | None, Form()] = None,
     default_meeting_url_template: Annotated[str | None, Form()] = None,
     notification_email: Annotated[str | None, Form()] = None,
+    booking_lead_hours: Annotated[int, Form()] = 2,
+    vacation_until: Annotated[str | None, Form()] = None,
     session: AsyncSession = Depends(get_session),  # noqa: B008
 ) -> Response:
     from app.lessio.service import validate_slug
@@ -227,6 +236,18 @@ async def settings_submit(
         ((default_meeting_url_template or "").strip()[:500]) or None
     )
     profile.notification_email = ((notification_email or "").strip()[:255]) or None
+    # Lead-time + vacation
+    if 0 <= booking_lead_hours <= 720:
+        profile.booking_lead_hours = booking_lead_hours
+    if vacation_until and vacation_until.strip():
+        try:
+            # HTML datetime-local input format: "2026-06-15T14:00"
+            naive = datetime.fromisoformat(vacation_until.strip())
+            profile.vacation_until = naive.replace(tzinfo=UTC) if naive.tzinfo is None else naive
+        except ValueError:
+            pass  # keep current
+    else:
+        profile.vacation_until = None
     await session.commit()
 
     if slug_changed:
@@ -273,6 +294,7 @@ async def services_create(
     title: Annotated[str, Form()],
     duration_minutes: Annotated[int, Form()],
     price_kopecks: Annotated[int, Form()],
+    icon_emoji: Annotated[str, Form()] = "💼",
     is_group_session: Annotated[bool, Form()] = False,
     max_attendees: Annotated[int, Form()] = 1,
     session: AsyncSession = Depends(get_session),  # noqa: B008
@@ -290,6 +312,7 @@ async def services_create(
         duration_minutes=duration_minutes,
         price_kopecks=price_kopecks,
         price_stars=price_stars,
+        icon_emoji=(icon_emoji or "💼")[:8],
         is_group_session=bool(is_group_session),
         max_attendees=max(1, max_attendees) if is_group_session else 1,
     )
@@ -792,6 +815,65 @@ async def stats_page(
             "last_30d": last_30d,
         },
     )
+
+
+# ── iCal feed (tutor subscribes in native calendar) ──────────────────
+
+
+@router.get("/calendar.ics", include_in_schema=False)
+async def ical_feed(
+    token: str,
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> Response:
+    """RFC5545 iCal feed для tutor'а. Token = encrypted profile.id."""
+    from uuid import UUID as _UUID
+
+    from app.config import get_settings as _gs
+    from app.lessio.google_calendar import decrypt_refresh_token
+    from app.lessio.ical_export import bookings_to_ical
+
+    if not token:
+        raise HTTPException(404)
+    decrypted = decrypt_refresh_token(token)
+    if not decrypted:
+        raise HTTPException(404)
+    try:
+        profile_id = _UUID(decrypted)
+    except ValueError as exc:
+        raise HTTPException(404) from exc
+    profile = await session.get(LessioTutorProfile, profile_id)
+    if profile is None:
+        raise HTTPException(404)
+
+    bookings = (
+        (
+            await session.execute(
+                select(LessioBooking)
+                .where(
+                    LessioBooking.tutor_id == profile.id,
+                    LessioBooking.status.in_(["confirmed", "completed"]),
+                )
+                .order_by(LessioBooking.starts_at)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    services = (
+        (await session.execute(select(LessioService).where(LessioService.tutor_id == profile.id)))
+        .scalars()
+        .all()
+    )
+    service_titles = {s.id: s.title for s in services}
+
+    base_url = _gs().app_base_url.rstrip("/")
+    body = bookings_to_ical(
+        tutor=profile,
+        bookings=bookings,
+        service_titles=service_titles,
+        base_url=base_url,
+    )
+    return Response(content=body, media_type="text/calendar; charset=utf-8")
 
 
 # ── Bulk CSV import ───────────────────────────────────────────────────

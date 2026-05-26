@@ -99,11 +99,35 @@
     <label class="block">
       <span class="text-sm font-semibold mb-1.5 block">Шаблон видеоссылки</span>
       <input name="default_meeting_url_template" type="url" maxlength="500"
-             placeholder="https://meet.google.com/abc-defg-hij"
+             placeholder="https://meet.google.com/abc-defg-hij (или оставьте пустым — Jitsi auto)"
              value="{{ profile.default_meeting_url_template or '' }}"
              class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
       <span class="text-xs text-violet-300/40 mt-1 block">
         Подставляется в подтверждение booking'а если у услуги нет своей ссылки.
+        Если оставите пустым — сгенерируем уникальную Jitsi-ссылку на каждую встречу
+        (бесплатно, без регистрации, открывается в браузере).
+      </span>
+    </label>
+
+    <label class="block">
+      <span class="text-sm font-semibold mb-1.5 block">Минимум часов до записи</span>
+      <input name="booking_lead_hours" type="number" min="0" max="720"
+             value="{{ profile.booking_lead_hours }}"
+             class="w-32 px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
+      <span class="text-xs text-violet-300/40 mt-1 block">
+        Клиент не может забронировать раньше чем за N часов до начала. Защита от
+        «через 5 минут можно?». 0 — можно сразу. Дефолт 2.
+      </span>
+    </label>
+
+    <label class="block">
+      <span class="text-sm font-semibold mb-1.5 block">Отпуск до (опционально)</span>
+      <input name="vacation_until" type="datetime-local"
+             value="{{ profile.vacation_until.strftime('%Y-%m-%dT%H:%M') if profile.vacation_until else '' }}"
+             class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-violet-400">
+      <span class="text-xs text-violet-300/40 mt-1 block">
+        Если задано — все слоты до этой даты скрыты от клиентов
+        (отпуск / болезнь / релокейт). Оставить пустым = убрать отпуск.
       </span>
     </label>
 
@@ -138,6 +162,27 @@
   Ошибка подключения Google Calendar: {{ request.query_params.get('gcal_error') }}
 </div>
 {% endif %}
+
+<section class="mt-8 bg-white/5 border border-white/10 rounded-2xl p-6">
+  <h2 class="text-lg font-bold mb-2">Подписка на календарь (.ics)</h2>
+  <p class="text-sm text-violet-200/70 mb-3">
+    Скопируйте URL и подпишитесь в Apple Calendar / Outlook / Google Calendar —
+    все ваши встречи появятся в нативном календаре (обновление каждые 15–30 минут).
+  </p>
+  <div class="flex items-center gap-2">
+    <input type="text" value="{{ ical_url }}" readonly
+           class="flex-1 px-3 py-2 bg-black/30 border border-white/10 rounded-lg text-xs text-violet-100 font-mono"
+           onclick="this.select()">
+    <button type="button"
+            onclick="navigator.clipboard.writeText('{{ ical_url }}'); this.textContent='✓';"
+            class="px-3 py-2 bg-white/10 rounded-lg text-sm hover:bg-white/20 transition">
+      Копировать
+    </button>
+  </div>
+  <p class="text-xs text-violet-300/40 mt-2">
+    Не делитесь этой ссылкой — она содержит секретный токен с доступом к вашим встречам.
+  </p>
+</section>
 
 <section class="mt-8 bg-white/5 border border-white/10 rounded-2xl p-6">
   <h2 class="text-lg font-bold mb-2">Google Calendar (опционально)</h2>

@@ -194,6 +194,12 @@ async def find_free_slots(
     working_days = set(tutor.working_days)
     step = service.duration_minutes + tutor.buffer_minutes
 
+    # Lead-time + vacation filters — обе планки выше now()
+    lead_threshold = now + timedelta(hours=tutor.booking_lead_hours or 0)
+    earliest = lead_threshold
+    if tutor.vacation_until and tutor.vacation_until > earliest:
+        earliest = tutor.vacation_until
+
     candidates: list[datetime] = []
     day = date_from.astimezone(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
     while day < date_to:
@@ -201,7 +207,7 @@ async def find_free_slots(
             minute = tutor.work_start_minute
             while minute + service.duration_minutes <= tutor.work_end_minute:
                 slot = day + timedelta(minutes=minute)
-                if slot >= now and slot >= date_from:
+                if slot >= earliest and slot >= date_from:
                     candidates.append(slot)
                 minute += step
         day += timedelta(days=1)
@@ -461,6 +467,10 @@ async def create_booking(
         if client_phone:
             client.phone = client_phone
 
+    # Meeting URL precedence: service template > tutor default > auto-Jitsi.
+    # Jitsi-fallback (https://meet.jit.si/lessio-<booking_uuid>) — free, no OAuth,
+    # клиент сразу получает clickable link в email, tutor не обязан Zoom настраивать.
+    meeting_url = service.meeting_url_template or tutor.default_meeting_url_template
     booking = LessioBooking(
         tutor_id=tutor.id,
         client_id=client.id,
@@ -472,13 +482,18 @@ async def create_booking(
         price_stars=service.price_stars,
         notes=notes,
         manage_token=secrets.token_urlsafe(48),
-        meeting_url=service.meeting_url_template or tutor.default_meeting_url_template,
+        meeting_url=meeting_url,
         payment_status="unpaid",
         client_email=email_norm,
         client_full_name=client_full_name[:120],
     )
     session.add(booking)
     await session.flush()
+
+    if not meeting_url:
+        # Auto-generate Jitsi room после flush чтобы booking.id уже был.
+        booking.meeting_url = f"https://meet.jit.si/lessio-{booking.id}"
+        await session.flush()
 
     await send_booking_emails(booking=booking, tutor=tutor, service_title=service.title)
     return booking

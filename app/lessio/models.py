@@ -92,6 +92,12 @@ class LessioTutorProfile(Base):
     last_daily_digest_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    # Минимум часов до встречи для клиента (защита от last-minute booking).
+    booking_lead_hours: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=2, server_default="2"
+    )
+    # Если задан и > now() — все слоты до этой даты скрыты (tutor в отпуске).
+    vacation_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False
     )
@@ -118,6 +124,10 @@ class LessioService(Base):
     package_size: Mapped[int | None] = mapped_column(Integer, nullable=True)
     is_active: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True, server_default="true"
+    )
+    # Per-service emoji icon (migration 0046)
+    icon_emoji: Mapped[str] = mapped_column(
+        String(8), nullable=False, default="💼", server_default="💼"
     )
     # Web-expansion (migration 0042, 2026-05-25)
     meeting_url_template: Mapped[str | None] = mapped_column(String(500), nullable=True)
