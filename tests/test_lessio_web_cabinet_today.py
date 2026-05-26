@@ -84,3 +84,46 @@ async def test_today_empty_state(client: AsyncClient, db_session: AsyncSession) 
     resp = await client.get("/lessio/app/today")
     assert resp.status_code == 200
     assert "пока нет" in resp.text.lower() or "встреч" in resp.text.lower()
+
+
+async def test_today_shows_onboarding_checklist_for_new_user(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """Свежий tutor без bio/booking'ов должен видеть стартовый чек-лист."""
+    await _register_and_setup(client, tg_id=70000010)
+    resp = await client.get("/lessio/app/today")
+    assert resp.status_code == 200
+    body = resp.text
+    assert "Стартовый чек-лист" in body
+    # Все 5 шагов должны быть отрисованы
+    assert "Заполните «О себе»" in body
+    assert "Проверьте услуги" in body
+    assert "Настройте рабочие дни" in body
+    assert (
+        "email для уведомлений" in body
+        or "Email для уведомлений" in body
+        or "Добавьте email" in body
+    )
+    assert "Получите первую запись" in body
+    # Прогресс — частичный (хотя бы 0/5 виден)
+    assert "0/5" in body or "1/5" in body or "2/5" in body
+
+
+async def test_today_checklist_marks_steps_complete(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """Заполнили bio + email + получили booking → чеклист обновляется."""
+    slug = await _register_and_setup(client, tg_id=70000011)
+    profile = (
+        await db_session.execute(select(LessioTutorProfile).where(LessioTutorProfile.slug == slug))
+    ).scalar_one()
+    profile.bio = "x" * 60  # ≥ 50 chars
+    profile.notification_email = "tutor@example.com"
+    await db_session.commit()
+
+    resp = await client.get("/lessio/app/today")
+    assert resp.status_code == 200
+    body = resp.text
+    # 4 done из 5 (bio, services [auto], schedule [default], email — booking ещё нет)
+    # Либо «4/5» либо «Последний шаг до полной готовности»
+    assert "4/5" in body or "Последний шаг" in body or "Почти готово" in body

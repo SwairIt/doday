@@ -107,3 +107,40 @@ async def test_all_posts_have_complete_content() -> None:
         assert p["hero_emoji"]
         assert p["reading_min"] > 0
         assert p["category"] in {"Сравнения", "Гайды", "Объяснения"}
+
+
+async def test_blog_feed_xml_is_valid_atom(client: AsyncClient) -> None:
+    """Atom feed должен отдавать application/atom+xml, валидный XML, с entry-тегами."""
+    resp = await client.get("/lessio/blog/feed.xml")
+    assert resp.status_code == 200
+    assert "application/atom+xml" in resp.headers["content-type"]
+    body = resp.text
+    assert body.startswith('<?xml version="1.0" encoding="UTF-8"?>')
+    assert "<feed xmlns=" in body
+    assert "<title>Блог Lessio</title>" in body
+    # Все 18 постов должны быть entry'ами
+    assert body.count("<entry>") == 18
+    # Простая XML-валидация — body это наш собственный response, не untrusted input
+    import xml.etree.ElementTree as ET
+
+    tree = ET.fromstring(body)  # noqa: S314 — наш собственный response, не untrusted
+    ns = {"atom": "http://www.w3.org/2005/Atom"}
+    entries = tree.findall("atom:entry", ns)
+    assert len(entries) == 18
+
+
+async def test_blog_post_has_share_buttons(client: AsyncClient) -> None:
+    resp = await client.get("/lessio/blog/calendly-vs-lessio")
+    assert resp.status_code == 200
+    body = resp.text
+    assert "t.me/share/url" in body
+    assert "vk.com/share.php" in body
+    assert "Копировать ссылку" in body
+
+
+async def test_blog_post_has_reading_progress(client: AsyncClient) -> None:
+    resp = await client.get("/lessio/blog/calendly-vs-lessio")
+    assert resp.status_code == 200
+    body = resp.text
+    assert "reading-progress" in body
+    assert "reading-progress-fill" in body

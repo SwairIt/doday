@@ -1,0 +1,56 @@
+{% extends "lessio/_base_marketing.html" %}
+
+{% block title %}Страница не найдена · Lessio{% endblock %}
+{% block description %}404 — этой страницы нет. Воспользуйтесь поиском по статьям или вернитесь на главную Lessio.{% endblock %}
+{% block canonical %}<meta name="robots" content="noindex,follow">{% endblock %}
+
+{% block content %}
+<div class="min-h-[60vh] flex items-center justify-center px-4 py-12">
+  <div class="max-w-xl w-full text-center">
+    <div class="relative inline-block mb-6">
+      <div class="text-7xl sm:text-8xl font-extrabold gradient-text leading-none tracking-tight">404</div>
+      <div class="absolute -top-2 -right-4 text-4xl sm:text-5xl rotate-12">🌌</div>
+    </div>
+
+    <h1 class="text-2xl sm:text-3xl font-bold mb-3">Не нашли страницу</h1>
+    <p class="text-violet-200/70 text-base sm:text-lg mb-8 leading-relaxed">
+      Возможно ссылка устарела или адрес ввёлся с опечаткой.
+      Попробуйте поиск по статьям блога и помощи.
+    </p>
+
+    {# Search by help+blog #}
+    <form method="get" action="/lessio/blog" class="mb-6 max-w-md mx-auto">
+      <div class="relative">
+        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-violet-300/40 pointer-events-none">🔍</span>
+        <input name="q" type="text" placeholder="Что вы искали?"
+               class="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-base focus:outline-none focus:border-violet-400 placeholder:text-violet-300/40">
+      </div>
+      <p class="text-xs text-violet-300/40 mt-2">
+        Поиск идёт по блогу. Для базы знаний — <a href="/lessio/help" class="underline hover:text-violet-200">/lessio/help</a>
+      </p>
+    </form>
+
+    <div class="grid sm:grid-cols-2 gap-3 max-w-md mx-auto mb-8">
+      <a href="/lessio" class="px-5 py-3 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-semibold text-sm hover:opacity-90 transition">
+        🏠 На главную Lessio
+      </a>
+      <a href="/lessio/help" class="px-5 py-3 bg-white/10 border border-white/20 rounded-xl font-semibold text-sm hover:bg-white/20 transition">
+        📚 База знаний
+      </a>
+    </div>
+
+    {# Popular destinations #}
+    <div class="text-xs text-violet-300/60">
+      <div class="mb-2 uppercase tracking-wider">Популярные страницы</div>
+      <div class="flex flex-wrap justify-center gap-2">
+        <a href="/lessio/auth/register" class="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition">Регистрация</a>
+        <a href="/lessio/dlya-repetitorov" class="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition">Для репетиторов</a>
+        <a href="/lessio/oplata-cherez-telegram" class="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition">Оплата Telegram</a>
+        <a href="/lessio/alternativa-calendly" class="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition">Vs Calendly</a>
+        <a href="/lessio/blog" class="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition">Блог</a>
+        <a href="/u/demo" class="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition">Демо-страница</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -85,6 +85,9 @@ async def today(
         }
         for b in bookings
     ]
+    # ── Onboarding-checklist — 5 шагов до полной готовности профиля.
+    # Скрывается с UI если все 5 ✓ (карточка не рендерится).
+    checklist = await _compute_onboarding_checklist(session, profile)
     return _templates.TemplateResponse(
         request,
         "lessio/app/today.html",
@@ -93,8 +96,103 @@ async def today(
             "bookings": bookings,
             "booking_views": booking_views,
             "active_nav": "today",
+            "onboarding": checklist,
         },
     )
+
+
+async def _compute_onboarding_checklist(
+    session: AsyncSession, profile: LessioTutorProfile
+) -> dict[str, object]:
+    """5-step onboarding state for new tutor.
+
+    Возвращает: {steps: [{key, label, hint, done, link}], done_count, total, complete}
+    Все шаги ✓ → `complete=True`, UI скрывает карточку.
+    """
+    # 1. Bio заполнено — содержательно, не дефолт
+    bio_done = bool(profile.bio and len(profile.bio.strip()) >= 50)
+
+    # 2. Есть хотя бы одна активная услуга — почти всегда true после онбординга
+    # (template создаёт шаблонные услуги), но проверим что НЕ default-шаблон —
+    # т.е. tutor хотя бы цену поправил.
+    services_count = (
+        (
+            await session.execute(
+                select(LessioService).where(
+                    LessioService.tutor_id == profile.id,
+                    LessioService.is_active.is_(True),
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+    services_done = len(services_count) >= 1
+
+    # 3. Расписание — working_days непустое + work_end > work_start
+    schedule_done = bool(profile.working_days) and (
+        profile.work_end_minute > profile.work_start_minute
+    )
+
+    # 4. Email-уведомления настроены
+    email_done = bool(profile.notification_email and "@" in profile.notification_email)
+
+    # 5. Первая запись от клиента
+    first_booking_count = (
+        (
+            await session.execute(
+                select(LessioBooking).where(LessioBooking.tutor_id == profile.id).limit(1)
+            )
+        )
+        .scalars()
+        .first()
+    )
+    booking_done = first_booking_count is not None
+
+    steps: list[dict[str, object]] = [
+        {
+            "key": "bio",
+            "label": "Заполните «О себе» (≥ 50 символов)",
+            "hint": "Клиенты читают это первым на публичной странице",
+            "done": bio_done,
+            "link": "/lessio/app/settings#profile",
+        },
+        {
+            "key": "services",
+            "label": "Проверьте услуги и цены",
+            "hint": "Шаблонные созданы автоматом — отредактируйте под себя",
+            "done": services_done,
+            "link": "/lessio/app/services",
+        },
+        {
+            "key": "schedule",
+            "label": "Настройте рабочие дни и часы",
+            "hint": "Какие дни недели и с какого по какой час доступны слоты",
+            "done": schedule_done,
+            "link": "/lessio/app/schedule",
+        },
+        {
+            "key": "email",
+            "label": "Добавьте email для уведомлений",
+            "hint": "Получать «новая запись» + ежедневный digest на email",
+            "done": email_done,
+            "link": "/lessio/app/settings#notifications",
+        },
+        {
+            "key": "first_booking",
+            "label": "Получите первую запись",
+            "hint": "Поделитесь ссылкой /u/<slug> в соцсетях и мессенджерах",
+            "done": booking_done,
+            "link": f"/u/{profile.slug}",
+        },
+    ]
+    done_count = sum(1 for s in steps if s["done"])
+    return {
+        "steps": steps,
+        "done_count": done_count,
+        "total": len(steps),
+        "complete": done_count == len(steps),
+    }
 
 
 # ── Settings ──────────────────────────────────────────────────────────

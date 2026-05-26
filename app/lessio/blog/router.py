@@ -6,8 +6,10 @@
 
 from __future__ import annotations
 
+from html import escape as html_escape
+
 from fastapi import APIRouter, HTTPException, Request, status
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 
 from app.lessio.blog.posts import (
@@ -51,6 +53,51 @@ async def blog_index(request: Request) -> HTMLResponse:
             "total_count": len(POSTS),
         },
     )
+
+
+@router.get("/feed.xml", include_in_schema=False)
+async def blog_feed() -> Response:
+    """Atom 1.0 feed для блога. Подписаны RSS-ридеры + поисковые системы.
+
+    Atom вместо RSS 2.0 — лучше по UTF-8 (нет двусмысленности с кодировками)
+    и поддерживается всеми современными ридерами.
+    """
+    base = "https://getdoday.ru"
+    feed_url = f"{base}/lessio/blog/feed.xml"
+    # Последнее обновление = max published_at среди всех постов
+    last_updated = max(p["published_at"] for p in POSTS) if POSTS else "2026-05-26"
+
+    entries: list[str] = []
+    for p in POSTS:
+        post_url = f"{base}/lessio/blog/{p['slug']}"
+        # Atom requires Updated timestamps in ISO-8601 format with timezone
+        published_iso = f"{p['published_at']}T00:00:00Z"
+        entries.append(
+            "<entry>"
+            f"<title>{html_escape(p['title'])}</title>"
+            f'<link href="{post_url}"/>'
+            f"<id>{post_url}</id>"
+            f"<published>{published_iso}</published>"
+            f"<updated>{published_iso}</updated>"
+            f'<category term="{html_escape(p["category"])}"/>'
+            f"<summary>{html_escape(p['summary'])}</summary>"
+            f"<author><name>Doday Studio</name></author>"
+            "</entry>"
+        )
+    body = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="ru">'
+        "<title>Блог Lessio</title>"
+        "<subtitle>Сравнения, гайды и объяснения для онлайн-учителей в РФ</subtitle>"
+        f'<link rel="self" href="{feed_url}"/>'
+        f'<link href="{base}/lessio/blog"/>'
+        f"<id>{feed_url}</id>"
+        f"<updated>{last_updated}T00:00:00Z</updated>"
+        "<author><name>Doday Studio</name><email>doday.support@gmail.com</email></author>"
+        + "".join(entries)
+        + "</feed>"
+    )
+    return Response(content=body, media_type="application/atom+xml; charset=utf-8")
 
 
 @router.get("/{slug}", response_class=HTMLResponse, include_in_schema=False)

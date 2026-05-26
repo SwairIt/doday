@@ -5,6 +5,25 @@
 {% block canonical %}<link rel="canonical" href="https://getdoday.ru/lessio/blog/{{ post.slug }}">{% endblock %}
 {% block og_type %}article{% endblock %}
 
+{% block body_extra %}
+<script>
+  // Reading-progress bar — fills as user scrolls article content
+  (() => {
+    const fill = document.getElementById('reading-progress-fill');
+    if (!fill) return;
+    const onScroll = () => {
+      const h = document.documentElement;
+      const total = h.scrollHeight - h.clientHeight;
+      const progress = total > 0 ? Math.min(100, (h.scrollTop / total) * 100) : 0;
+      fill.style.width = progress + '%';
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    onScroll();
+  })();
+</script>
+{% endblock %}
+
 {% block head_extra %}
 <script type="application/ld+json">
 {
@@ -47,6 +66,14 @@
 {% endblock %}
 
 {% block content %}
+{# Reading progress bar — fixed top, fills как скроллит читатель #}
+<div id="reading-progress"
+     class="fixed top-0 left-0 right-0 h-1 z-50 pointer-events-none">
+  <div id="reading-progress-fill"
+       class="h-full bg-gradient-to-r from-violet-500 to-pink-500 transition-[width] duration-100"
+       style="width: 0%"></div>
+</div>
+
 <div class="max-w-4xl mx-auto px-4 sm:px-6 py-8">
   <nav class="text-xs text-violet-300/60 mb-6 flex items-center gap-1.5 flex-wrap">
     <a href="/lessio" class="hover:text-violet-200">Lessio</a>
@@ -69,6 +96,42 @@
     <div class="prose-lessio max-w-3xl mx-auto">
       {{ post.body | safe }}
     </div>
+
+    {# ── Share buttons ──────────────────────────────────────────── #}
+    <aside class="mt-10 pt-6 border-t border-white/10 max-w-3xl mx-auto"
+           x-data="{ copied: false }">
+      <div class="text-xs uppercase tracking-wider text-violet-300/60 mb-3">
+        Поделиться статьёй
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <a href="https://t.me/share/url?url=https://getdoday.ru/lessio/blog/{{ post.slug }}&text={{ post.title | urlencode }}"
+           target="_blank" rel="noopener"
+           class="inline-flex items-center gap-2 px-4 py-2 bg-[#2AABEE]/15 hover:bg-[#2AABEE]/30 border border-[#2AABEE]/30 rounded-lg text-sm font-semibold transition">
+          <span>✈️</span><span>Telegram</span>
+        </a>
+        <a href="https://vk.com/share.php?url=https://getdoday.ru/lessio/blog/{{ post.slug }}&title={{ post.title | urlencode }}"
+           target="_blank" rel="noopener"
+           class="inline-flex items-center gap-2 px-4 py-2 bg-[#0077FF]/15 hover:bg-[#0077FF]/30 border border-[#0077FF]/30 rounded-lg text-sm font-semibold transition">
+          <span>VK</span>
+        </a>
+        <a href="https://twitter.com/intent/tweet?url=https://getdoday.ru/lessio/blog/{{ post.slug }}&text={{ post.title | urlencode }}"
+           target="_blank" rel="noopener"
+           class="inline-flex items-center gap-2 px-4 py-2 bg-black/30 hover:bg-black/50 border border-white/20 rounded-lg text-sm font-semibold transition">
+          <span>𝕏</span>
+        </a>
+        <a href="https://wa.me/?text={{ post.title | urlencode }}%20https://getdoday.ru/lessio/blog/{{ post.slug }}"
+           target="_blank" rel="noopener"
+           class="inline-flex items-center gap-2 px-4 py-2 bg-[#25D366]/15 hover:bg-[#25D366]/30 border border-[#25D366]/30 rounded-lg text-sm font-semibold transition">
+          <span>💬</span><span>WhatsApp</span>
+        </a>
+        <button type="button"
+                x-on:click="navigator.clipboard.writeText('https://getdoday.ru/lessio/blog/{{ post.slug }}'); copied = true; setTimeout(() => copied = false, 1500)"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-semibold transition">
+          <span x-show="!copied">🔗 Копировать ссылку</span>
+          <span x-show="copied" x-cloak class="text-emerald-300">✓ Скопировано</span>
+        </button>
+      </div>
+    </aside>
 
     {# ── Mid-article CTA ─────────────────────────────────────────── #}
     <aside class="mt-12 mx-auto max-w-2xl bg-gradient-to-br from-violet-500/10 to-pink-500/10 border border-violet-400/20 rounded-2xl p-6 sm:p-8 text-center">

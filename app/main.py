@@ -286,6 +286,9 @@ async def _pretty_404(
 
     HTMX swaps, /api/*, /doday/htmx/* и не-HTML-Accept остаются JSON — они не для
     отображения юзером, а для consumption кодом.
+
+    Для Lessio-routes (/lessio/* и /u/*) рендерится Lessio-брендированный шаблон,
+    остальное — общий Doday 404.
     """
     response = await call_next(request)
     if response.status_code != 404:
@@ -296,8 +299,10 @@ async def _pretty_404(
     api_like = path.startswith(("/api/", "/doday/htmx/"))
     if is_htmx or api_like or "text/html" not in accept:
         return response
+    is_lessio_path = path.startswith(("/lessio/", "/u/")) or path == "/lessio"
+    template = "lessio/404.html" if is_lessio_path else "404.html"
     return _templates_404.TemplateResponse(
-        request, "404.html", {"current_user": None}, status_code=404
+        request, template, {"current_user": None}, status_code=404
     )
 
 
