@@ -80,14 +80,19 @@ logger = logging.getLogger("doday.telegram")
 # Поэтому жёстко список IP: httpx попробует по порядку, если первый failed —
 # следующий. Без этого httpx random'но выбирает один и виснет на connect timeout.
 #
-# Состав списка проверен 2026-05-25 с dev-машины (оба отдают 302 на GET /):
-# - 149.154.166.110 — current A-record (Google DNS + Cloudflare DNS)
-# - 149.154.167.220 — старый hardcoded, всё ещё отвечает с dev
+# Состав списка проверен 2026-05-26 с **прод-сервера** (bash test через /dev/tcp):
+# - 149.154.167.220 — OK, отвечает на 443 ✓ (поставил первым)
+# - 149.154.166.110 — BLOCKED с проды (хотя dns его отдаёт)
+# - 149.154.165.220, 149.154.175.50 — тоже BLOCKED
 #
-# Если оба не доступны с прод-сервера → это сетевой блок (RKN / провайдер /
-# MTU / firewall), не stale-IP. Тогда фикс через MTProxy или HTTP-прокси,
-# не через обновление этого списка. См. memory feedback_telegram_api_infra_debt.
-_TELEGRAM_API_IPS = ("149.154.166.110", "149.154.167.220")
+# Это объясняет почему bot падал с Timed out: системный DNS отдавал .166.110
+# (заблокированный), а наш patch имел его первым — httpx не успевал fallback'нуться
+# на .167.220 в TLS-handshake timeout.
+#
+# Если 149.154.167.220 тоже перестанет работать → проверить bash /dev/tcp/<ip>/443
+# для остальных DCs Telegram'а с проды, обновить здесь. См. memory
+# feedback_telegram_api_infra_debt.
+_TELEGRAM_API_IPS = ("149.154.167.220", "149.154.166.110")
 _FORCED_HOSTS = {"api.telegram.org"}
 
 
