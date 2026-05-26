@@ -308,17 +308,28 @@ async def cmd_feedback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 
 async def on_feedback_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Catch-next-private-message после /feedback. Пересылает админу.
+    """Catch private text-message — пересылает админу если в feedback-mode,
+    иначе показывает friendly fallback с menu-кнопкой.
 
-    Сработает ТОЛЬКО если юзер ранее вызвал /feedback и стоит флаг в user_data.
-    В остальных случаях silently return — мы не хотим echo-bot поведения.
+    Catch-all для текста в private chat (filter в register_handlers). Так что
+    помимо feedback-flow это ещё и «непонятная команда» обработчик: юзер
+    написал произвольный текст → отвечаем подсказкой + WebApp-кнопкой.
     """
     if update.message is None:
         return
-    if context.user_data is None:
+
+    in_feedback_mode = context.user_data is not None and context.user_data.pop(
+        _FEEDBACK_AWAITING_KEY, False
+    )
+
+    if not in_feedback_mode:
+        # Юзер написал текст вне feedback-flow — friendly fallback.
+        await update.message.reply_text(
+            "Я понимаю команды через /. Самое удобное — открыть кабинет кнопкой ниже "
+            "или командой /menu. Список команд — /help.",
+            reply_markup=_open_lessio_keyboard(),
+        )
         return
-    if not context.user_data.pop(_FEEDBACK_AWAITING_KEY, False):
-        return  # юзер не в feedback-режиме — молчим
 
     settings = get_settings()
     admin_id = settings.admin_telegram_user_id

@@ -709,6 +709,13 @@ def build_lessio_app() -> Application[Any, Any, Any, Any, Any, Any] | None:
     from app.lessio.telegram_handlers import register_handlers as register_lessio_handlers
 
     register_lessio_handlers(application)
+    # Stars-payment handlers — те же что у @DodayTaskBot. Общая логика через
+    # HMAC-signed payload в app.billing.stars: payload содержит product_code +
+    # user_id + nonce + signature, обработчик ровно один. Если tutor_pro_*
+    # invoice выписан через lessio_bot_token — pre_checkout и SuccessfulPayment
+    # прилетят на @LessioBot Application; без этих handler'ов это silent fail.
+    application.add_handler(PreCheckoutQueryHandler(on_pre_checkout_query))
+    application.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, on_successful_payment))
     return application
 
 

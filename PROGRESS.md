@@ -4,6 +4,54 @@
 
 ---
 
+## 2026-05-26 — @LessioBot максимальная доработка (из Lessio-archive сессии)
+
+Юзер передал bot-setup из архивной Lessio-сессии (`c:\www-Yaroslav\Lessio`,
+master `1630fc3`). Lessio-Claude в этой сессии работал **только над ботом**;
+web-side остаётся за Doday-Claude — не пересекается.
+
+**Коммит e0a5dc4** — bot expansion (3 файла, +342/-58):
+- `app/config.py`: `admin_telegram_user_id: int | None = None`
+- `app/lessio/telegram_handlers.py` полностью переписан:
+  - 6 commands: `/start`, `/menu`, `/help`, `/about`, `/privacy`, `/feedback`
+  - `lessio_post_init()` — idempotent setMyCommands ru+en + set_my_short_description
+    + set_my_description + set_chat_menu_button (WebApp `/lessio`). Все вызовы
+    в try/except BadRequest — Telegram-сторонние ошибки («not modified» и др.)
+    не валят worker.
+  - Deeplink `lessio_<slug>` в `cmd_start` — открывает `/u/<slug>` через
+    WebAppInfo (booking page).
+  - `/feedback` через `context.user_data` flag + MessageHandler ChatType.PRIVATE.
+  - Welcome обновлён под real-product (убрал «валидационная фаза, собираю
+    waitlist» — лендинг уже переписан под real-product в `ac92a83`).
+- `app/telegram/bot.py` `build_lessio_app`: заменён inline `_post_init` на
+  импорт `lessio_post_init`, -40 строк дублирования.
+
+**Коммит <NEXT> — добавки**:
+- `app/telegram/bot.py`: маунт `PreCheckoutQueryHandler(on_pre_checkout_query)`
+  + `MessageHandler(filters.SUCCESSFUL_PAYMENT, on_successful_payment)` на
+  Lessio Application. Без этого `tutor_pro_*` invoice выписан через
+  `lessio_bot_token` молча падал — handlers были только на @DodayTaskBot.
+- `app/lessio/telegram_handlers.py` `on_feedback_message`: friendly fallback
+  с WebApp-кнопкой когда юзер написал текст вне feedback-mode (раньше
+  silent return — выглядело как сломанный бот).
+- `app/static/lessio/logo.svg`: brand-mark «L» на gradient (4F6EF7→7B5CFF)
+  rounded-square для BotFather `/setuserpic`. SVG в репо чтобы конвертить в
+  PNG 512×512 (cloudconvert.com) и загрузить руками.
+
+**ruff + mypy --strict зелёные** на изменённых файлах. Tests не запускал
+(нет local DB-creds для Doday).
+
+**Что осталось руками (BotFather)**: `/setname`→`Lessio`, `/setuserpic` (PNG
+из logo.svg). Description/commands/menu сами обновятся через `lessio_post_init`
+на следующем рестарте bot worker'а.
+
+**Что НЕ сделано (deferred)**: на проде Telegram API недоступен напрямую (см.
+[[feedback_telegram_api_infra_debt]]). Установить `telegram_proxy_url` в `.env`
+прежде чем рестартовать worker — иначе `lessio_post_init` залогирует warning'и
+(но не упадёт), а handlers не будут получать updates.
+
+---
+
 ## 2026-05-26 — Lessio UI maximum polish: 7 chunk'ов кабинета подряд
 
 Юзер: «Максимально доработай интерфейс, чтобы было все понятно красиво и удобно. А так же автоматизированно.» Продолжение ночной сессии после context-compact.
