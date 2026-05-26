@@ -681,43 +681,25 @@ def build_doday_app() -> Application[Any, Any, Any, Any, Any, Any]:
 
 
 def build_lessio_app() -> Application[Any, Any, Any, Any, Any, Any] | None:
-    """Build @LessioBot Application — validation-phase handlers only.
+    """Build @LessioBot Application.
 
     Returns None if LESSIO_BOT_TOKEN is empty (Lessio bot disabled). Returning
     None — not raising — keeps the worker process running just Doday in graceful
     degradation mode. Token can be added later via .env edit + systemctl restart
     doday-bot, no code redeploy needed.
+
+    post_init + handlers — в app.lessio.telegram_handlers (commands ru/en,
+    short_description, description, menu button, /menu /help /about /privacy
+    /feedback + deeplink lessio_<slug>).
     """
     settings = get_settings()
     if not settings.lessio_bot_token:
         logger.info("LESSIO_BOT_TOKEN empty — @LessioBot disabled, running only Doday")
         return None
 
-    async def _post_init(app: Application[Any, Any, Any, Any, Any, Any]) -> None:
-        """Lessio bot post-init: setMyCommands + menu-button открывающую Lessio в WebApp."""
-        from telegram import BotCommand, MenuButtonWebApp, WebAppInfo
+    from app.lessio.telegram_handlers import lessio_post_init
 
-        base = settings.app_base_url or "https://getdoday.ru"
-        # На фазе валидации menu-button открывает лендинг /lessio (waitlist форма).
-        # После MVP сменим URL на /lessio/miniapp/cabinet (tutor cabinet с TG-SDK).
-        webapp_url = base.rstrip("/") + "/lessio"
-        try:
-            await app.bot.set_chat_menu_button(
-                menu_button=MenuButtonWebApp(
-                    text="Открыть Lessio", web_app=WebAppInfo(url=webapp_url)
-                )
-            )
-            logger.info("Lessio menu button set to %s", webapp_url)
-        except Exception as e:
-            logger.warning("failed to set Lessio menu button: %s", e)
-
-        try:
-            await app.bot.set_my_commands([BotCommand("start", "Что такое Lessio")])
-            logger.info("Lessio bot commands registered: /start")
-        except Exception as e:
-            logger.warning("failed to set Lessio commands: %s", e)
-
-    builder = Application.builder().token(settings.lessio_bot_token).post_init(_post_init)
+    builder = Application.builder().token(settings.lessio_bot_token).post_init(lessio_post_init)
     if settings.telegram_proxy_url:
         builder = builder.proxy(settings.telegram_proxy_url).get_updates_proxy(
             settings.telegram_proxy_url

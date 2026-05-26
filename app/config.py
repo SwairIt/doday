@@ -95,6 +95,11 @@ class Settings(BaseSettings):
     lessio_bot_token: str = ""
     lessio_bot_username: str = ""
 
+    # Telegram user-id куда пересылать /feedback из @LessioBot (и потенциально других
+    # ботов студии). Узнать свой id: написать @userinfobot в Telegram. Если пусто —
+    # /feedback отвечает «напишите на doday.support@gmail.com» и в TG не пересылает.
+    admin_telegram_user_id: int | None = None
+
     # Beta-flag: если True — все юзеры получают Pro-фичи независимо от tier.
     # Раннее grandfather-обещание: «всё бесплатно сейчас, ранним юзерам Pro
     # останется навсегда когда введём оплату». Снимается в один клик в .env
