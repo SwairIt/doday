@@ -231,7 +231,8 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.message is None:
         return
 
-    args = context.args or []
+    # context.args может отсутствовать в тестах (SimpleNamespace) — getattr безопаснее
+    args = getattr(context, "args", None) or []
     payload = args[0] if args else ""
 
     if payload.startswith("lessio_"):

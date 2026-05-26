@@ -1,4 +1,4 @@
-"""@LessioBot handlers — validation phase /start."""
+"""@LessioBot handlers — /start + продуктовые команды (/menu /help /about /privacy /feedback)."""
 
 from __future__ import annotations
 
@@ -26,7 +26,8 @@ async def test_cmd_start_sends_welcome_with_cta() -> None:
     text = update.message.reply_text.call_args.args[0]
     # Брендинг + CTA в тексте + наличие inline-кнопки с WebApp в reply_markup.
     assert "Lessio" in text
-    assert "waitlist" in text.lower()
+    # После запуска real-продукта welcome говорит про «кабинет», а не про waitlist.
+    assert "кабинет" in text.lower()
     # HTML parse mode для жирного текста.
     kwargs = update.message.reply_text.call_args.kwargs
     assert kwargs.get("parse_mode") == "HTML"
@@ -47,19 +48,21 @@ async def test_cmd_start_ignores_missing_message() -> None:
     await cmd_start(update, SimpleNamespace())  # type: ignore[arg-type]
 
 
-def test_register_handlers_adds_start() -> None:
-    """register_handlers подцепляет /start к Application."""
+def test_register_handlers_adds_product_commands() -> None:
+    """register_handlers подцепляет все продуктовые команды + message-handler."""
     added: list[Any] = []
     fake_app = SimpleNamespace(add_handler=lambda h: added.append(h))
     register_handlers(fake_app)  # type: ignore[arg-type]
-    assert len(added) == 1
-    # Это CommandHandler — проверяем что команда `start`
-    handler = added[0]
-    # python-telegram-bot's CommandHandler stores commands in .commands
-    commands = getattr(handler, "commands", None)
-    if commands is not None:
-        # frozenset of strings in v21
-        assert "start" in {str(c) for c in commands}
+    # /start /menu /help /about /privacy /feedback + on_feedback_message — итого 7
+    assert len(added) >= 6, f"expected ≥6 handlers (commands + feedback), got {len(added)}"
+    # Собираем имена команд из CommandHandler'ов
+    all_commands: set[str] = set()
+    for h in added:
+        commands = getattr(h, "commands", None)
+        if commands is not None:
+            all_commands.update(str(c) for c in commands)
+    for required in {"start", "menu", "help", "about", "privacy", "feedback"}:
+        assert required in all_commands, f"command /{required} not registered"
 
 
 @pytest.fixture(autouse=True)

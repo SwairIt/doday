@@ -59,7 +59,7 @@
     {# ── Edit form (Alpine-toggled, inline) ─────────────────────────── #}
     <form method="post" action="/lessio/app/services/{{ s.id }}/edit"
           x-show="editing" x-transition x-cloak
-          x-data="{ emoji: '{{ s.icon_emoji or '💼' }}' }"
+          x-data='{ "emoji": {{ (s.icon_emoji or "💼") | tojson }} }'
           class="mt-4 pt-4 border-t border-white/10 space-y-3">
       <input type="hidden" name="icon_emoji" x-bind:value="emoji">
 
