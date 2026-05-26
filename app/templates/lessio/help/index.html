@@ -1,45 +1,157 @@
-{# Lessio Help Center — index. Финальный дизайн в N2. Этот заглушечный шаблон
-   сделан, чтобы N1 тесты (route + search + sitemap) проходили. #}
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="utf-8">
-<title>Помощь · Lessio</title>
-<meta name="description" content="База знаний Lessio: {{ total_count }} статей про публичную страницу, услуги, расписание, оплату, интеграции.">
-<link rel="canonical" href="https://getdoday.ru/lessio/help">
-</head>
-<body>
-<h1>Помощь Lessio</h1>
-<form method="get" action="/lessio/help">
-  <input name="q" value="{{ search_query }}" placeholder="Поиск по статьям">
-  <button type="submit">Найти</button>
-</form>
+{% extends "lessio/_base_marketing.html" %}
 
-{% if search_results is not none %}
-  <h2>Результаты поиска «{{ search_query }}»</h2>
-  {% if search_results %}
-  <ul>
-    {% for a in search_results %}
-    <li><a href="/lessio/help/{{ a.slug }}">{{ a.title }}</a> — {{ a.summary }}</li>
+{% block title %}Помощь Lessio · {{ total_count }} статей о записи и приёме оплаты онлайн{% endblock %}
+{% block description %}База знаний Lessio: {{ total_count }} статей про публичную страницу записи, услуги, расписание, оплату через Telegram Stars, интеграции с Google Calendar и iCal.{% endblock %}
+{% block canonical %}<link rel="canonical" href="https://getdoday.ru/lessio/help">{% endblock %}
+
+{% block head_extra %}
+{# JSON-LD: FAQPage по статусу не подходит (это не FAQ), используем CollectionPage + BreadcrumbList #}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "База знаний Lessio",
+  "description": "Все статьи про работу с Lessio: онбординг, профиль, услуги, расписание, оплата, клиенты, интеграции.",
+  "url": "https://getdoday.ru/lessio/help",
+  "inLanguage": "ru",
+  "hasPart": [
+    {% for a in articles %}
+    {
+      "@type": "Article",
+      "headline": "{{ a.title }}",
+      "url": "https://getdoday.ru/lessio/help/{{ a.slug }}"
+    }{{ "," if not loop.last }}
     {% endfor %}
-  </ul>
-  {% else %}
-  <p>Ничего не нашлось. Попробуйте другие слова.</p>
-  {% endif %}
-{% else %}
-  {% for cat_name, cat_icon in categories %}
-    {% set arts = by_category.get(cat_name, []) %}
-    {% if arts %}
-    <section>
-      <h2>{{ cat_icon }} {{ cat_name }}</h2>
-      <ul>
-        {% for a in arts %}
-        <li><a href="/lessio/help/{{ a.slug }}">{{ a.title }}</a> — {{ a.summary }}</li>
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Главная", "item": "https://getdoday.ru/lessio"},
+    {"@type": "ListItem", "position": 2, "name": "Помощь", "item": "https://getdoday.ru/lessio/help"}
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="max-w-5xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 pb-10 text-center">
+  <p class="text-xs uppercase tracking-widest gradient-text font-semibold mb-3">База знаний Lessio</p>
+  <h1 class="text-4xl md:text-5xl font-extrabold mb-4">Как пользоваться Lessio</h1>
+  <p class="text-violet-200/70 text-lg max-w-2xl mx-auto leading-relaxed">
+    {{ total_count }} статей про каждую функцию — короткие, с примерами,
+    без воды. Если чего-то не хватает —
+    <a href="mailto:doday.support@gmail.com" class="text-violet-300 underline hover:text-violet-200">напишите</a>.
+  </p>
+
+  <form method="get" action="/lessio/help" class="mt-8 max-w-xl mx-auto">
+    <div class="relative">
+      <span class="absolute left-4 top-1/2 -translate-y-1/2 text-violet-300/40 pointer-events-none">🔍</span>
+      <input name="q" type="text"
+             value="{{ search_query }}"
+             placeholder="Что вы хотите узнать?"
+             class="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-base focus:outline-none focus:border-violet-400 placeholder:text-violet-300/40">
+    </div>
+  </form>
+</section>
+
+<section class="max-w-5xl mx-auto px-4 sm:px-6 pb-20">
+  {% if search_results is not none %}
+    {# ── Search results mode ─────────────────────────────────────────── #}
+    <header class="mb-6 flex items-baseline justify-between gap-3">
+      <h2 class="text-lg font-bold">
+        Результаты для «<span class="gradient-text">{{ search_query }}</span>»
+      </h2>
+      <span class="text-sm text-violet-300/60">{{ search_results | length }} {{ 'статья' if search_results|length == 1 else 'статьи' if 2 <= search_results|length <= 4 else 'статей' }}</span>
+    </header>
+
+    {% if search_results %}
+      <div class="grid sm:grid-cols-2 gap-4">
+        {% for a in search_results %}
+          <a href="/lessio/help/{{ a.slug }}"
+             class="bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-violet-400/40 hover:bg-white/[.07] transition flex gap-4">
+            <div class="flex-shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-white">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="{{ a.icon }}"/>
+              </svg>
+            </div>
+            <div class="flex-1">
+              <div class="text-[10px] uppercase tracking-wider text-violet-300/50 mb-1">{{ a.category }}</div>
+              <h3 class="font-bold mb-1">{{ a.title }}</h3>
+              <p class="text-sm text-violet-200/60">{{ a.summary }}</p>
+            </div>
+          </a>
         {% endfor %}
-      </ul>
-    </section>
+      </div>
+    {% else %}
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-10 text-center">
+        <div class="text-5xl mb-4">🔎</div>
+        <h3 class="text-xl font-bold mb-2">Ничего не нашли</h3>
+        <p class="text-violet-200/60 mb-6">Попробуйте другие слова, или напишите в поддержку — мы добавим статью.</p>
+        <div class="flex flex-wrap justify-center gap-3">
+          <a href="/lessio/help" class="px-4 py-2 bg-white/10 rounded-lg text-sm hover:bg-white/20 transition">
+            ← Все статьи
+          </a>
+          <a href="mailto:doday.support@gmail.com" class="px-4 py-2 bg-gradient-to-r from-violet-500 to-pink-500 rounded-lg text-sm font-semibold hover:opacity-90 transition">
+            ✉️ Спросить
+          </a>
+        </div>
+      </div>
     {% endif %}
-  {% endfor %}
-{% endif %}
-</body>
-</html>
+
+  {% else %}
+    {# ── Browse mode: by category ────────────────────────────────────── #}
+    {% for cat_name, cat_icon in categories %}
+      {% set arts = by_category.get(cat_name, []) %}
+      {% if arts %}
+      <section class="mb-10">
+        <header class="flex items-baseline gap-2 mb-4">
+          <h2 class="text-xl font-extrabold">
+            <span class="mr-1">{{ cat_icon }}</span>{{ cat_name }}
+          </h2>
+          <span class="text-xs text-violet-300/40">{{ arts | length }} {{ 'статья' if arts|length == 1 else 'статьи' if 2 <= arts|length <= 4 else 'статей' }}</span>
+        </header>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {% for a in arts %}
+            <a href="/lessio/help/{{ a.slug }}"
+               class="bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-violet-400/40 hover:bg-white/[.07] hover:-translate-y-0.5 transition flex flex-col gap-3">
+              <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-white shrink-0">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="{{ a.icon }}"/>
+                </svg>
+              </div>
+              <h3 class="font-bold text-base leading-snug">{{ a.title }}</h3>
+              <p class="text-sm text-violet-200/60 leading-relaxed flex-1">{{ a.summary }}</p>
+              <span class="text-xs text-violet-300/70 inline-flex items-center gap-1">
+                Читать →
+              </span>
+            </a>
+          {% endfor %}
+        </div>
+      </section>
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+</section>
+
+<section class="max-w-3xl mx-auto px-4 sm:px-6 pb-20 text-center">
+  <div class="bg-gradient-to-br from-violet-500/10 to-pink-500/10 border border-violet-400/20 rounded-2xl p-10 relative overflow-hidden">
+    <div class="absolute -top-24 -right-24 w-64 h-64 bg-violet-500/30 rounded-full blur-3xl opacity-60"></div>
+    <h2 class="text-2xl md:text-3xl font-extrabold mb-3 relative">Не нашли ответ?</h2>
+    <p class="text-violet-200/70 mb-6 relative">
+      Напишите — обычно отвечаем в тот же день. И если вопрос частый — добавим статью сюда.
+    </p>
+    <div class="flex flex-wrap justify-center gap-3 relative">
+      <a href="mailto:doday.support@gmail.com" class="px-5 py-2.5 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-semibold text-sm hover:opacity-90 transition">
+        ✉️ Написать в поддержку
+      </a>
+      <a href="https://t.me/LessioBot" class="px-5 py-2.5 bg-white/10 border border-white/20 rounded-xl font-semibold text-sm hover:bg-white/20 transition">
+        💬 Telegram @LessioBot
+      </a>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,27 +1,126 @@
-{# Lessio Help Center — article. Финальный дизайн в N2. Заглушечный шаблон. #}
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="utf-8">
-<title>{{ article.title }} · Помощь Lessio</title>
-<meta name="description" content="{{ article.summary }}">
-<link rel="canonical" href="https://getdoday.ru/lessio/help/{{ article.slug }}">
-</head>
-<body>
-<nav><a href="/lessio/help">← Все статьи</a></nav>
-<h1>{{ article.title }}</h1>
-<p><em>{{ article.summary }}</em></p>
-<article>{{ article.body | safe }}</article>
+{% extends "lessio/_base_marketing.html" %}
 
-{% if related %}
-<aside>
-  <h3>Похожее</h3>
-  <ul>
-    {% for a in related %}
-    <li><a href="/lessio/help/{{ a.slug }}">{{ a.title }}</a></li>
-    {% endfor %}
-  </ul>
-</aside>
-{% endif %}
-</body>
-</html>
+{% block title %}{{ article.title }} · Помощь Lessio{% endblock %}
+{% block description %}{{ article.summary }}{% endblock %}
+{% block canonical %}<link rel="canonical" href="https://getdoday.ru/lessio/help/{{ article.slug }}">{% endblock %}
+{% block og_type %}article{% endblock %}
+
+{% block head_extra %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "{{ article.title }}",
+  "description": "{{ article.summary }}",
+  "url": "https://getdoday.ru/lessio/help/{{ article.slug }}",
+  "inLanguage": "ru",
+  "publisher": {
+    "@type": "Organization",
+    "name": "Lessio",
+    "url": "https://getdoday.ru/lessio"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "Doday Studio"
+  },
+  "articleSection": "{{ article.category }}",
+  "keywords": "{{ article.keywords | join(', ') }}"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Главная", "item": "https://getdoday.ru/lessio"},
+    {"@type": "ListItem", "position": 2, "name": "Помощь", "item": "https://getdoday.ru/lessio/help"},
+    {"@type": "ListItem", "position": 3, "name": "{{ article.title }}", "item": "https://getdoday.ru/lessio/help/{{ article.slug }}"}
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+  <nav class="text-xs text-violet-300/60 mb-6 flex items-center gap-1.5 flex-wrap">
+    <a href="/lessio" class="hover:text-violet-200">Lessio</a>
+    <span class="opacity-40">›</span>
+    <a href="/lessio/help" class="hover:text-violet-200">Помощь</a>
+    <span class="opacity-40">›</span>
+    <span class="text-violet-200/80">{{ article.category }}</span>
+  </nav>
+
+  <div class="grid lg:grid-cols-[260px_1fr] gap-8">
+    {# ── Sidebar nav: all articles grouped ────────────────────────────── #}
+    <aside class="lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-4">
+        {% for cat_name, cat_icon in categories %}
+          {% set arts = by_category.get(cat_name, []) %}
+          {% if arts %}
+          <div>
+            <div class="text-[10px] uppercase tracking-wider text-violet-300/50 px-1.5 mb-1.5">{{ cat_icon }} {{ cat_name }}</div>
+            <ul class="space-y-0.5">
+              {% for a in arts %}
+              <li>
+                <a href="/lessio/help/{{ a.slug }}"
+                   class="block px-2 py-1.5 rounded text-sm hover:bg-white/5 transition
+                          {% if a.slug == article.slug %}bg-violet-500/20 text-violet-100 font-semibold{% else %}text-violet-200/70{% endif %}">
+                  {{ a.title }}
+                </a>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+        {% endfor %}
+        <div class="border-t border-white/10 pt-3">
+          <a href="/lessio/help" class="text-xs text-violet-300/60 hover:text-violet-200">← Все статьи</a>
+        </div>
+      </div>
+    </aside>
+
+    {# ── Article ──────────────────────────────────────────────────────── #}
+    <article>
+      <header class="mb-8">
+        <div class="text-[10px] uppercase tracking-wider text-violet-300/60 mb-2">
+          {{ article.category }}
+        </div>
+        <h1 class="text-3xl md:text-4xl font-extrabold leading-tight mb-3">{{ article.title }}</h1>
+        <p class="text-lg text-violet-200/70 leading-relaxed">{{ article.summary }}</p>
+      </header>
+
+      <div class="prose-lessio max-w-2xl">
+        {{ article.body | safe }}
+      </div>
+
+      {# ── Related articles ──────────────────────────────────────────── #}
+      {% if related %}
+      <aside class="mt-12 pt-8 border-t border-white/10">
+        <h3 class="text-sm uppercase tracking-wider text-violet-300/60 mb-4">Похожее</h3>
+        <div class="grid sm:grid-cols-2 gap-3">
+          {% for a in related %}
+          <a href="/lessio/help/{{ a.slug }}"
+             class="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-violet-400/40 hover:bg-white/[.07] transition">
+            <div class="text-[10px] uppercase tracking-wider text-violet-300/40 mb-1">{{ a.category }}</div>
+            <div class="font-bold mb-1">{{ a.title }}</div>
+            <p class="text-sm text-violet-200/60">{{ a.summary }}</p>
+          </a>
+          {% endfor %}
+        </div>
+      </aside>
+      {% endif %}
+
+      {# ── CTA card after article ─────────────────────────────────────── #}
+      <aside class="mt-10 bg-gradient-to-br from-violet-500/10 to-pink-500/10 border border-violet-400/20 rounded-2xl p-6 sm:p-8 text-center">
+        <h3 class="text-xl font-bold mb-2">Готовы попробовать?</h3>
+        <p class="text-violet-200/70 mb-4 text-sm">
+          Регистрация бесплатно, без карт, без подписки. 5 минут до первой ссылки записи.
+        </p>
+        <a href="/lessio/auth/register" class="inline-block px-6 py-2.5 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-bold text-sm hover:opacity-90 transition">
+          Создать профиль →
+        </a>
+      </aside>
+    </article>
+  </div>
+</div>
+{% endblock %}
