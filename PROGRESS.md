@@ -4,6 +4,37 @@
 
 ---
 
+## 2026-05-26 (continued) — 4 фичи которых хотелось сделать (ce1c391)
+
+Юзер: «еще что нибудь сделай, чтобы ты хотел чтобы было». Full autonomy.
+
+**F1. Onboarding-чеклист на «Сегодня»:**
+- 5 шагов: bio (≥50 символов) · услуги · расписание · email · первая запись
+- Прогресс-бар компактный (1.5px), expandable список с прямыми ссылками
+- Скрывается полностью когда complete=True
+- Авто-open при 0-2 готовых, свёрнут при 3+
+
+**F2. Reading-progress bar + Share-buttons в blog:**
+- Sticky-bar сверху страницы статьи, fill = % прокрутки документа
+- Share: Telegram / VK / X / WhatsApp / copy-link с toast «Скопировано»
+- Над related-секцией статьи
+
+**F3. Atom-feed /lessio/blog/feed.xml:**
+- 18 entries, валидный Atom 1.0
+- application/atom+xml; charset=utf-8
+- `<link rel="alternate" type="application/atom+xml">` в head всех marketing-страниц
+- RSS-ридеры и SearchEngines auto-discover'ят его
+
+**F4. Custom Lessio 404 page:**
+- `/lessio/*` и `/u/*` рендерят `lessio/404.html` (брендированный)
+- Doday-paths сохраняют свой 404
+- Hero (404 + 🌌) + search-input по blog + 6 popular-destination chips
+- meta robots noindex,follow
+
+**Прод:** SHA ce1c391, **26/26 тестов зелёные** (5 today + 15 blog + 6 404).
+
+---
+
 ## 2026-05-26 (latest) — Lessio Blog + cabinet UX (audit-driven)
 
 Юзер: «а сео ты сделал максимально статей не как пользоваться, а допустим сравнение
