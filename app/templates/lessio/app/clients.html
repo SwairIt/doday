@@ -1,52 +1,109 @@
 {% extends "lessio/app/_base.html" %}
 {% block title %}Клиенты · Lessio{% endblock %}
 {% block content %}
-<header class="mb-8 flex flex-wrap items-start justify-between gap-3">
+<header class="mb-8 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <h1 class="text-3xl font-extrabold mb-1">Клиенты</h1>
-    <p class="text-violet-200/60 text-sm">{{ clients | length }} {{ 'клиент' if clients|length == 1 else 'клиента' if 2 <= clients|length <= 4 else 'клиентов' }}</p>
+    <h1 class="text-3xl md:text-4xl font-extrabold mb-1">Клиенты</h1>
+    <p class="text-violet-200/60 text-sm">
+      {{ clients | length }}
+      {{ 'клиент' if clients|length == 1 else 'клиента' if 2 <= clients|length <= 4 else 'клиентов' }}
+      {% if search_query %}· найдено по «{{ search_query }}»{% endif %}
+    </p>
   </div>
   <a href="/lessio/app/clients/import"
      class="px-4 py-2 bg-white/10 text-violet-200 rounded-lg text-sm hover:bg-white/20 transition">
-    Импорт CSV →
+    📥 Импорт CSV
   </a>
 </header>
 
-{% if request.query_params.get('imported') %}
+{% if request.query_params.get('toast') == 'imported' %}
 <div class="mb-6 px-4 py-3 rounded-xl bg-emerald-500/15 text-emerald-300 text-sm">
-  ✓ Импорт завершён: создано {{ request.query_params.get('created', 0) }},
+  Создано {{ request.query_params.get('created', 0) }},
   обновлено {{ request.query_params.get('updated', 0) }},
-  пропущено {{ request.query_params.get('skipped', 0) }}
+  пропущено {{ request.query_params.get('skipped', 0) }}.
 </div>
 {% endif %}
+
+<form method="get" action="/lessio/app/clients" class="mb-6">
+  <div class="relative">
+    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-violet-300/40 pointer-events-none">🔍</span>
+    <input name="q" type="text" placeholder="Поиск по имени / email / телефону"
+           value="{{ search_query }}"
+           class="w-full pl-10 pr-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm focus:outline-none focus:border-violet-400 placeholder:text-violet-300/40">
+  </div>
+</form>
 
 {% if clients %}
 <section class="space-y-2">
   {% for c in clients %}
+  {% set agg = aggregates.get(c.id, {}) %}
   <a href="/lessio/app/clients/{{ c.id }}"
-     class="block bg-white/5 border border-white/10 rounded-2xl p-4 hover:border-violet-400/40 transition">
-    <div class="flex flex-wrap items-center gap-3">
+     class="block bg-white/5 border border-white/10 rounded-2xl p-4 hover:border-violet-400/40 hover:bg-white/[.07] transition">
+    <div class="flex flex-wrap items-center gap-4">
+      <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-base font-bold">
+        {{ (c.full_name[:1] or '?')|upper }}
+      </div>
       <div class="flex-1 min-w-[200px]">
         <div class="font-bold">{{ c.full_name }}</div>
-        <div class="text-sm text-violet-300/70">{{ c.email }}</div>
-        {% if c.phone %}<div class="text-xs text-violet-300/50">{{ c.phone }}</div>{% endif %}
+        <div class="text-sm text-violet-300/70 flex items-center gap-3 flex-wrap">
+          <span>📧 {{ c.email }}</span>
+          {% if c.phone %}<span>📱 {{ c.phone }}</span>{% endif %}
+        </div>
       </div>
-      <div class="text-xs text-violet-300/40">
-        с {{ c.created_at.strftime('%d.%m.%Y') }}
+      <div class="text-right text-xs space-y-0.5">
+        {% if agg.bookings_count %}
+        <div>
+          <span class="text-violet-200 font-semibold">{{ agg.bookings_count }}</span>
+          <span class="text-violet-300/50">встреч</span>
+        </div>
+        {% if agg.paid_rub %}
+        <div class="text-emerald-300/80">
+          {{ "{:,}".format(agg.paid_rub).replace(',', ' ') }} ₽
+        </div>
+        {% endif %}
+        {% if agg.last_contact %}
+        <div class="text-violet-300/40">
+          посл. {{ agg.last_contact.strftime('%d.%m.%y') }}
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="text-violet-300/40">
+          новый · {{ c.created_at.strftime('%d.%m.%y') }}
+        </div>
+        {% endif %}
       </div>
     </div>
   </a>
   {% endfor %}
 </section>
-{% else %}
+{% elif search_query %}
 <section class="bg-white/5 border border-white/10 rounded-2xl p-10 text-center">
-  <div class="text-5xl mb-4" aria-hidden="true">👥</div>
+  <div class="text-5xl mb-4">🔎</div>
+  <h2 class="text-lg font-bold mb-2">Ничего не нашлось</h2>
+  <p class="text-violet-200/60 mb-4">По запросу «<b>{{ search_query }}</b>» клиентов нет.</p>
+  <a href="/lessio/app/clients" class="px-4 py-2 bg-white/10 rounded-lg text-sm hover:bg-white/20 transition">
+    Сбросить поиск
+  </a>
+</section>
+{% else %}
+<section class="bg-gradient-to-br from-violet-500/5 to-pink-500/5 border border-violet-400/20 rounded-2xl p-10 text-center">
+  <div class="text-6xl mb-4" aria-hidden="true">👥</div>
   <h2 class="text-xl font-bold mb-2">Клиентов пока нет</h2>
-  <p class="text-violet-200/60 mb-6">
-    Когда кто-то запишется через
-    <a href="/u/{{ profile.slug }}" class="text-violet-300 underline">вашу страницу</a>,
-    он появится здесь.
+  <p class="text-violet-200/60 mb-6 max-w-md mx-auto leading-relaxed">
+    Каждый, кто запишется через
+    <a href="/u/{{ profile.slug }}" target="_blank" class="text-violet-300 underline hover:text-violet-200">вашу публичную страницу</a>,
+    автоматически появится в этом списке вместе с историей встреч.
   </p>
+  <div class="flex flex-wrap justify-center gap-3">
+    <a href="/lessio/app/clients/import"
+       class="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-sm hover:bg-white/20 transition">
+      📥 Импорт из CSV
+    </a>
+    <a href="/u/{{ profile.slug }}" target="_blank" rel="noopener"
+       class="px-4 py-2 bg-gradient-to-r from-violet-500 to-pink-500 rounded-lg text-sm font-semibold hover:opacity-90 transition">
+      Посмотреть свою страницу →
+    </a>
+  </div>
 </section>
 {% endif %}
 {% endblock %}

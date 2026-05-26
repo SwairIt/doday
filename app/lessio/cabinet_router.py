@@ -390,24 +390,67 @@ async def services_edit(
 async def clients_page(
     request: Request,
     user: RequiredUser,
+    q: str = "",
     session: AsyncSession = Depends(get_session),  # noqa: B008
 ) -> Response:
     profile = await _require_profile(session, user.id)
-    clients = (
-        (
-            await session.execute(
-                select(LessioClient)
-                .where(LessioClient.tutor_id == profile.id)
-                .order_by(LessioClient.created_at.desc())
+    clients_q = select(LessioClient).where(LessioClient.tutor_id == profile.id)
+    if q.strip():
+        from sqlalchemy import or_
+
+        like = f"%{q.strip().lower()}%"
+        clients_q = clients_q.where(
+            or_(
+                LessioClient.full_name.ilike(like),
+                LessioClient.email.ilike(like),
+                LessioClient.phone.ilike(like),
             )
         )
-        .scalars()
-        .all()
+    clients = (
+        (await session.execute(clients_q.order_by(LessioClient.created_at.desc()))).scalars().all()
     )
+
+    # Per-client aggregate: count, total_paid_rub, last_contact
+    client_ids = [c.id for c in clients]
+    aggregates: dict[UUID, dict[str, int | datetime | None]] = {}
+    if client_ids:
+        from sqlalchemy import func as _func
+
+        rows = (
+            await session.execute(
+                select(
+                    LessioBooking.client_id,
+                    _func.count(LessioBooking.id),
+                    _func.coalesce(
+                        _func.sum(LessioBooking.price_kopecks).filter(
+                            LessioBooking.payment_status == "paid"
+                        ),
+                        0,
+                    ),
+                    _func.max(LessioBooking.starts_at),
+                )
+                .where(LessioBooking.client_id.in_(client_ids))
+                .group_by(LessioBooking.client_id)
+            )
+        ).all()
+        for row in rows:
+            cid, count, paid_kopecks, last_dt = row
+            aggregates[cid] = {
+                "bookings_count": int(count or 0),
+                "paid_rub": (int(paid_kopecks or 0)) // 100,
+                "last_contact": last_dt,
+            }
+
     return _templates.TemplateResponse(
         request,
         "lessio/app/clients.html",
-        {"profile": profile, "clients": clients, "active_nav": "clients"},
+        {
+            "profile": profile,
+            "clients": clients,
+            "aggregates": aggregates,
+            "search_query": q,
+            "active_nav": "clients",
+        },
     )
 
 
@@ -996,6 +1039,23 @@ async def client_detail(
         .scalars()
         .all()
     )
+    # Aggregate stats
+    completed_or_confirmed = [b for b in bookings if b.status in ("confirmed", "completed")]
+    paid_rub = sum(b.price_kopecks for b in bookings if b.payment_status == "paid") // 100
+    unpaid_rub = (
+        sum(
+            b.price_kopecks
+            for b in bookings
+            if b.payment_status != "paid" and b.status != "cancelled"
+        )
+        // 100
+    )
+    avg_rub = (
+        (sum(b.price_kopecks for b in completed_or_confirmed) // 100 // len(completed_or_confirmed))
+        if completed_or_confirmed
+        else 0
+    )
+
     return _templates.TemplateResponse(
         request,
         "lessio/app/client_detail.html",
@@ -1003,6 +1063,15 @@ async def client_detail(
             "profile": profile,
             "client": client,
             "bookings": bookings,
+            "stats": {
+                "total_bookings": len(bookings),
+                "completed_count": sum(1 for b in bookings if b.status == "completed"),
+                "upcoming_count": sum(1 for b in bookings if b.status == "confirmed"),
+                "cancelled_count": sum(1 for b in bookings if b.status == "cancelled"),
+                "paid_rub": paid_rub,
+                "unpaid_rub": unpaid_rub,
+                "avg_rub": avg_rub,
+            },
             "active_nav": "clients",
         },
     )

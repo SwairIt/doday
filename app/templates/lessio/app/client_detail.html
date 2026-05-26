@@ -3,51 +3,98 @@
 {% block content %}
 <a href="/lessio/app/clients" class="text-violet-300/70 text-sm hover:text-violet-200">← Все клиенты</a>
 
-<header class="mt-4 mb-8">
-  <h1 class="text-3xl font-extrabold mb-1">{{ client.full_name }}</h1>
-  <p class="text-violet-200/70 text-sm">
-    {{ client.email }}{% if client.phone %} · {{ client.phone }}{% endif %}
-  </p>
-  <p class="text-violet-300/40 text-xs mt-1">с {{ client.created_at.strftime('%d.%m.%Y') }}</p>
+<header class="mt-4 mb-8 flex flex-wrap items-start gap-5">
+  <div class="w-16 h-16 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-2xl font-bold flex-shrink-0">
+    {{ (client.full_name[:1] or '?')|upper }}
+  </div>
+  <div class="flex-1">
+    <h1 class="text-3xl font-extrabold mb-1">{{ client.full_name }}</h1>
+    <p class="text-violet-200/70 text-sm flex items-center gap-3 flex-wrap">
+      <a href="mailto:{{ client.email }}" class="hover:text-violet-200">📧 {{ client.email }}</a>
+      {% if client.phone %}
+      <a href="tel:{{ client.phone }}" class="hover:text-violet-200">📱 {{ client.phone }}</a>
+      {% endif %}
+    </p>
+    <p class="text-violet-300/40 text-xs mt-1">клиент с {{ client.created_at.strftime('%d.%m.%Y') }}</p>
+  </div>
 </header>
+
+{% if stats.total_bookings %}
+<section class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+  <div class="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+    <div class="text-xs text-violet-300/60 mb-1">Всего встреч</div>
+    <div class="text-2xl font-extrabold">{{ stats.total_bookings }}</div>
+    <div class="text-[10px] text-violet-300/40 mt-1">
+      {% if stats.completed_count %}{{ stats.completed_count }} проведено{% endif %}
+      {% if stats.upcoming_count %}· {{ stats.upcoming_count }} впереди{% endif %}
+    </div>
+  </div>
+  <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 text-center">
+    <div class="text-xs text-emerald-300/80 mb-1">Заплачено</div>
+    <div class="text-2xl font-extrabold text-emerald-300">
+      {{ "{:,}".format(stats.paid_rub).replace(',', ' ') }} ₽
+    </div>
+  </div>
+  <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 text-center">
+    <div class="text-xs text-amber-300/80 mb-1">Не оплачено</div>
+    <div class="text-2xl font-extrabold text-amber-300">
+      {{ "{:,}".format(stats.unpaid_rub).replace(',', ' ') }} ₽
+    </div>
+  </div>
+  <div class="bg-violet-500/10 border border-violet-500/30 rounded-xl p-4 text-center">
+    <div class="text-xs text-violet-300/80 mb-1">Средний чек</div>
+    <div class="text-2xl font-extrabold text-violet-200">
+      {{ "{:,}".format(stats.avg_rub).replace(',', ' ') }} ₽
+    </div>
+  </div>
+</section>
+{% endif %}
 
 <h2 class="text-xl font-bold mb-4">История встреч</h2>
 
 {% if bookings %}
 <section class="space-y-3">
   {% for b in bookings %}
-  <article class="bg-white/5 border border-white/10 rounded-2xl p-5">
+  <article class="bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-white/20 transition">
     <div class="flex flex-wrap items-start gap-4">
-      <div class="flex-1 min-w-[200px]">
+      <div class="min-w-[150px]">
         <div class="text-sm text-violet-300/70">{{ b.starts_at.strftime('%d.%m.%Y') }}</div>
-        <div class="text-2xl font-bold">{{ b.starts_at.strftime('%H:%M') }} UTC</div>
-        <div class="text-sm text-violet-300/70 mt-1">{{ b.duration_minutes }} мин</div>
+        <div class="text-2xl font-bold">{{ b.starts_at.strftime('%H:%M') }} <span class="text-xs text-violet-300/40 font-normal">UTC</span></div>
+        <div class="text-xs text-violet-300/60 mt-1">{{ b.duration_minutes }} мин</div>
+      </div>
+      <div class="flex-1 min-w-[140px] flex items-center">
+        {% if b.status == 'cancelled' %}
+        <span class="px-2 py-1 bg-rose-500/20 text-rose-300 rounded text-xs font-semibold">❌ Отменено</span>
+        {% elif b.status == 'completed' %}
+        <span class="px-2 py-1 bg-emerald-500/20 text-emerald-300 rounded text-xs font-semibold">✓ Проведено</span>
+        {% else %}
+        <span class="px-2 py-1 bg-violet-500/20 text-violet-200 rounded text-xs font-semibold">📅 Запланировано</span>
+        {% endif %}
       </div>
       <div class="text-right">
-        <div class="text-sm font-semibold mb-1">
+        <div class="text-sm font-bold mb-1.5">
           {{ "{:,}".format(b.price_kopecks // 100).replace(',', ' ') }} ₽
-        </div>
-        <div class="text-xs mb-2">
-          {% if b.status == 'cancelled' %}<span class="text-rose-300">отменено</span>
-          {% elif b.status == 'completed' %}<span class="text-emerald-300">проведено</span>
-          {% else %}<span class="text-violet-200">подтверждено</span>{% endif %}
         </div>
         <div class="text-xs">
           {% if b.payment_status == 'paid' %}
-            <span class="text-emerald-300">✓ оплачено</span>
+            <span class="px-2 py-1 bg-emerald-500/20 text-emerald-300 rounded">✓ оплачено</span>
+          {% elif b.status == 'cancelled' %}
+            <span class="text-violet-300/40">—</span>
           {% else %}
-            <span class="text-amber-300">не оплачено</span>
+            <span class="px-2 py-1 bg-amber-500/20 text-amber-300 rounded">⏳ ждёт</span>
           {% endif %}
         </div>
       </div>
     </div>
     {% if b.notes %}
-    <p class="text-sm text-violet-200/60 mt-3 italic">«{{ b.notes }}»</p>
+    <p class="text-sm text-violet-200/55 mt-3 italic bg-white/5 rounded-md px-2.5 py-1.5">
+      💬 «{{ b.notes }}»
+    </p>
     {% endif %}
   </article>
   {% endfor %}
 </section>
 {% else %}
-<p class="text-violet-300/50">Нет встреч.</p>
+<p class="text-violet-300/50 text-sm">Нет встреч.</p>
 {% endif %}
 {% endblock %}
