@@ -4,6 +4,47 @@
 
 ---
 
+## 2026-05-26 (latest) — Lessio Blog + cabinet UX (audit-driven)
+
+Юзер: «а сео ты сделал максимально статей не как пользоваться, а допустим сравнение
+с конкурентами, что это и тп. чтобы в инете находилось. И давай прочекай весь
+lessio и потом реализуй чего не хватает до прод».
+
+**Audit findings:**
+- ✓ SEO basics готовы (canonical/OG/JSON-LD везде)
+- ✓ Sitemap 35 URLs, robots ok
+- ✗ Top-of-funnel контент отсутствовал — только product docs в help-center
+- ✗ /lessio/blog не существовал
+
+**Cabinet UX (предыдущий feedback от юзера):**
+- `68ca985` — Помощь+Моя страница в sidebar, max-w-6xl mx-auto, mobile hamburger drawer
+- `1b46126` — Floating Help-bubble справа-снизу с live-поиском по articles.json
+
+**Blog implementation:**
+- `e6c39c2` — Lessio blog backend + 18 long-form статей (~80 KB)
+  - Сравнения (8): Calendly/Profi.ru/YClients/Skillbox/Zoom-Jitsi-Meet/Stars-ЮKassa-СБП/SimplyBook-Setmore/GetCourse-Skillbox vs Lessio
+  - Гайды (6): как стать репетитором английского/найти клиентов/назначить цену/сколько зарабатывают/стать психологом/принимать оплату
+  - Объяснения (4): что такое Telegram Stars/booking-сервис/онлайн-коуч/самозанятость
+  - JSON-LD BlogPosting + BreadcrumbList + Blog (CollectionPage)
+  - 12 тестов
+
+- `ed55e8b` — cross-links: blog в /lessio landing footer + marketing-header +
+  cabinet sidebar (+_base_marketing footer)
+
+**Прод-статус:** SHA ed55e8b, **54 lessio-URL в sitemap**:
+- 2 главные + 5 SEO-niche + 28 help + 18 blog + 1 demo-tutor
+
+JSON-LD типы покрыты: SoftwareApplication, Organization, Service, FAQPage,
+Article, BlogPosting, Blog (CollectionPage), BreadcrumbList, HowTo,
+BusinessAudience, Person, AggregateRating, Review.
+
+Структура SEO-контента под основные intent-ступени:
+- Top-of-funnel (информационный intent): explainers «что такое X»
+- Mid-funnel (commercial intent): сравнения «X vs Y»
+- Bottom-funnel (transactional): niche-landings + help-center
+
+---
+
 ## 2026-05-26 (late) — Lessio Help Center + 5 SEO landings (5 chunks)
 
 Юзер: «Продумай еще улучшения, сделай дофига seo, помощь (так же как с doday, помощь можно открыть и там дофигище статей как пользоваться и можно еще найти по поисковику)». Полная автономия.
