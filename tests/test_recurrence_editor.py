@@ -1,4 +1,4 @@
-"""Tests that the inline recurrence editor in /htmx/tasks/{id}/detail works."""
+"""Tests that the inline recurrence editor in /doday/htmx/tasks/{id}/detail works."""
 
 from datetime import UTC, datetime, timedelta
 
@@ -8,7 +8,7 @@ from httpx import AsyncClient
 async def test_detail_panel_renders_recurrence_picker(logged_in_client: AsyncClient) -> None:
     """The detail panel always shows the recurrence section with picker controls."""
     t = (await logged_in_client.post("/api/tasks", json={"title": "T"})).json()
-    body = (await logged_in_client.get(f"/htmx/tasks/{t['id']}/detail")).text
+    body = (await logged_in_client.get(f"/doday/htmx/tasks/{t['id']}/detail")).text
     assert "Повтор" in body
     # All four cadence options must be available
     for val in ("daily", "weekly", "monthly", "yearly"):
@@ -16,11 +16,11 @@ async def test_detail_panel_renders_recurrence_picker(logged_in_client: AsyncCli
 
 
 async def test_set_recurrence_via_detail_endpoint(logged_in_client: AsyncClient) -> None:
-    """PATCH /htmx/tasks/{id}/detail with recurrence=weekly persists the value."""
+    """PATCH /doday/htmx/tasks/{id}/detail with recurrence=weekly persists the value."""
     due = (datetime.now(UTC) + timedelta(days=1)).isoformat()
     t = (await logged_in_client.post("/api/tasks", json={"title": "Weekly", "due_at": due})).json()
     r = await logged_in_client.patch(
-        f"/htmx/tasks/{t['id']}/detail",
+        f"/doday/htmx/tasks/{t['id']}/detail",
         data={"title": "Weekly", "description": "", "recurrence": "weekly"},
     )
     assert r.status_code == 200
@@ -39,7 +39,7 @@ async def test_clear_recurrence_via_detail_endpoint(logged_in_client: AsyncClien
         )
     ).json()
     await logged_in_client.patch(
-        f"/htmx/tasks/{t['id']}/detail",
+        f"/doday/htmx/tasks/{t['id']}/detail",
         data={"title": "Daily", "description": "", "recurrence": ""},
     )
     all_tasks = (await logged_in_client.get("/api/tasks")).json()
@@ -57,7 +57,7 @@ async def test_omitting_recurrence_keeps_existing(logged_in_client: AsyncClient)
         )
     ).json()
     await logged_in_client.patch(
-        f"/htmx/tasks/{t['id']}/detail",
+        f"/doday/htmx/tasks/{t['id']}/detail",
         data={"title": "M", "description": "edited"},  # no recurrence field
     )
     all_tasks = (await logged_in_client.get("/api/tasks")).json()

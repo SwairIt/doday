@@ -27,7 +27,7 @@ async def test_creator_shown_in_shared_project(
     await add_member(db_session, proj.id, second_user.id, role="member")
     task = await create_task(db_session, owner.id, title="Кто добавил", project_id=proj.id)
 
-    body = (await logged_in_client.get(f"/htmx/tasks/{task.id}/detail")).text
+    body = (await logged_in_client.get(f"/doday/htmx/tasks/{task.id}/detail")).text
     assert "Создал:" in body
     assert "logged-in@example.com" in body  # creator email rendered
 
@@ -38,11 +38,11 @@ async def test_creator_hidden_in_personal_project(
     owner = await _owner(db_session)
     task = await create_task(db_session, owner.id, title="Личная")  # Inbox (single-member)
 
-    body = (await logged_in_client.get(f"/htmx/tasks/{task.id}/detail")).text
+    body = (await logged_in_client.get(f"/doday/htmx/tasks/{task.id}/detail")).text
     assert "Создано" in body  # the dates footer still renders
     assert "Создал:" not in body  # no creator line in a solo project
 
 
 async def test_detail_anonymous_blocked(client: AsyncClient) -> None:
-    resp = await client.get("/htmx/tasks/00000000-0000-0000-0000-000000000000/detail")
+    resp = await client.get("/doday/htmx/tasks/00000000-0000-0000-0000-000000000000/detail")
     assert resp.status_code == 401

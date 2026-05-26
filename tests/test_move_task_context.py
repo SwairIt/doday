@@ -21,7 +21,7 @@ async def test_move_task_to_another_project(logged_in_client: AsyncClient) -> No
 
 
 async def test_context_menu_renders_move_item(logged_in_client: AsyncClient) -> None:
-    body = (await logged_in_client.get("/app/today")).text
+    body = (await logged_in_client.get("/doday/app/today")).text
     assert "Перенести в проект" in body
     assert "task-ctx-move-submenu" in body
 

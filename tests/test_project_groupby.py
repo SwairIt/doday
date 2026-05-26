@@ -6,7 +6,7 @@ from httpx import AsyncClient
 async def test_project_view_has_groupby_dropdown(logged_in_client: AsyncClient) -> None:
     """The project page exposes a group-by dropdown alongside sort."""
     proj = (await logged_in_client.post("/api/projects", json={"name": "Test"})).json()
-    body = (await logged_in_client.get(f"/app/projects/{proj['slug']}")).text
+    body = (await logged_in_client.get(f"/doday/app/projects/{proj['slug']}")).text
     assert "Группа:" in body
     assert "Без группировки" in body
     assert "По приоритету" in body
@@ -20,5 +20,5 @@ async def test_project_view_marks_no_section_block(logged_in_client: AsyncClient
     await logged_in_client.post(
         "/api/tasks", json={"title": "loose task", "project_id": proj["id"]}
     )
-    body = (await logged_in_client.get(f"/app/projects/{proj['slug']}")).text
+    body = (await logged_in_client.get(f"/doday/app/projects/{proj['slug']}")).text
     assert 'id="no-section-block"' in body

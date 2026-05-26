@@ -19,7 +19,7 @@
            const r = await fetch('/api/profile/experiments/{{ exp.key }}', {method: 'POST', body: fd, credentials: 'include'});
            if (r.ok) {
              this.enabled = next;
-             // Reload so server-rendered nav/links re-evaluate (e.g. /app/graph link appears).
+             // Reload so server-rendered nav/links re-evaluate (e.g. /doday/app/graph link appears).
              setTimeout(() => location.reload(), 300);
            }
          } catch (e) {} finally { this.saving = false; }
@@ -35,12 +35,12 @@
     </div>
     <p class="text-xs text-[var(--text-muted)] mt-1 leading-relaxed">{{ exp.description }}</p>
     {% if exp.key == 'school' and exp.enabled %}
-      <a href="/app/school" class="inline-block mt-2 text-xs text-[var(--accent)] hover:underline">→ Открыть «🎓 Учёба»</a>
+      <a href="/doday/app/school" class="inline-block mt-2 text-xs text-[var(--accent)] hover:underline">→ Открыть «🎓 Учёба»</a>
       <span class="mx-1 text-[var(--text-muted)]/40">·</span>
-      <a href="/app/settings#school" class="inline-block mt-2 text-xs text-[var(--accent)] hover:underline">→ Подключить портал</a>
+      <a href="/doday/app/settings#school" class="inline-block mt-2 text-xs text-[var(--accent)] hover:underline">→ Подключить портал</a>
     {% endif %}
     {% if exp.key == 'graph' and exp.enabled %}
-      <a href="/app/graph" class="inline-block mt-2 text-xs text-[var(--accent)] hover:underline">→ Открыть граф</a>
+      <a href="/doday/app/graph" class="inline-block mt-2 text-xs text-[var(--accent)] hover:underline">→ Открыть граф</a>
     {% endif %}
     {% if exp.key == 'user_templates' and exp.enabled %}
       <div class="mt-2"
@@ -68,7 +68,7 @@
                  if (r.ok) {
                    const proj = await r.json();
                    if (window.dodayToast) window.dodayToast('Проект создан · открываю', {icon: '📁'});
-                   setTimeout(() => location.href = '/app/projects/' + proj.slug, 500);
+                   setTimeout(() => location.href = '/doday/app/projects/' + proj.slug, 500);
                  } else { this.err = 'Не удалось развернуть'; }
                } catch (e) { this.err = String(e); }
              },

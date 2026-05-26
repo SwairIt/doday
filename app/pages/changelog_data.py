@@ -81,7 +81,7 @@ ENTRIES: list[Entry] = [
             "Telegram-бот: команды /add /today /upcoming /done /unlink + "
             "natural-language парсер (даты, приоритеты, лейблы)",
             "Привязка чата к Doday-аккаунту через одноразовый токен в Профиле",
-            "Root-аккаунт + /app/root админ-панель с метриками, жалобами, token-API для интеграций",
+            "Root-аккаунт + /doday/app/root админ-панель с метриками, жалобами, token-API для интеграций",
             "Кнопка «🐞 Сообщить о проблеме» в help-drawer",
         ],
     },

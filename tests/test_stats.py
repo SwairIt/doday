@@ -107,12 +107,12 @@ async def test_compute_user_stats_avg_completion_hours(
 
 
 async def test_stats_view_renders(logged_in_client: AsyncClient) -> None:
-    response = await logged_in_client.get("/app/stats")
+    response = await logged_in_client.get("/doday/app/stats")
     assert response.status_code == 200
     assert "Статистика" in response.text
     assert "Стрик" in response.text
 
 
 async def test_stats_view_anonymous_blocked(client: AsyncClient) -> None:
-    response = await client.get("/app/stats")
+    response = await client.get("/doday/app/stats")
     assert response.status_code == 401

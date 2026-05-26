@@ -1,5 +1,5 @@
 """The 💬 comment badge must render on the cross-project teams hubs
-(/app/team and /app/assigned), not just project/kanban views."""
+(/doday/app/team and /doday/app/assigned), not just project/kanban views."""
 
 from typing import Any
 
@@ -28,7 +28,7 @@ async def test_comment_badge_on_assigned_view(
     await update_task(db_session, owner.id, task.id, assigned_to=owner.id)
     await create_comment(db_session, owner.id, task_id=task.id, body="вопрос по задаче")
 
-    body = (await logged_in_client.get("/app/assigned")).text
+    body = (await logged_in_client.get("/doday/app/assigned")).text
     assert "Назначенная с обсуждением" in body
     assert "Комментариев: 1" in body
 
@@ -44,7 +44,7 @@ async def test_comment_badge_on_team_view(
     )
     await create_comment(db_session, owner.id, task_id=task.id, body="обсуждаем")
 
-    body = (await logged_in_client.get("/app/team")).text
+    body = (await logged_in_client.get("/doday/app/team")).text
     assert "Командная с обсуждением" in body
     assert "Комментариев: 1" in body
 
@@ -56,6 +56,6 @@ async def test_no_badge_without_comments_on_assigned(
     task = await create_task(db_session, owner.id, title="Тихая назначенная")
     await update_task(db_session, owner.id, task.id, assigned_to=owner.id)
 
-    body = (await logged_in_client.get("/app/assigned")).text
+    body = (await logged_in_client.get("/doday/app/assigned")).text
     assert "Тихая назначенная" in body
     assert "Комментариев:" not in body

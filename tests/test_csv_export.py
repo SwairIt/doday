@@ -23,14 +23,14 @@ async def test_export_includes_active_task(logged_in_client: AsyncClient) -> Non
 
 async def test_export_excludes_completed_by_default(logged_in_client: AsyncClient) -> None:
     task = (await logged_in_client.post("/api/tasks", json={"title": "Done one"})).json()
-    await logged_in_client.post(f"/htmx/tasks/{task['id']}/toggle")
+    await logged_in_client.post(f"/doday/htmx/tasks/{task['id']}/toggle")
     body = (await logged_in_client.get("/api/tasks/export.csv")).text
     assert "Done one" not in body
 
 
 async def test_export_includes_completed_when_asked(logged_in_client: AsyncClient) -> None:
     task = (await logged_in_client.post("/api/tasks", json={"title": "Done two"})).json()
-    await logged_in_client.post(f"/htmx/tasks/{task['id']}/toggle")
+    await logged_in_client.post(f"/doday/htmx/tasks/{task['id']}/toggle")
     body = (await logged_in_client.get("/api/tasks/export.csv?include_completed=true")).text
     assert "Done two" in body
 

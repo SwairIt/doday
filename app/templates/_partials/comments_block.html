@@ -30,7 +30,7 @@
               </button>
               <button type="button" title="Удалить" x-show="!editing"
                       class="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-500/10 text-[var(--text-muted)] hover:text-rose-400 transition"
-                      hx-delete="/htmx/comments/{{ c.id }}"
+                      hx-delete="/doday/htmx/comments/{{ c.id }}"
                       hx-target="#comment-{{ c.id }}"
                       hx-swap="outerHTML swap:160ms"
                       hx-confirm="Удалить комментарий?">
@@ -60,7 +60,7 @@
   {% endif %}
 
   <form
-    hx-post="/htmx/tasks/{{ task_id }}/comments"
+    hx-post="/doday/htmx/tasks/{{ task_id }}/comments"
     hx-target="#comments-{{ task_id }}"
     hx-swap="outerHTML"
     class="flex items-start gap-2"

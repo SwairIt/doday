@@ -304,7 +304,7 @@
   canvas.addEventListener('mouseup', (ev) => {
     if (dragNode && !dragNode.dragged) {
       // clean click → open task detail
-      htmx.ajax('GET', '/htmx/tasks/' + dragNode.id + '/detail', {target: '#task-detail-slot', swap: 'innerHTML'});
+      htmx.ajax('GET', '/doday/htmx/tasks/' + dragNode.id + '/detail', {target: '#task-detail-slot', swap: 'innerHTML'});
     }
     if (dragNode) dragNode.dragged = false;
     dragNode = null;

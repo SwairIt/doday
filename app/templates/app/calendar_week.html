@@ -8,7 +8,7 @@
     <p class="text-[var(--text-muted)] text-sm">7 колонок Пн-Вс. Перетащи задачу — изменится день. Inline-добавление в шапке колонки.</p>
   </div>
   <div class="flex items-center gap-2">
-    <a href="/app/calendar" class="btn-ghost px-3 py-2 text-xs">Месяц</a>
+    <a href="/doday/app/calendar" class="btn-ghost px-3 py-2 text-xs">Месяц</a>
     <a href="?view=week&week={{ prev_week }}" class="btn-ghost px-3 py-2" title="Предыдущая неделя">
       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
     </a>
@@ -85,7 +85,7 @@
                class="cal-chip block text-xs px-2 py-1.5 rounded-md cursor-grab active:cursor-grabbing
                       bg-{{ color }}-500/15 text-{{ color }}-400 hover:bg-{{ color }}-500/25 transition
                       {% if task.is_completed %}line-through opacity-60{% endif %}"
-               hx-get="/htmx/tasks/{{ task.id }}/detail"
+               hx-get="/doday/htmx/tasks/{{ task.id }}/detail"
                hx-target="#task-detail-slot"
                hx-swap="innerHTML"
                title="{{ task.title }}">

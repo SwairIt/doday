@@ -41,7 +41,7 @@
   </span>
   <span class="w-px h-6 bg-[var(--border)]"></span>
 
-  <form hx-post="/htmx/bulk" hx-include="this" hx-vals='js:{action: "complete"}' class="contents">
+  <form hx-post="/doday/htmx/bulk" hx-include="this" hx-vals='js:{action: "complete"}' class="contents">
     <template x-for="id in $store.selection.ids" :key="id">
       <input type="hidden" name="ids" :value="id">
     </template>
@@ -51,7 +51,7 @@
     </button>
   </form>
 
-  <form hx-post="/htmx/bulk" hx-include="this" hx-vals='js:{action: "uncomplete"}' class="contents">
+  <form hx-post="/doday/htmx/bulk" hx-include="this" hx-vals='js:{action: "uncomplete"}' class="contents">
     <template x-for="id in $store.selection.ids" :key="id">
       <input type="hidden" name="ids" :value="id">
     </template>
@@ -61,7 +61,7 @@
     </button>
   </form>
 
-  <form hx-post="/htmx/bulk" hx-include="this" hx-vals='js:{action: "duplicate"}' class="contents">
+  <form hx-post="/doday/htmx/bulk" hx-include="this" hx-vals='js:{action: "duplicate"}' class="contents">
     <template x-for="id in $store.selection.ids" :key="id">
       <input type="hidden" name="ids" :value="id">
     </template>
@@ -71,7 +71,7 @@
     </button>
   </form>
 
-  <form hx-post="/htmx/bulk" hx-include="this" hx-vals='js:{action: "assign_me"}' class="contents">
+  <form hx-post="/doday/htmx/bulk" hx-include="this" hx-vals='js:{action: "assign_me"}' class="contents">
     <template x-for="id in $store.selection.ids" :key="id">
       <input type="hidden" name="ids" :value="id">
     </template>
@@ -81,7 +81,7 @@
     </button>
   </form>
 
-  <form hx-post="/htmx/bulk" hx-include="this" hx-vals='js:{action: "unassign"}' class="contents">
+  <form hx-post="/doday/htmx/bulk" hx-include="this" hx-vals='js:{action: "unassign"}' class="contents">
     <template x-for="id in $store.selection.ids" :key="id">
       <input type="hidden" name="ids" :value="id">
     </template>
@@ -120,7 +120,7 @@
            f.append('action', 'assign_user');
            f.append('assignee_id', uid);
            $store.selection.ids.forEach(id => f.append('ids', id));
-           fetch('/htmx/bulk', {method: 'POST', credentials: 'include', body: f}).then(() => location.reload());
+           fetch('/doday/htmx/bulk', {method: 'POST', credentials: 'include', body: f}).then(() => location.reload());
            this.open = false;
          },
        }" class="relative">
@@ -157,7 +157,7 @@
     <div x-show="open" x-cloak @click.outside="open = false" x-transition
          class="absolute bottom-full mb-2 left-0 card p-1 flex gap-1 shadow-lg z-30">
       {% for p, pc in [('p1','rose'),('p2','amber'),('p3','sky'),('p4','slate')] %}
-        <form hx-post="/htmx/bulk" hx-include="this" hx-vals='js:{action: "set_priority", priority: "{{ p }}"}' class="contents">
+        <form hx-post="/doday/htmx/bulk" hx-include="this" hx-vals='js:{action: "set_priority", priority: "{{ p }}"}' class="contents">
           <template x-for="id in $store.selection.ids" :key="id">
             <input type="hidden" name="ids" :value="id">
           </template>
@@ -177,7 +177,7 @@
     <div x-show="open" x-cloak @click.outside="open = false" x-transition
          class="absolute bottom-full mb-2 left-0 card p-1 w-56 max-h-64 overflow-y-auto shadow-lg z-30 space-y-0.5">
       <template x-for="proj in projects" :key="proj.id">
-        <form hx-post="/htmx/bulk" hx-include="this" :hx-vals="JSON.stringify({action: 'move_project', project_id: proj.id})" class="contents">
+        <form hx-post="/doday/htmx/bulk" hx-include="this" :hx-vals="JSON.stringify({action: 'move_project', project_id: proj.id})" class="contents">
           <template x-for="id in $store.selection.ids" :key="id">
             <input type="hidden" name="ids" :value="id">
           </template>
@@ -232,7 +232,7 @@
                     f.append('action', 'set_section');
                     f.append('section_id', '');
                     $store.selection.ids.forEach(id => f.append('ids', id));
-                    fetch('/htmx/bulk', {method: 'POST', credentials: 'include', body: f}).then(() => location.reload());
+                    fetch('/doday/htmx/bulk', {method: 'POST', credentials: 'include', body: f}).then(() => location.reload());
                     open = false;
                   "
                   class="w-full text-left text-sm px-3 py-1.5 rounded hover:bg-[var(--surface-2)] text-[var(--text-muted)] transition">— Без секции</button>
@@ -243,7 +243,7 @@
                       f.append('action', 'set_section');
                       f.append('section_id', sec.id);
                       $store.selection.ids.forEach(id => f.append('ids', id));
-                      fetch('/htmx/bulk', {method: 'POST', credentials: 'include', body: f}).then(() => location.reload());
+                      fetch('/doday/htmx/bulk', {method: 'POST', credentials: 'include', body: f}).then(() => location.reload());
                       open = false;
                     "
                     class="w-full text-left text-sm px-3 py-1.5 rounded hover:bg-[var(--surface-2)] truncate transition" x-text="sec.name"></button>
@@ -275,7 +275,7 @@
                   {label: '📆 Через 7 дней', val: nextweek},
                   {label: '🚫 Без срока', val: ''}
                 ]" :key="opt.label">
-        <form hx-post="/htmx/bulk" hx-include="this" :hx-vals="JSON.stringify({action: 'set_due', due: opt.val})" class="contents">
+        <form hx-post="/doday/htmx/bulk" hx-include="this" :hx-vals="JSON.stringify({action: 'set_due', due: opt.val})" class="contents">
           <template x-for="id in $store.selection.ids" :key="id">
             <input type="hidden" name="ids" :value="id">
           </template>
@@ -293,7 +293,7 @@
                  f.append('action', 'set_due');
                  f.append('due', v);
                  $store.selection.ids.forEach(id => f.append('ids', id));
-                 fetch('/htmx/bulk', {method:'POST', credentials:'include', body: f}).then(()=>location.reload());
+                 fetch('/doday/htmx/bulk', {method:'POST', credentials:'include', body: f}).then(()=>location.reload());
                  open = false;
                ">
       </div>
@@ -309,7 +309,7 @@
     <div x-show="open" x-cloak @click.outside="open = false" x-transition
          class="absolute bottom-full mb-2 left-0 card p-1 w-56 max-h-64 overflow-y-auto shadow-lg z-30 space-y-0.5">
       <template x-for="lab in labels" :key="lab.id">
-        <form hx-post="/htmx/bulk" hx-include="this" :hx-vals="JSON.stringify({action: 'attach_label', label_id: lab.id})" class="contents">
+        <form hx-post="/doday/htmx/bulk" hx-include="this" :hx-vals="JSON.stringify({action: 'attach_label', label_id: lab.id})" class="contents">
           <template x-for="id in $store.selection.ids" :key="id">
             <input type="hidden" name="ids" :value="id">
           </template>
@@ -320,11 +320,11 @@
           </button>
         </form>
       </template>
-      <div x-show="!labels.length" class="text-xs text-[var(--text-muted)] italic px-3 py-2">Лейблов нет — создай на /app/labels</div>
+      <div x-show="!labels.length" class="text-xs text-[var(--text-muted)] italic px-3 py-2">Лейблов нет — создай на /doday/app/labels</div>
     </div>
   </div>
 
-  <form hx-post="/htmx/bulk" hx-include="this" hx-vals='js:{action: "delete"}' hx-confirm="Удалить выбранные задачи? Это нельзя отменить." class="contents">
+  <form hx-post="/doday/htmx/bulk" hx-include="this" hx-vals='js:{action: "delete"}' hx-confirm="Удалить выбранные задачи? Это нельзя отменить." class="contents">
     <template x-for="id in $store.selection.ids" :key="id">
       <input type="hidden" name="ids" :value="id">
     </template>

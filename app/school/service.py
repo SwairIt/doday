@@ -368,7 +368,7 @@ def provider_label(provider: Provider) -> str:
     return PROVIDER_LABELS.get(provider, provider)
 
 
-# Opportunistic auto-refresh: when a user opens /app/today, kick off a sync
+# Opportunistic auto-refresh: when a user opens /doday/app/today, kick off a sync
 # for any of their enabled, properly-configured integrations whose
 # `last_sync_at` is None or older than the threshold. Runs as a FastAPI
 # BackgroundTask (after the response is sent) so the page never waits.
@@ -378,7 +378,7 @@ _LAZY_SYNC_STALE_MINUTES = 30
 
 async def lazy_sync_stale_integrations(user_id: UUID) -> None:
     """Fire-and-forget refresh of stale school integrations. Must never raise:
-    this runs as a FastAPI BackgroundTask under /app/today and an exception
+    this runs as a FastAPI BackgroundTask under /doday/app/today and an exception
     here would surface as a 500 *after* the response was already sent (and
     in tests just corrupts unrelated state)."""
     try:

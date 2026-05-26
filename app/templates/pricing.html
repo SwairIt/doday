@@ -18,7 +18,7 @@
   </a>
   <div class="flex-1"></div>
   {% if user %}
-    <a href="/app/today" class="btn-ghost px-3 py-1.5 text-sm whitespace-nowrap">В приложение →</a>
+    <a href="/doday/app/today" class="btn-ghost px-3 py-1.5 text-sm whitespace-nowrap">В приложение →</a>
   {% else %}
     <a href="/auth/login" class="btn-ghost px-3 py-1.5 text-sm whitespace-nowrap">Войти</a>
     <a href="/auth/register" class="btn-primary px-3 py-1.5 text-sm whitespace-nowrap"><span class="hidden sm:inline">Зарегистрироваться</span><span class="sm:hidden">Начать</span></a>
@@ -63,7 +63,7 @@
 
     <div class="flex flex-col sm:flex-row items-center justify-center gap-3 mb-12">
       {% if user %}
-        <a href="/app/today" class="btn-primary px-6 py-3 text-sm">В приложение →</a>
+        <a href="/doday/app/today" class="btn-primary px-6 py-3 text-sm">В приложение →</a>
       {% else %}
         <a href="/auth/register" class="btn-primary px-6 py-3 text-sm">Начать бесплатно →</a>
         <a href="/auth/login" class="btn-ghost px-6 py-3 text-sm">У меня уже есть аккаунт</a>
@@ -162,7 +162,7 @@
           <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span>3 кастомных фильтра</span></li>
         </ul>
         {% if user %}
-          <a href="/app/today" class="btn-ghost py-2 text-center">В приложение</a>
+          <a href="/doday/app/today" class="btn-ghost py-2 text-center">В приложение</a>
         {% else %}
           <a href="/auth/register" class="btn-ghost py-2 text-center">Начать бесплатно</a>
         {% endif %}
@@ -195,7 +195,7 @@
           <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span>Безлимит кастомных фильтров</span></li>
           <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span>Priority support</span></li>
         </ul>
-        <a href="/app/settings#subscription"
+        <a href="/doday/app/settings#subscription"
            class="btn-primary py-2 text-center"
            title="Оплата через Telegram Stars">
           Купить за <span class="font-bold">250 ⭐</span>
@@ -225,7 +225,7 @@
           <li class="flex items-start gap-2"><span class="text-amber-400 mt-0.5">◐</span><span>Уведомления родителю <span class="text-[10px] text-amber-400">скоро</span></span></li>
           <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span>Один счёт, не нужно платить за каждого ребёнка</span></li>
         </ul>
-        <a href="/app/settings#subscription" class="btn-ghost py-2 text-center">
+        <a href="/doday/app/settings#subscription" class="btn-ghost py-2 text-center">
           Купить за <span class="font-bold">500 ⭐</span>
         </a>
       </div>

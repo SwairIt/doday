@@ -4,7 +4,7 @@ from httpx import AsyncClient
 
 
 async def test_profile_view_renders(logged_in_client: AsyncClient) -> None:
-    response = await logged_in_client.get("/app/settings")
+    response = await logged_in_client.get("/doday/app/settings")
     assert response.status_code == 200
     assert "Настройки" in response.text
     assert "logged-in@example.com" in response.text
@@ -13,8 +13,8 @@ async def test_profile_view_renders(logged_in_client: AsyncClient) -> None:
 
 
 async def test_profile_anon_blocked(client: AsyncClient) -> None:
-    # /app/profile is now a redirect; the settings page behind it requires auth
-    response = await client.get("/app/settings", follow_redirects=False)
+    # /doday/app/profile is now a redirect; the settings page behind it requires auth
+    response = await client.get("/doday/app/settings", follow_redirects=False)
     assert response.status_code == 401
 
 
@@ -77,7 +77,7 @@ async def test_change_password_anon_blocked(client: AsyncClient) -> None:
 
 
 async def test_profile_renders_password_form(logged_in_client: AsyncClient) -> None:
-    body = (await logged_in_client.get("/app/settings")).text
+    body = (await logged_in_client.get("/doday/app/settings")).text
     assert "Сменить пароль" in body
     assert "/api/profile/password" in body
 

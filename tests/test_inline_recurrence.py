@@ -5,7 +5,7 @@ from httpx import AsyncClient
 
 async def test_edit_form_shows_recurrence_options(logged_in_client: AsyncClient) -> None:
     task = (await logged_in_client.post("/api/tasks", json={"title": "T"})).json()
-    html = (await logged_in_client.get(f"/htmx/tasks/{task['id']}/edit")).text
+    html = (await logged_in_client.get(f"/doday/htmx/tasks/{task['id']}/edit")).text
     assert "Каждый день" in html
     assert "Каждую неделю" in html
     assert 'name="recurrence"' in html
@@ -16,7 +16,7 @@ async def test_edit_form_marks_existing_recurrence(logged_in_client: AsyncClient
         await logged_in_client.post("/api/tasks", json={"title": "T", "recurrence": "weekly"})
     ).json()
     assert task["recurrence"] == "weekly"
-    html = (await logged_in_client.get(f"/htmx/tasks/{task['id']}/edit")).text
+    html = (await logged_in_client.get(f"/doday/htmx/tasks/{task['id']}/edit")).text
     # Radio for "weekly" should have the checked attribute (single space, but tolerate any).
     import re
 
@@ -26,7 +26,7 @@ async def test_edit_form_marks_existing_recurrence(logged_in_client: AsyncClient
 async def test_save_changes_recurrence(logged_in_client: AsyncClient) -> None:
     task = (await logged_in_client.post("/api/tasks", json={"title": "T"})).json()
     response = await logged_in_client.patch(
-        f"/htmx/tasks/{task['id']}",
+        f"/doday/htmx/tasks/{task['id']}",
         data={"title": "T", "description": "", "recurrence": "monthly"},
     )
     assert response.status_code == 200
@@ -39,7 +39,7 @@ async def test_save_clears_recurrence(logged_in_client: AsyncClient) -> None:
         await logged_in_client.post("/api/tasks", json={"title": "T", "recurrence": "daily"})
     ).json()
     await logged_in_client.patch(
-        f"/htmx/tasks/{task['id']}",
+        f"/doday/htmx/tasks/{task['id']}",
         data={"title": "T", "description": "", "recurrence": ""},
     )
     fetched = (await logged_in_client.get("/api/tasks?include_completed=true")).json()

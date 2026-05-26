@@ -7,7 +7,7 @@
     <h1 class="text-3xl md:text-4xl font-bold mb-1 flex items-center gap-3 flex-wrap">
       <span>Сегодня</span>
       {% if streak_days and streak_days > 0 %}
-        <a href="/app/stats"
+        <a href="/doday/app/stats"
            title="Дней подряд с выполненной задачей — открыть статистику"
            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-300 text-base font-bold hover:bg-amber-500/25 transition shrink-0">
           <span>🔥</span>
@@ -29,7 +29,7 @@
               const ids = Array.from(document.querySelectorAll('[id^=&quot;task-wrap-&quot;]')).map(d => d.id.replace('task-wrap-', ''));
               if (!ids.length) return;
               const pick = ids[Math.floor(Math.random() * ids.length)];
-              htmx.ajax('GET', '/htmx/tasks/' + pick + '/detail', {target: '#task-detail-slot', swap: 'innerHTML'});
+              htmx.ajax('GET', '/doday/htmx/tasks/' + pick + '/detail', {target: '#task-detail-slot', swap: 'innerHTML'});
             "
             title="Случайная задача из списка — открыть в панели"
             class="btn-ghost px-3 py-2 text-sm gap-1.5 shrink-0">
@@ -62,7 +62,7 @@
   <div class="card p-12 text-center">
     <div class="text-5xl mb-3">✨</div>
     <h2 class="text-xl font-semibold mb-1">Сегодня всё чисто</h2>
-    <p class="text-[var(--text-muted)]">Можешь отдохнуть или <a href="/app/upcoming" class="text-[var(--accent)] hover:underline">запланировать что-нибудь</a>.</p>
+    <p class="text-[var(--text-muted)]">Можешь отдохнуть или <a href="/doday/app/upcoming" class="text-[var(--accent)] hover:underline">запланировать что-нибудь</a>.</p>
   </div>
 {% endif %}
 
@@ -98,7 +98,7 @@
       f.append('action', 'set_due');
       f.append('due', new Date().toISOString().slice(0, 10));
       ids.forEach(function (id) { f.append('ids', id); });
-      fetch('/htmx/bulk', { method: 'POST', credentials: 'include', body: f })
+      fetch('/doday/htmx/bulk', { method: 'POST', credentials: 'include', body: f })
         .then(function () { location.reload(); })
         .catch(function () { if (btn) btn.disabled = false; });
     }

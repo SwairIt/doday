@@ -117,7 +117,7 @@ async def list_all_links_for_user(session: AsyncSession, user_id: UUID) -> list[
 
 async def build_graph(session: AsyncSession, user_id: UUID) -> dict[str, list[dict[str, object]]]:
     """Aggregate active tasks + their links + parent-child + project-clustering edges
-    into a node/edge JSON the /app/graph view can render."""
+    into a node/edge JSON the /doday/app/graph view can render."""
     # Active tasks only (skip trash + completed older than a month).
     from datetime import UTC, datetime, timedelta
 

@@ -30,7 +30,7 @@ async def test_search_finds_teammate_task_in_shared_project(
     # And one the owner created.
     await create_task(db_session, owner.id, title="зюзюблик мой", project_id=shared.id)
 
-    resp = await logged_in_client.get("/htmx/search?q=зюзюблик&format=json")
+    resp = await logged_in_client.get("/doday/htmx/search?q=зюзюблик&format=json")
     assert resp.status_code == 200
     titles = [t["title"] for t in resp.json()["tasks"]]
     assert "зюзюблик напарника" in titles  # previously invisible to search
@@ -44,11 +44,11 @@ async def test_search_excludes_non_member_project(
     foreign = await create_project(db_session, second_user.id, name="Чужой")
     await create_task(db_session, second_user.id, title="квакозябрь", project_id=foreign.id)
 
-    resp = await logged_in_client.get("/htmx/search?q=квакозябрь&format=json")
+    resp = await logged_in_client.get("/doday/htmx/search?q=квакозябрь&format=json")
     assert resp.status_code == 200
     assert resp.json()["tasks"] == []
 
 
 async def test_search_anonymous_blocked(client: AsyncClient) -> None:
-    resp = await client.get("/htmx/search?q=test")
+    resp = await client.get("/doday/htmx/search?q=test")
     assert resp.status_code == 401

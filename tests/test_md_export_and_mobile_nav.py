@@ -61,7 +61,7 @@ async def test_export_md_unknown_project_404(logged_in_client: AsyncClient) -> N
 
 
 async def test_mobile_nav_present(logged_in_client: AsyncClient) -> None:
-    page = await logged_in_client.get("/app/today")
+    page = await logged_in_client.get("/doday/app/today")
     assert page.status_code == 200
     # Bottom-nav has md:hidden + Inbox/Сегодня/Календарь labels visible to phones.
     assert "md:hidden" in page.text

@@ -14,7 +14,7 @@ from app.tasks.service import create_task
 
 
 async def test_assign_member_item_present(logged_in_client: AsyncClient) -> None:
-    body = (await logged_in_client.get("/app/today")).text
+    body = (await logged_in_client.get("/doday/app/today")).text
     # The context menu (included on every /app page) carries the new item.
     assert 'data-ctx="assign-member"' in body
     assert "Назначить на" in body
@@ -28,6 +28,6 @@ async def test_task_row_exposes_project(
     ).scalar_one()
     task = await create_task(db_session, user.id, title="С проектом в data-атрибуте")
 
-    body = (await logged_in_client.get("/app/projects/inbox")).text
+    body = (await logged_in_client.get("/doday/app/projects/inbox")).text
     # The row carries data-project so the menu knows which project's members to fetch.
     assert f'data-project="{task.project_id}"' in body

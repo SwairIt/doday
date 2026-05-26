@@ -51,7 +51,7 @@ async def test_create_complaint_persists(db_session: AsyncSession, regular_user:
         db_session,
         user_id=regular_user.id,
         body="кнопка X не работает",
-        page_url="/app/today",
+        page_url="/doday/app/today",
         viewport="375x800",
         user_agent="Mozilla/5.0",
     )
@@ -151,7 +151,7 @@ async def test_submit_complaint_requires_login(client: AsyncClient) -> None:
 async def test_submit_complaint_logged_in(logged_in_client: AsyncClient) -> None:
     r = await logged_in_client.post(
         "/api/complaints",
-        json={"body": "что-то сломалось", "page_url": "/app/today", "viewport": "375x800"},
+        json={"body": "что-то сломалось", "page_url": "/doday/app/today", "viewport": "375x800"},
     )
     assert r.status_code == 201
     body = r.json()
@@ -201,7 +201,7 @@ async def test_admin_token_endpoint_without_token_503(client: AsyncClient) -> No
 
 
 async def test_root_view_requires_admin(logged_in_client: AsyncClient) -> None:
-    r = await logged_in_client.get("/app/root")
+    r = await logged_in_client.get("/doday/app/root")
     assert r.status_code == 403
 
 
@@ -217,7 +217,7 @@ async def test_root_view_loads_for_admin(db_session: AsyncSession, client: Async
         data={"email": "adm-root@example.com", "password": "strongpass123"},
     )
     assert login.status_code == 303
-    r = await client.get("/app/root")
+    r = await client.get("/doday/app/root")
     assert r.status_code == 200
     assert "Root" in r.text
     assert "Жалоб" in r.text

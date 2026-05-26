@@ -27,7 +27,7 @@ async def test_description_preview_present(
     from app.projects.service import get_project
 
     project = await get_project(db_session, user.id, task.project_id)
-    body = (await logged_in_client.get(f"/app/projects/{project.slug}")).text
+    body = (await logged_in_client.get(f"/doday/app/projects/{project.slug}")).text
     assert f'id="desc-data-{task.id}"' in body
     assert "Показать описание" in body
 
@@ -41,6 +41,6 @@ async def test_no_description_preview_when_empty(
     from app.projects.service import get_project
 
     project = await get_project(db_session, user.id, task.project_id)
-    body = (await logged_in_client.get(f"/app/projects/{project.slug}")).text
+    body = (await logged_in_client.get(f"/doday/app/projects/{project.slug}")).text
     assert "Без заметки" in body
     assert f'id="desc-data-{task.id}"' not in body

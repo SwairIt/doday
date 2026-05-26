@@ -202,7 +202,7 @@ async def test_bulk_assign_me(logged_in_client: AsyncClient, db_session: AsyncSe
     t = await create_task(db_session, owner.id, title="bulk-assign-me")
 
     resp = await logged_in_client.post(
-        "/htmx/bulk", data={"action": "assign_me", "ids": [str(t.id)]}
+        "/doday/htmx/bulk", data={"action": "assign_me", "ids": [str(t.id)]}
     )
     assert resp.status_code == 200
 
@@ -224,7 +224,7 @@ async def test_bulk_unassign(logged_in_client: AsyncClient, db_session: AsyncSes
     await _assign(db_session, t.id, owner.id)
 
     resp = await logged_in_client.post(
-        "/htmx/bulk", data={"action": "unassign", "ids": [str(t.id)]}
+        "/doday/htmx/bulk", data={"action": "unassign", "ids": [str(t.id)]}
     )
     assert resp.status_code == 200
 
@@ -235,17 +235,17 @@ async def test_bulk_unassign(logged_in_client: AsyncClient, db_session: AsyncSes
 
 
 async def test_bulk_anonymous_blocked(client: AsyncClient) -> None:
-    resp = await client.post("/htmx/bulk", data={"action": "assign_me", "ids": []})
+    resp = await client.post("/doday/htmx/bulk", data={"action": "assign_me", "ids": []})
     assert resp.status_code == 401
 
 
 async def test_assigned_view_anonymous_blocked(client: AsyncClient) -> None:
-    response = await client.get("/app/assigned")
+    response = await client.get("/doday/app/assigned")
     assert response.status_code == 401
 
 
 async def test_assigned_view_renders_empty(logged_in_client: AsyncClient) -> None:
-    response = await logged_in_client.get("/app/assigned")
+    response = await logged_in_client.get("/doday/app/assigned")
     assert response.status_code == 200
     assert "Назначено мне" in response.text
     assert "Тебе пока ничего не назначено" in response.text

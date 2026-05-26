@@ -2,7 +2,7 @@
   🧪 Experimental: habit quick-checkin widget.
   Renders only when current_user.experiments['habits'] is on. Shows up to 5
   active habits with a one-tap «отметить сегодня» button — full management at
-  /app/habits. Designed to remove the friction of «зайти в /app/habits → найти
+  /doday/app/habits. Designed to remove the friction of «зайти в /doday/app/habits → найти
   привычку → нажать» — most users only need the daily check.
 #}
 <div class="mb-6"
@@ -49,7 +49,7 @@
       <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)]">
         🌱 Привычки сегодня
       </h2>
-      <a href="/app/habits" class="text-xs text-[var(--accent)] hover:underline">Все →</a>
+      <a href="/doday/app/habits" class="text-xs text-[var(--accent)] hover:underline">Все →</a>
     </div>
     <template x-if="loading">
       <p class="text-xs text-[var(--text-muted)] italic">Загружаю…</p>
@@ -60,7 +60,7 @@
     <template x-if="!loading && !err && !items.length">
       <p class="text-xs text-[var(--text-muted)] italic">
         Ничего не настроено — добавь первую привычку на
-        <a href="/app/habits" class="text-[var(--accent)] hover:underline">/app/habits</a>.
+        <a href="/doday/app/habits" class="text-[var(--accent)] hover:underline">/doday/app/habits</a>.
       </p>
     </template>
     <template x-if="!loading && items.length">

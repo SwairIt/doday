@@ -41,6 +41,6 @@ async def test_trash_count_increments_on_delete(logged_in_client: AsyncClient) -
 
 
 async def test_sidebar_renders_count_badges(logged_in_client: AsyncClient) -> None:
-    body = (await logged_in_client.get("/app/today")).text
+    body = (await logged_in_client.get("/doday/app/today")).text
     assert "/api/projects/sidebar-counts" in body
     assert "counts['today']" in body or 'counts["today"]' in body

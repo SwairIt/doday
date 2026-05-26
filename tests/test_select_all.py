@@ -5,7 +5,7 @@ from httpx import AsyncClient
 
 
 async def test_select_all_store_and_hotkey_present(logged_in_client: AsyncClient) -> None:
-    body = (await logged_in_client.get("/app/today")).text
+    body = (await logged_in_client.get("/doday/app/today")).text
     # Store gained the select-all methods…
     assert "selectAll()" in body
     assert "toggleAll()" in body
@@ -15,6 +15,6 @@ async def test_select_all_store_and_hotkey_present(logged_in_client: AsyncClient
 
 
 async def test_select_all_button_in_bulk_bar(logged_in_client: AsyncClient) -> None:
-    body = (await logged_in_client.get("/app/today")).text
+    body = (await logged_in_client.get("/doday/app/today")).text
     assert "$store.selection.selectAll()" in body
     assert "Выделить все видимые" in body

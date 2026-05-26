@@ -22,7 +22,7 @@
         <div class="space-y-2">
           {% for it in day.events %}
             <div class="card p-3 flex items-start gap-3 hover:border-[var(--accent)] transition cursor-pointer"
-                 hx-get="/htmx/tasks/{{ it.task_id }}/detail"
+                 hx-get="/doday/htmx/tasks/{{ it.task_id }}/detail"
                  hx-target="#task-detail-slot"
                  hx-swap="innerHTML">
               <div class="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center

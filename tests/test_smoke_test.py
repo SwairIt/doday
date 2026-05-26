@@ -43,7 +43,7 @@ def test_404_where_401_expected_marks_failure() -> None:
         return httpx.Response(404)
 
     client = httpx.Client(transport=httpx.MockTransport(handler))
-    endpoints = [Endpoint("/app/today", 401, "auth-gate")]
+    endpoints = [Endpoint("/doday/app/today", 401, "auth-gate")]
     results = check_endpoints("https://example.com", endpoints, client=client)
 
     assert results[0].actual_status == 404
@@ -51,13 +51,13 @@ def test_404_where_401_expected_marks_failure() -> None:
 
 
 def test_401_on_protected_endpoint_is_success() -> None:
-    """401 on /app/* means auth gate works AND route is registered."""
+    """401 on /doday/app/* means auth gate works AND route is registered."""
 
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(401)
 
     client = httpx.Client(transport=httpx.MockTransport(handler))
-    endpoints = [Endpoint("/app/today", 401, "auth-gate")]
+    endpoints = [Endpoint("/doday/app/today", 401, "auth-gate")]
     results = check_endpoints("https://example.com", endpoints, client=client)
 
     assert results[0].actual_status == 401

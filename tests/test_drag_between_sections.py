@@ -27,7 +27,7 @@ async def test_project_list_has_shared_drag_group(
     await create_section(db_session, user.id, project_id=project.id, name="Секция 1")
     await create_task(db_session, user.id, title="x", project_id=project.id)
 
-    body = (await logged_in_client.get(f"/app/projects/{project.slug}")).text
+    body = (await logged_in_client.get(f"/doday/app/projects/{project.slug}")).text
     # A shared Sortable group scoped to the project enables cross-section drag.
     assert f"group: 'tasks-{project.id}'" in body
 

@@ -36,7 +36,7 @@ RequiredUser = Annotated[User, Depends(require_user)]
 
 
 async def require_admin(user: RequiredUser) -> User:
-    """403 if user.is_admin is False. Used for /app/root and /api/admin/*."""
+    """403 if user.is_admin is False. Used for /doday/app/root and /api/admin/*."""
     if not user.is_admin:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "только для администратора")
     return user

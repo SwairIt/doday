@@ -6,6 +6,6 @@ from httpx import AsyncClient
 
 
 async def test_move_section_item_present(logged_in_client: AsyncClient) -> None:
-    body = (await logged_in_client.get("/app/today")).text
+    body = (await logged_in_client.get("/doday/app/today")).text
     assert 'data-ctx="move-section"' in body
     assert "Перенести в секцию" in body

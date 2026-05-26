@@ -335,19 +335,19 @@
       });
 
       if (action === 'detail') {
-        if (window.htmx) htmx.ajax('GET', '/htmx/tasks/' + tid + '/detail', {target: '#task-detail-slot', swap: 'innerHTML'});
+        if (window.htmx) htmx.ajax('GET', '/doday/htmx/tasks/' + tid + '/detail', {target: '#task-detail-slot', swap: 'innerHTML'});
         return;
       }
       if (action === 'edit') {
-        if (window.htmx) htmx.ajax('GET', '/htmx/tasks/' + tid + '/edit', {target: '#task-' + tid, swap: 'outerHTML'});
+        if (window.htmx) htmx.ajax('GET', '/doday/htmx/tasks/' + tid + '/edit', {target: '#task-' + tid, swap: 'outerHTML'});
         return;
       }
       if (action === 'labels') {
         // List rows have an inline labels slot; kanban cards don't — open detail there.
         if (!document.getElementById('labels-slot-' + tid)) {
-          if (window.htmx) htmx.ajax('GET', '/htmx/tasks/' + tid + '/detail', {target: '#task-detail-slot', swap: 'innerHTML'});
+          if (window.htmx) htmx.ajax('GET', '/doday/htmx/tasks/' + tid + '/detail', {target: '#task-detail-slot', swap: 'innerHTML'});
         } else if (window.htmx) {
-          htmx.ajax('GET', '/htmx/tasks/' + tid + '/labels-popover', {target: '#labels-slot-' + tid, swap: 'innerHTML'});
+          htmx.ajax('GET', '/doday/htmx/tasks/' + tid + '/labels-popover', {target: '#labels-slot-' + tid, swap: 'innerHTML'});
         }
         return;
       }
@@ -355,11 +355,11 @@
         const slot = document.getElementById('comments-slot-' + tid);
         if (!slot) {
           // kanban card — no inline comment slot; open the detail panel instead.
-          if (window.htmx) htmx.ajax('GET', '/htmx/tasks/' + tid + '/detail', {target: '#task-detail-slot', swap: 'innerHTML'});
+          if (window.htmx) htmx.ajax('GET', '/doday/htmx/tasks/' + tid + '/detail', {target: '#task-detail-slot', swap: 'innerHTML'});
         } else if (slot.innerHTML.trim()) {
           slot.innerHTML = '';
         } else if (window.htmx) {
-          htmx.ajax('GET', '/htmx/tasks/' + tid + '/comments', {target: '#comments-slot-' + tid, swap: 'innerHTML'});
+          htmx.ajax('GET', '/doday/htmx/tasks/' + tid + '/comments', {target: '#comments-slot-' + tid, swap: 'innerHTML'});
         }
         return;
       }
@@ -417,7 +417,7 @@
       var tid = new URLSearchParams(location.search).get('task');
       var slot = document.getElementById('task-detail-slot');
       if (tid && /^[0-9a-fA-F-]{36}$/.test(tid) && slot && window.htmx) {
-        htmx.ajax('GET', '/htmx/tasks/' + tid + '/detail', {target: '#task-detail-slot', swap: 'innerHTML'});
+        htmx.ajax('GET', '/doday/htmx/tasks/' + tid + '/detail', {target: '#task-detail-slot', swap: 'innerHTML'});
       }
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', openDeepLinkedTask);

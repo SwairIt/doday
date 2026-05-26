@@ -69,7 +69,7 @@ async def test_reorder_projects(logged_in_client: AsyncClient) -> None:
 async def test_archive_view_renders(logged_in_client: AsyncClient) -> None:
     proj = (await logged_in_client.post("/api/projects", json={"name": "ArchView"})).json()
     await logged_in_client.patch(f"/api/projects/{proj['id']}", json={"is_archived": True})
-    response = await logged_in_client.get("/app/projects-archive")
+    response = await logged_in_client.get("/doday/app/projects-archive")
     assert response.status_code == 200
     assert "ArchView" in response.text
     assert "Восстановить" in response.text
@@ -78,7 +78,7 @@ async def test_archive_view_renders(logged_in_client: AsyncClient) -> None:
 async def test_favorite_appears_in_sidebar_section(logged_in_client: AsyncClient) -> None:
     proj = (await logged_in_client.post("/api/projects", json={"name": "Pinned"})).json()
     await logged_in_client.patch(f"/api/projects/{proj['id']}", json={"is_favorite": True})
-    response = await logged_in_client.get("/app/today")
+    response = await logged_in_client.get("/doday/app/today")
     assert response.status_code == 200
     assert "Избранное" in response.text
     assert "Pinned" in response.text

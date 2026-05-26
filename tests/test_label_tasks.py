@@ -1,4 +1,4 @@
-"""Tests for the per-label task view (/app/labels/{id}) and its service query."""
+"""Tests for the per-label task view (/doday/app/labels/{id}) and its service query."""
 
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -37,7 +37,7 @@ async def test_list_tasks_by_label_excludes_completed(db_session: AsyncSession) 
 
 
 async def test_label_view_anonymous_blocked(client: AsyncClient) -> None:
-    response = await client.get("/app/labels/00000000-0000-0000-0000-000000000000")
+    response = await client.get("/doday/app/labels/00000000-0000-0000-0000-000000000000")
     assert response.status_code == 401
 
 
@@ -52,6 +52,6 @@ async def test_label_view_renders_with_dict_filter(
     ).scalar_one()
     label = await create_label(db_session, owner.id, name="render-test")
 
-    resp = await logged_in_client.get(f"/app/labels/{label.id}")
+    resp = await logged_in_client.get(f"/doday/app/labels/{label.id}")
     assert resp.status_code == 200
     assert "@render-test" in resp.text

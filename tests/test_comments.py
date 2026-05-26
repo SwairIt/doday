@@ -35,14 +35,16 @@ async def test_delete_comment(logged_in_client: AsyncClient) -> None:
 async def test_htmx_comments_block_renders(logged_in_client: AsyncClient) -> None:
     tid = await _make_task(logged_in_client)
     await logged_in_client.post(f"/api/tasks/{tid}/comments", json={"body": "ping"})
-    html = (await logged_in_client.get(f"/htmx/tasks/{tid}/comments")).text
+    html = (await logged_in_client.get(f"/doday/htmx/tasks/{tid}/comments")).text
     assert "ping" in html
     assert "Добавить комментарий" in html
 
 
 async def test_htmx_comment_create_form(logged_in_client: AsyncClient) -> None:
     tid = await _make_task(logged_in_client)
-    response = await logged_in_client.post(f"/htmx/tasks/{tid}/comments", data={"body": "via form"})
+    response = await logged_in_client.post(
+        f"/doday/htmx/tasks/{tid}/comments", data={"body": "via form"}
+    )
     assert response.status_code == 200
     assert "via form" in response.text
 
@@ -55,7 +57,7 @@ async def test_htmx_comments_block_shows_author(logged_in_client: AsyncClient) -
     """
     tid = await _make_task(logged_in_client)
     await logged_in_client.post(f"/api/tasks/{tid}/comments", json={"body": "who"})
-    html = (await logged_in_client.get(f"/htmx/tasks/{tid}/comments")).text
+    html = (await logged_in_client.get(f"/doday/htmx/tasks/{tid}/comments")).text
     # Author label (email) and initial both present in the meta line.
     assert "logged-in@example.com" in html
     assert ">L</span>" in html
@@ -64,7 +66,9 @@ async def test_htmx_comments_block_shows_author(logged_in_client: AsyncClient) -
 async def test_htmx_comment_create_returns_author(logged_in_client: AsyncClient) -> None:
     """Posting via the htmx form returns the refreshed block with the author chip."""
     tid = await _make_task(logged_in_client)
-    response = await logged_in_client.post(f"/htmx/tasks/{tid}/comments", data={"body": "via form"})
+    response = await logged_in_client.post(
+        f"/doday/htmx/tasks/{tid}/comments", data={"body": "via form"}
+    )
     assert response.status_code == 200
     assert "via form" in response.text
     assert "logged-in@example.com" in response.text

@@ -1,4 +1,4 @@
-"""Complaint model — user-submitted feedback shown in /app/root admin panel."""
+"""Complaint model — user-submitted feedback shown in /doday/app/root admin panel."""
 
 from datetime import UTC, datetime
 from uuid import UUID, uuid4

@@ -23,7 +23,7 @@ async def test_bulk_set_priority(logged_in_client: AsyncClient) -> None:
             ("ids", t2["id"]),
         ]
     )
-    response = await logged_in_client.post("/htmx/bulk", content=body, headers=headers)
+    response = await logged_in_client.post("/doday/htmx/bulk", content=body, headers=headers)
     assert response.status_code == 200
     fetched = (await logged_in_client.get("/api/tasks")).json()
     by_id = {t["id"]: t for t in fetched}
@@ -49,7 +49,7 @@ async def test_bulk_move_project(logged_in_client: AsyncClient) -> None:
             ("ids", t2["id"]),
         ]
     )
-    response = await logged_in_client.post("/htmx/bulk", content=body, headers=headers)
+    response = await logged_in_client.post("/doday/htmx/bulk", content=body, headers=headers)
     assert response.status_code == 200
     in_dst = (await logged_in_client.get(f"/api/tasks?project_id={dst['id']}")).json()
     titles = {t["title"] for t in in_dst}
@@ -61,7 +61,7 @@ async def test_bulk_move_project(logged_in_client: AsyncClient) -> None:
 async def test_bulk_set_priority_invalid(logged_in_client: AsyncClient) -> None:
     t = (await logged_in_client.post("/api/tasks", json={"title": "Z"})).json()
     body, headers = _form([("action", "set_priority"), ("priority", "p9"), ("ids", t["id"])])
-    response = await logged_in_client.post("/htmx/bulk", content=body, headers=headers)
+    response = await logged_in_client.post("/doday/htmx/bulk", content=body, headers=headers)
     assert response.status_code == 400
 
 
@@ -74,7 +74,7 @@ async def test_bulk_move_project_unknown(logged_in_client: AsyncClient) -> None:
             ("ids", t["id"]),
         ]
     )
-    response = await logged_in_client.post("/htmx/bulk", content=body, headers=headers)
+    response = await logged_in_client.post("/doday/htmx/bulk", content=body, headers=headers)
     assert response.status_code == 404
 
 
@@ -89,7 +89,7 @@ async def test_bulk_set_due(logged_in_client: AsyncClient) -> None:
             ("ids", t2["id"]),
         ]
     )
-    response = await logged_in_client.post("/htmx/bulk", content=body, headers=headers)
+    response = await logged_in_client.post("/doday/htmx/bulk", content=body, headers=headers)
     assert response.status_code == 200
     fetched = (await logged_in_client.get("/api/tasks")).json()
     by_id = {t["id"]: t for t in fetched}
@@ -104,7 +104,7 @@ async def test_bulk_clear_due(logged_in_client: AsyncClient) -> None:
         )
     ).json()
     body, headers = _form([("action", "set_due"), ("due", ""), ("ids", t["id"])])
-    response = await logged_in_client.post("/htmx/bulk", content=body, headers=headers)
+    response = await logged_in_client.post("/doday/htmx/bulk", content=body, headers=headers)
     assert response.status_code == 200
     fetched = (await logged_in_client.get("/api/tasks")).json()
     assert next(x for x in fetched if x["id"] == t["id"])["due_at"] is None
@@ -113,7 +113,7 @@ async def test_bulk_clear_due(logged_in_client: AsyncClient) -> None:
 async def test_bulk_set_due_invalid(logged_in_client: AsyncClient) -> None:
     t = (await logged_in_client.post("/api/tasks", json={"title": "Z"})).json()
     body, headers = _form([("action", "set_due"), ("due", "not-a-date"), ("ids", t["id"])])
-    response = await logged_in_client.post("/htmx/bulk", content=body, headers=headers)
+    response = await logged_in_client.post("/doday/htmx/bulk", content=body, headers=headers)
     assert response.status_code == 400
 
 
@@ -129,7 +129,7 @@ async def test_bulk_attach_label(logged_in_client: AsyncClient) -> None:
             ("ids", t2["id"]),
         ]
     )
-    response = await logged_in_client.post("/htmx/bulk", content=body, headers=headers)
+    response = await logged_in_client.post("/doday/htmx/bulk", content=body, headers=headers)
     assert response.status_code == 200
     for tid in (t1["id"], t2["id"]):
         attached = (await logged_in_client.get(f"/api/tasks/{tid}/labels")).json()
@@ -139,9 +139,9 @@ async def test_bulk_attach_label(logged_in_client: AsyncClient) -> None:
 async def test_bulk_detach_label(logged_in_client: AsyncClient) -> None:
     t = (await logged_in_client.post("/api/tasks", json={"title": "A"})).json()
     label = (await logged_in_client.post("/api/labels", json={"name": "tmp"})).json()
-    await logged_in_client.post(f"/htmx/tasks/{t['id']}/labels/{label['id']}/toggle")
+    await logged_in_client.post(f"/doday/htmx/tasks/{t['id']}/labels/{label['id']}/toggle")
     body, headers = _form([("action", "detach_label"), ("label_id", label["id"]), ("ids", t["id"])])
-    response = await logged_in_client.post("/htmx/bulk", content=body, headers=headers)
+    response = await logged_in_client.post("/doday/htmx/bulk", content=body, headers=headers)
     assert response.status_code == 200
     attached = (await logged_in_client.get(f"/api/tasks/{t['id']}/labels")).json()
     assert all(lab["id"] != label["id"] for lab in attached)

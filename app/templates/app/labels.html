@@ -61,7 +61,7 @@
                  maxlength="40"
                  class="text-sm font-medium bg-[var(--surface-2)] border border-[var(--accent)] rounded px-2 py-0.5 outline-none w-full">
         </div>
-        <a href="/app/labels/{{ lab.id }}"
+        <a href="/doday/app/labels/{{ lab.id }}"
            class="text-xs text-[var(--text-muted)] tabular-nums hover:text-[var(--accent)] transition"
            title="Открыть задачи с этим лейблом">{{ count }} {% if count == 1 %}задача{% elif 1 < count < 5 %}задачи{% else %}задач{% endif %}</a>
         <button type="button"

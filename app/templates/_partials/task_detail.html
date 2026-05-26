@@ -10,7 +10,7 @@
          @click.stop>
 
     <div class="px-4 sm:px-5 py-4 border-b border-[var(--border)] flex items-center justify-between gap-2 sm:gap-3 sticky top-0 bg-[var(--surface)] z-10">
-      <a href="/app/projects/{{ project.slug }}"
+      <a href="/doday/app/projects/{{ project.slug }}"
          class="flex items-center gap-2 text-xs text-[var(--text-muted)] hover:text-[var(--text)] transition min-w-0 flex-1">
         <span class="w-2 h-2 rounded-full bg-{{ project.color }}-500 shrink-0"></span>
         <span class="truncate">{{ project.name }}</span>
@@ -27,7 +27,7 @@
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
         </button>
         <button type="button" title="Удалить задачу" aria-label="Удалить задачу"
-                hx-delete="/htmx/tasks/{{ task.id }}"
+                hx-delete="/doday/htmx/tasks/{{ task.id }}"
                 hx-target="#task-wrap-{{ task.id }}"
                 hx-swap="outerHTML"
                 hx-confirm="Удалить задачу «{{ task.title }}»?"
@@ -44,7 +44,7 @@
     </div>
 
     <form
-      hx-patch="/htmx/tasks/{{ task.id }}/detail"
+      hx-patch="/doday/htmx/tasks/{{ task.id }}/detail"
       hx-target="#task-detail-slot"
       hx-swap="innerHTML"
       class="px-4 sm:px-5 py-4 space-y-3 border-b border-[var(--border)]">
@@ -54,10 +54,10 @@
           title="{% if task.is_completed %}Отменить{% else %}Завершить{% endif %}"
           class="shrink-0 mt-1.5 w-6 h-6 rounded-full border-2 transition flex items-center justify-center hover:scale-110 active:scale-95
                  {% if task.is_completed %}grad-bg border-transparent{% else %}border-{{ prio_class }}-400 hover:border-[var(--accent)]{% endif %}"
-          hx-post="/htmx/tasks/{{ task.id }}/toggle"
+          hx-post="/doday/htmx/tasks/{{ task.id }}/toggle"
           hx-target="#task-{{ task.id }}"
           hx-swap="outerHTML"
-          hx-on::after-request="event.detail.successful && htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/detail', {target: '#task-detail-slot', swap: 'innerHTML'})">
+          hx-on::after-request="event.detail.successful && htmx.ajax('GET', '/doday/htmx/tasks/{{ task.id }}/detail', {target: '#task-detail-slot', swap: 'innerHTML'})">
           {% if task.is_completed %}
             <svg class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
           {% endif %}
@@ -104,11 +104,11 @@
           {% for p, pc in [('p1','rose'),('p2','amber'),('p3','sky'),('p4','slate')] %}
             <button
               type="button"
-              hx-post="/htmx/tasks/{{ task.id }}/priority"
+              hx-post="/doday/htmx/tasks/{{ task.id }}/priority"
               hx-vals='{"priority": "{{ p }}"}'
               hx-target="#task-{{ task.id }}"
               hx-swap="outerHTML"
-              hx-on::after-request="event.detail.successful && htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/detail', {target: '#task-detail-slot', swap: 'innerHTML'})"
+              hx-on::after-request="event.detail.successful && htmx.ajax('GET', '/doday/htmx/tasks/{{ task.id }}/detail', {target: '#task-detail-slot', swap: 'innerHTML'})"
               class="px-3 py-1.5 rounded-lg border-2 text-xs font-bold transition
                      {% if task.priority.value == p %}bg-{{ pc }}-500/30 border-{{ pc }}-400 text-{{ pc }}-400{% else %}bg-[var(--surface-2)] border-[var(--border)] text-[var(--text-muted)] hover:border-{{ pc }}-400{% endif %}">!{{ p[1:] }}</button>
           {% endfor %}
@@ -120,8 +120,8 @@
               tomorrow: new Date(Date.now()+86400000).toISOString().slice(0,10),
               nextweek: new Date(Date.now()+7*86400000).toISOString().slice(0,10),
               setDue(value) {
-                htmx.ajax('POST', '/htmx/tasks/{{ task.id }}/due', {target: '#task-{{ task.id }}', swap: 'outerHTML', values: {due: value}})
-                  .then(() => htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/detail', {target: '#task-detail-slot', swap: 'innerHTML'}));
+                htmx.ajax('POST', '/doday/htmx/tasks/{{ task.id }}/due', {target: '#task-{{ task.id }}', swap: 'outerHTML', values: {due: value}})
+                  .then(() => htmx.ajax('GET', '/doday/htmx/tasks/{{ task.id }}/detail', {target: '#task-detail-slot', swap: 'innerHTML'}));
               }
            }">
         <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider mb-2">Срок</div>
@@ -157,7 +157,7 @@
                if (r.ok) {
                  this.currentSectionId = secId;
                  this.open = false;
-                 htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/detail', {target: '#task-detail-slot', swap: 'innerHTML'});
+                 htmx.ajax('GET', '/doday/htmx/tasks/{{ task.id }}/detail', {target: '#task-detail-slot', swap: 'innerHTML'});
                }
              },
              currentName() {
@@ -196,7 +196,7 @@
       <div x-data="{ open: false }" class="relative">
         <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider mb-2 flex items-center justify-between">
           <span>Лейблы</span>
-          <button type="button" @click="open = !open; if (open) htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/labels-popover', {target: $refs.lpop, swap: 'innerHTML'});"
+          <button type="button" @click="open = !open; if (open) htmx.ajax('GET', '/doday/htmx/tasks/{{ task.id }}/labels-popover', {target: $refs.lpop, swap: 'innerHTML'});"
                   class="text-[10px] normal-case font-medium px-2 py-0.5 rounded hover:bg-[var(--surface-2)] text-[var(--accent)]">+ изменить</button>
         </div>
         <div class="flex flex-wrap gap-1.5">
@@ -230,7 +230,7 @@
                  if (r.ok) {
                    this.currentAssignee = userId;
                    this.open = false;
-                   htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/detail', {target: '#task-detail-slot', swap: 'innerHTML'});
+                   htmx.ajax('GET', '/doday/htmx/tasks/{{ task.id }}/detail', {target: '#task-detail-slot', swap: 'innerHTML'});
                  }
                },
                currentLabel() {
@@ -290,7 +290,7 @@
             {% set recur_opts = [('', 'Нет'), ('daily', 'Каждый день'), ('weekly', 'Каждую неделю'), ('monthly', 'Каждый месяц'), ('yearly', 'Каждый год')] %}
             {% for val, label in recur_opts %}
               <button type="button"
-                      hx-patch="/htmx/tasks/{{ task.id }}/detail"
+                      hx-patch="/doday/htmx/tasks/{{ task.id }}/detail"
                       hx-vals='{"title": {{ task.title|tojson|forceescape }}, "description": {{ (task.description or "")|tojson|forceescape }}, "recurrence": "{{ val }}"}'
                       hx-target="#task-detail-slot" hx-swap="innerHTML"
                       class="text-xs px-2.5 py-1 rounded-md border transition
@@ -417,10 +417,10 @@
               <button type="button"
                       class="shrink-0 w-4 h-4 rounded-full border-2 transition flex items-center justify-center
                              {% if sub.is_completed %}grad-bg border-transparent{% else %}border-{{ sub_prio }}-400{% endif %}"
-                      hx-post="/htmx/tasks/{{ sub.id }}/toggle"
+                      hx-post="/doday/htmx/tasks/{{ sub.id }}/toggle"
                       hx-target="this"
                       hx-swap="none"
-                      hx-on::after-request="event.detail.successful && htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/detail', {target: '#task-detail-slot', swap: 'innerHTML'})">
+                      hx-on::after-request="event.detail.successful && htmx.ajax('GET', '/doday/htmx/tasks/{{ task.id }}/detail', {target: '#task-detail-slot', swap: 'innerHTML'})">
                 {% if sub.is_completed %}
                   <svg class="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                 {% endif %}
@@ -432,10 +432,10 @@
           {% endfor %}
         </div>
         <form
-          hx-post="/htmx/tasks/{{ task.id }}/subtasks"
+          hx-post="/doday/htmx/tasks/{{ task.id }}/subtasks"
           hx-target="this"
           hx-swap="none"
-          hx-on::after-request="event.detail.successful && (this.reset(), htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/detail', {target: '#task-detail-slot', swap: 'innerHTML'}))"
+          hx-on::after-request="event.detail.successful && (this.reset(), htmx.ajax('GET', '/doday/htmx/tasks/{{ task.id }}/detail', {target: '#task-detail-slot', swap: 'innerHTML'}))"
           class="flex items-center gap-2 mt-2">
           <input type="text" name="title" required maxlength="500"
                  placeholder="Новая подзадача…"
@@ -446,7 +446,7 @@
     </div>
 
     {# 🧪 Experimental: task↔task links. Hidden unless the user opted into the
-       "graph" experiment in /app/settings#experiments. #}
+       "graph" experiment in /doday/app/settings#experiments. #}
     {% if graph_enabled is defined and graph_enabled %}
     <div class="px-5 py-4 border-t border-[var(--border)]"
          x-data="{
@@ -461,7 +461,7 @@
              if (q.length < 2) { this.results = []; return; }
              this.searching = true;
              try {
-               const r = await fetch('/htmx/search?format=json&q=' + encodeURIComponent(q), {credentials: 'include'});
+               const r = await fetch('/doday/htmx/search?format=json&q=' + encodeURIComponent(q), {credentials: 'include'});
                if (r.ok) {
                  const data = await r.json();
                  // Filter out the current task and cap at 8 results.
@@ -479,7 +479,7 @@
                });
                if (r.ok) {
                  // Reload detail panel to show the new link.
-                 htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/detail', {target: '#task-detail-slot', swap: 'innerHTML'});
+                 htmx.ajax('GET', '/doday/htmx/tasks/{{ task.id }}/detail', {target: '#task-detail-slot', swap: 'innerHTML'});
                } else {
                  const d = await r.json().catch(() => ({}));
                  this.err = d.detail || 'Не удалось связать';
@@ -510,7 +510,7 @@
                       class="opacity-0 group-hover:opacity-100 text-[10px] text-rose-400 hover:underline shrink-0"
                       hx-delete="/api/tasks/{{ task.id }}/links/{{ link.link_id }}"
                       hx-confirm="Удалить связь?"
-                      hx-on::after-request="event.detail.successful && htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/detail', {target: '#task-detail-slot', swap: 'innerHTML'})">×</button>
+                      hx-on::after-request="event.detail.successful && htmx.ajax('GET', '/doday/htmx/tasks/{{ task.id }}/detail', {target: '#task-detail-slot', swap: 'innerHTML'})">×</button>
             </div>
           {% endfor %}
         </div>
@@ -637,9 +637,9 @@
               <span class="text-[10px] text-[var(--text-muted)]">{{ c.created_at.strftime('%d.%m %H:%M') }}</span>
               <button type="button"
                       class="opacity-0 group-hover:opacity-100 text-[10px] text-rose-400 hover:underline"
-                      hx-delete="/htmx/comments/{{ c.id }}"
+                      hx-delete="/doday/htmx/comments/{{ c.id }}"
                       hx-confirm="Удалить комментарий?"
-                      hx-on::after-request="event.detail.successful && htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/detail', {target: '#task-detail-slot', swap: 'innerHTML'})">Удалить</button>
+                      hx-on::after-request="event.detail.successful && htmx.ajax('GET', '/doday/htmx/tasks/{{ task.id }}/detail', {target: '#task-detail-slot', swap: 'innerHTML'})">Удалить</button>
             </div>
           </div>
         {% else %}
@@ -647,10 +647,10 @@
         {% endfor %}
       </div>
       <form
-        hx-post="/htmx/tasks/{{ task.id }}/comments"
+        hx-post="/doday/htmx/tasks/{{ task.id }}/comments"
         hx-target="this"
         hx-swap="none"
-        hx-on::after-request="event.detail.successful && (this.reset(), htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/detail', {target: '#task-detail-slot', swap: 'innerHTML'}))"
+        hx-on::after-request="event.detail.successful && (this.reset(), htmx.ajax('GET', '/doday/htmx/tasks/{{ task.id }}/detail', {target: '#task-detail-slot', swap: 'innerHTML'}))"
         class="flex items-start gap-2">
         <textarea name="body" required rows="2"
                   placeholder="Добавить комментарий…"

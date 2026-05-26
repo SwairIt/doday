@@ -1,5 +1,5 @@
 {# Compact 7x6 month grid in the sidebar. Dots mark days with ≥1 task.
-   Click a day → /app/calendar with that month focused. #}
+   Click a day → /doday/app/calendar with that month focused. #}
 <div
   x-data="{
     today: new Date(),
@@ -51,7 +51,7 @@
     },
     goto(iso) {
       const ym = iso.slice(0, 7);
-      window.location = '/app/calendar?month=' + ym;
+      window.location = '/doday/app/calendar?month=' + ym;
     },
   }"
   class="mt-4 px-3 py-2 border-t border-[var(--border)]"

@@ -100,7 +100,7 @@
       Возврат возможен в течение 21 дня — напиши на
       <a href="mailto:doday.support@gmail.com" class="text-[var(--accent)] hover:underline">doday.support@gmail.com</a>.
     </p>
-    <a href="/app/billing/payments" class="inline-block mt-3 text-xs text-[var(--accent)] hover:underline">
+    <a href="/doday/app/billing/payments" class="inline-block mt-3 text-xs text-[var(--accent)] hover:underline">
       → История платежей
     </a>
   </section>
@@ -595,7 +595,7 @@
       Если 60+ фич — это слишком, попробуй упрощённую версию. Только «Сегодня», без проектов и настроек.
       Все данные остаются — можешь вернуться сюда в любой момент.
     </p>
-    <a href="/app/simple/today" class="btn-ghost px-4 py-2 text-sm inline-flex items-center gap-2 mb-8">
+    <a href="/doday/app/simple/today" class="btn-ghost px-4 py-2 text-sm inline-flex items-center gap-2 mb-8">
       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
       Открыть упрощённую версию
     </a>
@@ -968,22 +968,22 @@
       Эти фичи — часть ядра, не отключаются. Перечислены, чтобы ты знал что доступно.
     </p>
     {% set builtins = [
-      ('🍅 Помодоро-таймер', 'В деталях любой задачи. 25 мин работы + 5 мин отдыха, счётчик сессий, browser-уведомления.', '/app/help/pomodoro-goal'),
-      ('📊 Статистика', 'Графики продуктивности за 30 дней + streak\'и + лучший день недели.', '/app/stats'),
-      ('📅 Календарь', 'Месячный календарь с задачами + неделя планирования.', '/app/calendar'),
-      ('📋 Канбан-доски', 'Каждый проект можно открыть в виде доски (?view=kanban).', '/app/help/kanban'),
-      ('👥 Команда / Назначено мне', 'Делишь проект с email-приглашением, назначаешь задачи участникам, видишь «свои» через /app/assigned.', '/app/team'),
-      ('🏷 Лейблы и фильтры', 'Кастомные лейблы (@дом, @срочно), быстрые фильтры (Просрочено, Без даты, Высокий приоритет, На этой неделе).', '/app/help/labels-filters'),
-      ('💬 Комментарии к задачам', 'Markdown-поддержка. Видны в панели деталей задачи.', '/app/help/subtasks-comments-recurrence'),
-      ('🔁 Повторяющиеся задачи', 'Recurrence ежедневно/еженедельно/ежемесячно/ежегодно.', '/app/help/subtasks-comments-recurrence'),
+      ('🍅 Помодоро-таймер', 'В деталях любой задачи. 25 мин работы + 5 мин отдыха, счётчик сессий, browser-уведомления.', '/doday/app/help/pomodoro-goal'),
+      ('📊 Статистика', 'Графики продуктивности за 30 дней + streak\'и + лучший день недели.', '/doday/app/stats'),
+      ('📅 Календарь', 'Месячный календарь с задачами + неделя планирования.', '/doday/app/calendar'),
+      ('📋 Канбан-доски', 'Каждый проект можно открыть в виде доски (?view=kanban).', '/doday/app/help/kanban'),
+      ('👥 Команда / Назначено мне', 'Делишь проект с email-приглашением, назначаешь задачи участникам, видишь «свои» через /doday/app/assigned.', '/doday/app/team'),
+      ('🏷 Лейблы и фильтры', 'Кастомные лейблы (@дом, @срочно), быстрые фильтры (Просрочено, Без даты, Высокий приоритет, На этой неделе).', '/doday/app/help/labels-filters'),
+      ('💬 Комментарии к задачам', 'Markdown-поддержка. Видны в панели деталей задачи.', '/doday/app/help/subtasks-comments-recurrence'),
+      ('🔁 Повторяющиеся задачи', 'Recurrence ежедневно/еженедельно/ежемесячно/ежегодно.', '/doday/app/help/subtasks-comments-recurrence'),
       ('🔥 Стрики дней подряд', 'Чип в топбаре. Считает дни подряд с хотя бы одной выполненной задачей.', None),
-      ('⌘K Командная палитра', 'Хоткей Ctrl/⌘+K — поиск, быстрая навигация, действия.', '/app/help/shortcuts'),
-      ('📦 Bulk-действия', 'Выдели N задач — массово менять приоритет, дату, проект, лейблы; завершать/удалять.', '/app/help/bulk-add'),
-      ('📤 Импорт-экспорт', 'JSON-бэкап всего аккаунта, Markdown проекта, CSV для Excel.', '/app/help/import-export'),
+      ('⌘K Командная палитра', 'Хоткей Ctrl/⌘+K — поиск, быстрая навигация, действия.', '/doday/app/help/shortcuts'),
+      ('📦 Bulk-действия', 'Выдели N задач — массово менять приоритет, дату, проект, лейблы; завершать/удалять.', '/doday/app/help/bulk-add'),
+      ('📤 Импорт-экспорт', 'JSON-бэкап всего аккаунта, Markdown проекта, CSV для Excel.', '/doday/app/help/import-export'),
       ('🔗 Публичная ссылка на прогресс', 'Read-only ссылка для родителей/учителей. /api/profile/share-link.', None),
       ('📱 Mini App (Telegram)', 'Мобильный режим под Telegram WebApp на /miniapp/.', None),
       ('🎲 «Что дальше?»', 'Кнопка на «Сегодня» — случайная задача из списка.', None),
-      ('🌅 Утренний дайджест (Pro)', 'Email-сводка каждое утро с задачами на день.', '/app/help/quick-start'),
+      ('🌅 Утренний дайджест (Pro)', 'Email-сводка каждое утро с задачами на день.', '/doday/app/help/quick-start'),
       ('📌 Закрепления (countdown-пины)', 'Закрепи задачу с дедлайном — попадёт в виджет «До чего» на /today.', None),
     ] %}
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">

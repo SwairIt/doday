@@ -51,7 +51,7 @@ async def test_delete_section(logged_in_client: AsyncClient) -> None:
 async def test_htmx_create_section(logged_in_client: AsyncClient) -> None:
     proj = (await logged_in_client.post("/api/projects", json={"name": "P"})).json()
     response = await logged_in_client.post(
-        "/htmx/sections", data={"project_id": proj["id"], "name": "InlineSec"}
+        "/doday/htmx/sections", data={"project_id": proj["id"], "name": "InlineSec"}
     )
     assert response.status_code == 200
     assert "InlineSec" in response.text

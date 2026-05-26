@@ -62,6 +62,6 @@ async def test_subtask_row_renders_expand_caret_for_nested(
 
     # The subtasks block of the immediate child must include the caret + slot
     # so the user can drill further.
-    subs_html = (await logged_in_client.get(f"/htmx/tasks/{parent['id']}/subtasks")).text
+    subs_html = (await logged_in_client.get(f"/doday/htmx/tasks/{parent['id']}/subtasks")).text
     assert f"subtasks-of-{child['id']}-slot" in subs_html
-    assert f"/htmx/tasks/{child['id']}/subtasks" in subs_html
+    assert f"/doday/htmx/tasks/{child['id']}/subtasks" in subs_html

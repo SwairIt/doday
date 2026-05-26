@@ -33,7 +33,7 @@ async def test_duplicate_includes_subtasks(logged_in_client: AsyncClient) -> Non
     await logged_in_client.post("/api/tasks", json={"title": "C2", "parent_task_id": parent["id"]})
     new = (await logged_in_client.post(f"/api/tasks/{parent['id']}/duplicate")).json()
     assert new["title"] == "P (копия)"
-    subs_html = (await logged_in_client.get(f"/htmx/tasks/{new['id']}/subtasks")).text
+    subs_html = (await logged_in_client.get(f"/doday/htmx/tasks/{new['id']}/subtasks")).text
     assert "C1" in subs_html and "C2" in subs_html
 
 

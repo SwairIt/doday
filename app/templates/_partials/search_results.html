@@ -1,4 +1,4 @@
-{# Search results panel, returned by GET /htmx/search?q=… #}
+{# Search results panel, returned by GET /doday/htmx/search?q=… #}
 {% if not q or q|length < 2 %}
   <div class="px-4 py-8 text-center text-sm text-[var(--text-muted)]">
     Введи минимум 2 символа.
@@ -12,7 +12,7 @@
     <div class="px-4 pt-4 pb-2 text-xs uppercase tracking-wider font-semibold text-[var(--text-muted)]">Проекты</div>
     <div class="px-2">
       {% for p in projects %}
-        <a href="/app/projects/{{ p.slug }}"
+        <a href="/doday/app/projects/{{ p.slug }}"
            class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[var(--surface-2)] transition">
           <span class="w-2.5 h-2.5 rounded-full bg-{{ p.color }}-500"></span>
           <span class="flex-1">{{ p.name }}</span>
@@ -27,7 +27,7 @@
     <div class="px-2 pb-3 space-y-0.5">
       {% for t in tasks %}
         {% set color = project_color_map.get(t.project_id, 'violet') %}
-        <a href="/app/today"
+        <a href="/doday/app/today"
            class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[var(--surface-2)] transition
                   {% if t.is_completed %}opacity-60{% endif %}">
           <span class="w-2 h-2 rounded-full bg-{{ color }}-500 shrink-0"></span>

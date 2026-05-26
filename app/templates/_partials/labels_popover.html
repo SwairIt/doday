@@ -6,7 +6,7 @@
       <button
         type="button"
         class="w-full text-left text-sm px-2 py-1.5 rounded hover:bg-[var(--surface-2)] transition flex items-center gap-2"
-        hx-post="/htmx/tasks/{{ task_id }}/labels/{{ lab.id }}/toggle"
+        hx-post="/doday/htmx/tasks/{{ task_id }}/labels/{{ lab.id }}/toggle"
         hx-target="#task-{{ task_id }}"
         hx-swap="outerHTML"
       >
@@ -22,7 +22,7 @@
   {% endif %}
   <div class="border-t border-[var(--border)] pt-2 mt-2">
     <form
-      hx-post="/htmx/tasks/{{ task_id }}/labels/new"
+      hx-post="/doday/htmx/tasks/{{ task_id }}/labels/new"
       hx-target="#task-{{ task_id }}"
       hx-swap="outerHTML"
       class="flex items-center gap-1"

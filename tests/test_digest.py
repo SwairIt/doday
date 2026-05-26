@@ -117,7 +117,7 @@ def test_compose_text_includes_all_sections() -> None:
     assert "Просрочено" in text
     assert "Сегодня" in text
     assert "Завтра" in text
-    assert "https://example.com/app/today" in text
+    assert "https://example.com/doday/app/today" in text
     assert "просрочено" in text  # universal motivational copy
 
 

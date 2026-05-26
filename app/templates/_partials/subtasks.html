@@ -5,7 +5,7 @@
   {% endfor %}
 
   <form
-    hx-post="/htmx/tasks/{{ parent_id }}/subtasks"
+    hx-post="/doday/htmx/tasks/{{ parent_id }}/subtasks"
     hx-target="this"
     hx-swap="beforebegin swap:120ms"
     hx-on::after-request="if (event.detail.successful) this.querySelector('input').value = ''"

@@ -6,7 +6,13 @@ from collections.abc import Awaitable, Callable
 from urllib.parse import urlparse
 
 from fastapi import Depends, FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response
+from fastapi.responses import (
+    FileResponse,
+    JSONResponse,
+    PlainTextResponse,
+    RedirectResponse,
+    Response,
+)
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
@@ -125,6 +131,30 @@ app.add_middleware(
 # the same-origin CSRF check below.
 _CSRF_EXEMPT_PREFIXES = ("/miniapp", "/taptower")
 _UNSAFE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+
+
+@app.middleware("http")
+async def _doday_legacy_url_redirect(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
+    """301 redirect старых Doday URLs (`/app/...`, `/htmx/...`) → `/doday/*`.
+
+    Старые закладки + email-ссылки + Google-индекс продолжают работать. SEO-safe
+    через 301. После 30 дней (когда Google переиндексирует) можно убрать —
+    но это дешёвая broad-compat прослойка.
+    """
+    path = request.url.path
+    if path.startswith("/app/") or path == "/app":
+        return RedirectResponse(
+            url=f"/doday{path}" + (f"?{request.url.query}" if request.url.query else ""),
+            status_code=301,
+        )
+    if path.startswith("/htmx/") or path == "/htmx":
+        return RedirectResponse(
+            url=f"/doday{path}" + (f"?{request.url.query}" if request.url.query else ""),
+            status_code=301,
+        )
+    return await call_next(request)
 
 
 @app.middleware("http")
@@ -248,7 +278,7 @@ async def _pretty_404(
 ) -> Response:
     """Convert default 404 JSON into pretty HTML for browser GETs.
 
-    HTMX swaps, /api/*, /htmx/* и не-HTML-Accept остаются JSON — они не для
+    HTMX swaps, /api/*, /doday/htmx/* и не-HTML-Accept остаются JSON — они не для
     отображения юзером, а для consumption кодом.
     """
     response = await call_next(request)
@@ -257,7 +287,7 @@ async def _pretty_404(
     accept = request.headers.get("accept", "")
     is_htmx = request.headers.get("hx-request") == "true"
     path = request.url.path
-    api_like = path.startswith(("/api/", "/htmx/"))
+    api_like = path.startswith(("/api/", "/doday/htmx/"))
     if is_htmx or api_like or "text/html" not in accept:
         return response
     return _templates_404.TemplateResponse(
@@ -309,13 +339,13 @@ async def robots_txt() -> PlainTextResponse:
     """Allow indexing of marketing pages, disallow the logged-in app shell.
 
     `Allow: /u/` is explicit — public Lessio tutor pages live there and must be
-    indexable even though `/app/` and `/auth/` (used by Lessio too) are blocked.
+    indexable even though `/doday/app/` and `/auth/` (used by Lessio too) are blocked.
     """
     body = (
         "User-agent: *\n"
-        "Disallow: /app/\n"
+        "Disallow: /doday/app/\n"
         "Disallow: /api/\n"
-        "Disallow: /htmx/\n"
+        "Disallow: /doday/htmx/\n"
         "Disallow: /auth/\n"
         "Disallow: /lessio/app/\n"
         "Disallow: /lessio/auth/\n"
@@ -466,7 +496,7 @@ async def pwa_manifest() -> Response:
             "short_name": "Doday",
             "description": "Бесплатный туду-лист для школьников, компаний и личных дел",
             "lang": "ru",
-            "start_url": "/app/today",
+            "start_url": "/doday/app/today",
             "scope": "/",
             "display": "standalone",
             "orientation": "portrait",
@@ -491,7 +521,7 @@ async def pwa_manifest() -> Response:
 async def pwa_service_worker() -> Response:
     body = """// Doday service worker — minimal cache-first for the app shell, network for everything else.
 const CACHE = 'doday-shell-v1';
-const SHELL = ['/app/today', '/manifest.webmanifest'];
+const SHELL = ['/doday/app/today', '/manifest.webmanifest'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL).catch(() => null)).then(() => self.skipWaiting()));

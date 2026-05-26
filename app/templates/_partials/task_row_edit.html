@@ -1,7 +1,7 @@
 {# Inline edit form for a task row. Replaces the read-only row. #}
 <form
   id="task-{{ task.id }}"
-  hx-patch="/htmx/tasks/{{ task.id }}"
+  hx-patch="/doday/htmx/tasks/{{ task.id }}"
   hx-target="this"
   hx-swap="outerHTML"
   class="task-row p-3 rounded-xl border-2 border-[var(--accent)] bg-[var(--surface)] shadow-glow space-y-2"
@@ -13,7 +13,7 @@
     class="w-full bg-transparent border-none outline-none text-base font-medium"
     autofocus
     required
-    onkeydown="if (event.key === 'Escape') { htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/row', { target: '#task-{{ task.id }}', swap: 'outerHTML' }); }"
+    onkeydown="if (event.key === 'Escape') { htmx.ajax('GET', '/doday/htmx/tasks/{{ task.id }}/row', { target: '#task-{{ task.id }}', swap: 'outerHTML' }); }"
   >
   <textarea
     name="description"
@@ -35,7 +35,7 @@
     <button
       type="button"
       class="btn-ghost px-3 py-1.5 text-sm"
-      hx-get="/htmx/tasks/{{ task.id }}/row"
+      hx-get="/doday/htmx/tasks/{{ task.id }}/row"
       hx-target="#task-{{ task.id }}"
       hx-swap="outerHTML"
     >Отмена</button>

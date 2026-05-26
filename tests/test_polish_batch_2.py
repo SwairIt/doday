@@ -11,11 +11,11 @@ async def test_snooze_popover_in_task_row(logged_in_client: AsyncClient) -> None
     ).json()
     # β redesign: snooze dropdown removed from task row (moved to context-menu).
     # Verify snooze endpoint still works correctly.
-    r = await logged_in_client.post(f"/htmx/tasks/{task['id']}/snooze", data={"days": "1"})
+    r = await logged_in_client.post(f"/doday/htmx/tasks/{task['id']}/snooze", data={"days": "1"})
     assert r.status_code == 200
-    r3 = await logged_in_client.post(f"/htmx/tasks/{task['id']}/snooze", data={"days": "3"})
+    r3 = await logged_in_client.post(f"/doday/htmx/tasks/{task['id']}/snooze", data={"days": "3"})
     assert r3.status_code == 200
-    r7 = await logged_in_client.post(f"/htmx/tasks/{task['id']}/snooze", data={"days": "7"})
+    r7 = await logged_in_client.post(f"/doday/htmx/tasks/{task['id']}/snooze", data={"days": "7"})
     assert r7.status_code == 200
 
 
@@ -49,7 +49,7 @@ async def test_subtask_stats_unknown_404(logged_in_client: AsyncClient) -> None:
 
 
 async def test_sound_fx_partial_included(logged_in_client: AsyncClient) -> None:
-    body = (await logged_in_client.get("/app/today")).text
+    body = (await logged_in_client.get("/doday/app/today")).text
     assert "doday-sound-on" in body
     # Sound script reads localStorage flag and uses WebAudio.
     assert "AudioContext" in body
@@ -57,7 +57,7 @@ async def test_sound_fx_partial_included(logged_in_client: AsyncClient) -> None:
 
 
 async def test_sound_toggle_in_profile(logged_in_client: AsyncClient) -> None:
-    body = (await logged_in_client.get("/app/settings")).text
+    body = (await logged_in_client.get("/doday/app/settings")).text
     assert "Звук завершения" in body
     assert "doday-sound-on" in body
 

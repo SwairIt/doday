@@ -4,7 +4,7 @@ from httpx import AsyncClient
 
 
 async def test_undo_toast_partial_present(logged_in_client: AsyncClient) -> None:
-    body = (await logged_in_client.get("/app/today")).text
+    body = (await logged_in_client.get("/doday/app/today")).text
     assert "doday-task-deleted" in body
     assert "Удалено:" in body
     assert "Отменить" in body
@@ -17,7 +17,7 @@ async def test_delete_button_dispatches_event(logged_in_client: AsyncClient) -> 
     task = (
         await logged_in_client.post("/api/tasks", json={"title": "to-delete", "due_at": today_iso})
     ).json()
-    body = (await logged_in_client.get("/app/today")).text
+    body = (await logged_in_client.get("/doday/app/today")).text
     # delete is now via context menu (data-ctx="delete"); undo toast listens for doday-task-deleted
     assert task["id"] in body
     assert 'data-ctx="delete"' in body

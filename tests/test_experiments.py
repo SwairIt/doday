@@ -1,4 +1,4 @@
-"""Experimental-features opt-in: toggle endpoint + /app/graph gating."""
+"""Experimental-features opt-in: toggle endpoint + /doday/app/graph gating."""
 
 from httpx import AsyncClient
 
@@ -11,10 +11,10 @@ async def test_unknown_experiment_rejected(logged_in_client: AsyncClient) -> Non
 
 
 async def test_toggle_graph_experiment(logged_in_client: AsyncClient) -> None:
-    # OFF by default → /app/graph redirects to settings.
-    resp = await logged_in_client.get("/app/graph", follow_redirects=False)
+    # OFF by default → /doday/app/graph redirects to settings.
+    resp = await logged_in_client.get("/doday/app/graph", follow_redirects=False)
     assert resp.status_code == 303
-    assert "/app/settings" in resp.headers["location"]
+    assert "/doday/app/settings" in resp.headers["location"]
 
     # Turn it ON.
     on = await logged_in_client.post("/api/profile/experiments/graph", data={"enabled": "true"})
@@ -22,19 +22,19 @@ async def test_toggle_graph_experiment(logged_in_client: AsyncClient) -> None:
     assert on.json() == {"enabled": True}
 
     # Now the page renders.
-    resp2 = await logged_in_client.get("/app/graph")
+    resp2 = await logged_in_client.get("/doday/app/graph")
     assert resp2.status_code == 200
     assert "Граф" in resp2.text or "graph" in resp2.text.lower()
 
     # And toggling OFF restores the gate.
     off = await logged_in_client.post("/api/profile/experiments/graph", data={"enabled": "false"})
     assert off.json() == {"enabled": False}
-    resp3 = await logged_in_client.get("/app/graph", follow_redirects=False)
+    resp3 = await logged_in_client.get("/doday/app/graph", follow_redirects=False)
     assert resp3.status_code == 303
 
 
 async def test_settings_page_lists_experiments(logged_in_client: AsyncClient) -> None:
-    body = (await logged_in_client.get("/app/settings")).text
+    body = (await logged_in_client.get("/doday/app/settings")).text
     assert "Экспериментальные функции" in body
     assert "Граф связей задач" in body
 
@@ -43,7 +43,7 @@ async def test_settings_splits_features_vs_experiments(
     logged_in_client: AsyncClient,
 ) -> None:
     """Settings shows two sections: «Дополнительные функции» (stable) and «Эксперименты» (alpha/beta)."""
-    body = (await logged_in_client.get("/app/settings")).text
+    body = (await logged_in_client.get("/doday/app/settings")).text
     # Both section headers present.
     assert "Дополнительные функции" in body
     assert "Экспериментальные функции" in body
@@ -72,18 +72,18 @@ async def test_preset_applies_bundle(logged_in_client: AsyncClient) -> None:
         "user_templates",
         "school",
     }
-    # Persistence check #1: after maximum, /app/graph (which is gated by `graph`
+    # Persistence check #1: after maximum, /doday/app/graph (which is gated by `graph`
     # flag) should now serve 200 instead of the 303 redirect.
-    g = await logged_in_client.get("/app/graph", follow_redirects=False)
-    assert g.status_code == 200, "after «maximum» preset, /app/graph must render"
+    g = await logged_in_client.get("/doday/app/graph", follow_redirects=False)
+    assert g.status_code == 200, "after «maximum» preset, /doday/app/graph must render"
 
     # Switch to «минимум» — should be no enabled flags.
     on_min = await logged_in_client.post("/api/profile/experiments/preset/minimum")
     assert on_min.status_code == 200
     assert on_min.json()["enabled"] == []
     # Persistence check #2: after minimum, gated endpoints redirect again.
-    g2 = await logged_in_client.get("/app/graph", follow_redirects=False)
-    assert g2.status_code == 303, "after «minimum» preset, /app/graph must redirect"
+    g2 = await logged_in_client.get("/doday/app/graph", follow_redirects=False)
+    assert g2.status_code == 303, "after «minimum» preset, /doday/app/graph must redirect"
 
     # «школьник» — habits + achievements + mood + school but not graph/time_tracking.
     on_school = await logged_in_client.post("/api/profile/experiments/preset/schoolchild")
@@ -97,7 +97,7 @@ async def test_preset_applies_bundle(logged_in_client: AsyncClient) -> None:
     assert "time_tracking" not in enabled
     # Persistence check #3: subsequent /today shows the habit widget (server-
     # rendered, requires user.experiments['habits'] in DB to evaluate true).
-    today_body = (await logged_in_client.get("/app/today")).text
+    today_body = (await logged_in_client.get("/doday/app/today")).text
     assert "🌱 Привычки сегодня" in today_body, "habit widget should appear after school preset"
 
 
@@ -108,12 +108,12 @@ async def test_preset_unknown_key_422(logged_in_client: AsyncClient) -> None:
 
 async def test_taptower_game_sidebar_link_gated(logged_in_client: AsyncClient) -> None:
     """The «🎮 Игра» sidebar link appears only when the taptower feature is on."""
-    off = (await logged_in_client.get("/app/today")).text
+    off = (await logged_in_client.get("/doday/app/today")).text
     assert "🎮 Игра" not in off
 
     await logged_in_client.post("/api/profile/experiments/taptower", data={"enabled": "true"})
 
-    on = (await logged_in_client.get("/app/today")).text
+    on = (await logged_in_client.get("/doday/app/today")).text
     assert "🎮 Игра" in on
     assert "/taptower/" in on
 
@@ -132,7 +132,7 @@ async def test_schoolchild_plus_preset_includes_taptower(
 
 async def test_settings_lists_builtin_features(logged_in_client: AsyncClient) -> None:
     """Settings has a read-only «Что есть на сайте» section listing built-ins."""
-    body = (await logged_in_client.get("/app/settings")).text
+    body = (await logged_in_client.get("/doday/app/settings")).text
     assert "Что есть на сайте" in body
     # Specific built-ins enumerated.
     assert "Помодоро-таймер" in body
@@ -145,7 +145,7 @@ async def test_preset_buttons_have_escaped_quotes(logged_in_client: AsyncClient)
     HTML attribute, breaking the @click parser in browsers (Alpine never wired
     up, clicks did nothing). Forceescape converts " to &#34; so the attribute
     survives parsing. httpx-only tests miss this because they don't parse HTML."""
-    body = (await logged_in_client.get("/app/settings")).text
+    body = (await logged_in_client.get("/doday/app/settings")).text
     # Broken pattern would be: @click="apply("minimum")"
     # Fixed pattern: @click="apply(&#34;minimum&#34;)"
     assert 'apply("minimum")' not in body, (
@@ -219,32 +219,32 @@ async def test_ical_token_issued_after_enabling_experiment(
 
 
 async def test_habits_view_gated(logged_in_client: AsyncClient) -> None:
-    """Without the habits experiment, /app/habits redirects to settings."""
-    resp = await logged_in_client.get("/app/habits", follow_redirects=False)
+    """Without the habits experiment, /doday/app/habits redirects to settings."""
+    resp = await logged_in_client.get("/doday/app/habits", follow_redirects=False)
     assert resp.status_code == 303
-    assert "/app/settings" in resp.headers["location"]
+    assert "/doday/app/settings" in resp.headers["location"]
 
     on = await logged_in_client.post("/api/profile/experiments/habits", data={"enabled": "true"})
     assert on.json()["enabled"] is True
 
-    resp2 = await logged_in_client.get("/app/habits")
+    resp2 = await logged_in_client.get("/doday/app/habits")
     assert resp2.status_code == 200
 
 
 async def test_mood_widget_appears_only_when_enabled(logged_in_client: AsyncClient) -> None:
     """Mood widget renders on /today only after toggling the experiment on."""
-    body_off = (await logged_in_client.get("/app/today")).text
+    body_off = (await logged_in_client.get("/doday/app/today")).text
     assert "/api/mood/today" not in body_off  # widget not yet there
 
     await logged_in_client.post("/api/profile/experiments/mood", data={"enabled": "true"})
 
-    body_on = (await logged_in_client.get("/app/today")).text
+    body_on = (await logged_in_client.get("/doday/app/today")).text
     assert "/api/mood/today" in body_on  # widget now embedded
 
 
 async def test_achievements_view_gated(logged_in_client: AsyncClient) -> None:
-    """/app/achievements returns 303 without the experiment, 200 with it."""
-    off = await logged_in_client.get("/app/achievements", follow_redirects=False)
+    """/doday/app/achievements returns 303 without the experiment, 200 with it."""
+    off = await logged_in_client.get("/doday/app/achievements", follow_redirects=False)
     assert off.status_code == 303
 
     on = await logged_in_client.post(
@@ -252,7 +252,7 @@ async def test_achievements_view_gated(logged_in_client: AsyncClient) -> None:
     )
     assert on.json()["enabled"] is True
 
-    page = await logged_in_client.get("/app/achievements")
+    page = await logged_in_client.get("/doday/app/achievements")
     assert page.status_code == 200
     # Should reference the API the page fetches from.
     assert "/api/achievements" in page.text
@@ -271,12 +271,12 @@ async def test_time_tracking_widget_appears_only_when_enabled(
     logged_in_client: AsyncClient,
 ) -> None:
     """Sprint widget partial appears on /today only after time_tracking is on."""
-    body_off = (await logged_in_client.get("/app/today")).text
+    body_off = (await logged_in_client.get("/doday/app/today")).text
     assert "doday-sprint" not in body_off
 
     await logged_in_client.post("/api/profile/experiments/time_tracking", data={"enabled": "true"})
 
-    body_on = (await logged_in_client.get("/app/today")).text
+    body_on = (await logged_in_client.get("/doday/app/today")).text
     assert "doday-sprint" in body_on
 
 
@@ -284,51 +284,51 @@ async def test_task_detail_timer_block_gated(logged_in_client: AsyncClient) -> N
     """⏱ Трекер времени block appears in task_detail only when time_tracking is on."""
     t = (await logged_in_client.post("/api/tasks", json={"title": "tic-toc"})).json()
 
-    off = (await logged_in_client.get(f"/htmx/tasks/{t['id']}/detail")).text
+    off = (await logged_in_client.get(f"/doday/htmx/tasks/{t['id']}/detail")).text
     assert "Трекер времени" not in off
 
     await logged_in_client.post("/api/profile/experiments/time_tracking", data={"enabled": "true"})
 
-    on = (await logged_in_client.get(f"/htmx/tasks/{t['id']}/detail")).text
+    on = (await logged_in_client.get(f"/doday/htmx/tasks/{t['id']}/detail")).text
     assert "Трекер времени" in on
     # The Alpine helper hits the existing /api/time endpoints.
     assert "/api/time/tasks/" in on
 
 
 async def test_school_view_gated(logged_in_client: AsyncClient) -> None:
-    """/app/school redirects to settings unless the school feature is enabled."""
-    off = await logged_in_client.get("/app/school", follow_redirects=False)
+    """/doday/app/school redirects to settings unless the school feature is enabled."""
+    off = await logged_in_client.get("/doday/app/school", follow_redirects=False)
     assert off.status_code == 303
-    assert "/app/settings" in off.headers["location"]
+    assert "/doday/app/settings" in off.headers["location"]
 
     on = await logged_in_client.post("/api/profile/experiments/school", data={"enabled": "true"})
     assert on.json()["enabled"] is True
 
-    page = await logged_in_client.get("/app/school")
+    page = await logged_in_client.get("/doday/app/school")
     assert page.status_code == 200
     assert "🎓 Учёба" in page.text or "Учёба" in page.text
 
 
 async def test_school_tab_in_sidebar_when_feature_on(logged_in_client: AsyncClient) -> None:
     """The «🎓 Учёба» sidebar link appears only when the school feature is on."""
-    off = (await logged_in_client.get("/app/today")).text
+    off = (await logged_in_client.get("/doday/app/today")).text
     assert "🎓 Учёба" not in off
 
     await logged_in_client.post("/api/profile/experiments/school", data={"enabled": "true"})
 
-    on = (await logged_in_client.get("/app/today")).text
+    on = (await logged_in_client.get("/doday/app/today")).text
     assert "🎓 Учёба" in on
-    assert "/app/school" in on
+    assert "/doday/app/school" in on
 
 
 async def test_habit_quick_widget_on_today_gated(logged_in_client: AsyncClient) -> None:
     """The habit quick-checkin widget appears on /today only with the habits experiment."""
-    off = (await logged_in_client.get("/app/today")).text
+    off = (await logged_in_client.get("/doday/app/today")).text
     assert "Привычки сегодня" not in off
 
     await logged_in_client.post("/api/profile/experiments/habits", data={"enabled": "true"})
 
-    on = (await logged_in_client.get("/app/today")).text
+    on = (await logged_in_client.get("/doday/app/today")).text
     assert "Привычки сегодня" in on
     # Widget consumes the existing /api/habits endpoint — must reference it.
     assert "/api/habits" in on
@@ -342,7 +342,7 @@ async def test_task_detail_timer_reflects_running_state(logged_in_client: AsyncC
     started = await logged_in_client.post(f"/api/time/tasks/{t['id']}/start")
     assert started.status_code == 200
 
-    panel = (await logged_in_client.get(f"/htmx/tasks/{t['id']}/detail")).text
+    panel = (await logged_in_client.get(f"/doday/htmx/tasks/{t['id']}/detail")).text
     assert "running: true" in panel  # x-data state seeded from server
     assert "идёт сейчас" in panel
 

@@ -26,7 +26,7 @@ async def test_login_correct_credentials_sets_session(
     )
     assert response.status_code == 303
     # `?welcome=1` triggers dodayGoal('login') in base.html on first paint.
-    assert response.headers["location"] == "/app/today?welcome=1"
+    assert response.headers["location"] == "/doday/app/today?welcome=1"
     assert "session" in response.cookies
 
 

@@ -17,7 +17,7 @@ async def test_robots_txt_disallows_app_paths(client: AsyncClient) -> None:
     assert r.status_code == 200
     body = r.text
     assert "User-agent: *" in body
-    for path in ("/app/", "/api/", "/htmx/", "/auth/"):
+    for path in ("/doday/app/", "/api/", "/doday/htmx/", "/auth/"):
         assert f"Disallow: {path}" in body
     assert "Sitemap:" in body
 
@@ -30,4 +30,4 @@ async def test_sitemap_xml_exposes_marketing_pages(client: AsyncClient) -> None:
     assert "<urlset" in body
     # Marketing pages should be in there; app shell paths must NOT
     assert "/privacy" in body
-    assert "/app/" not in body
+    assert "/doday/app/" not in body

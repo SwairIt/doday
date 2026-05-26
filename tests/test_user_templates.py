@@ -66,7 +66,7 @@ async def test_instantiate_user_template(logged_in_client: AsyncClient) -> None:
     parents = (await logged_in_client.get(f"/api/tasks?project_id={new_proj['id']}")).json()
     assert len(parents) == 1
     assert parents[0]["title"] == "Parent"
-    subs_html = (await logged_in_client.get(f"/htmx/tasks/{parents[0]['id']}/subtasks")).text
+    subs_html = (await logged_in_client.get(f"/doday/htmx/tasks/{parents[0]['id']}/subtasks")).text
     assert "Child" in subs_html
 
 
@@ -100,15 +100,15 @@ async def test_instantiate_unknown_template_404(logged_in_client: AsyncClient) -
 async def test_settings_shows_template_list_when_experiment_on(
     logged_in_client: AsyncClient,
 ) -> None:
-    """When user_templates is on, /app/settings#experiments has a list/instantiate UI."""
+    """When user_templates is on, /doday/app/settings#experiments has a list/instantiate UI."""
     # OFF → no list UI.
-    off = (await logged_in_client.get("/app/settings")).text
+    off = (await logged_in_client.get("/doday/app/settings")).text
     assert "Нет сохранённых шаблонов" not in off
     assert "→ создать проект" not in off
 
     await logged_in_client.post("/api/profile/experiments/user_templates", data={"enabled": "true"})
 
-    on = (await logged_in_client.get("/app/settings")).text
+    on = (await logged_in_client.get("/doday/app/settings")).text
     # Inline list with "create project" action + empty-state text both present.
     assert "/api/user-templates" in on  # Alpine fetch target
     assert "→ создать проект" in on or "создать проект" in on
@@ -121,7 +121,7 @@ async def test_save_button_appears_only_when_experiment_enabled(
     proj = (await logged_in_client.post("/api/projects", json={"name": "MenuCheck"})).json()
 
     # OFF by default → button hidden.
-    page_off = await logged_in_client.get(f"/app/projects/{proj['slug']}")
+    page_off = await logged_in_client.get(f"/doday/app/projects/{proj['slug']}")
     assert "Сохранить как шаблон" not in page_off.text
 
     # Toggle the experiment on → button appears.
@@ -130,6 +130,6 @@ async def test_save_button_appears_only_when_experiment_enabled(
     )
     assert on.json()["enabled"] is True
 
-    page_on = await logged_in_client.get(f"/app/projects/{proj['slug']}")
+    page_on = await logged_in_client.get(f"/doday/app/projects/{proj['slug']}")
     assert "Сохранить как шаблон" in page_on.text
     assert "save-as-template" in page_on.text

@@ -11,7 +11,7 @@ async def test_manifest_endpoint(client: AsyncClient) -> None:
     assert "manifest" in response.headers["content-type"]
     body = json.loads(response.text)
     assert body["name"] == "Doday — todo для всех"
-    assert body["start_url"] == "/app/today"
+    assert body["start_url"] == "/doday/app/today"
     assert body["display"] == "standalone"
     assert len(body["icons"]) >= 1
 
@@ -25,6 +25,6 @@ async def test_service_worker_endpoint(client: AsyncClient) -> None:
 
 
 async def test_base_links_manifest(logged_in_client: AsyncClient) -> None:
-    body = (await logged_in_client.get("/app/today")).text
+    body = (await logged_in_client.get("/doday/app/today")).text
     assert 'rel="manifest"' in body
     assert "/service-worker.js" in body

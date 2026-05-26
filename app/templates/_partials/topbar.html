@@ -16,7 +16,7 @@
 
   <h1 class="text-lg font-semibold flex-1 truncate">{% block view_title %}Doday{% endblock %}</h1>
 
-  <a href="/app/stats"
+  <a href="/doday/app/stats"
      x-data="{ s: { current: 0, longest: 0, today_done: false }, async load() {
        try { const r = await fetch('/api/stats/streak', {credentials:'include'}); if (r.ok) this.s = await r.json(); } catch(e){}
      } }"

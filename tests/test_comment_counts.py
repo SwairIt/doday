@@ -49,7 +49,7 @@ async def test_comment_badge_in_project_view(
     from app.projects.service import get_project
 
     project = await get_project(db_session, user.id, task.project_id)
-    body = (await logged_in_client.get(f"/app/projects/{project.slug}")).text
+    body = (await logged_in_client.get(f"/doday/app/projects/{project.slug}")).text
     # The badge carries a unique title; the context-menu «Комментарии» item does not.
     assert "Комментариев: 1" in body
     assert "💬 1" in body
@@ -66,7 +66,7 @@ async def test_no_comment_badge_when_no_comments(
     from app.projects.service import get_project
 
     project = await get_project(db_session, user.id, task.project_id)
-    body = (await logged_in_client.get(f"/app/projects/{project.slug}")).text
+    body = (await logged_in_client.get(f"/doday/app/projects/{project.slug}")).text
     # The task renders, but no comment badge (its unique «Комментариев:» title).
     assert "Молчаливая задача" in body
     assert "Комментариев:" not in body
@@ -84,7 +84,7 @@ async def test_comment_badge_on_kanban_card(
     from app.projects.service import get_project
 
     project = await get_project(db_session, user.id, task.project_id)
-    body = (await logged_in_client.get(f"/app/projects/{project.slug}?view=kanban")).text
+    body = (await logged_in_client.get(f"/doday/app/projects/{project.slug}?view=kanban")).text
     # The kanban card shows the same 💬 N badge as the list row.
     assert "Комментариев: 1" in body
     assert "💬 1" in body
@@ -101,6 +101,6 @@ async def test_no_comment_badge_on_kanban_when_none(
     from app.projects.service import get_project
 
     project = await get_project(db_session, user.id, task.project_id)
-    body = (await logged_in_client.get(f"/app/projects/{project.slug}?view=kanban")).text
+    body = (await logged_in_client.get(f"/doday/app/projects/{project.slug}?view=kanban")).text
     assert "Тихая карточка" in body
     assert "Комментариев:" not in body

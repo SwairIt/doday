@@ -33,7 +33,7 @@
       f.append('action', 'set_due');
       f.append('due', new Date().toISOString().slice(0, 10));
       ids.forEach(function (id) { f.append('ids', id); });
-      fetch('/htmx/bulk', { method: 'POST', credentials: 'include', body: f })
+      fetch('/doday/htmx/bulk', { method: 'POST', credentials: 'include', body: f })
         .then(function () { location.reload(); })
         .catch(function () { if (btn) btn.disabled = false; });
     }

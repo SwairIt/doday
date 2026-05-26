@@ -6,7 +6,7 @@ from httpx import AsyncClient
 
 async def test_detail_has_share_button(logged_in_client: AsyncClient) -> None:
     tid = (await logged_in_client.post("/api/tasks", json={"title": "ShareMe"})).json()["id"]
-    html = (await logged_in_client.get(f"/htmx/tasks/{tid}/detail")).text
+    html = (await logged_in_client.get(f"/doday/htmx/tasks/{tid}/detail")).text
     # Share button: deep-link + clipboard wiring present.
     assert f"?task={tid}" in html
     assert "navigator.clipboard" in html

@@ -249,7 +249,7 @@ async def test_help_article_renders(logged_in_client: AsyncClient) -> None:
 
 
 async def test_profile_shows_school_section(logged_in_client: AsyncClient) -> None:
-    body = (await logged_in_client.get("/app/settings")).text
+    body = (await logged_in_client.get("/doday/app/settings")).text
     assert "Школьный дневник" in body
     assert "/api/school/integrations" in body
     # Primary token-acquisition method: portal's /v2/token/refresh pages.

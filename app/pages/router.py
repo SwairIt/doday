@@ -20,11 +20,11 @@ async def doday_landing(request: Request, user: CurrentUser) -> Response:
 
     Lives at `/doday` since 2026-05-25 when `/` was repurposed as the studio hub
     (`app.hub.router`). Anonymous visitors see marketing copy; logged-in users
-    are bounced to /app/today unless they explicitly opted into preview.
+    are bounced to /doday/app/today unless they explicitly opted into preview.
     """
     preview = request.query_params.get("preview") == "1"
     if user is not None and not preview:
-        return RedirectResponse(url="/app/today", status_code=302)
+        return RedirectResponse(url="/doday/app/today", status_code=302)
     return templates.TemplateResponse(
         request,
         "landing.html",
@@ -212,4 +212,4 @@ async def invite_accept(
                 **ctx,
             },
         )
-    return RedirectResponse("/app/projects", status_code=303)
+    return RedirectResponse("/doday/app/projects", status_code=303)

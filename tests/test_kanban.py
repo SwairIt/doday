@@ -6,7 +6,7 @@ from httpx import AsyncClient
 async def test_kanban_view_renders(logged_in_client: AsyncClient) -> None:
     proj = (await logged_in_client.post("/api/projects", json={"name": "Kanban test"})).json()
     response = await logged_in_client.get(
-        f"/app/projects/{proj['slug']}", params={"view": "kanban"}
+        f"/doday/app/projects/{proj['slug']}", params={"view": "kanban"}
     )
     assert response.status_code == 200
     assert "Без секции" in response.text  # default column for tasks without section
@@ -15,14 +15,14 @@ async def test_kanban_view_renders(logged_in_client: AsyncClient) -> None:
 
 async def test_list_view_default_renders(logged_in_client: AsyncClient) -> None:
     proj = (await logged_in_client.post("/api/projects", json={"name": "P"})).json()
-    response = await logged_in_client.get(f"/app/projects/{proj['slug']}")
+    response = await logged_in_client.get(f"/doday/app/projects/{proj['slug']}")
     assert response.status_code == 200
     assert "Список" in response.text  # toggle label for current view
 
 
 async def test_kanban_view_toggle_link_present(logged_in_client: AsyncClient) -> None:
     proj = (await logged_in_client.post("/api/projects", json={"name": "P"})).json()
-    response = await logged_in_client.get(f"/app/projects/{proj['slug']}")
+    response = await logged_in_client.get(f"/doday/app/projects/{proj['slug']}")
     assert "view=kanban" in response.text  # toggle target
 
 
@@ -52,7 +52,7 @@ async def test_kanban_renders_sections_as_columns(logged_in_client: AsyncClient)
     await logged_in_client.post("/api/sections", json={"project_id": proj["id"], "name": "DoneCol"})
 
     response = await logged_in_client.get(
-        f"/app/projects/{proj['slug']}", params={"view": "kanban"}
+        f"/doday/app/projects/{proj['slug']}", params={"view": "kanban"}
     )
     assert "TodoCol" in response.text
     assert "DoneCol" in response.text

@@ -57,7 +57,7 @@
             n.onclick = () => {
               window.focus();
               if (window.htmx) {
-                htmx.ajax('GET', '/htmx/tasks/' + t.id + '/detail',
+                htmx.ajax('GET', '/doday/htmx/tasks/' + t.id + '/detail',
                           {target: '#task-detail-slot', swap: 'innerHTML'});
               }
               n.close();

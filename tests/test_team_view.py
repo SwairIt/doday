@@ -1,4 +1,4 @@
-"""Tests for the «Команда» team-workload view (/app/team) and list_team_tasks."""
+"""Tests for the «Команда» team-workload view (/doday/app/team) and list_team_tasks."""
 
 from typing import Any
 
@@ -70,7 +70,7 @@ async def test_team_view_renders(
     await add_member(db_session, shared.id, second_user.id, role="member")
     await create_task(db_session, owner.id, title="Видна в команде", project_id=shared.id)
 
-    resp = await logged_in_client.get("/app/team")
+    resp = await logged_in_client.get("/doday/app/team")
     assert resp.status_code == 200
     assert "Команда" in resp.text
     assert "Видна в команде" in resp.text
@@ -81,11 +81,11 @@ async def test_team_view_empty_state(
 ) -> None:
     owner = await _owner(db_session)
     await ensure_inbox(db_session, owner.id)  # only a personal project → no team tasks
-    resp = await logged_in_client.get("/app/team")
+    resp = await logged_in_client.get("/doday/app/team")
     assert resp.status_code == 200
     assert "появятся задачи команды" in resp.text
 
 
 async def test_team_view_anonymous_blocked(client: AsyncClient) -> None:
-    resp = await client.get("/app/team")
+    resp = await client.get("/doday/app/team")
     assert resp.status_code == 401

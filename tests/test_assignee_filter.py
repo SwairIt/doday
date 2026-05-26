@@ -29,7 +29,7 @@ async def test_filter_shown_for_shared_project(
     project = await create_project(db_session, owner.id, name="Командный")
     await add_member(db_session, project.id, second_user.id, role="member")
 
-    body = (await logged_in_client.get(f"/app/projects/{project.slug}")).text
+    body = (await logged_in_client.get(f"/doday/app/projects/{project.slug}")).text
     assert "Исполнитель:" in body
     assert "Не назначено" in body
     # The current user's id is embedded so the «Мои» filter can match rows.
@@ -42,6 +42,6 @@ async def test_filter_hidden_for_single_member_project(
     owner = await _owner(db_session)
     inbox = await ensure_inbox(db_session, owner.id)
 
-    body = (await logged_in_client.get(f"/app/projects/{inbox.slug}")).text
+    body = (await logged_in_client.get(f"/doday/app/projects/{inbox.slug}")).text
     # Single-member project: no assignee-filter dropdown.
     assert "Исполнитель:" not in body

@@ -21,7 +21,7 @@ async def test_kanban_card_exposes_project_and_kcard_id(
     from app.projects.service import get_project
 
     project = await get_project(db_session, user.id, task.project_id)
-    body = (await logged_in_client.get(f"/app/projects/{project.slug}?view=kanban")).text
+    body = (await logged_in_client.get(f"/doday/app/projects/{project.slug}?view=kanban")).text
     assert f'id="kcard-{task.id}"' in body
     # data-project lets the context menu fetch that project's members for «Назначить на →».
     assert f'data-project="{task.project_id}"' in body

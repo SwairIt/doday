@@ -26,7 +26,7 @@ async def test_collapse_toggle_present_with_sections(
     project = await get_project(db_session, user.id, task.project_id)
     await create_section(db_session, user.id, project_id=project.id, name="Секция 1")
 
-    body = (await logged_in_client.get(f"/app/projects/{project.slug}")).text
+    body = (await logged_in_client.get(f"/doday/app/projects/{project.slug}")).text
     assert "doday-sections-toggle" in body
     assert "Свернуть секции" in body
 
@@ -40,6 +40,6 @@ async def test_collapse_toggle_absent_without_sections(
     project = await create_project(db_session, user.id, name="Без секций")
     await create_task(db_session, user.id, title="одна задача", project_id=project.id)
 
-    body = (await logged_in_client.get(f"/app/projects/{project.slug}")).text
+    body = (await logged_in_client.get(f"/doday/app/projects/{project.slug}")).text
     assert "одна задача" in body
     assert "doday-sections-toggle" not in body

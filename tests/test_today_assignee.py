@@ -63,7 +63,7 @@ async def test_today_shows_shared_assignee_avatar(
     )
     await update_task(db_session, owner.id, task.id, assigned_to=second_user.id)
 
-    body = (await logged_in_client.get("/app/today")).text
+    body = (await logged_in_client.get("/doday/app/today")).text
     # The assignee (second_user) appears as an avatar (label in the title attr).
     assert second_user.email in body
 
@@ -81,7 +81,7 @@ async def test_today_personal_task_has_no_assignee_avatar(
         due_at=datetime.now(UTC),
     )
 
-    resp = await logged_in_client.get("/app/today")
+    resp = await logged_in_client.get("/doday/app/today")
     assert resp.status_code == 200
     # Personal single-member project → no assignee avatar markup for it.
     assert "Исполнитель:" not in resp.text

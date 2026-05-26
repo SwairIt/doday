@@ -105,9 +105,9 @@ async def test_structured_data_is_valid_json(logged_in_client: AsyncClient) -> N
 
 
 async def test_invite_friends_modal_in_authed_pages(logged_in_client: AsyncClient) -> None:
-    """Invite-modal markup must be present on /app/today so the global trigger
+    """Invite-modal markup must be present on /doday/app/today so the global trigger
     `window.dodayInviteFriends()` finds a target."""
-    body = (await logged_in_client.get("/app/today")).text
+    body = (await logged_in_client.get("/doday/app/today")).text
     assert "dodayInviteFriends" in body or "open-invite-friends" in body
     assert "telegramShareUrl" in body or "Telegram" in body
     # Sidebar button calls the global function on click.
@@ -116,7 +116,7 @@ async def test_invite_friends_modal_in_authed_pages(logged_in_client: AsyncClien
 
 async def test_invite_modal_includes_share_targets(logged_in_client: AsyncClient) -> None:
     """All four share channels are linked from the modal."""
-    body = (await logged_in_client.get("/app/today")).text
+    body = (await logged_in_client.get("/doday/app/today")).text
     assert "t.me/share/url" in body
     assert "vk.com/share.php" in body
     assert "api.whatsapp.com/send" in body
@@ -137,11 +137,11 @@ async def test_invite_modal_script_has_no_jinja_escaping_left(
     We scope to the invite-modal block to avoid false positives from other
     scripts (the markdown renderer legitimately has `&quot;` in its source —
     it's the function that escapes HTML)."""
-    body = (await logged_in_client.get("/app/today")).text
+    body = (await logged_in_client.get("/doday/app/today")).text
     # Slice from `window.dodayInviteState` to the next closing `};` of the
     # IIFE — that's the invite-modal-specific JS we care about.
     start = body.find("window.dodayInviteState")
-    assert start != -1, "invite-modal JS not found in /app/today response"
+    assert start != -1, "invite-modal JS not found in /doday/app/today response"
     snippet = body[start : start + 5000]  # generous window covering the IIFE
     assert "&#34;" not in snippet, "HTML-escaped quote in invite-modal JS — JS will crash"
     assert "&quot;" not in snippet, "HTML-escaped quote in invite-modal JS — JS will crash"
@@ -154,7 +154,7 @@ async def test_invite_modal_has_server_rendered_fallbacks(logged_in_client: Asyn
     The textarea has plain inner text (rendered without x-text), the input
     has a real `value=...` attribute, and the copy button has a default
     text node inside the x-text span."""
-    body = (await logged_in_client.get("/app/today")).text
+    body = (await logged_in_client.get("/doday/app/today")).text
     # Server-rendered textarea content as fallback.
     assert "бесплатный todo на русском" in body
     # Server-rendered button text as fallback (inside the x-text span).

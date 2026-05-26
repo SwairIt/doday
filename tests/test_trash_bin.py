@@ -77,14 +77,14 @@ async def test_trashed_does_not_appear_in_today(
 
 
 async def test_trash_view_renders(logged_in_client: AsyncClient) -> None:
-    body = (await logged_in_client.get("/app/trash")).text
+    body = (await logged_in_client.get("/doday/app/trash")).text
     assert "Корзина" in body
     assert "30 дней" in body
 
 
 async def test_sidebar_includes_trash_link(logged_in_client: AsyncClient) -> None:
-    body = (await logged_in_client.get("/app/today")).text
-    assert "/app/trash" in body
+    body = (await logged_in_client.get("/doday/app/today")).text
+    assert "/doday/app/trash" in body
 
 
 async def test_purge_all_empties_trash(logged_in_client: AsyncClient) -> None:

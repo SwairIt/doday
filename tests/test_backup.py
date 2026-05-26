@@ -82,5 +82,5 @@ async def test_import_preserves_subtask_links(logged_in_client: AsyncClient) -> 
     assert len(parents) == 2  # original + imported
 
     for p in parents:
-        subs_html = (await logged_in_client.get(f"/htmx/tasks/{p['id']}/subtasks")).text
+        subs_html = (await logged_in_client.get(f"/doday/htmx/tasks/{p['id']}/subtasks")).text
         assert "Child" in subs_html

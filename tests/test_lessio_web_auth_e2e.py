@@ -1,7 +1,7 @@
 """End-to-end auth flow для Lessio: register → cabinet → logout → /lessio → login → cabinet.
 
 Цель — гарантировать что Lessio-tutor НИКОГДА не попадает в Doday-cabinet
-(/app/today) — только в /lessio/app/today. После logout — возврат на /lessio,
+(/doday/app/today) — только в /lessio/app/today. После logout — возврат на /lessio,
 не на Doday hub /.
 """
 
@@ -57,9 +57,9 @@ async def test_lessio_register_then_logout_then_login_keeps_user_in_lessio(
         follow_redirects=False,
     )
     assert r7.status_code in (302, 303)
-    # КЛЮЧЕВОЕ — должен попасть в /lessio/app/today, НЕ /app/today
+    # КЛЮЧЕВОЕ — должен попасть в /lessio/app/today, НЕ /doday/app/today
     assert r7.headers["location"] == "/lessio/app/today"
-    assert "/app/today" not in r7.headers["location"].replace("/lessio/app/today", "")
+    assert "/doday/app/today" not in r7.headers["location"].replace("/lessio/app/today", "")
 
     # 7. Cabinet снова работает
     r8 = await client.get("/lessio/app/today")

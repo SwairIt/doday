@@ -88,18 +88,18 @@ async def test_filter_unknown_slug_raises(db_session: AsyncSession) -> None:
 
 
 async def test_filter_endpoint_renders(logged_in_client: AsyncClient) -> None:
-    response = await logged_in_client.get("/app/filters/overdue")
+    response = await logged_in_client.get("/doday/app/filters/overdue")
     assert response.status_code == 200
     assert "Просрочено" in response.text
 
 
 async def test_filter_endpoint_unknown_slug_404(logged_in_client: AsyncClient) -> None:
-    response = await logged_in_client.get("/app/filters/bogus")
+    response = await logged_in_client.get("/doday/app/filters/bogus")
     assert response.status_code == 404
 
 
 async def test_filter_endpoint_anon_blocked(client: AsyncClient) -> None:
-    response = await client.get("/app/filters/overdue")
+    response = await client.get("/doday/app/filters/overdue")
     assert response.status_code == 401
 
 

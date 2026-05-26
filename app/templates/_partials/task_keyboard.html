@@ -48,7 +48,7 @@
       });
       // Re-render via HTMX swap on the row.
       if (window.htmx) {
-        htmx.ajax('GET', '/htmx/tasks/' + selectedId + '/row', {
+        htmx.ajax('GET', '/doday/htmx/tasks/' + selectedId + '/row', {
           target: '#task-' + selectedId, swap: 'outerHTML',
         }).catch(() => location.reload());
       } else {
@@ -92,7 +92,7 @@
       if (e.key === 'Enter') {
         e.preventDefault();
         if (window.htmx) {
-          htmx.ajax('GET', '/htmx/tasks/' + selectedId + '/detail', {
+          htmx.ajax('GET', '/doday/htmx/tasks/' + selectedId + '/detail', {
             target: '#task-detail-slot', swap: 'innerHTML',
           });
         }
@@ -101,7 +101,7 @@
       if (e.key === 'c') {
         e.preventDefault();
         try {
-          await fetch('/htmx/tasks/' + selectedId + '/toggle', {method: 'POST', credentials: 'include'});
+          await fetch('/doday/htmx/tasks/' + selectedId + '/toggle', {method: 'POST', credentials: 'include'});
           location.reload();
         } catch(_) {}
         return;
@@ -146,7 +146,7 @@
       if (e.key === 'e') {
         e.preventDefault();
         if (window.htmx) {
-          htmx.ajax('GET', '/htmx/tasks/' + selectedId + '/edit', {
+          htmx.ajax('GET', '/doday/htmx/tasks/' + selectedId + '/edit', {
             target: '#task-' + selectedId, swap: 'outerHTML',
           });
         }

@@ -92,7 +92,7 @@ async def save_as_endpoint(
     session: DbSession,
 ) -> UserTemplateOut:
     """Сохранить проект как шаблон. Доступно всем — фича experimental-уровня
-    (включается в /app/settings#experiments). Листинг и instantiate тоже всем."""
+    (включается в /doday/app/settings#experiments). Листинг и instantiate тоже всем."""
     try:
         obj = await save_project_as_template(session, user.id, project_id, name=payload.name)
     except ProjectNotFound as e:

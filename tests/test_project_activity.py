@@ -30,7 +30,7 @@ async def test_activity_shows_member_events(
     # A teammate comments — their email/avatar should appear in the feed.
     await create_comment(db_session, second_user.id, task_id=task.id, body="моё мнение")
 
-    body = (await logged_in_client.get(f"/app/projects/{shared.slug}?view=activity")).text
+    body = (await logged_in_client.get(f"/doday/app/projects/{shared.slug}?view=activity")).text
     assert "ОбщаяЗадача" in body
     assert second_user.email in body  # comment author's avatar title
     assert "Активность" in body
@@ -42,7 +42,7 @@ async def test_activity_empty_state_ok(
     user = await _owner(db_session)
     project = await create_project(db_session, user.id, name="Пустая лента")
 
-    resp = await logged_in_client.get(f"/app/projects/{project.slug}?view=activity")
+    resp = await logged_in_client.get(f"/doday/app/projects/{project.slug}?view=activity")
     assert resp.status_code == 200
     assert "Пока нет активности" in resp.text
 
@@ -55,5 +55,5 @@ async def test_activity_excludes_other_projects(
     p2 = await create_project(db_session, user.id, name="Лента П2")
     await create_task(db_session, user.id, title="ЗадачаИзП2", project_id=p2.id)
 
-    body = (await logged_in_client.get(f"/app/projects/{p1.slug}?view=activity")).text
+    body = (await logged_in_client.get(f"/doday/app/projects/{p1.slug}?view=activity")).text
     assert "ЗадачаИзП2" not in body

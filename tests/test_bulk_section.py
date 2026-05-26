@@ -27,7 +27,7 @@ async def test_bulk_set_and_clear_section(
     t2 = await create_task(db_session, user.id, title="S2", project_id=proj.id)
 
     resp = await logged_in_client.post(
-        "/htmx/bulk",
+        "/doday/htmx/bulk",
         data={
             "action": "set_section",
             "section_id": str(section.id),
@@ -43,7 +43,7 @@ async def test_bulk_set_and_clear_section(
 
     # Empty section_id clears the section.
     resp2 = await logged_in_client.post(
-        "/htmx/bulk",
+        "/doday/htmx/bulk",
         data={"action": "set_section", "section_id": "", "ids": [str(t1.id)]},
     )
     assert resp2.status_code == 200
@@ -64,7 +64,7 @@ async def test_bulk_set_section_skips_foreign_project(
     t_b = await create_task(db_session, user.id, title="InB", project_id=proj_b.id)
 
     resp = await logged_in_client.post(
-        "/htmx/bulk",
+        "/doday/htmx/bulk",
         data={"action": "set_section", "section_id": str(section_a.id), "ids": [str(t_b.id)]},
     )
     assert resp.status_code == 200  # no crash
@@ -75,5 +75,5 @@ async def test_bulk_set_section_skips_foreign_project(
 
 
 async def test_bulk_set_section_anonymous_blocked(client: AsyncClient) -> None:
-    resp = await client.post("/htmx/bulk", data={"action": "set_section", "ids": []})
+    resp = await client.post("/doday/htmx/bulk", data={"action": "set_section", "ids": []})
     assert resp.status_code == 401

@@ -18,7 +18,7 @@ async def hub_index(request: Request, user: CurrentUser) -> HTMLResponse:
 
     Anonymous visitors see project cards + author intro. Logged-in visitors also
     see the hub (no redirect) so they can navigate to other products — login
-    flow itself redirects to /app/today directly (see `app.auth.router.login`).
+    flow itself redirects to /doday/app/today directly (see `app.auth.router.login`).
     """
     return _templates.TemplateResponse(
         request,

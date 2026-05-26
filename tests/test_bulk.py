@@ -16,7 +16,7 @@ async def test_bulk_complete_marks_all_as_done(
     ids = [a.json()["id"], b.json()["id"], c.json()["id"]]
 
     response = await logged_in_client.post(
-        "/htmx/bulk",
+        "/doday/htmx/bulk",
         data={"action": "complete", "ids": ids},
     )
     assert response.status_code == 200
@@ -37,8 +37,10 @@ async def test_bulk_uncomplete_reopens_all(
     b = (await logged_in_client.post("/api/tasks", json={"title": "UB"})).json()
     ids = [a["id"], b["id"]]
     # Complete them first, then bulk-reopen.
-    await logged_in_client.post("/htmx/bulk", data={"action": "complete", "ids": ids})
-    response = await logged_in_client.post("/htmx/bulk", data={"action": "uncomplete", "ids": ids})
+    await logged_in_client.post("/doday/htmx/bulk", data={"action": "complete", "ids": ids})
+    response = await logged_in_client.post(
+        "/doday/htmx/bulk", data={"action": "uncomplete", "ids": ids}
+    )
     assert response.status_code == 200
     assert response.headers.get("HX-Refresh") == "true"
 
@@ -55,7 +57,7 @@ async def test_bulk_delete_removes_all(
     b = await logged_in_client.post("/api/tasks", json={"title": "DelB"})
 
     response = await logged_in_client.post(
-        "/htmx/bulk",
+        "/doday/htmx/bulk",
         data={"action": "delete", "ids": [a.json()["id"], b.json()["id"]]},
     )
     assert response.status_code == 200
@@ -79,7 +81,7 @@ async def test_bulk_unknown_action_returns_400(
 ) -> None:
     a = await logged_in_client.post("/api/tasks", json={"title": "X"})
     response = await logged_in_client.post(
-        "/htmx/bulk",
+        "/doday/htmx/bulk",
         data={"action": "frobnicate", "ids": [a.json()["id"]]},
     )
     assert response.status_code == 400
@@ -90,7 +92,7 @@ async def test_bulk_skips_unknown_ids_silently(
 ) -> None:
     a = await logged_in_client.post("/api/tasks", json={"title": "Real"})
     response = await logged_in_client.post(
-        "/htmx/bulk",
+        "/doday/htmx/bulk",
         data={
             "action": "complete",
             "ids": [a.json()["id"], "00000000-0000-0000-0000-000000000000"],

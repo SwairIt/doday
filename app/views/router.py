@@ -32,7 +32,7 @@ from app.tasks.service import (
 )
 from app.views.template_filters import due_label, due_state
 
-router = APIRouter(prefix="/app", tags=["app"])
+router = APIRouter(prefix="/doday/app", tags=["app"])
 templates = Jinja2Templates(directory="app/templates")
 templates.env.globals["due_state"] = due_state
 templates.env.globals["due_label"] = due_label
@@ -91,7 +91,7 @@ def _day_label(d: date, today: date) -> str:
 
 @router.get("", include_in_schema=False)
 async def app_root() -> Response:
-    return RedirectResponse(url="/app/today", status_code=302)
+    return RedirectResponse(url="/doday/app/today", status_code=302)
 
 
 @router.get("/today", response_class=HTMLResponse)
@@ -203,7 +203,7 @@ async def achievements_view(
     from app.experiments.service import is_enabled
 
     if not is_enabled(user, "achievements"):
-        return RedirectResponse(url="/app/settings#experiments", status_code=303)
+        return RedirectResponse(url="/doday/app/settings#experiments", status_code=303)
     return templates.TemplateResponse(
         request,
         "app/achievements.html",
@@ -223,7 +223,7 @@ async def habits_view(
     from app.experiments.service import is_enabled
 
     if not is_enabled(user, "habits"):
-        return RedirectResponse(url="/app/settings#experiments", status_code=303)
+        return RedirectResponse(url="/doday/app/settings#experiments", status_code=303)
     projects = await list_projects(session, user.id)
     project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
     return templates.TemplateResponse(
@@ -249,7 +249,7 @@ async def graph_view(
 
     if not is_enabled(user, "graph"):
         # Send the user to settings so they can opt in rather than just 404.
-        return RedirectResponse(url="/app/settings#experiments", status_code=303)
+        return RedirectResponse(url="/doday/app/settings#experiments", status_code=303)
     projects = await list_projects(session, user.id)
     return templates.TemplateResponse(
         request,
@@ -603,7 +603,7 @@ async def inbox_view(request: Request, user: RequiredUser, session: DbSession) -
     from app.projects.service import ensure_inbox
 
     inbox = await ensure_inbox(session, user.id)
-    return RedirectResponse(url=f"/app/projects/{inbox.slug}", status_code=302)
+    return RedirectResponse(url=f"/doday/app/projects/{inbox.slug}", status_code=302)
 
 
 @router.get("/filters/{slug}", response_class=HTMLResponse)
@@ -1000,7 +1000,7 @@ async def projects_archive_view(
 
 @router.get("/profile")
 async def profile_redirect() -> RedirectResponse:
-    return RedirectResponse("/app/settings", status_code=303)
+    return RedirectResponse("/doday/app/settings", status_code=303)
 
 
 @router.get("/settings", response_class=HTMLResponse)
@@ -1164,7 +1164,7 @@ async def school_view(
     from app.school.subjects import SUBJECTS, WEEKDAY_FULL_RU, WEEKDAY_SHORT_RU
 
     if not is_enabled(user, "school"):
-        return RedirectResponse(url="/app/settings#features", status_code=303)
+        return RedirectResponse(url="/doday/app/settings#features", status_code=303)
 
     projects = await list_projects(session, user.id)
     project_color_map: dict[UUID, str] = {p.id: p.color for p in projects}
@@ -1394,7 +1394,7 @@ async def simple_add_submit(
     due_date_value = form.get("due_date", "")
     due_date = str(due_date_value).strip() if due_date_value else ""
     if not title:
-        return RedirectResponse(url="/app/simple/add", status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(url="/doday/app/simple/add", status_code=status.HTTP_303_SEE_OTHER)
 
     due_at: datetime | None = None
     if due_date:
@@ -1406,7 +1406,7 @@ async def simple_add_submit(
 
     await _create_task_simple(session, user.id, title=title, due_at=due_at)
 
-    redirect = "/app/simple/today" if due_at else "/app/simple/inbox"
+    redirect = "/doday/app/simple/today" if due_at else "/doday/app/simple/inbox"
     return RedirectResponse(url=redirect, status_code=status.HTTP_303_SEE_OTHER)
 
 

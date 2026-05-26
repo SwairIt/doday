@@ -36,7 +36,7 @@
   }"
 >
 <form
-  hx-post="/htmx/quickadd"
+  hx-post="/doday/htmx/quickadd"
   hx-target="#quickadd-list"
   hx-swap="afterbegin swap:240ms"
   hx-on::after-request="if(event.detail.successful){this.reset();try{if(!localStorage.getItem('doday-fired-first-task')){window.dodayGoal&&window.dodayGoal('first_task');localStorage.setItem('doday-fired-first-task','1');}}catch(e){}}"
@@ -53,7 +53,7 @@
       name="text"
       data-quickadd-input
       x-data="{
-        draftKey: 'doday-quickadd-draft' + (window.location.pathname.startsWith('/app/projects/') ? ':' + window.location.pathname : ''),
+        draftKey: 'doday-quickadd-draft' + (window.location.pathname.startsWith('/doday/app/projects/') ? ':' + window.location.pathname : ''),
         init() {
           try {
             const saved = localStorage.getItem(this.draftKey);

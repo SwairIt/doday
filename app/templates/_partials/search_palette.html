@@ -4,17 +4,17 @@
     open: false,
     q: '',
     commands: [
-      {label: 'Сегодня', url: '/app/today', icon: '📅'},
-      {label: 'Инбокс', url: '/app/inbox', icon: '📥'},
-      {label: 'Ближайшие', url: '/app/upcoming', icon: '🗓'},
-      {label: 'Календарь', url: '/app/calendar', icon: '📆'},
-      {label: 'Команда', url: '/app/team', icon: '👥'},
-      {label: 'Назначено мне', url: '/app/assigned', icon: '🙋'},
-      {label: 'Активность', url: '/app/activity', icon: '⚡'},
-      {label: 'Статистика', url: '/app/stats', icon: '📊'},
-      {label: 'Выполненные', url: '/app/done', icon: '✅'},
-      {label: 'Лейблы', url: '/app/labels', icon: '🏷'},
-      {label: 'Настройки', url: '/app/settings', icon: '⚙'}
+      {label: 'Сегодня', url: '/doday/app/today', icon: '📅'},
+      {label: 'Инбокс', url: '/doday/app/inbox', icon: '📥'},
+      {label: 'Ближайшие', url: '/doday/app/upcoming', icon: '🗓'},
+      {label: 'Календарь', url: '/doday/app/calendar', icon: '📆'},
+      {label: 'Команда', url: '/doday/app/team', icon: '👥'},
+      {label: 'Назначено мне', url: '/doday/app/assigned', icon: '🙋'},
+      {label: 'Активность', url: '/doday/app/activity', icon: '⚡'},
+      {label: 'Статистика', url: '/doday/app/stats', icon: '📊'},
+      {label: 'Выполненные', url: '/doday/app/done', icon: '✅'},
+      {label: 'Лейблы', url: '/doday/app/labels', icon: '🏷'},
+      {label: 'Настройки', url: '/doday/app/settings', icon: '⚙'}
     ],
     get matchedCommands() {
       const term = this.q.trim().toLowerCase();
@@ -61,7 +61,7 @@
         x-model="q"
         @keydown.escape="open = false"
         x-init="$watch('open', value => { if (value) $nextTick(() => $refs.input.focus()) })"
-        hx-get="/htmx/search"
+        hx-get="/doday/htmx/search"
         hx-trigger="keyup changed delay:200ms"
         hx-target="#search-results"
         hx-swap="innerHTML"

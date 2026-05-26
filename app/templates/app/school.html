@@ -15,7 +15,7 @@
     <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)]">
       Подключённые порталы
     </h2>
-    <a href="/app/settings#school" class="text-xs text-[var(--accent)] hover:underline">→ Настройки</a>
+    <a href="/doday/app/settings#school" class="text-xs text-[var(--accent)] hover:underline">→ Настройки</a>
   </div>
   {% if integrations %}
     <ul class="space-y-2">
@@ -82,7 +82,7 @@
   {% else %}
     <p class="text-sm text-[var(--text-muted)] italic">
       Пока ни одного портала не подключено.
-      <a href="/app/settings#school" class="text-[var(--accent)] hover:underline">Подключить →</a>
+      <a href="/doday/app/settings#school" class="text-[var(--accent)] hover:underline">Подключить →</a>
     </p>
   {% endif %}
   <p class="text-[10px] text-[var(--text-muted)] mt-3 italic">
@@ -120,7 +120,7 @@
     </p>
   {% else %}
     <p class="text-sm text-[var(--text-muted)] italic">
-      Сначала подключи школьный портал в <a href="/app/settings#school" class="text-[var(--accent)] hover:underline">Настройках</a>.
+      Сначала подключи школьный портал в <a href="/doday/app/settings#school" class="text-[var(--accent)] hover:underline">Настройках</a>.
     </p>
   {% endif %}
 </section>
@@ -131,7 +131,7 @@
     <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)]">
       Расписание
     </h2>
-    <a href="/app/schedule" class="text-xs text-[var(--accent)] hover:underline">→ Редактировать</a>
+    <a href="/doday/app/schedule" class="text-xs text-[var(--accent)] hover:underline">→ Редактировать</a>
   </div>
   {% set has_any_slot = grid|length > 0 %}
   {% if has_any_slot %}
@@ -171,7 +171,7 @@
     </div>
   {% else %}
     <p class="text-sm text-[var(--text-muted)] italic">
-      Расписание не настроено. Заполни сетку на <a href="/app/schedule" class="text-[var(--accent)] hover:underline">/app/schedule</a>.
+      Расписание не настроено. Заполни сетку на <a href="/doday/app/schedule" class="text-[var(--accent)] hover:underline">/doday/app/schedule</a>.
     </p>
   {% endif %}
 </section>

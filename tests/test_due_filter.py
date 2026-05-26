@@ -23,7 +23,7 @@ async def test_due_filter_present_on_project_page(
     project = await create_project(db_session, user.id, name="Со сроками")
     await create_task(db_session, user.id, title="задача", project_id=project.id)
 
-    body = (await logged_in_client.get(f"/app/projects/{project.slug}")).text
+    body = (await logged_in_client.get(f"/doday/app/projects/{project.slug}")).text
     assert "setDueFilter('all')" in body
     assert "doday-due-filter" in body
     assert "Просрочено" in body

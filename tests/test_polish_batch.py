@@ -5,7 +5,7 @@ from httpx import AsyncClient
 
 
 async def test_today_renders_weekly_goal(logged_in_client: AsyncClient) -> None:
-    page = await logged_in_client.get("/app/today")
+    page = await logged_in_client.get("/doday/app/today")
     assert page.status_code == 200
     body = page.text
     assert "doday-daily-goal" in body
@@ -14,7 +14,7 @@ async def test_today_renders_weekly_goal(logged_in_client: AsyncClient) -> None:
 
 
 async def test_focus_mode_wired(logged_in_client: AsyncClient) -> None:
-    body = (await logged_in_client.get("/app/today")).text
+    body = (await logged_in_client.get("/doday/app/today")).text
     assert "focus-mode" in body
     assert "Выйти из focus" in body
     # Listener for `f` key.
@@ -22,7 +22,7 @@ async def test_focus_mode_wired(logged_in_client: AsyncClient) -> None:
 
 
 async def test_theme_cycle_button_present(logged_in_client: AsyncClient) -> None:
-    body = (await logged_in_client.get("/app/today")).text
+    body = (await logged_in_client.get("/doday/app/today")).text
     assert "doday-theme" in body
     assert "system" in body  # cycle includes System
     # Three SVG variants for the three modes.
@@ -32,13 +32,13 @@ async def test_theme_cycle_button_present(logged_in_client: AsyncClient) -> None
 
 
 async def test_tab_badge_script_included(logged_in_client: AsyncClient) -> None:
-    body = (await logged_in_client.get("/app/today")).text
+    body = (await logged_in_client.get("/doday/app/today")).text
     assert "/api/tasks/today" in body
     assert "document.title" in body
 
 
 async def test_logout_button_in_sidebar(logged_in_client: AsyncClient) -> None:
-    body = (await logged_in_client.get("/app/today")).text
+    body = (await logged_in_client.get("/doday/app/today")).text
     # Logout form posts to /auth/logout, button has aria-label.
     assert 'action="/auth/logout"' in body
     assert "Выйти из аккаунта" in body
@@ -52,10 +52,10 @@ async def test_landing_preview_for_logged_in(logged_in_client: AsyncClient) -> N
 
 
 async def test_landing_still_redirects_without_preview(logged_in_client: AsyncClient) -> None:
-    """Without ?preview=1, logged-in users get bounced to /app/today."""
+    """Without ?preview=1, logged-in users get bounced to /doday/app/today."""
     response = await logged_in_client.get("/doday", follow_redirects=False)
     assert response.status_code in (302, 303, 307)
-    assert response.headers["location"].endswith("/app/today")
+    assert response.headers["location"].endswith("/doday/app/today")
 
 
 async def test_task_detail_includes_section_dropdown(logged_in_client: AsyncClient) -> None:
@@ -68,7 +68,7 @@ async def test_task_detail_includes_section_dropdown(logged_in_client: AsyncClie
     task = (
         await logged_in_client.post("/api/tasks", json={"title": "T", "project_id": proj["id"]})
     ).json()
-    body = (await logged_in_client.get(f"/htmx/tasks/{task['id']}/detail")).text
+    body = (await logged_in_client.get(f"/doday/htmx/tasks/{task['id']}/detail")).text
     assert ">Секция<" in body
     assert "Без секции" in body
     assert "/api/sections?project_id=" in body
@@ -82,7 +82,7 @@ async def test_task_detail_includes_markdown_preview(logged_in_client: AsyncClie
             "/api/tasks", json={"title": "T", "description": "**bold** test"}
         )
     ).json()
-    body = (await logged_in_client.get(f"/htmx/tasks/{task['id']}/detail")).text
+    body = (await logged_in_client.get(f"/doday/htmx/tasks/{task['id']}/detail")).text
     # md-preview wrapper present + uses the global window.dodayMd() renderer.
     assert "md-preview" in body
     assert "dodayMd" in body

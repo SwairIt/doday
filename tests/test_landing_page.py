@@ -42,4 +42,4 @@ async def test_landing_includes_help_link(client: AsyncClient) -> None:
 async def test_landing_when_logged_in_redirects_to_app(logged_in_client: AsyncClient) -> None:
     response = await logged_in_client.get("/doday", follow_redirects=False)
     assert response.status_code in (302, 303, 307)
-    assert response.headers["location"].endswith("/app/today")
+    assert response.headers["location"].endswith("/doday/app/today")

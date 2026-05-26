@@ -1,5 +1,5 @@
 <li id="simple-task-{{ task.id }}" class="card p-3 flex items-center gap-3">
-  <button hx-post="/app/simple/task/{{ task.id }}/toggle"
+  <button hx-post="/doday/app/simple/task/{{ task.id }}/toggle"
           hx-target="#simple-task-{{ task.id }}"
           hx-swap="outerHTML"
           aria-label="{% if task.is_completed %}Восстановить{% else %}Отметить выполненной{% endif %}"
@@ -14,7 +14,7 @@
   <span class="flex-1 {% if task.is_completed %}line-through opacity-60{% endif %}">
     {{ task.title }}
   </span>
-  <button hx-post="/app/simple/task/{{ task.id }}/delete"
+  <button hx-post="/doday/app/simple/task/{{ task.id }}/delete"
           hx-target="#simple-task-{{ task.id }}"
           hx-swap="outerHTML swap:200ms"
           hx-confirm="Удалить эту задачу?"

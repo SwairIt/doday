@@ -45,7 +45,7 @@
     style="transition: transform 150ms"
     @click="
       subsOpen = !subsOpen;
-      if (subsOpen) htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/subtasks', { target: '#subtasks-of-{{ task.id }}-slot', swap: 'innerHTML' });
+      if (subsOpen) htmx.ajax('GET', '/doday/htmx/tasks/{{ task.id }}/subtasks', { target: '#subtasks-of-{{ task.id }}-slot', swap: 'innerHTML' });
       else document.getElementById('subtasks-of-{{ task.id }}-slot').innerHTML = '';
     "
   >
@@ -73,7 +73,7 @@
             title="Комментариев: {{ _cc }}"
             @click="
               commentsOpen = !commentsOpen;
-              if (commentsOpen) htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/comments', { target: '#comments-slot-{{ task.id }}', swap: 'innerHTML' });
+              if (commentsOpen) htmx.ajax('GET', '/doday/htmx/tasks/{{ task.id }}/comments', { target: '#comments-slot-{{ task.id }}', swap: 'innerHTML' });
               else document.getElementById('comments-slot-{{ task.id }}').innerHTML = '';
             ">💬 {{ _cc }}</button>
   {% endif %}
@@ -102,7 +102,7 @@
     class="shrink-0 w-6 h-6 rounded-full border-2 transition flex items-center justify-center
            hover:scale-110 active:scale-95
            {% if task.is_completed %}grad-bg border-transparent{% else %}border-{{ prio_class }}-400 hover:border-[var(--accent)]{% endif %}"
-    hx-post="/htmx/tasks/{{ task.id }}/toggle"
+    hx-post="/doday/htmx/tasks/{{ task.id }}/toggle"
     hx-target="#task-{{ task.id }}"
     hx-swap="outerHTML swap:160ms"
   >
@@ -130,13 +130,13 @@
     <button type="button"
             class="text-left truncate min-w-0 {% if task.is_completed %}line-through text-[var(--text-muted)]{% endif %} hover:text-[var(--accent)] transition"
             title="Открыть подробности · двойной клик — редактировать"
-            hx-get="/htmx/tasks/{{ task.id }}/detail"
+            hx-get="/doday/htmx/tasks/{{ task.id }}/detail"
             hx-target="#task-detail-slot"
             hx-swap="innerHTML"
             hx-trigger="click"
-            ondblclick="event.stopPropagation(); htmx.ajax('GET', '/htmx/tasks/{{ task.id }}/edit', {target: '#task-{{ task.id }}', swap: 'outerHTML'});">{{ task.title }}</button>
+            ondblclick="event.stopPropagation(); htmx.ajax('GET', '/doday/htmx/tasks/{{ task.id }}/edit', {target: '#task-{{ task.id }}', swap: 'outerHTML'});">{{ task.title }}</button>
     {% if task.labels %}
-      <a href="/app/labels/{{ task.labels[0].id }}"
+      <a href="/doday/app/labels/{{ task.labels[0].id }}"
          class="text-xs text-[var(--text-muted)] italic truncate ml-1 shrink-0 max-w-[8rem] hover:text-[var(--accent)] hover:not-italic transition"
          title="Все задачи с лейблом «{{ task.labels[0].name }}»">— {{ task.labels[0].name }}</a>
     {% endif %}
@@ -171,17 +171,17 @@
     <div x-show="open" x-cloak @click.outside="open = false" x-transition
          class="absolute top-full right-0 mt-1 z-20 card p-2 w-56 shadow-lg space-y-1">
       <button type="button" class="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-[var(--surface-2)] transition flex items-center justify-between"
-              hx-post="/htmx/tasks/{{ task.id }}/due" :hx-vals="JSON.stringify({due: today})"
+              hx-post="/doday/htmx/tasks/{{ task.id }}/due" :hx-vals="JSON.stringify({due: today})"
               hx-target="#task-{{ task.id }}" hx-swap="outerHTML" @click="open = false">
         <span>📅 Сегодня</span><span class="text-[var(--text-muted)]" x-text="new Date().toLocaleDateString('ru-RU', {day: '2-digit', month: 'short'})"></span>
       </button>
       <button type="button" class="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-[var(--surface-2)] transition flex items-center justify-between"
-              hx-post="/htmx/tasks/{{ task.id }}/due" :hx-vals="JSON.stringify({due: tomorrow})"
+              hx-post="/doday/htmx/tasks/{{ task.id }}/due" :hx-vals="JSON.stringify({due: tomorrow})"
               hx-target="#task-{{ task.id }}" hx-swap="outerHTML" @click="open = false">
         <span>🌅 Завтра</span><span class="text-[var(--text-muted)]" x-text="new Date(Date.now()+86400000).toLocaleDateString('ru-RU', {day: '2-digit', month: 'short'})"></span>
       </button>
       <button type="button" class="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-[var(--surface-2)] transition flex items-center justify-between"
-              hx-post="/htmx/tasks/{{ task.id }}/due" :hx-vals="JSON.stringify({due: nextweek})"
+              hx-post="/doday/htmx/tasks/{{ task.id }}/due" :hx-vals="JSON.stringify({due: nextweek})"
               hx-target="#task-{{ task.id }}" hx-swap="outerHTML" @click="open = false">
         <span>📆 Через неделю</span><span class="text-[var(--text-muted)]" x-text="new Date(Date.now()+7*86400000).toLocaleDateString('ru-RU', {day: '2-digit', month: 'short'})"></span>
       </button>
@@ -189,13 +189,13 @@
         <input type="date" x-ref="picker"
                class="w-full bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-1 text-xs text-[var(--text)]"
                @change="
-                 htmx.ajax('POST', '/htmx/tasks/{{ task.id }}/due', {target: '#task-{{ task.id }}', swap: 'outerHTML', values: {due: $event.target.value}});
+                 htmx.ajax('POST', '/doday/htmx/tasks/{{ task.id }}/due', {target: '#task-{{ task.id }}', swap: 'outerHTML', values: {due: $event.target.value}});
                  open = false;
                ">
       </div>
       {% if task.due_at %}
         <button type="button" class="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-rose-500/10 text-rose-400 transition"
-                hx-post="/htmx/tasks/{{ task.id }}/due" hx-vals='{"due": ""}'
+                hx-post="/doday/htmx/tasks/{{ task.id }}/due" hx-vals='{"due": ""}'
                 hx-target="#task-{{ task.id }}" hx-swap="outerHTML" @click="open = false">
           🚫 Убрать дату
         </button>

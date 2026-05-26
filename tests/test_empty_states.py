@@ -23,5 +23,5 @@ async def _login_as(client: AsyncClient, db_session: AsyncSession, email: str) -
 
 async def test_default_empty_state(client: AsyncClient, db_session: AsyncSession) -> None:
     await _login_as(client, db_session, "empty-none@x.test")
-    body = (await client.get("/app/today")).text
+    body = (await client.get("/doday/app/today")).text
     assert "Сегодня всё чисто" in body

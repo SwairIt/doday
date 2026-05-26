@@ -57,7 +57,7 @@ async def test_duplicate_preserves_parent_task_links(logged_in_client: AsyncClie
     assert len(parents) == 1
     new_parent = parents[0]
     assert new_parent["title"] == "P"
-    subs_html = (await logged_in_client.get(f"/htmx/tasks/{new_parent['id']}/subtasks")).text
+    subs_html = (await logged_in_client.get(f"/doday/htmx/tasks/{new_parent['id']}/subtasks")).text
     assert "C" in subs_html
 
 

@@ -26,7 +26,7 @@ async def test_today_shows_subtask_badge(
     await create_task(db_session, user.id, title="суб1", parent_task_id=parent.id)
     await create_task(db_session, user.id, title="суб2", parent_task_id=parent.id)
 
-    body = (await logged_in_client.get("/app/today")).text
+    body = (await logged_in_client.get("/doday/app/today")).text
     assert "Подзадачи:" in body
     assert ">0/2</span>" in body
 
@@ -38,7 +38,7 @@ async def test_today_shows_comment_badge(
     task = await create_task(db_session, user.id, title="Обсуждаемая", due_at=datetime.now(UTC))
     await create_comment(db_session, user.id, task_id=task.id, body="заметка")
 
-    body = (await logged_in_client.get("/app/today")).text
+    body = (await logged_in_client.get("/doday/app/today")).text
     assert "Комментариев:" in body
     assert "💬" in body
 
@@ -51,6 +51,6 @@ async def test_upcoming_shows_subtask_badge(
     parent = await create_task(db_session, user.id, title="Предстоит", due_at=due)
     await create_task(db_session, user.id, title="субА", parent_task_id=parent.id)
 
-    body = (await logged_in_client.get("/app/upcoming")).text
+    body = (await logged_in_client.get("/doday/app/upcoming")).text
     assert "Подзадачи:" in body
     assert ">0/1</span>" in body

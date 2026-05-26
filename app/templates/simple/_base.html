@@ -34,14 +34,14 @@
          aria-label="Боковое меню">
     <div class="flex flex-col h-full p-4">
 
-      <a href="/app/simple/today" class="flex items-center gap-2.5 font-bold text-lg mb-8 px-2">
+      <a href="/doday/app/simple/today" class="flex items-center gap-2.5 font-bold text-lg mb-8 px-2">
         <span class="grad-bg w-9 h-9 rounded-xl flex items-center justify-center text-white font-extrabold shadow-glow">D</span>
         <span class="grad-text">Doday</span>
         <span class="text-xs text-[var(--text-muted)] font-normal">simple</span>
       </a>
 
       <nav class="space-y-1 flex-1" aria-label="Главная навигация">
-        <a href="/app/simple/today"
+        <a href="/doday/app/simple/today"
            class="simple-nav-item {% if active_tab == 'today' %}active{% endif %}"
            aria-current="{% if active_tab == 'today' %}page{% endif %}">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -49,7 +49,7 @@
           </svg>
           Сегодня
         </a>
-        <a href="/app/simple/inbox"
+        <a href="/doday/app/simple/inbox"
            class="simple-nav-item {% if active_tab == 'inbox' %}active{% endif %}"
            aria-current="{% if active_tab == 'inbox' %}page{% endif %}">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -57,7 +57,7 @@
           </svg>
           Inbox
         </a>
-        <a href="/app/simple/settings"
+        <a href="/doday/app/simple/settings"
            class="simple-nav-item {% if active_tab == 'settings' %}active{% endif %}"
            aria-current="{% if active_tab == 'settings' %}page{% endif %}">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -68,7 +68,7 @@
         </a>
       </nav>
 
-      <a href="/app/today"
+      <a href="/doday/app/today"
          class="btn-ghost !py-2 !px-3 text-xs mt-4 justify-start"
          title="Вернуть полный интерфейс со всеми функциями">
         <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -104,7 +104,7 @@
           </h1>
         </div>
         {% block header_actions %}
-          <a href="/app/simple/add"
+          <a href="/doday/app/simple/add"
              class="btn-primary !py-1.5 !px-3 text-sm whitespace-nowrap inline-flex items-center gap-1.5">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>

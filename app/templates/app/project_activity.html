@@ -16,7 +16,7 @@
 
 <div class="sticky top-[62px] z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 mb-4 bg-[var(--bg)]/90 backdrop-blur-sm border-b border-[var(--border)]/50">
   <div class="flex items-center gap-1 p-1 rounded-xl bg-[var(--surface-2)] text-sm w-fit">
-    <a href="/app/projects/{{ project.slug }}" class="px-3 py-1.5 rounded-lg hover:bg-[var(--surface)] transition">Список</a>
+    <a href="/doday/app/projects/{{ project.slug }}" class="px-3 py-1.5 rounded-lg hover:bg-[var(--surface)] transition">Список</a>
     <a href="?view=kanban" class="px-3 py-1.5 rounded-lg hover:bg-[var(--surface)] transition">Доска</a>
     <span class="px-3 py-1.5 rounded-lg grad-bg text-white font-semibold">Активность</span>
   </div>
@@ -35,7 +35,7 @@
         <div class="space-y-2">
           {% for it in day.events %}
             <div class="card p-3 flex items-start gap-3 hover:border-[var(--accent)] transition cursor-pointer"
-                 hx-get="/htmx/tasks/{{ it.task_id }}/detail"
+                 hx-get="/doday/htmx/tasks/{{ it.task_id }}/detail"
                  hx-target="#task-detail-slot"
                  hx-swap="innerHTML">
               <div class="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center

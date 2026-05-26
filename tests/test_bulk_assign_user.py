@@ -29,7 +29,7 @@ async def test_bulk_assign_user(
     t2 = await create_task(db_session, owner.id, title="A2", project_id=proj.id)
 
     resp = await logged_in_client.post(
-        "/htmx/bulk",
+        "/doday/htmx/bulk",
         data={
             "action": "assign_user",
             "assignee_id": str(second_user.id),
@@ -53,7 +53,7 @@ async def test_bulk_assign_user_skips_non_member(
     t = await create_task(db_session, owner.id, title="Solo", project_id=solo.id)
 
     resp = await logged_in_client.post(
-        "/htmx/bulk",
+        "/doday/htmx/bulk",
         data={"action": "assign_user", "assignee_id": str(second_user.id), "ids": [str(t.id)]},
     )
     assert resp.status_code == 200  # no crash
@@ -65,6 +65,6 @@ async def test_bulk_assign_user_skips_non_member(
 
 async def test_bulk_assign_user_anonymous_blocked(client: AsyncClient) -> None:
     resp = await client.post(
-        "/htmx/bulk", data={"action": "assign_user", "assignee_id": "x", "ids": []}
+        "/doday/htmx/bulk", data={"action": "assign_user", "assignee_id": "x", "ids": []}
     )
     assert resp.status_code == 401

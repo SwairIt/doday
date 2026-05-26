@@ -15,19 +15,19 @@
        relevantSlugs() {
          const path = window.location.pathname;
          const map = {
-           '/app/today':    ['quick-start', 'quickadd-syntax', 'keyboard'],
-           '/app/upcoming': ['calendar-upcoming', 'quickadd-syntax'],
-           '/app/inbox':    ['quick-start', 'projects'],
-           '/app/calendar': ['calendar-upcoming'],
-           '/app/stats':    ['pomodoro-goal'],
-           '/app/settings': ['import-export'],
-           '/app/labels':   ['labels-filters'],
-           '/app/done':     ['trash-restore'],
-           '/app/trash':    ['trash-restore'],
-           '/app/schedule': ['school-integrations'],
-           '/app/projects': ['projects', 'kanban', 'subtasks-comments-recurrence'],
-           '/app/filters':  ['labels-filters'],
-           '/app/activity': ['mood-achievements'],
+           '/doday/app/today':    ['quick-start', 'quickadd-syntax', 'keyboard'],
+           '/doday/app/upcoming': ['calendar-upcoming', 'quickadd-syntax'],
+           '/doday/app/inbox':    ['quick-start', 'projects'],
+           '/doday/app/calendar': ['calendar-upcoming'],
+           '/doday/app/stats':    ['pomodoro-goal'],
+           '/doday/app/settings': ['import-export'],
+           '/doday/app/labels':   ['labels-filters'],
+           '/doday/app/done':     ['trash-restore'],
+           '/doday/app/trash':    ['trash-restore'],
+           '/doday/app/schedule': ['school-integrations'],
+           '/doday/app/projects': ['projects', 'kanban', 'subtasks-comments-recurrence'],
+           '/doday/app/filters':  ['labels-filters'],
+           '/doday/app/activity': ['mood-achievements'],
          };
          for (const prefix of Object.keys(map)) {
            if (path.startsWith(prefix)) return map[prefix];

@@ -4,13 +4,13 @@
 {% block page_heading %}Новая задача{% endblock %}
 
 {% block header_actions %}
-  <a href="/app/simple/today" class="btn-ghost !py-1.5 !px-3 text-sm whitespace-nowrap">
+  <a href="/doday/app/simple/today" class="btn-ghost !py-1.5 !px-3 text-sm whitespace-nowrap">
     Отмена
   </a>
 {% endblock %}
 
 {% block simple_content %}
-  <form method="post" action="/app/simple/add" class="space-y-5">
+  <form method="post" action="/doday/app/simple/add" class="space-y-5">
     <div>
       <label for="title" class="block text-sm font-medium mb-2">Что нужно сделать?</label>
       <input id="title" name="title" type="text" required minlength="1" maxlength="500"

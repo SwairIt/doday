@@ -141,9 +141,9 @@ def compose_text(
         parts.extend(_task_line_text(t) for t in tomorrow)
         parts.append("")
 
-    parts.append(f"Открыть Doday: {base_url}/app/today")
+    parts.append(f"Открыть Doday: {base_url}/doday/app/today")
     parts.append("")
-    parts.append(f"Отписаться: {base_url}/app/settings (раздел Уведомления)")
+    parts.append(f"Отписаться: {base_url}/doday/app/settings (раздел Уведомления)")
     return "\n".join(parts)
 
 
@@ -214,7 +214,7 @@ color:#1a1230;">
         <tr><td align="center" bgcolor="#7c3aed"
                 style="border-radius:12px;
                        background:linear-gradient(135deg,#7c3aed 0%,#d946ef 100%);">
-          <a href="{base_url}/app/today"
+          <a href="{base_url}/doday/app/today"
              style="display:inline-block;padding:12px 28px;font-size:14px;font-weight:700;
                     color:#ffffff;text-decoration:none;letter-spacing:.2px;
                     border-radius:12px;">
@@ -229,7 +229,7 @@ color:#1a1230;">
                  border-top:1px solid #ede9fe;">
         <p style="margin:0;font-size:11px;color:#9890b8;line-height:1.5;">
           Получаешь это письмо потому что включил утренний дайджест.
-          <a href="{base_url}/app/settings" style="color:#a78bfa;text-decoration:underline;">
+          <a href="{base_url}/doday/app/settings" style="color:#a78bfa;text-decoration:underline;">
             Отписаться можно в Настройках
           </a> · одна галка.
         </p>

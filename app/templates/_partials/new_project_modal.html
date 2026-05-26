@@ -30,7 +30,7 @@
       });
       if (r.ok) {
         const p = await r.json();
-        window.location.href = '/app/projects/' + p.slug;
+        window.location.href = '/doday/app/projects/' + p.slug;
       } else {
         this.loading = false;
       }
@@ -56,7 +56,7 @@
       }
       if (r && r.ok) {
         const p = await r.json();
-        window.location.href = '/app/projects/' + p.slug;
+        window.location.href = '/doday/app/projects/' + p.slug;
       } else {
         this.loading = false;
       }

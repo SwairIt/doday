@@ -1,10 +1,10 @@
-"""Tests for onboarding card on /app/today and calendar drag-drop wiring."""
+"""Tests for onboarding card on /doday/app/today and calendar drag-drop wiring."""
 
 from httpx import AsyncClient
 
 
 async def test_onboarding_card_present_on_today(logged_in_client: AsyncClient) -> None:
-    page = await logged_in_client.get("/app/today")
+    page = await logged_in_client.get("/doday/app/today")
     assert page.status_code == 200
     assert "Добро пожаловать в Doday" in page.text
     assert "doday-onboarded" in page.text  # localStorage key referenced in markup
@@ -20,7 +20,7 @@ async def test_calendar_chips_are_draggable(logged_in_client: AsyncClient) -> No
             "due_at": "2026-12-15T00:00:00Z",
         },
     )
-    page = await logged_in_client.get("/app/calendar?month=2026-12")
+    page = await logged_in_client.get("/doday/app/calendar?month=2026-12")
     assert page.status_code == 200
     assert "DragMe" in page.text
     assert 'draggable="true"' in page.text
@@ -30,7 +30,7 @@ async def test_calendar_chips_are_draggable(logged_in_client: AsyncClient) -> No
 
 
 async def test_daily_goal_card_renders(logged_in_client: AsyncClient) -> None:
-    page = await logged_in_client.get("/app/today")
+    page = await logged_in_client.get("/doday/app/today")
     assert page.status_code == 200
     assert "Цель на день" in page.text
     assert "doday-daily-goal" in page.text
@@ -41,7 +41,7 @@ async def test_daily_goal_count_reflects_completed_today(logged_in_client: Async
     t2 = (await logged_in_client.post("/api/tasks", json={"title": "G2"})).json()
     await logged_in_client.post(f"/api/tasks/{t1['id']}/complete")
     await logged_in_client.post(f"/api/tasks/{t2['id']}/complete")
-    page = await logged_in_client.get("/app/today")
+    page = await logged_in_client.get("/doday/app/today")
     # Alpine x-data has `done: {{ done_today_count }}` rendered server-side.
     assert "done: 2" in page.text
 

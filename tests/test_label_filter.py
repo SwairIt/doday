@@ -34,7 +34,7 @@ async def test_label_filter_present_with_labeled_task(
     # each request uses a fresh session. Expire so the GET reloads labels.
     db_session.expire_all()
 
-    body = (await logged_in_client.get(f"/app/projects/{slug}")).text
+    body = (await logged_in_client.get(f"/doday/app/projects/{slug}")).text
     # Row carries the label id, the chip is rendered, the label appears as an option.
     assert f'data-labels="{label_id}"' in body
     assert "setLabelFilter('all')" in body
@@ -48,7 +48,7 @@ async def test_label_filter_absent_without_labels(
     project = await create_project(db_session, user.id, name="Без лейблов")
     await create_task(db_session, user.id, title="без метки", project_id=project.id)
 
-    body = (await logged_in_client.get(f"/app/projects/{project.slug}")).text
+    body = (await logged_in_client.get(f"/doday/app/projects/{project.slug}")).text
     assert "без метки" in body
     # No labels on any task → the filter chip is not rendered.
     assert "setLabelFilter('all')" not in body

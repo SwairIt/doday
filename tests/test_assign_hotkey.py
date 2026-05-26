@@ -6,7 +6,7 @@ from httpx import AsyncClient
 
 
 async def test_assign_hotkey_rendered(logged_in_client: AsyncClient) -> None:
-    body = (await logged_in_client.get("/app/today")).text
+    body = (await logged_in_client.get("/doday/app/today")).text
     # Handler patches assigned_to using the id from #task-ctx-menu data-me.
     assert "patchSelected({assigned_to: me})" in body
     assert "data-me=" in body

@@ -7,7 +7,7 @@ who didn't ask for them, and the team can iterate without breaking the focused
 core product.
 
 Add a new experiment here, run the matching migration if it needs schema, then
-toggle from /app/settings → «🧪 Экспериментальные функции».
+toggle from /doday/app/settings → «🧪 Экспериментальные функции».
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ class Experiment:
 
     `stage`:
     - "stable" — production-ready, just hidden by default to keep UI focused.
-      Shown in /app/settings under «Функции» (no «🧪» badge).
+      Shown in /doday/app/settings under «Функции» (no «🧪» badge).
     - "beta"   — usable daily, may still ship breaking UI changes.
     - "alpha"  — actively built, may break, no SLO. Shown under «Эксперименты».
     """

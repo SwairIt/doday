@@ -29,19 +29,19 @@
     <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider px-3 pt-2 pb-1">Главное</div>
 
     {% set primary_nav = [
-      ('inbox',    '/app/inbox',    'Inbox',     'M3 7l9 6 9-6M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'),
-      ('today',    '/app/today',    'Сегодня',   'M9 11l3 3 8-8M21 12a9 9 0 11-18 0 9 9 0 0118 0z'),
-      ('upcoming', '/app/upcoming', 'Ближайшие', 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'),
-      ('calendar', '/app/calendar', 'Календарь', 'M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'),
+      ('inbox',    '/doday/app/inbox',    'Inbox',     'M3 7l9 6 9-6M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'),
+      ('today',    '/doday/app/today',    'Сегодня',   'M9 11l3 3 8-8M21 12a9 9 0 11-18 0 9 9 0 0118 0z'),
+      ('upcoming', '/doday/app/upcoming', 'Ближайшие', 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'),
+      ('calendar', '/doday/app/calendar', 'Календарь', 'M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'),
     ] %}
     {% set secondary_nav = [
-      ('assigned', '/app/assigned', 'Назначено мне','M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'),
-      ('team',     '/app/team',     'Команда','M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a3 3 0 10-2.83-4M7 11a3 3 0 10-2.83-4'),
-      ('stats',    '/app/stats',    'Статистика','M11 3.055A9.001 9.001 0 1020.945 13H11V3.055zM20.488 9H15V3.512A9.025 9.025 0 0120.488 9z'),
-      ('done',     '/app/done',     'Завершённые','M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'),
-      ('labels',   '/app/labels',   'Лейблы',    'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z'),
-      ('activity', '/app/activity', 'Активность','M13 10V3L4 14h7v7l9-11h-7z'),
-      ('trash',    '/app/trash',    'Корзина',   'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3'),
+      ('assigned', '/doday/app/assigned', 'Назначено мне','M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'),
+      ('team',     '/doday/app/team',     'Команда','M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a3 3 0 10-2.83-4M7 11a3 3 0 10-2.83-4'),
+      ('stats',    '/doday/app/stats',    'Статистика','M11 3.055A9.001 9.001 0 1020.945 13H11V3.055zM20.488 9H15V3.512A9.025 9.025 0 0120.488 9z'),
+      ('done',     '/doday/app/done',     'Завершённые','M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'),
+      ('labels',   '/doday/app/labels',   'Лейблы',    'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z'),
+      ('activity', '/doday/app/activity', 'Активность','M13 10V3L4 14h7v7l9-11h-7z'),
+      ('trash',    '/doday/app/trash',    'Корзина',   'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3'),
     ] %}
     <div>
     {% for key, href, label, icon in primary_nav %}
@@ -85,7 +85,7 @@
     {% for fkey, flabel, fcolor, ficon in filter_items %}
       {% set active = view == 'filter:' ~ fkey %}
       {% set fcount_key = filter_count_keys.get(fkey) %}
-      <a href="/app/filters/{{ fkey }}"
+      <a href="/doday/app/filters/{{ fkey }}"
          class="flex items-center gap-3 px-3 py-2 rounded-lg transition
                 {% if active %}bg-{{ fcolor }}-500/15 text-{{ fcolor }}-400 font-semibold{% else %}hover:bg-[var(--surface)]{% endif %}">
         <svg class="w-4 h-4 shrink-0 text-{{ fcolor }}-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -117,7 +117,7 @@
       </div>
       {% if current_user.experiments.get('school') %}
         {% set active = view == 'school' %}
-        <a href="/app/school"
+        <a href="/doday/app/school"
            {% if active %}aria-current="page"{% endif %}
            class="flex items-center gap-3 px-3 py-2 rounded-lg transition
                   {% if active %}grad-bg text-white font-semibold shadow-glow{% else %}hover:bg-[var(--surface)] text-[var(--text)]{% endif %}">
@@ -130,7 +130,7 @@
       {% endif %}
       {% if current_user.experiments.get('graph') %}
         {% set active = view == 'graph' %}
-        <a href="/app/graph"
+        <a href="/doday/app/graph"
            {% if active %}aria-current="page"{% endif %}
            class="flex items-center gap-3 px-3 py-2 rounded-lg transition
                   {% if active %}grad-bg text-white font-semibold shadow-glow{% else %}hover:bg-[var(--surface)] text-[var(--text)]{% endif %}">
@@ -143,7 +143,7 @@
       {% endif %}
       {% if current_user.experiments.get('habits') %}
         {% set active = view == 'habits' %}
-        <a href="/app/habits"
+        <a href="/doday/app/habits"
            {% if active %}aria-current="page"{% endif %}
            class="flex items-center gap-3 px-3 py-2 rounded-lg transition
                   {% if active %}grad-bg text-white font-semibold shadow-glow{% else %}hover:bg-[var(--surface)] text-[var(--text)]{% endif %}">
@@ -156,7 +156,7 @@
       {% endif %}
       {% if current_user.experiments.get('achievements') %}
         {% set active = view == 'achievements' %}
-        <a href="/app/achievements"
+        <a href="/doday/app/achievements"
            {% if active %}aria-current="page"{% endif %}
            class="flex items-center gap-3 px-3 py-2 rounded-lg transition
                   {% if active %}grad-bg text-white font-semibold shadow-glow{% else %}hover:bg-[var(--surface)] text-[var(--text)]{% endif %}">
@@ -203,7 +203,7 @@
     <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider px-3 pt-5 pb-1 flex items-center justify-between">
       <span>Проекты</span>
       <div class="flex items-center gap-1">
-        <a href="/app/projects-archive" title="Архив"
+        <a href="/doday/app/projects-archive" title="Архив"
            class="text-[var(--text-muted)] hover:text-[var(--accent)] transition">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
         </a>
@@ -266,7 +266,7 @@
          с Ещё (которое стоит выше). #}
       <div class="mt-4 pt-3 px-3 border-t border-[var(--border)]">
         <div class="text-[10px] uppercase font-semibold text-rose-400/80 tracking-wider mb-1">Админ</div>
-        <a href="/app/root"
+        <a href="/doday/app/root"
            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition
                   {% if current_view == 'root' %}bg-rose-500/15 text-rose-400 font-semibold{% else %}text-[var(--text-muted)] hover:bg-[var(--surface)] hover:text-rose-400{% endif %}">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
@@ -286,7 +286,7 @@
   </button>
 
   <div class="p-3 border-t border-[var(--border)] flex items-center gap-2">
-    <a href="/app/settings"
+    <a href="/doday/app/settings"
        class="flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-[var(--surface)] transition flex-1 min-w-0">
       <div class="w-9 h-9 rounded-full grad-bg flex items-center justify-center text-white font-semibold shadow-glow text-sm shrink-0">
         {{ (current_user.email[0] if current_user else '?')|upper }}

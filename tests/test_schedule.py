@@ -4,7 +4,7 @@ from httpx import AsyncClient
 
 
 async def test_schedule_view_renders_for_logged_in(logged_in_client: AsyncClient) -> None:
-    response = await logged_in_client.get("/app/schedule")
+    response = await logged_in_client.get("/doday/app/schedule")
     assert response.status_code == 200
     body = response.text
     assert "Расписание уроков" in body

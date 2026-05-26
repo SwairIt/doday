@@ -126,7 +126,7 @@ async def detach_label(session: AsyncSession, user_id: UUID, task_id: UUID, labe
 async def list_tasks_by_label(session: AsyncSession, user_id: UUID, label_id: UUID) -> list["Task"]:
     """Open (non-completed, non-trashed) top-level tasks carrying this label.
 
-    Powers the /app/labels/{id} view. Labels eager-load via `lazy="selectin"`.
+    Powers the /doday/app/labels/{id} view. Labels eager-load via `lazy="selectin"`.
     """
     from app.tasks.models import Task
 

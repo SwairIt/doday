@@ -17,7 +17,7 @@
       class="shrink-0 mt-0.5 w-5 h-5 rounded-full border-2 transition flex items-center justify-center
              hover:scale-110 active:scale-95
              {% if task.is_completed %}grad-bg border-transparent{% else %}border-{{ prio_class }}-400 hover:border-[var(--accent)]{% endif %}"
-      hx-post="/htmx/tasks/{{ task.id }}/toggle"
+      hx-post="/doday/htmx/tasks/{{ task.id }}/toggle"
       hx-target="closest .kanban-card"
       hx-swap="outerHTML swap:160ms"
     >
@@ -28,7 +28,7 @@
     <button type="button"
             class="flex-1 min-w-0 text-sm text-left hover:text-[var(--accent)] transition {% if task.is_completed %}line-through text-[var(--text-muted)]{% endif %}"
             title="Открыть подробности"
-            hx-get="/htmx/tasks/{{ task.id }}/detail"
+            hx-get="/doday/htmx/tasks/{{ task.id }}/detail"
             hx-target="#task-detail-slot"
             hx-swap="innerHTML">
       {{ task.title }}

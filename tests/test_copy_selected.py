@@ -23,13 +23,13 @@ async def test_task_row_has_exact_title_attr(
     user = await _owner(db_session)
     await create_task(db_session, user.id, title="Купить Молоко", due_at=datetime.now(UTC))
 
-    body = (await logged_in_client.get("/app/today")).text
+    body = (await logged_in_client.get("/doday/app/today")).text
     # Exact-case title (not the lowercased data-title) is available for copying.
     assert 'data-title-text="Купить Молоко"' in body
 
 
 async def test_bulk_bar_has_copy_action(logged_in_client: AsyncClient) -> None:
-    body = (await logged_in_client.get("/app/today")).text
+    body = (await logged_in_client.get("/doday/app/today")).text
     assert "copySelected()" in body
     assert "navigator.clipboard" in body
     assert "Скопировать выделенные" in body

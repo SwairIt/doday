@@ -26,7 +26,7 @@ async def test_kanban_filter_shown_for_shared_project(
     project = await create_project(db_session, owner.id, name="Доска команды")
     await add_member(db_session, project.id, second_user.id, role="member")
 
-    body = (await logged_in_client.get(f"/app/projects/{project.slug}?view=kanban")).text
+    body = (await logged_in_client.get(f"/doday/app/projects/{project.slug}?view=kanban")).text
     assert "applyKanbanAssigneeFilter" in body
     assert "Не назначено" in body
     assert str(owner.id) in body  # current_user.id embedded for the «Мои» filter
@@ -38,6 +38,6 @@ async def test_kanban_filter_hidden_for_single_member(
     owner = await _owner(db_session)
     inbox = await ensure_inbox(db_session, owner.id)
 
-    body = (await logged_in_client.get(f"/app/projects/{inbox.slug}?view=kanban")).text
+    body = (await logged_in_client.get(f"/doday/app/projects/{inbox.slug}?view=kanban")).text
     # Single-member project: no assignee-filter toolbar.
     assert "doday-kanban-assignee-filter" not in body

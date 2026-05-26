@@ -45,6 +45,6 @@ async def test_pinned_badge_renders_in_today(logged_in_client: AsyncClient) -> N
         )
     ).json()
     await logged_in_client.post(f"/api/tasks/{task['id']}/pin")
-    body = (await logged_in_client.get("/app/today")).text
+    body = (await logged_in_client.get("/doday/app/today")).text
     assert "📌" in body
     assert "Pinned today" in body

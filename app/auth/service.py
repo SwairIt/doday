@@ -117,7 +117,7 @@ def _starter_samples() -> list[tuple[str, datetime | None, TaskPriority]]:
 
     Tasks go from simplest (tick the checkbox) to advanced (filters, projects).
     Дедлайны сегодня/завтра/через 3 дня — чтобы пользователь увидел задачи
-    и в /app/today, и в /app/upcoming, и понял разницу.
+    и в /doday/app/today, и в /doday/app/upcoming, и понял разницу.
     """
     from datetime import timedelta
 
@@ -153,7 +153,7 @@ def _starter_samples() -> list[tuple[str, datetime | None, TaskPriority]]:
         ),
         # 5. Статистика — полезная фича для всех.
         (
-            "📊 Статистика: посмотри на /app/stats — давай увидим прогресс после нескольких задач",
+            "📊 Статистика: посмотри на /doday/app/stats — давай увидим прогресс после нескольких задач",
             in_three_days,
             TaskPriority.P4,
         ),
