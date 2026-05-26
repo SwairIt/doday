@@ -21,6 +21,47 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Lessio — расписание и записи для репетиторов">
 
+  {# JSON-LD SoftwareApplication — для богатой выдачи в Google #}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Lessio",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "description": "Кабинет онлайн-учителя с публичной страницей записи и приёмом оплаты через Telegram Stars. Для репетиторов, тренеров, психологов, коучей.",
+    "url": "https://getdoday.ru/lessio",
+    "inLanguage": "ru",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "RUB",
+      "availability": "https://schema.org/InStock"
+    },
+    "creator": {
+      "@type": "Organization",
+      "name": "Doday Studio",
+      "url": "https://getdoday.ru"
+    },
+    "audience": {
+      "@type": "BusinessAudience",
+      "audienceType": "Репетиторы, онлайн-тренеры, психологи, коучи"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Lessio",
+    "url": "https://getdoday.ru/lessio",
+    "logo": "https://getdoday.ru/static/lessio/logo.svg",
+    "email": "doday.support@gmail.com",
+    "sameAs": ["https://t.me/LessioBot"],
+    "address": {"@type": "PostalAddress", "addressCountry": "RU"}
+  }
+  </script>
+
   <link rel="icon" href="/favicon.ico">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -347,6 +388,42 @@
     </div>
   </section>
 
+  <!-- BROWSE-MORE: внутренние ссылки на нишевые лендинги + помощь -->
+  <section class="px-5 py-12 max-w-5xl mx-auto">
+    <h2 class="text-2xl md:text-3xl font-extrabold mb-6 text-center">Узнать больше</h2>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <a href="/lessio/dlya-repetitorov" class="card p-4 hover:border-violet-400/40 transition">
+        <div class="text-2xl mb-1.5">📚</div>
+        <h3 class="font-bold mb-1 text-sm">Для репетиторов</h3>
+        <p class="text-xs text-violet-200/60">Английский, IELTS, математика, школа</p>
+      </a>
+      <a href="/lessio/dlya-trenerov" class="card p-4 hover:border-violet-400/40 transition">
+        <div class="text-2xl mb-1.5">💪</div>
+        <h3 class="font-bold mb-1 text-sm">Для тренеров</h3>
+        <p class="text-xs text-violet-200/60">Фитнес, йога, единоборства</p>
+      </a>
+      <a href="/lessio/dlya-psihologov" class="card p-4 hover:border-violet-400/40 transition">
+        <div class="text-2xl mb-1.5">🧠</div>
+        <h3 class="font-bold mb-1 text-sm">Для психологов</h3>
+        <p class="text-xs text-violet-200/60">Терапия, коучинг, супервизии</p>
+      </a>
+      <a href="/lessio/oplata-cherez-telegram" class="card p-4 hover:border-violet-400/40 transition">
+        <div class="text-2xl mb-1.5">⭐</div>
+        <h3 class="font-bold mb-1 text-sm">Оплата через Telegram</h3>
+        <p class="text-xs text-violet-200/60">Stars, без эквайринга</p>
+      </a>
+    </div>
+    <div class="mt-6 text-center text-sm">
+      <a href="/lessio/help" class="text-violet-300 hover:text-violet-200">
+        📚 База знаний — 28 статей про каждую функцию →
+      </a>
+      <span class="mx-2 text-violet-300/40">·</span>
+      <a href="/lessio/alternativa-calendly" class="text-violet-300 hover:text-violet-200">
+        Сравнить с Calendly →
+      </a>
+    </div>
+  </section>
+
   <!-- FINAL CTA -->
   <section class="px-5 py-16 max-w-3xl mx-auto text-center">
     <h2 class="text-3xl md:text-4xl font-extrabold mb-4">
@@ -365,15 +442,49 @@
     </p>
   </section>
 
-  <footer class="px-5 py-10 max-w-5xl mx-auto border-t border-white/5 text-center text-sm text-violet-300/50">
-    <p class="mb-2">
-      <a href="/" class="underline hover:text-violet-200">Doday Studio</a> ·
-      <a href="/doday" class="underline hover:text-violet-200">Doday Tasks (туду-лист)</a> ·
-      <a href="mailto:doday.support@gmail.com" class="underline hover:text-violet-200">doday.support@gmail.com</a>
-    </p>
-    <p class="text-xs text-violet-300/30">
-      Lessio — модуль внутри Doday Studio. Хостинг РФ, данные на серверах в Москве.
-    </p>
+  <footer class="px-5 py-10 max-w-5xl mx-auto border-t border-white/5 text-sm text-violet-300/50">
+    <div class="grid sm:grid-cols-4 gap-6 mb-6">
+      <div>
+        <h4 class="font-bold text-violet-200/90 mb-2">Продукт</h4>
+        <ul class="space-y-1.5">
+          <li><a href="/lessio" class="hover:text-violet-200">Главная</a></li>
+          <li><a href="/lessio/help" class="hover:text-violet-200">Помощь</a></li>
+          <li><a href="/lessio/alternativa-calendly" class="hover:text-violet-200">Vs Calendly</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-bold text-violet-200/90 mb-2">Для кого</h4>
+        <ul class="space-y-1.5">
+          <li><a href="/lessio/dlya-repetitorov" class="hover:text-violet-200">Репетиторы</a></li>
+          <li><a href="/lessio/dlya-trenerov" class="hover:text-violet-200">Тренеры</a></li>
+          <li><a href="/lessio/dlya-psihologov" class="hover:text-violet-200">Психологи</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-bold text-violet-200/90 mb-2">Оплата</h4>
+        <ul class="space-y-1.5">
+          <li><a href="/lessio/oplata-cherez-telegram" class="hover:text-violet-200">Через Telegram Stars</a></li>
+          <li><a href="/lessio/help/refunds" class="hover:text-violet-200">Возвраты</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-bold text-violet-200/90 mb-2">Doday Studio</h4>
+        <ul class="space-y-1.5">
+          <li><a href="/" class="hover:text-violet-200">Главная Doday</a></li>
+          <li><a href="/doday" class="hover:text-violet-200">Doday Tasks</a></li>
+          <li><a href="/privacy" class="hover:text-violet-200">Privacy</a></li>
+          <li><a href="https://t.me/LessioBot" class="hover:text-violet-200">@LessioBot</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="border-t border-white/5 pt-4 text-center">
+      <p class="text-xs text-violet-300/30 mb-1">
+        Lessio — модуль внутри Doday Studio. Хостинг РФ, данные на серверах в Москве.
+      </p>
+      <p class="text-xs text-violet-300/40">
+        <a href="mailto:doday.support@gmail.com" class="underline hover:text-violet-200">doday.support@gmail.com</a>
+      </p>
+    </div>
   </footer>
 </main>
 

@@ -138,3 +138,32 @@ async def test_help_index_has_collection_page_jsonld(client: AsyncClient) -> Non
     body = resp.text
     assert '"@type": "CollectionPage"' in body
     assert '"@type": "BreadcrumbList"' in body
+
+
+async def test_lessio_landing_has_software_app_jsonld(client: AsyncClient) -> None:
+    resp = await client.get("/lessio")
+    assert resp.status_code == 200
+    body = resp.text
+    assert '"@type": "SoftwareApplication"' in body
+    assert '"@type": "Organization"' in body
+    # Crosslinks на нишевые лендинги + help
+    assert "/lessio/dlya-repetitorov" in body
+    assert "/lessio/dlya-trenerov" in body
+    assert "/lessio/dlya-psihologov" in body
+    assert "/lessio/oplata-cherez-telegram" in body
+    assert "/lessio/help" in body
+
+
+async def test_robots_txt_allows_seo_pages(client: AsyncClient) -> None:
+    resp = await client.get("/robots.txt")
+    assert resp.status_code == 200
+    body = resp.text
+    # Cabinet/auth — закрыто
+    assert "Disallow: /lessio/app/" in body
+    assert "Disallow: /lessio/auth/" in body
+    # SEO-страницы — открыты
+    assert "Allow: /lessio/help" in body
+    assert "Allow: /lessio/dlya-repetitorov" in body
+    assert "Allow: /lessio/oplata-cherez-telegram" in body
+    # Sitemap
+    assert "Sitemap:" in body

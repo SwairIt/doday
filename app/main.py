@@ -342,8 +342,9 @@ async def version() -> dict[str, str]:
 async def robots_txt() -> PlainTextResponse:
     """Allow indexing of marketing pages, disallow the logged-in app shell.
 
-    `Allow: /u/` is explicit — public Lessio tutor pages live there and must be
-    indexable even though `/doday/app/` and `/auth/` (used by Lessio too) are blocked.
+    `Allow: /u/`, `/lessio/help/` и `/lessio/dlya-*` — публичные SEO-страницы,
+    которые должны индексироваться. Cabinet shells (`/lessio/app/`, `/doday/app/`)
+    и auth-страницы — закрыты.
     """
     body = (
         "User-agent: *\n"
@@ -355,6 +356,12 @@ async def robots_txt() -> PlainTextResponse:
         "Disallow: /lessio/auth/\n"
         "Disallow: /lessio/manage/\n"
         "Allow: /u/\n"
+        "Allow: /lessio/help\n"
+        "Allow: /lessio/dlya-repetitorov\n"
+        "Allow: /lessio/dlya-trenerov\n"
+        "Allow: /lessio/dlya-psihologov\n"
+        "Allow: /lessio/alternativa-calendly\n"
+        "Allow: /lessio/oplata-cherez-telegram\n"
         f"Sitemap: {_settings.app_base_url.rstrip('/')}/sitemap.xml\n"
     )
     return PlainTextResponse(body)
