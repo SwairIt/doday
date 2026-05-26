@@ -4,6 +4,61 @@
 
 ---
 
+## 2026-05-26 — Lessio UI maximum polish: 7 chunk'ов кабинета подряд
+
+Юзер: «Максимально доработай интерфейс, чтобы было все понятно красиво и удобно. А так же автоматизированно.» Продолжение ночной сессии после context-compact.
+
+**N1 — Toast система + Today (425a2d6):**
+- _base.html: глобальный Alpine toast с auto-dismiss 4s, URL-strip (saved/paid/imported/gcal/…)
+- today.html: hero «следующая встреча в X», карточки с mailto-link + inline notes + per-booking mark-paid + open-meeting кнопки, empty-state с copy-link button
+
+**N2 — Clients (7da7d77):**
+- Search-bar с magnifier (q-param, ILIKE по name/email/phone)
+- Per-client aggregates: bookings_count + paid_rub + last_contact одним GROUP BY-запросом
+- Карточки с gradient-avatar (initial), badge'и stats, not-found state на пустой поиск
+- client_detail.html: 4-card stats grid (total/completed/upcoming/avg)
+
+**N3 — Settings tabs (54a2cc9):**
+- Alpine-tab nav: Профиль · Встречи · Уведомления · Интеграции
+- URL `#hash` persist для F5-stability
+- Sticky save-кнопка снизу (скрыта на Integrations)
+- GCal OAuth + iCal-URL вынесены в Integrations; info-карточка про auto-emails
+
+**N4 — Calendar week+day view (f7a54d7):**
+- Toggle Месяц/Неделя/День в header'е
+- Week: 7-col × hourly grid, scroll-x на mobile, клик header → Day-view
+- Day: вертикальный hourly strip с полными карточками встреч (цена+статус+duration)
+- Часы берутся из work_start/end профиля (fallback 8–22)
+- Back-compat: ?month=YYYY-MM продолжает работать
+
+**N5 — Stats charts (5cf07dc):**
+- Chart.js 4.4.1 с CDN (no npm)
+- Bar: доход + кол-во встреч по месяцам (6 мес), две оси
+- Line: встречи по неделям (8 нед) с заливкой и tension-curve
+- Doughnut: топ-6 услуг
+- Палитра violet/emerald/pink, чарты только при total_count>0
+
+**N6 — Services redesign (5b60d6c):**
+- Emoji-picker: 27 пресетов (флаги стран, спорт, наука, искусство)
+- Цена теперь в **рублях** (price_rub), не копейках — friendly для users
+- Inline edit-form через Alpine x-show, не свёрнутые `<details>`
+- Description-поле в UI (раньше только в БД)
+- Stars-эквивалент показан рядом с ₽ (≈ price/1.2)
+- Back-compat: price_kopecks остаётся как fallback
+
+**N7 — TZ auto-detect (6f35b97):**
+- Setup-profile форма: TZ-select с 17 пресетами РФ/СНГ
+- JS `Intl.DateTimeFormat().resolvedOptions().timeZone` — авто-detect
+- Если детектированная TZ в списке — выбирается, hint меняется на «✓ определили: …»
+- Если не в списке — добавляется как option сверху
+- Backend валидирует через ZoneInfo, fallback на Europe/Moscow
+
+**Прод-статус:** SHA 6f35b97 живой, /lessio 200, /u/demo 200, /lessio/auth/login 200, /lessio/app/today (no-auth) 401. **188/188 lessio-тестов зелёные** (3:30 минут полный run).
+
+Запушено: 425a2d6, 7da7d77, 54a2cc9, f7a54d7, 5cf07dc, 5b60d6c, 6f35b97 — 7 коммитов за сессию, без поломок существующих фич.
+
+---
+
 ## 2026-05-27 — Ночная сессия: Lessio login fix + /u/demo + Doday URL refactor + 5 Phase 3 фич
 
 Юзер заметил баги (после login попадал в Doday cabinet, /u/demo 404), потом дал полную автономию «работай ночь, придумывай фишки». Старт ~23:45 МСК 2026-05-26.
