@@ -164,20 +164,29 @@ async def subject_grade_page(
     )
 
 
-@router.get("/q/{question_id}-{question_slug}", response_class=HTMLResponse)
-@router.get("/q/{question_id}", response_class=HTMLResponse)
+@router.get("/q/{id_slug}", response_class=HTMLResponse)
 async def question_page(
     request: Request,
-    question_id: int,
+    id_slug: str,
     session: DbSession,
     user: CurrentUser,
-    question_slug: str | None = None,
 ) -> Response:
+    # Path matches both `665` and `665-chto-takoe-...` — split manually because
+    # FastAPI path params cannot mix int-with-dash-string in one segment.
+    if "-" in id_slug:
+        id_part, question_slug = id_slug.split("-", 1)
+    else:
+        id_part, question_slug = id_slug, ""
+    try:
+        question_id = int(id_part)
+    except ValueError as exc:
+        raise HTTPException(404, "Вопрос не найден") from exc
+
     q = await service.get_question(session, question_id)
     if q is None:
         raise HTTPException(404, "Вопрос не найден")
     # Canonical-slug redirect
-    if question_slug is not None and question_slug != q.slug:
+    if question_slug and question_slug != q.slug:
         return RedirectResponse(
             f"/qa/q/{q.id}-{q.slug}", status_code=status.HTTP_301_MOVED_PERMANENTLY
         )
