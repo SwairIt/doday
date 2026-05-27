@@ -4,6 +4,46 @@
 
 ---
 
+## 2026-05-26 (UX-fix) — Dynamic header + unified logo (d5ed3ee)
+
+**User-report:** «когда вошёл и вышел в лендинг — всё равно показывает Войти/Стать
+репетитором, должно быть В кабинет» + «лого иногда разное».
+
+**Root causes (Phase 1 systematic-debugging):**
+1. `app/lessio/router.py` (lessio_landing) НЕ инжектил CurrentUser
+2. `app/lessio/blog/router.py` НЕ инжектил CurrentUser
+3. `app/lessio/seo_pages.py` НЕ инжектил CurrentUser
+4. `_base_marketing.html` + `lessio/index.html` хардкодили «Войти / Стать репетитором»
+5. 2 разных лого: `✦ Lessio` (landing+cabinet) vs `[L] Lessio` (marketing-base)
+
+**Fixes (commit d5ed3ee):**
+
+1. CurrentUser injection в routes:
+   - lessio_landing, blog_index/post, все 5 seo-страниц → user в context
+   - 404 middleware → user_logged_in: bool через session.get("user_id")
+
+2. Single source-of-truth логотипа `app/templates/lessio/_logo.html`:
+   - gradient-square «L» + inline-style gradient на «Lessio»
+   - 3 размера (sm/default/lg)
+   - Self-contained — не зависит от внешнего .gradient-text класса
+   - Заменено в _base_marketing header+footer, lessio/index.html nav,
+     app/_base.html sidebar + mobile top-bar
+   - `✦ Lessio` исчез со всех web-страниц (остался только в og-image
+     watermark + email-templates — намеренно)
+
+3. Dynamic header (_base_marketing.html + lessio/index.html):
+   - `{% if user or user_logged_in %}` → «В кабинет →» + «Выйти» (form POST)
+   - `{% else %}` → «Войти» + «Стать репетитором/Начать»
+   - Landing Hero CTA + Final CTA адаптируются:
+     anon → «Создать страницу бесплатно»
+     logged → «Открыть мой кабинет» + «С возвращением 👋»
+
+**Тесты:** +6 в test_lessio_landing_logged_in.py (anon/logged CTAs,
+marketing pages dynamic, logo unification, logout flow).
+**Полный регрешн:** 240/240 lessio-тестов зелёные.
+
+---
+
 ## 2026-05-26 (bot-fix) — КРИТИЧЕСКИЙ блокер закрыт: bot worker оживлён (3fd09f3)
 
 **Контекст:** verification suite (V1-V8) выявил что `@LessioBot` (он же `mylessiobot`)
