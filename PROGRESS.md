@@ -4,6 +4,79 @@
 
 ---
 
+## 2026-05-28 (overnight) — Razbery (Doday Q&A) flagship MVP shipped
+
+**Goal:** new flagship product `getdoday.ru/qa/` — школьное Q&A с разборами вместо
+готовых ответов. Brand: **Razbery** (разбери). Audience: школьники 5–11 класса.
+Moat: SEO-compounding контент-база, $0 marginal cost per user (no AI in user paths).
+
+**What shipped (commits 73ef55e..16de423):**
+
+1. **Spec + plan:** `docs/superpowers/specs/2026-05-28-doday-qa-design.md`
+   + `docs/superpowers/plans/2026-05-28-doday-qa-overnight.md`.
+2. **Code:** `app/qa/*` — models, schemas (anti-cheating min-150-char explanation
+   field validated server-side), service (CRUD + voting + reputation deltas +
+   accept-answer + reports), rendering (markdown-it-py + bleach), reputation
+   (StackOverflow-style privilege tiers), rate_limits, seo (JSON-LD QAPage +
+   OG-SVG + sitemap rows), seeding pipeline + `python -m app.qa.seed_load` CLI,
+   router (HTML + JSON API).
+3. **Migration:** `alembic/0047_qa_razbery.py` — tables qa_subject (16 seeded RU
+   school subjects), qa_question (+ tsvector trigger по русскому), qa_answer,
+   qa_vote, qa_user_stats, qa_report.
+4. **Templates:** `templates/qa/*.html` — _base (clean light Tailwind +
+   KaTeX CDN), index/subject/question/ask/user/search/admin_reports
+   + partials (vote-buttons / answer-block / question-card).
+5. **Wire-in:** `app/main.py` — qa_router, robots.txt, sitemap.xml,
+   /qa/sitemap.xml как отдельный sub-sitemap, top-nav link на лендинге.
+6. **Tests:** 53 pytest зелёные (rendering / schemas / reputation / anti-cheating).
+7. **Seed content:** 665+ Q&A залито на прод через `seed_load` CLI
+   (matematika 120 + geografiya 103 + obshhestvoznanie 114 + okruzhajushhij-mir 79
+   + tehnologiya 68 + fizika 106 + literatura 103 — что было готово на момент load).
+8. **Remaining seed agents** (фоновые) ещё догрузят: himiya, biologiya, english,
+   informatika, istoriya, russkij, algebra, geometriya, obzh — после
+   завершения нужен повторный `seed_load` (idempotent).
+
+**Prod state at session end:**
+- SHA: 16de423
+- `/qa/` → 200, hub отрисовывается с 16 предметами
+- `/qa/s/algebra` → 200, subject landing
+- `/qa/q/<id>-<slug>` → 200 (FastAPI path-param fix в 16de423 — теперь
+  парсит `id-slug` вручную, а не как одно int-поле)
+- `/qa/sitemap.xml` → 771 URLs
+- `/qa/ask` → 401 (auth required, correct)
+
+**Known issues / TODO:**
+- ⚠️ **Прод 502 пост-deploy gotcha:** `uv sync` опять silently skipped новые
+  deps (bleach, markdown-it-py) — пришлось вручную `pip install` + restart.
+  См. [[feedback_prod_deploy_pip_sync]]. Юзер: рассмотри добавление uv в PATH
+  глобально или fallback на `.venv/bin/pip` в deploy-poll.sh.
+- Биологию и информатику первые попытки seed-агентов упали с socket-timeout;
+  relaunched smaller scope, ждать завершения.
+- Phase-2: Stars-tips на answer (schema columns уже есть), Pro-tier (qa_user_stats.pro_until)
+  — отключены behind feature flag, активируются когда юзеры подтянутся.
+- Cross-link с Doday Tasks в обе стороны: добавил navbar-ссылку в landing.html;
+  обратной ссылки из cabinet пока нет — можно добавить в Doday-сайдбар.
+
+**How to verify (smoke):**
+```bash
+for p in /qa/ /qa/s/algebra /qa/s/matematika/5 /qa/sitemap.xml; do
+  printf "%-30s " "$p"; curl -s -o /dev/null -w "%{http_code}\n" "https://getdoday.ru$p"
+done
+# Expected: all 200
+```
+
+**How to load more seed content (if more agents finish overnight):**
+```bash
+git pull
+ls app/qa/seed_data/         # check new *.json
+git add app/qa/seed_data/*.json && git commit -m "seed data" && git push
+# SSH to prod:
+plink ... "cd /var/www/.../app && git pull && .venv/bin/python -m app.qa.seed_load"
+# seed_load is idempotent — previously-loaded items skip
+```
+
+---
+
 ## 2026-05-26 (UX-fix) — Dynamic header + unified logo (d5ed3ee)
 
 **User-report:** «когда вошёл и вышел в лендинг — всё равно показывает Войти/Стать

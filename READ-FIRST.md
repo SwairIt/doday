@@ -44,6 +44,7 @@
 |---|---|---|---|---|
 | **Doday Tasks** | `getdoday.ru` | `@DodayTaskBot` | production | Todoist-style todo-list + команды |
 | **Lessio** | `getdoday.ru/lessio` | `@mylessiobot` | pre-launch ready | Booking + Stars-оплата для соло-учителей |
+| **Razbery (Doday Q&A)** | `getdoday.ru/qa/` | — | **live MVP** | Школьное Q&A с разборами (5–11 класс), 665+ seed-вопросов, SEO-driven рост |
 | **Tap Tower** | `getdoday.ru/taptower` | (тот же DodayTaskBot) | live | Telegram Mini App игра. Port 8012, **не трогать** |
 | **IndigoSmart** | port 8000 (отдельно) | — | live | **Не трогать** — отдельный проект |
 | **School diary parser** | внутри Doday | — | unfinished | Парсер Школьного портала МО + МЭШ. Endpoints нужно поправить через live-token + DevTools capture |
@@ -61,6 +62,14 @@ help-center (28 статей), блог (18 long-form), 5 SEO niche-landings, cu
 RSS-feed, onboarding-чеклист, floating help-bubble. **Готов к тестовой
 аудитории 100-300 человек.** Что осталось — в `docs/YOUR-LAUNCH-PLAN.md`
 (DNS Resend, Better Stack, Sentry alerts, @BotFather аватарка, real Stars-test).
+
+**Razbery (Doday Q&A)** — флагман на `getdoday.ru/qa/`, запущен 2026-05-28.
+Школьный StackOverflow: 16 предметов × 5-11 классов, anti-cheating механика
+(обязательное «Объяснение» ≥150 знаков), репутация, голосование, sitemap.
+**665+ seed-Q&A** уже на проде, ещё ~9 предметов догружаются по мере
+готовности параллельных агентов. Stars-tips и Pro-tier заложены в schema
+но скрыты до phase-2. Spec: `docs/superpowers/specs/2026-05-28-doday-qa-design.md`,
+plan: `docs/superpowers/plans/2026-05-28-doday-qa-overnight.md`.
 
 ### Идеи для нового проекта (НЕ обязательно, можешь свою)
 
