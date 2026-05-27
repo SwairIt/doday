@@ -17,6 +17,8 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
+from app.auth.deps import CurrentUser
+
 router = APIRouter(prefix="/lessio", tags=["lessio-seo"])
 _templates = Jinja2Templates(directory="app/templates")
 
@@ -31,11 +33,12 @@ def _seo_meta(slug: str) -> dict[str, str]:
 
 
 @router.get("/dlya-repetitorov", response_class=HTMLResponse, include_in_schema=False)
-async def page_for_tutors(request: Request) -> HTMLResponse:
+async def page_for_tutors(request: Request, user: CurrentUser) -> HTMLResponse:
     return _templates.TemplateResponse(
         request,
         "lessio/seo/dlya_repetitorov.html",
         {
+            "user": user,
             "meta": _seo_meta("dlya-repetitorov"),
             "page_title": "Сервис записи и оплаты для репетиторов · Lessio",
             "page_description": (
@@ -47,11 +50,12 @@ async def page_for_tutors(request: Request) -> HTMLResponse:
 
 
 @router.get("/dlya-trenerov", response_class=HTMLResponse, include_in_schema=False)
-async def page_for_trainers(request: Request) -> HTMLResponse:
+async def page_for_trainers(request: Request, user: CurrentUser) -> HTMLResponse:
     return _templates.TemplateResponse(
         request,
         "lessio/seo/dlya_trenerov.html",
         {
+            "user": user,
             "meta": _seo_meta("dlya-trenerov"),
             "page_title": "Сервис записи для онлайн-тренеров · Lessio",
             "page_description": (
@@ -63,11 +67,12 @@ async def page_for_trainers(request: Request) -> HTMLResponse:
 
 
 @router.get("/dlya-psihologov", response_class=HTMLResponse, include_in_schema=False)
-async def page_for_psychologists(request: Request) -> HTMLResponse:
+async def page_for_psychologists(request: Request, user: CurrentUser) -> HTMLResponse:
     return _templates.TemplateResponse(
         request,
         "lessio/seo/dlya_psihologov.html",
         {
+            "user": user,
             "meta": _seo_meta("dlya-psihologov"),
             "page_title": "Запись и оплата для онлайн-психологов · Lessio",
             "page_description": (
@@ -79,11 +84,12 @@ async def page_for_psychologists(request: Request) -> HTMLResponse:
 
 
 @router.get("/alternativa-calendly", response_class=HTMLResponse, include_in_schema=False)
-async def page_calendly_alternative(request: Request) -> HTMLResponse:
+async def page_calendly_alternative(request: Request, user: CurrentUser) -> HTMLResponse:
     return _templates.TemplateResponse(
         request,
         "lessio/seo/alternativa_calendly.html",
         {
+            "user": user,
             "meta": _seo_meta("alternativa-calendly"),
             "page_title": "Альтернатива Calendly в России · Lessio",
             "page_description": (
@@ -95,11 +101,12 @@ async def page_calendly_alternative(request: Request) -> HTMLResponse:
 
 
 @router.get("/oplata-cherez-telegram", response_class=HTMLResponse, include_in_schema=False)
-async def page_telegram_payments(request: Request) -> HTMLResponse:
+async def page_telegram_payments(request: Request, user: CurrentUser) -> HTMLResponse:
     return _templates.TemplateResponse(
         request,
         "lessio/seo/oplata_cherez_telegram.html",
         {
+            "user": user,
             "meta": _seo_meta("oplata-cherez-telegram"),
             "page_title": "Приём оплаты через Telegram Stars для учителей · Lessio",
             "page_description": (

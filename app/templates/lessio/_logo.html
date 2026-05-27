@@ -1,0 +1,25 @@
+{# Lessio logo — единый partial для marketing + cabinet + email-страниц.
+
+   Использовать так:
+     {% include "lessio/_logo.html" %}                                    ← default
+     {% with logo_size="sm" %}{% include "lessio/_logo.html" %}{% endwith %}
+     {% with logo_size="lg" %}{% include "lessio/_logo.html" %}{% endwith %}
+
+   Self-contained: gradient на тексте задан inline-style'ом, не требует
+   внешнего .gradient-text класса (работает и в cabinet/marketing/email).
+#}
+{% set _logo_size = logo_size | default("default") %}
+{% if _logo_size == "sm" %}
+{%   set _wrap_class = "flex items-center gap-2 font-extrabold text-base" %}
+{%   set _badge_class = "w-7 h-7 text-sm" %}
+{% elif _logo_size == "lg" %}
+{%   set _wrap_class = "flex items-center gap-2.5 font-extrabold text-2xl" %}
+{%   set _badge_class = "w-10 h-10 text-lg" %}
+{% else %}
+{%   set _wrap_class = "flex items-center gap-2.5 font-extrabold text-lg sm:text-xl" %}
+{%   set _badge_class = "w-8 h-8 sm:w-9 sm:h-9" %}
+{% endif %}
+<span class="{{ _wrap_class }}">
+  <span class="{{ _badge_class }} rounded-lg bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-white shrink-0">L</span>
+  <span style="background:linear-gradient(135deg,#a78bfa,#f472b6);-webkit-background-clip:text;background-clip:text;color:transparent;">Lessio</span>
+</span>

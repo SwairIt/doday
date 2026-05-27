@@ -90,15 +90,27 @@
 <body class="antialiased">
 
 <nav class="px-5 py-5 flex items-center justify-between max-w-6xl mx-auto">
-  <a href="/lessio" class="text-2xl font-extrabold">
-    <span class="gradient-text">✦ Lessio</span>
-  </a>
-  <div class="flex items-center gap-3 text-sm">
+  <a href="/lessio">{% with logo_size="lg" %}{% include "lessio/_logo.html" %}{% endwith %}</a>
+  <div class="flex items-center gap-2 sm:gap-3 text-sm">
+    <a href="/lessio/help" class="hidden sm:block px-2.5 py-1.5 text-violet-300/70 hover:text-violet-200 transition">Помощь</a>
+    <a href="/lessio/blog" class="hidden sm:block px-2.5 py-1.5 text-violet-300/70 hover:text-violet-200 transition">Блог</a>
+    {% if user %}
+    <a href="/lessio/app/today"
+       class="px-4 py-2 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-semibold hover:opacity-90 transition whitespace-nowrap">
+      В кабинет →
+    </a>
+    <form method="post" action="/lessio/auth/logout" class="inline">
+      <button type="submit" class="px-2.5 py-1.5 text-violet-300/50 hover:text-violet-200 transition text-xs">
+        Выйти
+      </button>
+    </form>
+    {% else %}
     <a href="/lessio/auth/login" class="text-violet-300/70 hover:text-violet-200">Войти</a>
     <a href="/lessio/auth/register"
        class="px-4 py-2 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-semibold hover:opacity-90 transition">
       Стать репетитором →
     </a>
+    {% endif %}
   </div>
 </nav>
 
@@ -121,10 +133,17 @@
     </p>
 
     <div class="flex flex-col sm:flex-row items-center justify-center gap-3 mb-12">
+      {% if user %}
+      <a href="/lessio/app/today"
+         class="px-8 py-4 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-bold text-lg hover:opacity-90 transition glow">
+        Открыть мой кабинет →
+      </a>
+      {% else %}
       <a href="/lessio/auth/register"
          class="px-8 py-4 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-bold text-lg hover:opacity-90 transition glow">
         Создать страницу бесплатно →
       </a>
+      {% endif %}
       <a href="/u/demo"
          class="px-6 py-3 bg-white/5 border border-white/10 rounded-xl font-semibold hover:bg-white/10 transition">
         Посмотреть пример страницы
@@ -430,6 +449,18 @@
 
   <!-- FINAL CTA -->
   <section class="px-5 py-16 max-w-3xl mx-auto text-center">
+    {% if user %}
+    <h2 class="text-3xl md:text-4xl font-extrabold mb-4">
+      С возвращением 👋
+    </h2>
+    <p class="text-violet-200/70 mb-8 max-w-xl mx-auto">
+      Ты уже зарегистрирован. Открой кабинет и поделись ссылкой с клиентами.
+    </p>
+    <a href="/lessio/app/today"
+       class="inline-block px-8 py-4 bg-gradient-to-r from-violet-500 to-pink-500 rounded-xl font-bold text-lg hover:opacity-90 transition glow">
+      Открыть мой кабинет →
+    </a>
+    {% else %}
     <h2 class="text-3xl md:text-4xl font-extrabold mb-4">
       Давай ты будешь первым
     </h2>
@@ -444,6 +475,7 @@
     <p class="text-xs text-violet-300/40 mt-4">
       Уже есть аккаунт? <a href="/lessio/auth/login" class="underline">Войти</a>
     </p>
+    {% endif %}
   </section>
 
   <footer class="px-5 py-10 max-w-5xl mx-auto border-t border-white/5 text-sm text-violet-300/50">

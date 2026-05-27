@@ -342,8 +342,14 @@ async def _pretty_404(
         return response
     is_lessio_path = path.startswith(("/lessio/", "/u/")) or path == "/lessio"
     template = "lessio/404.html" if is_lessio_path else "404.html"
+    # user_logged_in — лёгкий маркер для шаблонов без полной загрузки User-объекта
+    # из БД (404 страница не требует ничего кроме «есть ли session»).
+    user_logged_in = request.session.get("user_id") is not None
     return _templates_404.TemplateResponse(
-        request, template, {"current_user": None}, status_code=404
+        request,
+        template,
+        {"current_user": None, "user_logged_in": user_logged_in},
+        status_code=404,
     )
 
 

@@ -61,18 +61,27 @@
 {# ── Header ────────────────────────────────────────────────────────── #}
 <header class="border-b border-white/10 bg-black/20 backdrop-blur sticky top-0 z-30">
   <nav class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-    <a href="/lessio" class="flex items-center gap-2.5 font-extrabold text-lg">
-      <span class="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-white">L</span>
-      <span class="gradient-text">Lessio</span>
-    </a>
+    <a href="/lessio">{% include "lessio/_logo.html" %}</a>
     <div class="flex items-center gap-1 sm:gap-3 text-sm">
       <a href="/lessio/help" class="hidden sm:block px-2.5 py-1.5 text-violet-200/80 hover:text-violet-100 transition">Помощь</a>
       <a href="/lessio/blog" class="px-2.5 py-1.5 text-violet-200/80 hover:text-violet-100 transition">Блог</a>
       <a href="/lessio/dlya-repetitorov" class="hidden md:block px-2.5 py-1.5 text-violet-200/80 hover:text-violet-100 transition">Для репетиторов</a>
+      {# `user` приходит из DI на routes, `user_logged_in` — из middleware (для 404) #}
+      {% if user or user_logged_in %}
+      <a href="/lessio/app/today" class="px-3 py-1.5 bg-gradient-to-r from-violet-500 to-pink-500 rounded-lg text-white font-semibold hover:opacity-90 transition whitespace-nowrap">
+        В кабинет →
+      </a>
+      <form method="post" action="/lessio/auth/logout" class="inline">
+        <button type="submit" class="px-2.5 py-1.5 text-violet-300/60 hover:text-violet-200 transition text-xs">
+          Выйти
+        </button>
+      </form>
+      {% else %}
       <a href="/lessio/auth/login" class="px-3 py-1.5 text-violet-200 hover:text-violet-100 transition">Войти</a>
       <a href="/lessio/auth/register" class="px-3 py-1.5 bg-gradient-to-r from-violet-500 to-pink-500 rounded-lg text-white font-semibold hover:opacity-90 transition">
         Начать
       </a>
+      {% endif %}
     </div>
   </nav>
 </header>
@@ -85,9 +94,8 @@
 <footer class="border-t border-white/10 mt-16 bg-black/20">
   <div class="max-w-6xl mx-auto px-4 py-10 grid sm:grid-cols-4 gap-8 text-sm">
     <div>
-      <div class="flex items-center gap-2 font-extrabold text-base mb-2">
-        <span class="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-white text-sm">L</span>
-        <span class="gradient-text">Lessio</span>
+      <div class="mb-2">
+        {% with logo_size="sm" %}{% include "lessio/_logo.html" %}{% endwith %}
       </div>
       <p class="text-violet-300/60 text-xs leading-relaxed">
         Кабинет онлайн-учителя с публичной страницей записи и приёмом оплаты через Telegram Stars.

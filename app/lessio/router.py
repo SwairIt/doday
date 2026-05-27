@@ -25,6 +25,7 @@ from pydantic import EmailStr
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth.deps import CurrentUser
 from app.config import get_settings
 from app.db import get_session
 from app.lessio.models import LessioWaitlistEntry
@@ -79,9 +80,14 @@ _ALLOWED_NICHES: frozenset[str] = frozenset(
 @router.get("/", response_class=HTMLResponse, include_in_schema=False)
 async def lessio_landing(
     request: Request,
+    user: CurrentUser,
     session: AsyncSession = Depends(get_session),  # noqa: B008 — FastAPI Depends pattern
 ) -> HTMLResponse:
-    """Landing page + waitlist signup form."""
+    """Landing page + waitlist signup form.
+
+    `user` (CurrentUser) — пробрасываем в template чтобы header показал
+    «В кабинет» / «Выйти» для залогиненных вместо «Войти / Начать».
+    """
     count_row = await session.execute(select(func.count()).select_from(LessioWaitlistEntry))
     count = int(count_row.scalar_one())
     # Show social proof only after a threshold — empty list signals "no traction"
@@ -92,6 +98,7 @@ async def lessio_landing(
         {
             "waitlist_count": count,
             "show_count": show_count,
+            "user": user,
         },
     )
 

@@ -104,11 +104,7 @@
 
 {# ── Mobile top-bar (hamburger + logo) — виден только < md ──────────── #}
 <header class="md:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-black/40 backdrop-blur border-b border-white/10">
-  <a href="/lessio" class="text-lg font-extrabold">
-    <span style="background:linear-gradient(135deg,#a78bfa,#f472b6);-webkit-background-clip:text;background-clip:text;color:transparent;">
-      ✦ Lessio
-    </span>
-  </a>
+  <a href="/lessio/app/today">{% with logo_size="sm" %}{% include "lessio/_logo.html" %}{% endwith %}</a>
   <button type="button"
           x-on:click="sidebarOpen = true"
           aria-label="Открыть меню"
@@ -133,10 +129,8 @@
                 md:flex md:flex-col"
          x-bind:class="sidebarOpen ? 'drawer-enter' : 'hidden md:flex md:flex-col'">
     <div class="flex items-center justify-between mb-6">
-      <a href="/lessio" class="block text-xl font-extrabold">
-        <span style="background:linear-gradient(135deg,#a78bfa,#f472b6);-webkit-background-clip:text;background-clip:text;color:transparent;">
-          ✦ Lessio
-        </span>
+      <a href="/lessio/app/today" class="block">
+        {% include "lessio/_logo.html" %}
       </a>
       <button type="button" x-on:click="sidebarOpen = false"
               aria-label="Закрыть меню"

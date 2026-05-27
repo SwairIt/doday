@@ -12,6 +12,7 @@ from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 
+from app.auth.deps import CurrentUser
 from app.lessio.blog.posts import (
     CATEGORIES,
     POSTS,
@@ -25,7 +26,7 @@ _templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("", response_class=HTMLResponse, include_in_schema=False)
-async def blog_index(request: Request) -> HTMLResponse:
+async def blog_index(request: Request, user: CurrentUser) -> HTMLResponse:
     q = request.query_params.get("q", "").strip()
     if q:
         results = search_posts(q)
@@ -33,6 +34,7 @@ async def blog_index(request: Request) -> HTMLResponse:
             request,
             "lessio/blog/index.html",
             {
+                "user": user,
                 "posts": POSTS,
                 "by_category": posts_by_category(),
                 "categories": CATEGORIES,
@@ -45,6 +47,7 @@ async def blog_index(request: Request) -> HTMLResponse:
         request,
         "lessio/blog/index.html",
         {
+            "user": user,
             "posts": POSTS,
             "by_category": posts_by_category(),
             "categories": CATEGORIES,
@@ -101,7 +104,7 @@ async def blog_feed() -> Response:
 
 
 @router.get("/{slug}", response_class=HTMLResponse, include_in_schema=False)
-async def blog_post(slug: str, request: Request) -> HTMLResponse:
+async def blog_post(slug: str, request: Request, user: CurrentUser) -> HTMLResponse:
     post = get_post(slug)
     if post is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "статья не найдена")
@@ -112,6 +115,7 @@ async def blog_post(slug: str, request: Request) -> HTMLResponse:
         request,
         "lessio/blog/post.html",
         {
+            "user": user,
             "post": post,
             "posts": POSTS,
             "by_category": posts_by_category(),
