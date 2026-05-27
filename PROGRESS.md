@@ -75,18 +75,19 @@ plink ... "cd /var/www/.../app && git pull && .venv/bin/python -m app.qa.seed_lo
 # seed_load is idempotent — previously-loaded items skip
 ```
 
-**Final state on session close (SHA 005ecc2):**
-- All Razbery code clean: 53 pytest зелёные, ruff + mypy --strict pass.
-- 777 Q&A на проде across 10 of 16 subjects (10 файлов загружены).
-- 6 предметов догружают агенты в фоне: russkij, english, istoriya, algebra,
-  geometriya, informatika (relaunched smaller). Когда любой завершится —
-  юзеру (или новой сессии) надо: commit + push JSON, потом SSH seed_load.
+**Final state on session close (SHA 5d9b040):**
+- All Razbery code clean: 53 pytest зелёные, ruff + ruff format + mypy --strict pass.
+- **1436 Q&A в БД, 1540 URLs в sitemap** — все 16 школьных предметов залиты.
+- 19 JSON-файлов seed-content committed в `app/qa/seed_data/`.
 - Search через Postgres tsvector (russian config) + ILIKE-fallback.
 - `/qa/ask` для анонимов → 303 → /auth/login (вместо 401).
 - Top-nav link «Razbery NEW» на лендинге `/`.
 - 502-инцидент при первом deploy: deploy-poll silently skipped `uv sync`,
   recovery через manual `.venv/bin/pip install bleach markdown-it-py` + restart.
   Доку об этой gotcha смотри [[feedback_prod_deploy_pip_sync]] в memory.
+- Seed-агенты несколько раз падали с max-output (64k) и socket-timeout —
+  крупные предметы (algebra/english/istoriya) пришлось разбивать на 2-3 батча
+  с явным "KEEP SHORT — do not exceed 64k". Помогло, все 16 заполнены.
 
 ---
 
