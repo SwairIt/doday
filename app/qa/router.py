@@ -241,11 +241,17 @@ async def question_page(
 async def ask_page(
     request: Request,
     session: DbSession,
-    user: RequiredUser,
+    user: CurrentUser,
     subject: str | None = Query(default=None),
-) -> HTMLResponse:
+) -> Response:
+    # Anonymous users get a friendly redirect to login, not a 401.
+    # Doday auth doesn't honour `?next=`, so after login the user lands on
+    # /doday/app/today and can return via the top-nav "Razbery" link.
+    if user is None:
+        return RedirectResponse("/auth/login", status_code=303)
     subjects = await service.list_subjects(session)
     stats = await service.ensure_user_stats(session, user)
+    await session.commit()
     return _templates.TemplateResponse(
         "qa/ask.html",
         {
