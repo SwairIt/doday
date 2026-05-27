@@ -75,6 +75,19 @@ plink ... "cd /var/www/.../app && git pull && .venv/bin/python -m app.qa.seed_lo
 # seed_load is idempotent — previously-loaded items skip
 ```
 
+**Final state on session close (SHA 005ecc2):**
+- All Razbery code clean: 53 pytest зелёные, ruff + mypy --strict pass.
+- 777 Q&A на проде across 10 of 16 subjects (10 файлов загружены).
+- 6 предметов догружают агенты в фоне: russkij, english, istoriya, algebra,
+  geometriya, informatika (relaunched smaller). Когда любой завершится —
+  юзеру (или новой сессии) надо: commit + push JSON, потом SSH seed_load.
+- Search через Postgres tsvector (russian config) + ILIKE-fallback.
+- `/qa/ask` для анонимов → 303 → /auth/login (вместо 401).
+- Top-nav link «Razbery NEW» на лендинге `/`.
+- 502-инцидент при первом deploy: deploy-poll silently skipped `uv sync`,
+  recovery через manual `.venv/bin/pip install bleach markdown-it-py` + restart.
+  Доку об этой gotcha смотри [[feedback_prod_deploy_pip_sync]] в memory.
+
 ---
 
 ## 2026-05-26 (UX-fix) — Dynamic header + unified logo (d5ed3ee)
