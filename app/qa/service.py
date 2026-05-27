@@ -294,25 +294,61 @@ async def search_questions(
     grade: int | None = None,
     limit: int = 20,
 ) -> list[QAQuestion]:
+    """Full-text search via Postgres tsvector (russian config).
+
+    Falls back to ILIKE if the database lacks the tsv column populated (e.g.
+    SQLite test fallback). Title is weight A, body weight B (see migration
+    trigger).
+    """
     query = query.strip()
     if not query:
         return []
-    # Use plain ILIKE first (works without tsv); if production confirms tsv
-    # is populated by trigger, replace with `to_tsquery` for ranked results.
+
+    try:
+        # plainto_tsquery is forgiving — handles stop words and stems.
+        from sqlalchemy import func, literal
+
+        ts_query = func.plainto_tsquery("russian", literal(query))
+        stmt = (
+            select(QAQuestion)
+            .where(
+                and_(
+                    QAQuestion.is_hidden.is_(False),
+                    QAQuestion.tsv.op("@@")(ts_query),
+                )
+            )
+            .order_by(
+                desc(func.ts_rank_cd(QAQuestion.tsv, ts_query)),
+                desc(QAQuestion.score),
+                desc(QAQuestion.created_at),
+            )
+        )
+        if subject_id is not None:
+            stmt = stmt.where(QAQuestion.subject_id == subject_id)
+        if grade is not None:
+            stmt = stmt.where(QAQuestion.grade == grade)
+        stmt = stmt.limit(limit)
+        rows = (await session.execute(stmt)).scalars().all()
+        if rows:
+            return list(rows)
+    except Exception as exc:
+        log.warning("qa.search.tsv_failed_fallback_ilike", err=str(exc)[:200])
+
+    # Fallback for tests / when tsv is empty (no trigger run yet).
     pattern = f"%{query}%"
-    stmt = select(QAQuestion).where(
+    stmt2 = select(QAQuestion).where(
         and_(
             QAQuestion.is_hidden.is_(False),
             or_(QAQuestion.title.ilike(pattern), QAQuestion.body_md.ilike(pattern)),
         )
     )
     if subject_id is not None:
-        stmt = stmt.where(QAQuestion.subject_id == subject_id)
+        stmt2 = stmt2.where(QAQuestion.subject_id == subject_id)
     if grade is not None:
-        stmt = stmt.where(QAQuestion.grade == grade)
-    stmt = stmt.order_by(desc(QAQuestion.score), desc(QAQuestion.created_at)).limit(limit)
-    rows = (await session.execute(stmt)).scalars().all()
-    return list(rows)
+        stmt2 = stmt2.where(QAQuestion.grade == grade)
+    stmt2 = stmt2.order_by(desc(QAQuestion.score), desc(QAQuestion.created_at)).limit(limit)
+    rows2 = (await session.execute(stmt2)).scalars().all()
+    return list(rows2)
 
 
 async def find_similar(
