@@ -31,6 +31,7 @@ from app.main import app
 from app.mood import models as _mood_models  # noqa: F401
 from app.pomodoro import models as _pomodoro_models  # noqa: F401
 from app.projects import models as _projects_models  # noqa: F401
+from app.qa import models as _qa_models  # noqa: F401
 from app.reminders import models as _reminders_models  # noqa: F401
 from app.school import models as _school_models  # noqa: F401
 from app.sections import models as _sections_models  # noqa: F401
