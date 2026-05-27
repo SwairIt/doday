@@ -1,0 +1,66 @@
+{% extends "qa/_base.html" %}
+
+{% block title %}{{ subject.icon }} {{ subject.name }}{% if grade %} · {{ grade }} класс{% endif %} — Razbery{% endblock %}
+{% block description %}{{ subject.name }}{% if grade %} {{ grade }} класс{% endif %} — школьные вопросы с разборами. {{ subject.description or 'Объяснения от учеников и редакторская база.' }}{% endblock %}
+{% block canonical %}<link rel="canonical" href="https://getdoday.ru/qa/s/{{ subject.slug }}{% if grade %}/{{ grade }}{% endif %}">{% endblock %}
+
+{% block content %}
+
+<nav class="text-sm text-slate-500 mb-4 flex items-center gap-1">
+  <a href="/qa/" class="hover:text-indigo-700">Razbery</a>
+  <span>›</span>
+  <span class="text-slate-700">{{ subject.icon }} {{ subject.name }}</span>
+  {% if grade %}<span>›</span><span class="text-slate-700">{{ grade }} класс</span>{% endif %}
+</nav>
+
+<header class="bg-white border border-slate-200 rounded-2xl p-6 mb-6">
+  <div class="flex items-center gap-4">
+    <div class="text-5xl">{{ subject.icon }}</div>
+    <div class="flex-1 min-w-0">
+      <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">{{ subject.name }}{% if grade %} · {{ grade }} класс{% endif %}</h1>
+      {% if subject.description %}<p class="text-slate-600 mt-1">{{ subject.description }}</p>{% endif %}
+    </div>
+    <a href="/qa/ask?subject={{ subject.slug }}" class="hidden sm:inline-flex px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold transition">Спросить</a>
+  </div>
+</header>
+
+<div class="flex flex-wrap items-center gap-2 mb-4">
+  <span class="text-sm text-slate-500 mr-1">Класс:</span>
+  <a href="/qa/s/{{ subject.slug }}" class="px-2.5 py-1 rounded-full border text-sm {{ 'bg-indigo-600 border-indigo-600 text-white' if not grade else 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50' }}">все</a>
+  {% for g in range(subject.min_grade, subject.max_grade + 1) %}
+    <a href="/qa/s/{{ subject.slug }}/{{ g }}" class="px-2.5 py-1 rounded-full border text-sm {{ 'bg-indigo-600 border-indigo-600 text-white' if grade == g else 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50' }}">{{ g }}</a>
+  {% endfor %}
+  <div class="ml-auto flex items-center gap-2 text-sm">
+    <span class="text-slate-500">Сортировка:</span>
+    {% set sort_base = '/qa/s/' ~ subject.slug ~ ('/' ~ grade if grade else '') %}
+    <a href="{{ sort_base }}?sort=recent" class="px-2 py-1 rounded {{ 'bg-slate-100 text-slate-900 font-semibold' if sort == 'recent' else 'text-slate-600 hover:text-slate-900' }}">свежие</a>
+    <a href="{{ sort_base }}?sort=top" class="px-2 py-1 rounded {{ 'bg-slate-100 text-slate-900 font-semibold' if sort == 'top' else 'text-slate-600 hover:text-slate-900' }}">топ</a>
+    <a href="{{ sort_base }}?sort=viewed" class="px-2 py-1 rounded {{ 'bg-slate-100 text-slate-900 font-semibold' if sort == 'viewed' else 'text-slate-600 hover:text-slate-900' }}">просмотры</a>
+  </div>
+</div>
+
+{% if questions %}
+<ul class="space-y-2">
+  {% for q in questions %}
+    {% include "qa/_question_card.html" %}
+  {% endfor %}
+</ul>
+
+{% if has_more or page > 1 %}
+<nav class="mt-6 flex items-center justify-between text-sm">
+  {% if page > 1 %}
+    <a href="{{ sort_base }}?sort={{ sort }}&page={{ page - 1 }}" class="px-3 py-2 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">← Назад</a>
+  {% else %}<span></span>{% endif %}
+  <span class="text-slate-500">Страница {{ page }}{% if total %} из {{ ((total - 1) // limit) + 1 }}{% endif %}</span>
+  {% if has_more %}
+    <a href="{{ sort_base }}?sort={{ sort }}&page={{ page + 1 }}" class="px-3 py-2 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">Дальше →</a>
+  {% else %}<span></span>{% endif %}
+</nav>
+{% endif %}
+{% else %}
+  <div class="bg-white border border-slate-200 rounded-xl p-10 text-center text-slate-500">
+    Здесь пока нет вопросов. <a href="/qa/ask?subject={{ subject.slug }}" class="text-indigo-600 hover:underline">Будь первым</a> — задай.
+  </div>
+{% endif %}
+
+{% endblock %}

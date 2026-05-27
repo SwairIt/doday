@@ -1,0 +1,154 @@
+{% extends "qa/_base.html" %}
+
+{% block title %}{{ question.title }} — Razbery{% endblock %}
+{% block description %}{{ question.body_md[:160] }}{% endblock %}
+{% block canonical %}<link rel="canonical" href="{{ canonical_url }}">{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block og_image %}https://getdoday.ru/qa/og/{{ question.id }}.svg{% endblock %}
+
+{% block head_extra %}
+<script type="application/ld+json">{{ jsonld | safe }}</script>
+{% endblock %}
+
+{% block content %}
+
+<nav class="text-sm text-slate-500 mb-3 flex items-center gap-1 flex-wrap">
+  <a href="/qa/" class="hover:text-indigo-700">Razbery</a>
+  <span>›</span>
+  {% if subject %}<a href="/qa/s/{{ subject.slug }}" class="hover:text-indigo-700">{{ subject.icon }} {{ subject.name }}</a>{% endif %}
+  {% if question.grade %}<span>›</span><a href="/qa/s/{{ subject.slug }}/{{ question.grade }}" class="hover:text-indigo-700">{{ question.grade }} класс</a>{% endif %}
+</nav>
+
+<article class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 mb-6">
+  <div class="flex gap-4">
+    {% with target_type='q', target_id=question.id, score=question.score, user_vote=user_q_votes.get(question.id, 0) %}
+      {% include "qa/_vote_buttons.html" %}
+    {% endwith %}
+
+    <div class="flex-1 min-w-0">
+      <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">{{ question.title }}</h1>
+      <div class="text-sm text-slate-500 mb-4 flex flex-wrap items-center gap-x-3 gap-y-1">
+        {% if question.grade %}<span>{{ question.grade }} класс</span>{% endif %}
+        <span>{{ question.view_count }} просмотр{% if question.view_count % 10 == 1 and question.view_count % 100 != 11 %}{% elif question.view_count % 10 in (2,3,4) and question.view_count % 100 not in (12,13,14) %}а{% else %}ов{% endif %}</span>
+        <span>задан {{ question.created_at.strftime('%d.%m.%Y') }}</span>
+        {% if question.is_seed %}<span class="text-xs px-1.5 py-0.5 bg-indigo-50 text-indigo-700 rounded">📚 редакторский</span>{% endif %}
+      </div>
+
+      <div class="prose-qa mb-4">{{ question.body_html | safe }}</div>
+
+      <div class="flex items-center justify-between pt-3 border-t border-slate-100 text-xs text-slate-500">
+        <div class="flex items-center gap-2">
+          {% if author_stats %}
+            <a href="/qa/u/{{ author_stats.display_slug }}" class="flex items-center gap-1.5 hover:text-indigo-700">
+              <span>{{ author_stats.avatar_emoji }}</span>
+              <span class="font-semibold">{{ author_stats.display_name }}</span>
+              <span class="text-slate-400">· {{ author_stats.reputation }}</span>
+            </a>
+          {% else %}
+            <span>анонимно</span>
+          {% endif %}
+        </div>
+        {% if user and user.id != question.author_id %}
+          <button type="button" @click="$dispatch('open-report', {target_type:'q', target_id: {{ question.id }}})" class="text-slate-400 hover:text-rose-600">пожаловаться</button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</article>
+
+<section class="mb-6">
+  <h2 class="text-lg font-bold text-slate-900 mb-3">
+    {% if answers %}{{ answers | length }} ответ{% if answers | length == 1 %}{% elif answers | length in (2, 3, 4) %}а{% else %}ов{% endif %}{% else %}Пока нет ответов{% endif %}
+  </h2>
+  {% if answers %}
+    <div class="space-y-4">
+      {% set can_accept = user and user.id == question.author_id %}
+      {% for a in answers %}
+        {% set author_stats = answer_author_stats.get(a.author_id) %}
+        {% set user_vote = user_a_votes.get(a.id, 0) %}
+        {% include "qa/_answer_block.html" %}
+      {% endfor %}
+    </div>
+  {% endif %}
+</section>
+
+<section class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6">
+  <h2 class="text-lg font-bold text-slate-900 mb-1">Дать ответ</h2>
+  <p class="text-sm text-slate-500 mb-4">Razbery — про разбор, не про списывание. Объяснение обязательно.</p>
+
+  {% if user %}
+  <form method="post" action="/qa/q/{{ question.id }}/answer" x-data="{ answer: '', explanation: '' }" class="space-y-4">
+    <div>
+      <label class="block text-sm font-semibold text-slate-700 mb-1">Ответ</label>
+      <textarea name="answer_md" x-model="answer" rows="2" required minlength="10"
+        class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+        placeholder="Короткий результат, например: x = 5 и x = -2"></textarea>
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold text-slate-700 mb-1">
+        Как это получилось — обязательно
+      </label>
+      <textarea name="explanation_md" x-model="explanation" rows="6" required minlength="150"
+        class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+        placeholder="Объясни шаг за шагом — какую формулу применил, как пришёл к ответу. Минимум 150 символов."></textarea>
+      <div class="text-xs mt-1" :class="explanation.length >= 150 ? 'text-emerald-600' : 'text-slate-500'">
+        <span x-text="explanation.length"></span> / минимум 150 символов <span x-show="explanation.length >= 150">✓</span>
+      </div>
+    </div>
+
+    <button type="submit" :disabled="answer.length < 10 || explanation.length < 150"
+      :class="answer.length < 10 || explanation.length < 150 ? 'bg-slate-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'"
+      class="px-5 py-2.5 text-white rounded-lg font-semibold transition">
+      Помочь разобраться
+    </button>
+  </form>
+  {% else %}
+  <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 text-center">
+    <p class="text-slate-700 mb-3">Чтобы ответить, нужен аккаунт.</p>
+    <a href="/auth/register?next=/qa/q/{{ question.id }}-{{ question.slug }}" class="inline-flex px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold">Зарегистрироваться</a>
+    <a href="/auth/login?next=/qa/q/{{ question.id }}-{{ question.slug }}" class="ml-2 inline-flex px-4 py-2 bg-white border border-slate-300 rounded-lg">Войти</a>
+  </div>
+  {% endif %}
+</section>
+
+{# Report modal — single instance, listens for @open-report event #}
+{% if user %}
+<div x-data="{
+  open: false, target_type: '', target_id: 0, reason: 'spam', comment: '', sending: false,
+  init() { window.addEventListener('open-report', e => { this.target_type = e.detail.target_type; this.target_id = e.detail.target_id; this.open = true; }); },
+  async send() {
+    if (this.sending) return;
+    this.sending = true;
+    try {
+      const res = await fetch('/api/qa/report', {
+        method: 'POST', credentials: 'same-origin',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({target_type: this.target_type, target_id: this.target_id, reason: this.reason, comment: this.comment})
+      });
+      if (res.ok) { this.open = false; alert('Спасибо, жалоба отправлена.'); }
+      else { const d = await res.json().catch(()=>({})); alert(d.detail || 'Не получилось'); }
+    } finally { this.sending = false; }
+  }
+}" x-show="open" x-cloak class="fixed inset-0 z-40 flex items-center justify-center bg-black/30 p-4" @keydown.escape.window="open=false">
+  <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-5">
+    <h3 class="text-lg font-bold mb-3">Пожаловаться</h3>
+    <label class="block text-sm font-semibold mb-1">Причина</label>
+    <select x-model="reason" class="w-full border border-slate-300 rounded px-3 py-2 text-sm mb-3">
+      <option value="spam">Спам</option>
+      <option value="offtopic">Не по теме</option>
+      <option value="wrong_answer">Неверный ответ</option>
+      <option value="abuse">Оскорбления / агрессия</option>
+      <option value="cheating_request">Просьба «решить за меня»</option>
+    </select>
+    <label class="block text-sm font-semibold mb-1">Комментарий (опционально)</label>
+    <textarea x-model="comment" rows="3" maxlength="500" class="w-full border border-slate-300 rounded px-3 py-2 text-sm mb-4"></textarea>
+    <div class="flex justify-end gap-2">
+      <button type="button" @click="open=false" class="px-3 py-1.5 text-slate-600 hover:text-slate-900">Отмена</button>
+      <button type="button" @click="send" :disabled="sending" class="px-4 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded">Отправить</button>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

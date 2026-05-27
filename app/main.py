@@ -63,6 +63,8 @@ from app.pages.router import router as pages_router
 from app.profile.router import router as profile_router
 from app.projects.router import invites_router
 from app.projects.router import router as projects_router
+from app.qa.router import api_router as qa_api_router
+from app.qa.router import router as qa_router
 from app.school.router import router as school_router
 from app.sections.router import router as sections_router
 from app.share.router import router as share_router
@@ -301,6 +303,8 @@ app.include_router(lessio_blog_router)
 app.include_router(lessio_public_router)
 app.include_router(lessio_cron_router)
 app.include_router(lessio_admin_router)
+app.include_router(qa_router)
+app.include_router(qa_api_router)
 
 
 # Static assets for the Three.js meme-game at /game.
@@ -465,7 +469,11 @@ async def robots_txt() -> PlainTextResponse:
         "Disallow: /lessio/app/\n"
         "Disallow: /lessio/auth/\n"
         "Disallow: /lessio/manage/\n"
+        "Disallow: /qa/admin/\n"
+        "Disallow: /qa/edit/\n"
+        "Disallow: /qa/search\n"
         "Allow: /u/\n"
+        "Allow: /qa/\n"
         "Allow: /lessio/help\n"
         "Allow: /lessio/blog\n"
         "Allow: /lessio/dlya-repetitorov\n"
@@ -474,6 +482,7 @@ async def robots_txt() -> PlainTextResponse:
         "Allow: /lessio/alternativa-calendly\n"
         "Allow: /lessio/oplata-cherez-telegram\n"
         f"Sitemap: {_settings.app_base_url.rstrip('/')}/sitemap.xml\n"
+        f"Sitemap: {_settings.app_base_url.rstrip('/')}/qa/sitemap.xml\n"
     )
     return PlainTextResponse(body)
 
@@ -493,6 +502,7 @@ async def sitemap_xml(session: AsyncSession = Depends(get_session)) -> Response:
         "/",
         "/doday",
         "/lessio",
+        "/qa/",
     ]
     static_medium_paths = [
         "/for-students",

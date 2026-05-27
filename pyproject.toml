@@ -26,6 +26,9 @@ dependencies = [
     "tzdata>=2024.2",
     # Fernet symmetric encryption — для шифрования Google refresh-token в БД (Lessio)
     "cryptography>=43.0",
+    # Razbery Q&A: markdown rendering + HTML sanitization for user-submitted Q&A
+    "markdown-it-py>=3.0",
+    "bleach>=6.1",
 ]
 
 [dependency-groups]
@@ -36,6 +39,7 @@ dev = [
     "mypy>=1.13,<2",
     "pre-commit>=4.0,<5",
     "markdown>=3.10.2",
+    "types-bleach>=6.3.0.20260508",
 ]
 
 [tool.uv]
@@ -156,6 +160,18 @@ ignore = [
 "app/lessio/blog/posts.py" = ["RUF001", "RUF002", "RUF003"]       # Russian blog post titles/summaries + docstrings
 "app/lessio/blog/posts_content.py" = ["RUF001", "RUF002", "RUF003"]  # Russian blog content
 "app/lessio/blog/router.py" = ["RUF001", "RUF002", "RUF003"]      # Russian docstrings + 404 message
+"app/qa/__init__.py" = ["RUF002"]
+"app/qa/models.py" = ["RUF001", "RUF002", "RUF003"]
+"app/qa/schemas.py" = ["RUF001", "RUF002", "RUF003"]
+"app/qa/rendering.py" = ["RUF001", "RUF002", "RUF003"]
+"app/qa/reputation.py" = ["RUF002"]
+"app/qa/rate_limits.py" = ["RUF002"]
+"app/qa/service.py" = ["RUF001", "RUF002", "RUF003"]
+"app/qa/seo.py" = ["RUF001", "RUF002", "RUF003"]
+"app/qa/seeding.py" = ["RUF001", "RUF002", "RUF003"]
+"app/qa/seed_topics.py" = ["RUF001", "RUF002", "RUF003"]
+"app/qa/router.py" = ["RUF001", "RUF002", "RUF003"]
+"alembic/versions/0047_qa_razbery.py" = ["RUF001", "RUF002", "RUF003"]
 
 [tool.mypy]
 python_version = "3.12"

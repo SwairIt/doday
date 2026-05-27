@@ -1,0 +1,50 @@
+{# variables: target_type='q'|'a', target_id, score, user_vote (-1/0/+1 or None) #}
+<div
+  x-data="{
+    score: {{ score }},
+    myVote: {{ user_vote if user_vote is defined and user_vote is not none else 0 }},
+    busy: false,
+    async cast(value) {
+      if (this.busy) return;
+      this.busy = true;
+      const newValue = this.myVote === value ? 0 : value;
+      try {
+        const res = await fetch('/api/qa/vote', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({target_type: '{{ target_type }}', target_id: {{ target_id }}, value: newValue})
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({detail: 'Ошибка'}));
+          alert(data.detail || 'Не удалось проголосовать');
+          return;
+        }
+        const data = await res.json();
+        this.score = data.score;
+        this.myVote = newValue;
+      } finally {
+        this.busy = false;
+      }
+    }
+  }"
+  class="flex flex-col items-center gap-1 select-none"
+>
+  {% if user %}
+    <button type="button" @click="cast(1)" :class="myVote === 1 ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-700'" class="p-1 transition" :disabled="busy" aria-label="Голос за">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l9 12H3z"/></svg>
+    </button>
+    <span class="text-sm font-bold" :class="score > 0 ? 'text-emerald-600' : (score < 0 ? 'text-rose-600' : 'text-slate-700')" x-text="score"></span>
+    <button type="button" @click="cast(-1)" :class="myVote === -1 ? 'text-rose-600' : 'text-slate-400 hover:text-slate-700'" class="p-1 transition" :disabled="busy" aria-label="Голос против">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 20l-9-12h18z"/></svg>
+    </button>
+  {% else %}
+    <a href="/auth/login?next=/qa/" class="p-1 text-slate-400 hover:text-slate-700" aria-label="Войти чтобы голосовать">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l9 12H3z"/></svg>
+    </a>
+    <span class="text-sm font-bold {{ 'text-emerald-600' if score > 0 else ('text-rose-600' if score < 0 else 'text-slate-700') }}">{{ score }}</span>
+    <a href="/auth/login?next=/qa/" class="p-1 text-slate-400 hover:text-slate-700" aria-label="Войти чтобы голосовать">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 20l-9-12h18z"/></svg>
+    </a>
+  {% endif %}
+</div>

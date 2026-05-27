@@ -1,0 +1,41 @@
+{% extends "qa/_base.html" %}
+
+{% block title %}Жалобы — Razbery admin{% endblock %}
+
+{% block content %}
+
+<h1 class="text-2xl font-bold text-slate-900 mb-4">Жалобы ({{ reports | length }})</h1>
+
+{% if not reports %}
+  <div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500">Пусто — никаких открытых жалоб.</div>
+{% else %}
+<div class="space-y-3">
+  {% for r in reports %}
+  <div class="bg-white border border-slate-200 rounded-xl p-4" x-data="{ busy: false, async resolve(hide) {
+    if (this.busy) return;
+    this.busy = true;
+    const res = await fetch('/api/qa/admin/report/{{ r.id }}/resolve?hide=' + hide, {method:'POST', credentials:'same-origin'});
+    if (res.ok) $el.style.display = 'none';
+    else alert('Не удалось');
+    this.busy = false;
+  }}">
+    <div class="flex items-baseline justify-between gap-3 mb-2">
+      <div class="text-sm">
+        <span class="font-bold">{{ r.reason }}</span>
+        · target: <code>{{ r.target_type }}/{{ r.target_id }}</code>
+        · #{{ r.id }}
+      </div>
+      <div class="text-xs text-slate-500">{{ r.created_at.strftime('%d.%m.%Y %H:%M') }}</div>
+    </div>
+    {% if r.comment %}<p class="text-sm text-slate-700 mb-2">{{ r.comment }}</p>{% endif %}
+    <div class="flex gap-2 text-sm">
+      <a href="{% if r.target_type == 'q' %}/qa/q/{{ r.target_id }}{% else %}#a-{{ r.target_id }}{% endif %}" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded">посмотреть</a>
+      <button type="button" @click="resolve(true)" :disabled="busy" class="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded">скрыть контент</button>
+      <button type="button" @click="resolve(false)" :disabled="busy" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded">отклонить</button>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}

@@ -15,6 +15,7 @@ from app.db import Base
 from app.labels import models as _labels_models  # noqa: F401
 from app.lessio import models as _lessio_models  # noqa: F401
 from app.projects import models as _projects_models  # noqa: F401
+from app.qa import models as _qa_models  # noqa: F401
 from app.sections import models as _sections_models  # noqa: F401
 from app.tasks import models as _tasks_models  # noqa: F401
 from app.telegram import models as _telegram_models  # noqa: F401

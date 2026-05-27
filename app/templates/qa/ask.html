@@ -1,0 +1,100 @@
+{% extends "qa/_base.html" %}
+
+{% block title %}Задать вопрос — Razbery{% endblock %}
+{% block description %}Задай школьный вопрос на Razbery — получи разбор с объяснением, а не готовый ответ для списывания.{% endblock %}
+
+{% block content %}
+
+<header class="mb-6">
+  <h1 class="text-3xl font-bold text-slate-900">Задай вопрос</h1>
+  <p class="text-slate-600 mt-1">
+    Чем подробнее условие — тем точнее тебе разберут. Чужие готовые ответы из интернета не принимаются.
+  </p>
+</header>
+
+{% if error %}
+<div class="mb-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-lg p-3 text-sm">
+  {{ error }}
+</div>
+{% endif %}
+
+<form method="post" action="/qa/ask" x-data="{
+  subject: '{{ preselected_subject or '' }}',
+  grade: {{ form_grade or 'null' }},
+  title: '{{ form_title or '' | replace(\"'\", \"\\\\'\") }}',
+  body: '{{ form_body_md or '' | replace(\"'\", \"\\\\'\") | replace('\\n', '\\\\n') }}',
+  similar: [],
+  similarTimer: null,
+  scheduleSimilarLookup() {
+    clearTimeout(this.similarTimer);
+    if (this.title.length < 12) { this.similar = []; return; }
+    this.similarTimer = setTimeout(async () => {
+      const params = new URLSearchParams({title: this.title});
+      if (this.subject) params.set('subject_slug', this.subject);
+      try {
+        const res = await fetch('/api/qa/similar?' + params.toString(), {credentials:'same-origin'});
+        if (res.ok) { const data = await res.json(); this.similar = data.results || []; }
+      } catch(e) { /* swallow */ }
+    }, 500);
+  }
+}" class="space-y-5 bg-white border border-slate-200 rounded-2xl p-5 sm:p-6">
+
+  <div class="grid sm:grid-cols-2 gap-4">
+    <div>
+      <label class="block text-sm font-semibold text-slate-700 mb-1">Предмет</label>
+      <select name="subject_slug" x-model="subject" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none">
+        <option value="">— выбери предмет —</option>
+        {% for s in subjects %}
+          <option value="{{ s.slug }}">{{ s.icon }} {{ s.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="block text-sm font-semibold text-slate-700 mb-1">Класс (опционально)</label>
+      <select name="grade" x-model="grade" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none">
+        <option value="">любой</option>
+        {% for g in range(5, 12) %}
+          <option value="{{ g }}">{{ g }} класс</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div>
+    <label class="block text-sm font-semibold text-slate-700 mb-1">Заголовок вопроса</label>
+    <input type="text" name="title" x-model="title" @input.debounce.300ms="scheduleSimilarLookup()" required minlength="10" maxlength="250"
+      class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+      placeholder="Сформулируй кратко, как вбил бы в Google. Например: «Как найти дискриминант квадратного уравнения?»">
+    <div class="text-xs text-slate-500 mt-1"><span x-text="title.length"></span> / 250 — минимум 10 символов</div>
+  </div>
+
+  <div x-show="similar.length > 0" x-cloak class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
+    <div class="font-semibold text-amber-900 mb-1">Похожие вопросы уже есть — посмотри:</div>
+    <ul class="space-y-1">
+      <template x-for="s in similar" :key="s.id">
+        <li><a :href="s.url" target="_blank" class="text-amber-800 hover:underline" x-text="s.title"></a></li>
+      </template>
+    </ul>
+  </div>
+
+  <div>
+    <label class="block text-sm font-semibold text-slate-700 mb-1">Условие задачи / контекст</label>
+    <textarea name="body_md" x-model="body" rows="8" required minlength="30"
+      class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none font-mono"
+      placeholder="Опиши задачу полностью. Используй Markdown. Для формул: $x^2 + 2x - 3 = 0$ или $$\int_0^1 x^2 dx$$"></textarea>
+    <div class="text-xs text-slate-500 mt-1"><span x-text="body.length"></span> символов — минимум 30. Поддерживается Markdown и LaTeX через KaTeX.</div>
+  </div>
+
+  <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+    <p class="text-xs text-slate-500">
+      Нажимая «Задать», ты подтверждаешь что хочешь <strong>понять</strong> решение, а не получить готовое для списывания.
+    </p>
+    <button type="submit" :disabled="title.length < 10 || body.length < 30 || !subject"
+      :class="title.length < 10 || body.length < 30 || !subject ? 'bg-slate-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'"
+      class="px-5 py-2.5 text-white rounded-lg font-semibold transition">
+      Задать вопрос
+    </button>
+  </div>
+</form>
+
+{% endblock %}

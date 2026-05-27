@@ -1,0 +1,58 @@
+{% extends "qa/_base.html" %}
+
+{% block title %}{% if query %}«{{ query }}» — поиск на Razbery{% else %}Поиск — Razbery{% endif %}{% endblock %}
+{% block description %}Поиск по школьным разборам Razbery — найди ответ с объяснением для любого предмета и класса.{% endblock %}
+
+{% block content %}
+
+<header class="mb-6">
+  <h1 class="text-2xl font-bold text-slate-900 mb-3">Поиск вопросов</h1>
+  <form method="get" action="/qa/search" class="bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
+    <div>
+      <input type="text" name="q" value="{{ query }}" required minlength="2"
+        class="w-full text-base border border-slate-300 rounded-lg px-3 py-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+        placeholder="что искать — слово или фраза">
+    </div>
+    <div class="flex flex-wrap gap-3">
+      <select name="subject_slug" class="border border-slate-300 rounded-lg px-3 py-2 text-sm">
+        <option value="">любой предмет</option>
+        {% for s in subjects %}
+          <option value="{{ s.slug }}" {% if subject_slug == s.slug %}selected{% endif %}>{{ s.icon }} {{ s.name }}</option>
+        {% endfor %}
+      </select>
+      <select name="grade" class="border border-slate-300 rounded-lg px-3 py-2 text-sm">
+        <option value="">любой класс</option>
+        {% for g in range(5, 12) %}
+          <option value="{{ g }}" {% if grade == g %}selected{% endif %}>{{ g }} класс</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold">Найти</button>
+    </div>
+  </form>
+</header>
+
+{% if query %}
+  <p class="text-slate-600 mb-3 text-sm">{{ results | length }} результат{% if results | length == 1 %}{% elif results | length in (2,3,4) %}а{% else %}ов{% endif %} по запросу «{{ query }}»</p>
+  {% if results %}
+    <ul class="space-y-2">
+      {% for q in results %}
+        {% include "qa/_question_card.html" %}
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="bg-white border border-slate-200 rounded-xl p-10 text-center">
+      <p class="text-slate-600 mb-3">Ничего не нашлось.</p>
+      {% if user %}
+        <a href="/qa/ask?subject={{ subject_slug or '' }}" class="inline-flex px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold">Задай свой вопрос</a>
+      {% else %}
+        <a href="/auth/register?next=/qa/ask" class="inline-flex px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold">Зарегистрируйся и спроси</a>
+      {% endif %}
+    </div>
+  {% endif %}
+{% else %}
+  <div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500">
+    Введи запрос выше или вернись на <a href="/qa/" class="text-indigo-700 hover:underline">главную</a>.
+  </div>
+{% endif %}
+
+{% endblock %}

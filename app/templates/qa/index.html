@@ -1,0 +1,92 @@
+{% extends "qa/_base.html" %}
+
+{% block title %}Razbery — школьное Q&A. Разбери, не спиши.{% endblock %}
+{% block description %}Razbery — школьное Q&A на русском. Задавай вопрос — получай разбор: ответ + объяснение. 5–11 классы. Алгебра, физика, химия, русский, биология, и ещё 11 предметов.{% endblock %}
+{% block canonical %}<link rel="canonical" href="https://getdoday.ru/qa/">{% endblock %}
+
+{% block content %}
+
+<section class="text-center py-10 sm:py-14">
+  <h1 class="text-3xl sm:text-5xl font-bold text-slate-900 mb-3">
+    Школьное Q&A где <span class="text-indigo-600">разбирают</span>, а не списывают
+  </h1>
+  <p class="max-w-2xl mx-auto text-slate-600 text-base sm:text-lg">
+    Задавай вопросы по урокам — получай **ответ + объяснение**. Каждый ответ обязательно с разбором логики. 5–11 классы.
+  </p>
+  <div class="mt-6 flex justify-center gap-3 flex-wrap">
+    <a href="/qa/ask" class="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold transition">Задать вопрос</a>
+    <a href="/qa/search" class="px-5 py-3 bg-white border border-slate-300 text-slate-700 rounded-xl font-semibold hover:bg-slate-50 transition">Найти ответ</a>
+  </div>
+</section>
+
+<section class="mb-10">
+  <h2 class="text-xl font-bold mb-4 text-slate-900">Предметы</h2>
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+    {% for s in subjects %}
+    <a href="/qa/s/{{ s.slug }}" class="block bg-white border border-slate-200 hover:border-indigo-400 hover:shadow-md rounded-xl p-4 transition">
+      <div class="text-3xl mb-1">{{ s.icon }}</div>
+      <div class="font-semibold text-slate-900">{{ s.name }}</div>
+      <div class="text-xs text-slate-500">{{ s.min_grade }}–{{ s.max_grade }} класс</div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+<div class="grid lg:grid-cols-3 gap-6">
+
+  <section class="lg:col-span-2">
+    <div class="flex items-baseline justify-between mb-3">
+      <h2 class="text-xl font-bold text-slate-900">Последние вопросы</h2>
+      <a href="/qa/search" class="text-sm text-indigo-600 hover:underline">смотреть все →</a>
+    </div>
+    {% if recent %}
+      <ul class="space-y-2">
+        {% for q in recent %}
+          {% include "qa/_question_card.html" %}
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="bg-white border border-slate-200 rounded-xl p-6 text-center text-slate-500">
+        Пока пусто. <a href="/qa/ask" class="text-indigo-600 hover:underline">Будь первым</a> — задай вопрос.
+      </div>
+    {% endif %}
+  </section>
+
+  <aside class="lg:col-span-1 space-y-6">
+    <div>
+      <h2 class="text-base font-bold text-slate-900 mb-2">Топ-вопросы</h2>
+      {% if top %}
+        <ul class="space-y-1.5 text-sm">
+          {% for q in top %}
+            <li class="flex items-start gap-2">
+              <span class="text-xs text-slate-400 mt-1">+{{ q.score }}</span>
+              <a href="/qa/q/{{ q.id }}-{{ q.slug }}" class="text-indigo-700 hover:underline line-clamp-2">{{ q.title }}</a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-sm text-slate-500">Будет когда наберётся голосов.</p>
+      {% endif %}
+    </div>
+
+    {% if unanswered %}
+    <div>
+      <h2 class="text-base font-bold text-slate-900 mb-2">Без ответа</h2>
+      <ul class="space-y-1.5 text-sm">
+        {% for q in unanswered %}
+          <li>
+            <a href="/qa/q/{{ q.id }}-{{ q.slug }}" class="text-slate-700 hover:text-indigo-700 line-clamp-2">{{ q.title }}</a>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 text-sm text-indigo-900">
+      <div class="font-semibold mb-1">Правило Razbery</div>
+      <p>Ответ всегда содержит **разбор**. Просто «42» без объяснения не публикуется. Учимся, а не списываем.</p>
+    </div>
+  </aside>
+
+</div>
+{% endblock %}

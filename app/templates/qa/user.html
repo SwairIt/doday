@@ -1,0 +1,107 @@
+{% extends "qa/_base.html" %}
+
+{% block title %}{{ target_stats.display_name }} — профиль на Razbery{% endblock %}
+{% block description %}{{ target_stats.display_name }} · {{ target_stats.reputation }} репутации · {{ target_stats.q_count }} вопросов · {{ target_stats.a_count }} ответов на Razbery.{% endblock %}
+{% block canonical %}<link rel="canonical" href="https://getdoday.ru/qa/u/{{ target_stats.display_slug }}">{% endblock %}
+
+{% block content %}
+
+<header class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 mb-6">
+  <div class="flex items-start gap-4">
+    <div class="text-5xl">{{ target_stats.avatar_emoji }}</div>
+    <div class="flex-1 min-w-0">
+      <h1 class="text-2xl font-bold text-slate-900">{{ target_stats.display_name }}</h1>
+      {% if target_stats.bio %}<p class="text-slate-600 mt-1">{{ target_stats.bio }}</p>{% endif %}
+      <div class="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+        <div class="bg-indigo-50 rounded-lg p-3">
+          <div class="text-2xl font-bold text-indigo-700">{{ target_stats.reputation }}</div>
+          <div class="text-xs text-indigo-900/70">репутация</div>
+        </div>
+        <div class="bg-slate-50 rounded-lg p-3">
+          <div class="text-2xl font-bold text-slate-700">{{ target_stats.q_count }}</div>
+          <div class="text-xs text-slate-600">вопросов</div>
+        </div>
+        <div class="bg-slate-50 rounded-lg p-3">
+          <div class="text-2xl font-bold text-slate-700">{{ target_stats.a_count }}</div>
+          <div class="text-xs text-slate-600">ответов</div>
+        </div>
+        <div class="bg-emerald-50 rounded-lg p-3">
+          <div class="text-2xl font-bold text-emerald-700">{{ target_stats.accepted_count }}</div>
+          <div class="text-xs text-emerald-900/70">принято</div>
+        </div>
+      </div>
+    </div>
+    {% if user and user.id == target_stats.user_id %}
+      <button type="button" @click="$dispatch('open-profile-edit')" class="hidden sm:inline-flex px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm">Редактировать</button>
+    {% endif %}
+  </div>
+</header>
+
+<div class="grid lg:grid-cols-2 gap-6">
+  <section>
+    <h2 class="text-lg font-bold text-slate-900 mb-3">Вопросы</h2>
+    {% if questions %}
+      <ul class="space-y-2">
+        {% for q in questions %}
+          {% include "qa/_question_card.html" %}
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="bg-white border border-slate-200 rounded-xl p-6 text-center text-slate-500">пока нет вопросов</div>
+    {% endif %}
+  </section>
+
+  <section>
+    <h2 class="text-lg font-bold text-slate-900 mb-3">Лучшие ответы</h2>
+    {% if answers %}
+      <ul class="space-y-2">
+        {% for a in answers %}
+        <li class="bg-white border border-slate-200 rounded-xl p-4 hover:border-indigo-400 hover:shadow-sm transition">
+          <div class="flex items-baseline gap-3">
+            <div class="text-sm font-bold {{ 'text-emerald-600' if a.score > 0 else ('text-rose-600' if a.score < 0 else 'text-slate-700') }}">{{ a.score }}</div>
+            <a href="/qa/q/{{ a.question_id }}#a-{{ a.id }}" class="text-indigo-700 hover:underline text-sm line-clamp-2">{{ a.answer_md[:200] }}</a>
+          </div>
+          {% if a.is_accepted %}<div class="text-xs text-emerald-700 mt-1">✓ принят</div>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="bg-white border border-slate-200 rounded-xl p-6 text-center text-slate-500">пока нет ответов</div>
+    {% endif %}
+  </section>
+</div>
+
+{% if user and user.id == target_stats.user_id %}
+{# inline edit modal — Alpine #}
+<div x-data="{
+  open: false, display_name: '{{ target_stats.display_name | replace(\"'\", \"\\\\'\") }}',
+  bio: {{ (target_stats.bio or '') | tojson }},
+  emoji: '{{ target_stats.avatar_emoji }}',
+  init() { window.addEventListener('open-profile-edit', () => this.open = true); },
+  async save() {
+    const res = await fetch('/api/qa/profile', {
+      method:'POST', credentials:'same-origin',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({display_name: this.display_name, bio: this.bio, avatar_emoji: this.emoji})
+    });
+    if (res.ok) { const d = await res.json(); window.location.href = '/qa/u/' + d.display_slug; }
+    else { const d = await res.json().catch(()=>({})); alert(d.detail || 'Не удалось'); }
+  }
+}" x-show="open" x-cloak class="fixed inset-0 z-40 flex items-center justify-center bg-black/30 p-4" @keydown.escape.window="open=false">
+  <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-5">
+    <h3 class="text-lg font-bold mb-3">Редактировать профиль</h3>
+    <label class="block text-sm font-semibold mb-1">Имя (псевдоним)</label>
+    <input x-model="display_name" maxlength="50" class="w-full border border-slate-300 rounded px-3 py-2 text-sm mb-3">
+    <label class="block text-sm font-semibold mb-1">Эмодзи-аватар</label>
+    <input x-model="emoji" maxlength="2" class="w-full border border-slate-300 rounded px-3 py-2 text-sm mb-3">
+    <label class="block text-sm font-semibold mb-1">О себе</label>
+    <textarea x-model="bio" maxlength="280" rows="3" class="w-full border border-slate-300 rounded px-3 py-2 text-sm mb-4"></textarea>
+    <div class="flex justify-end gap-2">
+      <button type="button" @click="open=false" class="px-3 py-1.5 text-slate-600 hover:text-slate-900">Отмена</button>
+      <button type="button" @click="save" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded">Сохранить</button>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

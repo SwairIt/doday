@@ -1,0 +1,55 @@
+{# vars: a (QAAnswer), question, author_stats, user_vote, can_accept #}
+<article id="a-{{ a.id }}" class="bg-white border {{ 'border-emerald-400 ring-2 ring-emerald-100' if a.is_accepted else 'border-slate-200' }} rounded-xl p-4 sm:p-5">
+  <div class="flex gap-4">
+    {% with target_type='a', target_id=a.id, score=a.score, user_vote=user_vote %}
+      {% include "qa/_vote_buttons.html" %}
+    {% endwith %}
+
+    <div class="flex-1 min-w-0">
+      {% if a.is_accepted %}
+        <div class="inline-flex items-center gap-1 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 mb-2">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.2l-3.5-3.5-1.4 1.4L9 19 20 8l-1.4-1.4z"/></svg>
+          Принятый ответ
+        </div>
+      {% endif %}
+
+      <div class="border-l-4 border-indigo-500 pl-3 mb-3 bg-indigo-50/40 py-2 rounded-r">
+        <div class="text-xs uppercase tracking-wide text-indigo-700 font-bold mb-1">Ответ</div>
+        <div class="prose-qa">{{ a.answer_html | safe }}</div>
+      </div>
+
+      <div class="pl-3 mb-3">
+        <div class="text-xs uppercase tracking-wide text-slate-500 font-bold mb-1">Как это получилось</div>
+        <div class="prose-qa text-slate-700">{{ a.explanation_html | safe }}</div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-500 pt-3 border-t border-slate-100">
+        <div class="flex items-center gap-2">
+          {% if author_stats %}
+            <a href="/qa/u/{{ author_stats.display_slug }}" class="flex items-center gap-1.5 hover:text-indigo-700">
+              <span>{{ author_stats.avatar_emoji }}</span>
+              <span class="font-semibold">{{ author_stats.display_name }}</span>
+              <span class="text-slate-400">· {{ author_stats.reputation }}</span>
+            </a>
+          {% else %}
+            <span>анонимно</span>
+          {% endif %}
+          <span class="text-slate-400">· {{ a.created_at.strftime('%d.%m.%Y') }}</span>
+          {% if a.is_seed %}<span class="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">📚 редакторский</span>{% endif %}
+        </div>
+        <div class="flex items-center gap-3">
+          {% if can_accept and not a.is_accepted %}
+            <form method="post" action="/api/qa/a/{{ a.id }}/accept" x-data x-on:submit.prevent="
+              fetch($el.action, {method:'POST', credentials:'same-origin'}).then(r => r.ok && window.location.reload())
+            ">
+              <button type="submit" class="text-emerald-700 hover:underline">Принять ответ</button>
+            </form>
+          {% endif %}
+          {% if user and user.id != a.author_id %}
+            <button type="button" @click="$dispatch('open-report', {target_type:'a', target_id: {{ a.id }}})" class="text-slate-400 hover:text-rose-600">пожаловаться</button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</article>
