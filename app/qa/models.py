@@ -86,7 +86,7 @@ class QAQuestion(Base):
     view_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     accepted_answer_id: Mapped[int | None] = mapped_column(
         BigInteger, nullable=True
-    )  # FK declared in migration to avoid circular dep
+    )  # FK declared in migration 0047 (circular dep); conftest drops it pre-drop_all
     is_seed: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default="false"
     )

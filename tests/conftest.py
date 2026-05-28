@@ -50,6 +50,15 @@ _TEST_CONNECT_ARGS = {"server_settings": {"timezone": "UTC"}}
 async def _setup_test_schema() -> None:
     test_engine = create_async_engine(_settings.test_database_url, connect_args=_TEST_CONNECT_ARGS)
     async with test_engine.begin() as conn:
+        # Migration 0047 adds qa_question.accepted_answer_id → qa_answer.id as a
+        # deferred FK (circular dep). The model itself doesn't declare it, so
+        # Base.metadata.drop_all can't unwire it; drop manually first.
+        await conn.execute(
+            text(
+                "ALTER TABLE IF EXISTS qa_question "
+                "DROP CONSTRAINT IF EXISTS fk_qa_question_accepted_answer"
+            )
+        )
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     await test_engine.dispose()
