@@ -364,7 +364,8 @@ async def test_list_products_endpoint(logged_in_client: AsyncClient) -> None:
     assert resp.status_code == 200
     products = resp.json()
     codes = {p["code"] for p in products}
-    assert codes == {p.code for p in PRODUCTS}
+    # ПДД products are sold on /pdd/pro, not in the Doday Tasks catalog.
+    assert codes == {p.code for p in PRODUCTS if not p.code.startswith("pdd_")}
     for p in products:
         assert p["stars_amount"] > 0
         assert "title" in p and "description" in p
@@ -419,7 +420,8 @@ async def test_create_invoice_no_bot_token(
 
 
 def test_products_catalog_internal_consistency() -> None:
-    """Sanity: titles non-empty, codes unique, stars > 0, grants_tier in known set."""
+    """Sanity: titles non-empty, codes unique, stars > 0, each product grants
+    either a global tier or a feature entitlement (never neither)."""
     seen_codes: set[str] = set()
     valid_tiers = {"pro", "family"}
     for p in PRODUCTS:
@@ -428,7 +430,13 @@ def test_products_catalog_internal_consistency() -> None:
         assert p.title.strip()
         assert p.description.strip()
         assert p.stars_amount > 0
-        assert p.grants_tier in valid_tiers
+        # Tier products set grants_tier; entitlement products (ПДД) set
+        # grants_entitlement and leave grants_tier None. Exactly one applies.
+        if p.grants_tier is not None:
+            assert p.grants_tier in valid_tiers
+            assert p.grants_entitlement is None
+        else:
+            assert p.grants_entitlement, f"{p.code} grants neither tier nor entitlement"
         assert p.duration_months is None or p.duration_months > 0
     # Year is cheaper-per-month than monthly (we promise this on landing).
     pro_year = get_product("pro_12m")

@@ -99,3 +99,49 @@ async def test_exam_save_persists_for_pro(logged_in_client, db_session, qid):
     assert body["total"] == 1
     n = (await db_session.execute(select(func.count()).select_from(PddExamSession))).scalar_one()
     assert n == 1
+
+
+async def test_exam_save_rejects_phantom_question(logged_in_client, db_session):
+    await _grant_pdd_pro(db_session)
+    r = await logged_in_client.post(
+        "/api/pdd/exam/save", json={"answers": [{"question_id": 987654, "chosen_position": 1}]}
+    )
+    assert r.status_code == 404
+    n = (await db_session.execute(select(func.count()).select_from(PddExamSession))).scalar_one()
+    assert n == 0  # nothing persisted on a rejected run
+
+
+# ─── cross-user isolation (IDOR guard) ──────────────────────────────────────
+
+
+async def test_attempt_isolated_between_users(
+    logged_in_client, second_logged_in_client, db_session, qid
+):
+    """User A's attempts never show up in user B's stats."""
+    from app.pdd.service import attempt_stats
+
+    r = await logged_in_client.post(
+        "/api/pdd/attempt", json={"question_id": qid, "chosen_position": 1}
+    )
+    assert r.status_code == 200
+    user_b = (
+        await db_session.execute(select(User).where(User.email == "second@example.com"))
+    ).scalar_one()
+    assert (await attempt_stats(db_session, user_b))["attempts"] == 0
+
+
+async def test_exam_sessions_isolated_between_users(
+    logged_in_client, second_logged_in_client, db_session, qid
+):
+    """User A's saved exam sessions are not visible to user B."""
+    from app.pdd.service import list_exam_sessions
+
+    await _grant_pdd_pro(db_session, "logged-in@example.com")
+    r = await logged_in_client.post(
+        "/api/pdd/exam/save", json={"answers": [{"question_id": qid, "chosen_position": 1}]}
+    )
+    assert r.status_code == 200
+    user_b = (
+        await db_session.execute(select(User).where(User.email == "second@example.com"))
+    ).scalar_one()
+    assert await list_exam_sessions(db_session, user_b) == []

@@ -363,7 +363,7 @@ async def refund_payment(
 
     url = f"https://api.telegram.org/bot{bot_token}/refundStarPayment"
     body: dict[str, Any] = {
-        "user_id": _telegram_user_id_for(session, payment.user_id),
+        "user_id": await _telegram_user_id_for(session, payment.user_id),
         "telegram_payment_charge_id": payment.telegram_payment_charge_id,
     }
     async with httpx.AsyncClient(timeout=15.0) as client:
@@ -376,18 +376,21 @@ async def refund_payment(
     payment.refunded_at = datetime.now(UTC)
     payment.refund_reason = (reason or "")[:500]
 
-    # Roll back: shrink pro_until by the refunded duration (tier products).
+    # Roll back the grant. (Caller commits — same contract as apply_successful_payment.)
     product = get_product(payment.product_code)
-    if product is not None and product.duration_months is not None:
-        if product.grants_tier is not None:
+    if product is not None:
+        # Tier products: shrink pro_until by the refunded duration. Lifetime tiers
+        # (duration None → year-2099 expiry) are unrefundable by design — skip.
+        if product.grants_tier is not None and product.duration_months is not None:
             user = await session.get(User, payment.user_id)
             if user is not None and user.pro_until is not None:
                 user.pro_until = user.pro_until - timedelta(days=30 * product.duration_months)
                 if user.pro_until <= datetime.now(UTC):
                     user.pro_until = None
                     user.tier = "free"
-        # Symmetric rollback for entitlement products (ПДД): shrink the grant,
-        # delete it once it lapses. Lifetime grants (None) are left as-is.
+
+        # Entitlement products (ПДД): reverse the grant. A lifetime grant is
+        # deleted outright; a dated grant shrinks and is deleted once it lapses.
         if product.grants_entitlement is not None:
             from app.billing.models import Entitlement
 
@@ -399,10 +402,13 @@ async def refund_payment(
                     )
                 )
             ).scalar_one_or_none()
-            if ent is not None and ent.expires_at is not None:
-                ent.expires_at = ent.expires_at - timedelta(days=30 * product.duration_months)
-                if ent.expires_at <= datetime.now(UTC):
+            if ent is not None:
+                if product.duration_months is None:
                     await session.delete(ent)
+                elif ent.expires_at is not None:
+                    ent.expires_at = ent.expires_at - timedelta(days=30 * product.duration_months)
+                    if ent.expires_at <= datetime.now(UTC):
+                        await session.delete(ent)
     return True
 
 

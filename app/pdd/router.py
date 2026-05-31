@@ -101,6 +101,7 @@ async def question_page(
         {
             "request": request,
             "user": user,
+            "is_pdd_pro": await service.is_pdd_pro(session, user),
             "question": question,
             "meta": seo.question_meta(question),
             "jsonld": seo.question_jsonld(question),
@@ -210,7 +211,10 @@ async def save_exam_endpoint(
 ) -> dict[str, object]:
     """Persist a finished exam run — Pro only (free runs stay client-side)."""
     await service.require_pdd_pro(session, user)
-    exam = await service.save_exam_session(session, user, data.answers)
+    try:
+        exam = await service.save_exam_session(session, user, data.answers)
+    except service.NotFound as exc:
+        raise HTTPException(404, str(exc)) from exc
     return {
         "id": exam.id,
         "passed": exam.status == "passed",

@@ -296,6 +296,12 @@ async def save_exam_session(
         )
     ).all()
     correct = {row.id: row.correct_position for row in rows}
+    # Reject phantom question ids up front — otherwise the PddAttempt inserts
+    # below hit the FK constraint at commit (ugly 500), and total would disagree
+    # with the scored count. Mirrors record_attempt's existence check.
+    missing = [qid for qid in qids if qid not in correct]
+    if missing:
+        raise NotFound(f"вопросы не найдены: {missing}")
     answer_map = {a.question_id: a.chosen_position for a in answers}
     passed, mistakes, extra = score_exam(answer_map, correct)
 
@@ -312,7 +318,7 @@ async def save_exam_session(
     exam = PddExamSession(
         user_id=user.id,
         question_ids=qids,
-        total=len(qids),
+        total=len(correct),  # distinct scored questions — matches `mistakes`
         mistakes=mistakes,
         extra_added=extra,
         status="passed" if passed else "failed",
