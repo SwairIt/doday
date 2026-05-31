@@ -28,10 +28,10 @@
 
 <section class="mb-10">
   <h2 class="text-lg font-bold text-slate-900 mb-3">Все билеты</h2>
-  <div class="grid grid-cols-4 sm:grid-cols-8 gap-2">
+  <div class="grid grid-cols-4 sm:grid-cols-8 gap-2 rise-stagger">
     {% for t in tickets %}
     <a href="/pdd/bilet/{{ t.number }}"
-       class="aspect-square flex items-center justify-center rounded-lg bg-white border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50 font-semibold text-slate-800 transition">
+       class="card-hover aspect-square flex items-center justify-center rounded-lg bg-white border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50 font-semibold text-slate-800">
       {{ t.number }}
     </a>
     {% endfor %}
@@ -44,7 +44,7 @@
   <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
     {% for tp in topics %}
     <a href="/pdd/tema/{{ tp.slug }}"
-       class="px-4 py-3 rounded-lg bg-white border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50 text-sm font-medium text-slate-800 transition">
+       class="card-hover px-4 py-3 rounded-lg bg-white border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50 text-sm font-medium text-slate-800">
       {{ tp.title }}
     </a>
     {% endfor %}

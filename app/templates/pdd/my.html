@@ -36,7 +36,7 @@
   {% if weak_topics %}
   <div class="space-y-2">
     {% for w in weak_topics %}
-    <a href="/pdd/tema/{{ w.slug }}" class="block bg-white rounded-lg border border-slate-200 p-3 hover:border-emerald-400 transition">
+    <a href="/pdd/tema/{{ w.slug }}" class="card-hover block bg-white rounded-lg border border-slate-200 p-3 hover:border-emerald-400">
       <div class="flex items-center justify-between text-sm">
         <span class="font-medium text-slate-800">{{ w.title }}</span>
         <span class="text-slate-500">{{ w.wrong }} из {{ w.total }} с ошибкой</span>

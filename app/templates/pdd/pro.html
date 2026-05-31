@@ -23,7 +23,7 @@
 
 <section class="grid sm:grid-cols-3 gap-4 max-w-4xl mx-auto mt-2">
   {% for p in products %}
-  <div class="bg-white rounded-2xl border {{ 'border-emerald-400 ring-2 ring-emerald-100' if p.code == 'pdd_pro_3m' else 'border-slate-200' }} p-5 flex flex-col">
+  <div class="card-hover bg-white rounded-2xl border {{ 'border-emerald-400 ring-2 ring-emerald-100' if p.code == 'pdd_pro_3m' else 'border-slate-200' }} p-5 flex flex-col">
     {% if p.code == 'pdd_pro_3m' %}<div class="text-xs font-bold text-emerald-700 mb-1">ВЫГОДНО · К ЭКЗАМЕНУ</div>{% endif %}
     <div class="font-bold text-slate-900">{{ p.title }}</div>
     <div class="mt-2 text-3xl font-extrabold text-slate-900">{{ p.stars_amount }} <span class="text-base font-semibold text-slate-400">⭐</span></div>

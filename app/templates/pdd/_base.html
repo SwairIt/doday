@@ -28,6 +28,21 @@
     }
     [x-cloak] { display: none !important; }
     .opt-btn { transition: background-color .12s, border-color .12s; }
+
+    /* Studio-consistent motion: hover lift (like the hub) + fade-up entrance. */
+    .card-hover { transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
+    .card-hover:hover { transform: translateY(-3px); box-shadow: 0 10px 26px -14px rgba(5, 150, 105, .35); }
+    @keyframes pddRise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .rise { animation: pddRise .45s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    /* Gentle stagger for grid/list children (first rows; rest just appear). */
+    .rise-stagger > * { animation: pddRise .45s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    .rise-stagger > *:nth-child(1){animation-delay:.02s} .rise-stagger > *:nth-child(2){animation-delay:.04s}
+    .rise-stagger > *:nth-child(3){animation-delay:.06s} .rise-stagger > *:nth-child(4){animation-delay:.08s}
+    .rise-stagger > *:nth-child(5){animation-delay:.10s} .rise-stagger > *:nth-child(6){animation-delay:.12s}
+    .rise-stagger > *:nth-child(7){animation-delay:.14s} .rise-stagger > *:nth-child(8){animation-delay:.16s}
+    @media (prefers-reduced-motion: reduce) {
+      .rise, .rise-stagger > *, .card-hover { animation: none !important; transition: none !important; }
+    }
   </style>
 
   {% block head_extra %}{% endblock %}
@@ -57,7 +72,7 @@
   </nav>
 </header>
 
-<main class="max-w-6xl mx-auto px-4 py-6">
+<main class="max-w-6xl mx-auto px-4 py-6 rise">
   {% block content %}{% endblock %}
 </main>
 

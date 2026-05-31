@@ -4,7 +4,7 @@
    and the explanation; Alpine only handles the answer-reveal interaction.
    x-data holds numbers only — never interpolate user strings here (Alpine
    quoting trap). #}
-<article class="bg-white rounded-xl border border-slate-200 p-4 sm:p-5"
+<article class="card-hover bg-white rounded-xl border border-slate-200 p-4 sm:p-5"
          x-data='{ chosen: null, revealed: false, correct: {{ q.correct_position }} }'>
   <div class="flex items-center justify-between gap-3 mb-2 text-xs text-slate-400">
     <span>Билет {{ q.ticket.number }} · вопрос {{ q.position_in_ticket }}</span>
