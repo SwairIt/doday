@@ -30,11 +30,17 @@ class Product:
     code: str
     title: str
     description: str
-    # What tier this purchase grants. Set on user.tier after payment.
-    grants_tier: str
+    # What global tier this purchase grants (set on user.tier after payment).
+    # None for entitlement-only products (e.g. ПДД) that must NOT touch the
+    # studio-wide tier — see grants_entitlement.
+    grants_tier: str | None
     # How long the paid period lasts. None == lifetime (no expiry).
     duration_months: int | None
     stars_amount: int
+    # If set, the purchase upserts an Entitlement(feature=...) instead of (or in
+    # addition to) the global tier. Lets a vertical (pdd_pro) be sold and priced
+    # independently of Doday Pro. Defaults to None → behaves exactly as before.
+    grants_entitlement: str | None = None
 
 
 PRODUCTS: tuple[Product, ...] = (
@@ -123,6 +129,43 @@ PRODUCTS: tuple[Product, ...] = (
         grants_tier="pro",
         duration_months=None,  # lifetime
         stars_amount=50000,
+    ),
+    # ── Doday ПДД (driving-exam prep) — standalone `pdd_pro` entitlement,
+    # independent of the global tier. Revenue lands on @DodayTaskBot's Stars
+    # balance (codes don't start with `tutor_pro_`). The 3-month tier is the
+    # hero: a one-time exam-window buy that sidesteps Stars' lack of web
+    # auto-renew (the churn cycle is the exam, not a calendar month).
+    Product(
+        code="pdd_pro_1m",
+        title="ПДД Pro · 1 месяц",
+        description=(
+            "Тренажёр ошибок, история экзаменов, статистика и PDF слабых тем — на 30 дней."
+        ),
+        grants_tier=None,
+        duration_months=1,
+        stars_amount=199,
+        grants_entitlement="pdd_pro",
+    ),
+    Product(
+        code="pdd_pro_3m",
+        title="ПДД Pro · до экзамена (3 мес)",
+        description=(
+            "Всё что в ПДД Pro, на 3 месяца — ровно на период подготовки к экзамену. "
+            "Выгоднее помесячной."
+        ),
+        grants_tier=None,
+        duration_months=3,
+        stars_amount=399,
+        grants_entitlement="pdd_pro",
+    ),
+    Product(
+        code="pdd_pro_forever",
+        title="ПДД Pro · навсегда",
+        description="ПДД Pro без ограничения по времени. Платишь один раз.",
+        grants_tier=None,
+        duration_months=None,  # lifetime
+        stars_amount=990,
+        grants_entitlement="pdd_pro",
     ),
 )
 

@@ -214,6 +214,31 @@ def has_pro_features(user: User) -> bool:
     return effective_tier(user) in ("pro", "team", "family")
 
 
+async def has_entitlement(session: AsyncSession, user: User, feature: str) -> bool:
+    """True if the beta override is on, or the user holds a non-expired grant.
+
+    Per-feature entitlements (e.g. ``pdd_pro``) are independent of the global
+    ``user.tier`` — a vertical can be sold and gated on its own without touching
+    Doday Tasks/Lessio Pro. Used by ``app/pdd/service.py``; generic so future
+    verticals reuse it.
+    """
+    from app.billing.models import Entitlement
+    from app.config import get_settings
+
+    if get_settings().beta_free_for_all:
+        return True
+    ent = (
+        await session.execute(
+            select(Entitlement).where(
+                Entitlement.user_id == user.id, Entitlement.feature == feature
+            )
+        )
+    ).scalar_one_or_none()
+    if ent is None:
+        return False
+    return ent.expires_at is None or ent.expires_at > datetime.now(UTC)
+
+
 def require_pro(user: User, feature_name: str) -> None:
     """Raise 402 Payment Required if the user is not on a Pro-tier plan.
 

@@ -37,7 +37,7 @@ class ProductOut(BaseModel):
     code: str
     title: str
     description: str
-    grants_tier: str
+    grants_tier: str | None
     duration_months: int | None
     stars_amount: int
 
@@ -96,6 +96,9 @@ async def list_products_endpoint(_: RequiredUser) -> list[ProductOut]:
 
     beta = get_settings().beta_free_for_all
     products_visible = [p for p in PRODUCTS if p.code == "pro_forever"] if beta else list(PRODUCTS)
+    # ПДД products are sold on their own /pdd/pro page, not in the Doday Tasks
+    # pricing catalog — keep them out of this endpoint.
+    products_visible = [p for p in products_visible if not p.code.startswith("pdd_")]
     return [
         ProductOut(
             code=p.code,

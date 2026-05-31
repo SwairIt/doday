@@ -267,17 +267,25 @@ async def apply_successful_payment(
         logger.error("paid user not found: %s", user_id)
         return payment
 
-    user.tier = product.grants_tier
-    if product.duration_months is None:
-        # Lifetime — set far future (year 2099) so effective_tier always sees
-        # it as active. We don't use None because that would clash with the
-        # «never had Pro» semantics elsewhere.
-        user.pro_until = datetime(2099, 12, 31, tzinfo=UTC)
-    else:
-        # Extend from max(now, current pro_until). Renewals don't lose remaining days.
-        now = datetime.now(UTC)
-        base = user.pro_until if (user.pro_until and user.pro_until > now) else now
-        user.pro_until = base + timedelta(days=30 * product.duration_months)
+    # Tier products (Doday Tasks / Lessio) extend the global tier + pro_until.
+    # Entitlement-only products (ПДД) leave the tier untouched — grants_tier None.
+    if product.grants_tier is not None:
+        user.tier = product.grants_tier
+        if product.duration_months is None:
+            # Lifetime — set far future (year 2099) so effective_tier always sees
+            # it as active. We don't use None because that would clash with the
+            # «never had Pro» semantics elsewhere.
+            user.pro_until = datetime(2099, 12, 31, tzinfo=UTC)
+        else:
+            # Extend from max(now, current pro_until). Renewals don't lose remaining days.
+            now = datetime.now(UTC)
+            base = user.pro_until if (user.pro_until and user.pro_until > now) else now
+            user.pro_until = base + timedelta(days=30 * product.duration_months)
+
+    # Entitlement products (ПДД, future verticals) upsert a per-feature grant
+    # without touching the global tier.
+    if product.grants_entitlement is not None:
+        await _grant_entitlement(session, user_id, product)
 
     logger.info(
         "applied star payment: user=%s product=%s stars=%s pro_until=%s",
@@ -287,6 +295,51 @@ async def apply_successful_payment(
         user.pro_until.isoformat() if user.pro_until else None,
     )
     return payment
+
+
+async def _grant_entitlement(session: AsyncSession, user_id: UUID, product: Product) -> None:
+    """Upsert the per-feature Entitlement for an entitlement product (idempotent
+    on renewal). Lifetime grants set expires_at=None and never downgrade to a
+    dated expiry. Dated renewals extend from max(now, current expiry)."""
+    from app.billing.models import Entitlement
+
+    feature = product.grants_entitlement
+    if feature is None:  # caller guarantees non-None; narrow for the type checker
+        return
+    ent = (
+        await session.execute(
+            select(Entitlement).where(
+                Entitlement.user_id == user_id,
+                Entitlement.feature == feature,
+            )
+        )
+    ).scalar_one_or_none()
+
+    if product.duration_months is None:
+        new_expiry: datetime | None = None  # lifetime
+    else:
+        now = datetime.now(UTC)
+        if ent is not None and ent.expires_at is not None and ent.expires_at > now:
+            base = ent.expires_at
+        else:
+            base = now
+        new_expiry = base + timedelta(days=30 * product.duration_months)
+
+    if ent is None:
+        session.add(
+            Entitlement(
+                user_id=user_id,
+                feature=feature,
+                expires_at=new_expiry,
+                source_code=product.code,
+            )
+        )
+        return
+    # Existing grant: a lifetime grant never downgrades to a dated one.
+    if ent.expires_at is None:
+        return
+    ent.expires_at = new_expiry
+    ent.source_code = product.code
 
 
 # ---------------------------------------------------------------------------
@@ -323,15 +376,33 @@ async def refund_payment(
     payment.refunded_at = datetime.now(UTC)
     payment.refund_reason = (reason or "")[:500]
 
-    # Roll back: shrink pro_until by the refunded duration.
+    # Roll back: shrink pro_until by the refunded duration (tier products).
     product = get_product(payment.product_code)
     if product is not None and product.duration_months is not None:
-        user = await session.get(User, payment.user_id)
-        if user is not None and user.pro_until is not None:
-            user.pro_until = user.pro_until - timedelta(days=30 * product.duration_months)
-            if user.pro_until <= datetime.now(UTC):
-                user.pro_until = None
-                user.tier = "free"
+        if product.grants_tier is not None:
+            user = await session.get(User, payment.user_id)
+            if user is not None and user.pro_until is not None:
+                user.pro_until = user.pro_until - timedelta(days=30 * product.duration_months)
+                if user.pro_until <= datetime.now(UTC):
+                    user.pro_until = None
+                    user.tier = "free"
+        # Symmetric rollback for entitlement products (ПДД): shrink the grant,
+        # delete it once it lapses. Lifetime grants (None) are left as-is.
+        if product.grants_entitlement is not None:
+            from app.billing.models import Entitlement
+
+            ent = (
+                await session.execute(
+                    select(Entitlement).where(
+                        Entitlement.user_id == payment.user_id,
+                        Entitlement.feature == product.grants_entitlement,
+                    )
+                )
+            ).scalar_one_or_none()
+            if ent is not None and ent.expires_at is not None:
+                ent.expires_at = ent.expires_at - timedelta(days=30 * product.duration_months)
+                if ent.expires_at <= datetime.now(UTC):
+                    await session.delete(ent)
     return True
 
 
