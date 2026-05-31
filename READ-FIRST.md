@@ -45,7 +45,7 @@
 | **Doday Tasks** | `getdoday.ru` | `@DodayTaskBot` | production | Todoist-style todo-list + команды |
 | **Lessio** | `getdoday.ru/lessio` | `@mylessiobot` | pre-launch ready | Booking + Stars-оплата для соло-учителей |
 | **Razbery (Doday Q&A)** | `getdoday.ru/qa/` | — | **live MVP** | Школьное Q&A с разборами (5–11 класс), **1436 seed-вопросов** по всем 16 предметам, SEO-driven рост |
-| **Doday ПДД** | `getdoday.ru/pdd/` | (тот же DodayTaskBot) | **live** | Билеты ПДД АВМ онлайн: **800 офиц. вопросов, 40 билетов, 541 картинка** (засижено на проде) + Pro-тренажёр/симулятор/PDF за Stars через отдельный `pdd_pro` entitlement |
+| **Doday ПДД** | `getdoday.ru/pdd/` (ABM) · `/pdd/cd/` (CD) | (тот же DodayTaskBot) | **live** | Билеты ПДД: **2 категории АВМ+CD, 1600 офиц. вопросов, 80 билетов, 1080 картинок**. Фишки: выбор категории, прогресс по билетам, марафон, поиск, экзамен (клавиатура), Pro-тренажёр/PDF за Stars (`pdd_pro` entitlement) |
 | **Tap Tower** | `getdoday.ru/taptower` | (тот же DodayTaskBot) | live | Telegram Mini App игра. Port 8012, **не трогать** |
 | **IndigoSmart** | port 8000 (отдельно) | — | live | **Не трогать** — отдельный проект |
 | **School diary parser** | внутри Doday | — | unfinished | Парсер Школьного портала МО + МЭШ. Endpoints нужно поправить через live-token + DevTools capture |

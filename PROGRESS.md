@@ -55,9 +55,25 @@
 - Code-review (15 агентов): 7 дефектов → 6 фиксов (вкл. pre-existing critical
   await в refund) + 2 латентные регрессии тестов; 1 ложноположит.
 
+**Обновление 2 (тот же день): категории + фишки удобства.**
+- Категории **АВМ + CD** (миграция `0049`: `category` на билетах/вопросах,
+  unique `(category, number)`). Импортирован CD (ещё 800 Q + 539 картинок),
+  засижен на проде (`seed_cli cd.json`). Итого **1600 вопросов, 80 билетов,
+  1080 картинок**. ABM на `/pdd/*`, CD на `/pdd/cd/*` (индексация ABM цела).
+  Существующие ABM-строки бэкфилл `category='ABM'` server_default'ом.
+- Фишки: выбор категории на хабе, прогресс по билетам (сдан/начат,
+  `ticket_progress`), марафон (`/pdd{,/cd}/marafon` + `/api/pdd/deck`), поиск
+  (`/pdd{,/cd}/poisk`, ILIKE), случайный билет (303-редирект), ответ с
+  клавиатуры 1-9 в экзамене и марафоне.
+- Проверено на проде: оба хаба 800/800, селектор, CD-билеты/вопросы, deck,
+  поиск (дорог=40, обгон=31/32), random 303, sitemap обе категории.
+- ⚠️ Тест Cyrillic в curl из Windows-bash ломается (cp1251) — проверяй поиск
+  через UTF-8 (python-скрипт или Playwright), не через `curl -G --data-urlencode`.
+
 **Осталось юзеру:** (1) прогнать `pytest tests/test_pdd_*.py
-tests/test_billing_entitlements.py` локально; (2) реальный Stars-платёж
-`pdd_pro_3m`; (3) перегон датасета на новый год ПДД (идемпотентно).
+tests/test_billing_entitlements.py tests/test_stars_payments.py` локально;
+(2) реальный Stars-платёж `pdd_pro_3m`; (3) перегон датасета на новый год ПДД
+(`scripts/pdd_import_avm.py` + `seed_cli` для avm.json и cd.json, идемпотентно).
 
 **Design decisions (не переигрывать без причины):**
 - ПДД Pro — отдельный entitlement, НЕ глобальный tier (чистая экономика;
