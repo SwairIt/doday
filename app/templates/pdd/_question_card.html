@@ -8,7 +8,7 @@
          x-data='{ chosen: null, revealed: false, correct: {{ q.correct_position }} }'>
   <div class="flex items-center justify-between gap-3 mb-2 text-xs text-slate-400">
     <span>Билет {{ q.ticket.number }} · вопрос {{ q.position_in_ticket }}</span>
-    <a href="/pdd/tema/{{ q.topic.slug }}" class="hover:text-emerald-700">{{ q.topic.title }}</a>
+    <a href="/pdd{{ '/cd' if q.category == 'CD' else '' }}/tema/{{ q.topic.slug }}" class="hover:text-emerald-700">{{ q.topic.title }}</a>
   </div>
 
   <p class="font-medium text-slate-900 leading-relaxed">{{ q.text }}</p>

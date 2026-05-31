@@ -51,13 +51,14 @@
 
 <header class="border-b border-slate-200 bg-white sticky top-0 z-30">
   <nav class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-    <a href="/pdd/" class="flex items-center gap-2 font-bold text-lg">
+    <a href="/pdd{{ cat_prefix|default('') }}/" class="flex items-center gap-2 font-bold text-lg">
       <span class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 to-emerald-800 text-white flex items-center justify-center font-extrabold">П</span>
       <span class="text-slate-900">Doday ПДД</span>
       <span class="hidden sm:inline text-xs text-slate-400 font-normal ml-1">· билеты онлайн</span>
     </a>
     <div class="flex items-center gap-2 sm:gap-3 text-sm">
-      <a href="/pdd/ekzamen" class="hidden sm:block px-2.5 py-1.5 text-slate-600 hover:text-slate-900 transition">Экзамен</a>
+      <a href="/pdd{{ cat_prefix|default('') }}/poisk" class="hidden sm:block px-2.5 py-1.5 text-slate-600 hover:text-slate-900 transition">Поиск</a>
+      <a href="/pdd{{ cat_prefix|default('') }}/ekzamen" class="hidden sm:block px-2.5 py-1.5 text-slate-600 hover:text-slate-900 transition">Экзамен</a>
       {% if user %}
         <a href="/pdd/my" class="px-2.5 py-1.5 text-slate-700 hover:text-slate-900 transition">Мой прогресс</a>
         {% if not is_pdd_pro %}

@@ -1,0 +1,33 @@
+{% extends "pdd/_base.html" %}
+
+{% block title %}Поиск вопросов ПДД — категории {{ categories[cat].label }}{% endblock %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-extrabold text-slate-900 mb-1">Поиск вопросов</h1>
+<p class="text-slate-500 text-sm mb-4">Найди вопрос ПДД категории {{ categories[cat].label }} по словам из текста.</p>
+
+<form method="get" action="/pdd{{ cat_prefix }}/poisk" class="flex gap-2 mb-6">
+  <input type="search" name="q" value="{{ query }}" autofocus
+         placeholder="Например: обгон, разметка, стоянка…"
+         class="flex-1 px-4 py-2.5 rounded-lg border border-slate-300 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 outline-none text-sm">
+  <button class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition">Найти</button>
+</form>
+
+{% if query and query|length >= 3 %}
+  <p class="text-sm text-slate-500 mb-4">Найдено: {{ results|length }}{% if results|length >= 40 %}+{% endif %}</p>
+  {% if results %}
+  <div class="space-y-4">
+    {% for q in results %}
+      {% include "pdd/_question_card.html" %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-500">
+    Ничего не найдено. Попробуй другие слова.
+  </div>
+  {% endif %}
+{% elif query %}
+  <p class="text-sm text-amber-600">Введите хотя бы 3 буквы.</p>
+{% endif %}
+{% endblock %}

@@ -1,19 +1,35 @@
 {% extends "pdd/_base.html" %}
 
-{% block canonical %}<link rel="canonical" href="https://getdoday.ru/pdd/">{% endblock %}
+{% block title %}Билеты ПДД онлайн 2026 — категории {{ categories[cat].label }} | Doday ПДД{% endblock %}
+{% block description %}Официальные билеты ПДД категории {{ categories[cat].label }} ({{ categories[cat].long }}) онлайн — бесплатно, с ответами и пояснениями. Тренируй ошибки, сдай экзамен в ГИБДД.{% endblock %}
+{% block canonical %}<link rel="canonical" href="https://getdoday.ru/pdd{{ cat_prefix }}/">{% endblock %}
 
 {% block content %}
-<section class="text-center py-8 sm:py-12">
+<section class="text-center py-6 sm:py-10">
   <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
     Билеты ПДД онлайн 2026
   </h1>
   <p class="mt-3 text-slate-600 max-w-2xl mx-auto">
-    Официальные экзаменационные билеты категории <b>A, B, M</b> — бесплатно, с правильными
-    ответами и пояснениями. Решай билеты, тренируй ошибки и сдай экзамен в ГИБДД с первого раза.
+    Официальные экзаменационные билеты — бесплатно, с правильными ответами и пояснениями.
+    Решай билеты, тренируй ошибки и сдай экзамен в ГИБДД с первого раза.
   </p>
-  <div class="mt-5 flex flex-wrap items-center justify-center gap-3 text-sm">
-    <a href="/pdd/ekzamen" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition">Сдать экзамен онлайн</a>
-    {% if tickets %}<a href="/pdd/bilet/1" class="px-5 py-2.5 bg-white border border-slate-300 hover:border-emerald-400 rounded-lg font-semibold text-slate-800 transition">Начать с билета 1</a>{% endif %}
+
+  {# Category selector — pick your licence category right away. #}
+  <div class="mt-5 inline-flex gap-1 p-1 rounded-xl bg-slate-100">
+    {% for code, c in categories.items() %}
+    <a href="/pdd{{ ('/' + c.path) if c.path else '' }}/"
+       class="px-4 py-2 rounded-lg text-sm font-semibold transition {{ 'bg-white text-emerald-700 shadow-sm' if code == cat else 'text-slate-500 hover:text-slate-800' }}">
+      Категории {{ c.label }}
+      <span class="hidden sm:inline text-xs font-normal opacity-70">· {{ c.long }}</span>
+    </a>
+    {% endfor %}
+  </div>
+
+  <div class="mt-5 flex flex-wrap items-center justify-center gap-2 text-sm">
+    <a href="/pdd{{ cat_prefix }}/ekzamen" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition">🎓 Сдать экзамен</a>
+    <a href="/pdd{{ cat_prefix }}/marafon" class="px-4 py-2.5 bg-white border border-slate-300 hover:border-emerald-400 rounded-lg font-semibold text-slate-800 transition">🏃 Марафон</a>
+    <a href="/pdd{{ cat_prefix }}/sluchainyi-bilet" class="px-4 py-2.5 bg-white border border-slate-300 hover:border-emerald-400 rounded-lg font-semibold text-slate-800 transition">🎲 Случайный билет</a>
+    <a href="/pdd{{ cat_prefix }}/poisk" class="px-4 py-2.5 bg-white border border-slate-300 hover:border-emerald-400 rounded-lg font-semibold text-slate-800 transition">🔎 Поиск</a>
   </div>
   {% if total_questions %}
   <p class="mt-4 text-xs text-slate-400">{{ total_questions }} вопросов · {{ tickets|length }} билетов · {{ topics|length }} тем</p>
@@ -27,12 +43,24 @@
 {% else %}
 
 <section class="mb-10">
-  <h2 class="text-lg font-bold text-slate-900 mb-3">Все билеты</h2>
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="text-lg font-bold text-slate-900">Все билеты</h2>
+    {% if user and progress %}
+    <div class="flex items-center gap-3 text-xs text-slate-500">
+      <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded bg-emerald-100 border border-emerald-300"></span>сдан</span>
+      <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded bg-amber-50 border border-amber-300"></span>начат</span>
+    </div>
+    {% endif %}
+  </div>
   <div class="grid grid-cols-4 sm:grid-cols-8 gap-2 rise-stagger">
     {% for t in tickets %}
-    <a href="/pdd/bilet/{{ t.number }}"
-       class="card-hover aspect-square flex items-center justify-center rounded-lg bg-white border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50 font-semibold text-slate-800">
-      {{ t.number }}
+    {% set st = progress.get(t.number) if progress else none %}
+    <a href="/pdd{{ cat_prefix }}/bilet/{{ t.number }}"
+       class="card-hover aspect-square flex items-center justify-center rounded-lg border font-semibold
+              {{ 'bg-emerald-100 border-emerald-300 text-emerald-800' if st == 'passed'
+                 else ('bg-amber-50 border-amber-300 text-amber-800' if st == 'started'
+                 else 'bg-white border-slate-200 text-slate-800 hover:border-emerald-400 hover:bg-emerald-50') }}">
+      {{ t.number }}{% if st == 'passed' %} <span class="ml-0.5 text-emerald-500">✓</span>{% endif %}
     </a>
     {% endfor %}
   </div>
@@ -43,7 +71,7 @@
   <h2 class="text-lg font-bold text-slate-900 mb-3">Вопросы по темам</h2>
   <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
     {% for tp in topics %}
-    <a href="/pdd/tema/{{ tp.slug }}"
+    <a href="/pdd{{ cat_prefix }}/tema/{{ tp.slug }}"
        class="card-hover px-4 py-3 rounded-lg bg-white border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50 text-sm font-medium text-slate-800">
       {{ tp.title }}
     </a>

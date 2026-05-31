@@ -6,11 +6,11 @@
 
 {% block content %}
 <nav class="text-sm text-slate-500 mb-4">
-  <a href="/pdd/" class="hover:text-emerald-700">Билеты</a> ·
+  <a href="/pdd{{ cat_prefix }}/" class="hover:text-emerald-700">Билеты {{ categories[cat].label }}</a> ·
   <span class="text-slate-700">Билет {{ ticket.number }}</span>
 </nav>
 
-<h1 class="text-2xl font-extrabold text-slate-900 mb-1">Билет {{ ticket.number }} ПДД</h1>
+<h1 class="text-2xl font-extrabold text-slate-900 mb-1">Билет {{ ticket.number }} ПДД — категории {{ categories[cat].label }}</h1>
 <p class="text-slate-500 text-sm mb-6">{{ questions|length }} вопросов с правильными ответами и пояснениями. Нажми вариант — увидишь разбор.</p>
 
 <div class="space-y-4">
@@ -21,8 +21,10 @@
 
 <div class="mt-8 flex items-center justify-between text-sm">
   {% if ticket.number > 1 %}
-    <a href="/pdd/bilet/{{ ticket.number - 1 }}" class="px-4 py-2 rounded-lg bg-white border border-slate-300 hover:border-emerald-400 transition">← Билет {{ ticket.number - 1 }}</a>
+    <a href="/pdd{{ cat_prefix }}/bilet/{{ ticket.number - 1 }}" class="px-4 py-2 rounded-lg bg-white border border-slate-300 hover:border-emerald-400 transition">← Билет {{ ticket.number - 1 }}</a>
   {% else %}<span></span>{% endif %}
-  <a href="/pdd/bilet/{{ ticket.number + 1 }}" class="px-4 py-2 rounded-lg bg-white border border-slate-300 hover:border-emerald-400 transition">Билет {{ ticket.number + 1 }} →</a>
+  {% if ticket.number < 40 %}
+    <a href="/pdd{{ cat_prefix }}/bilet/{{ ticket.number + 1 }}" class="px-4 py-2 rounded-lg bg-white border border-slate-300 hover:border-emerald-400 transition">Билет {{ ticket.number + 1 }} →</a>
+  {% else %}<a href="/pdd{{ cat_prefix }}/ekzamen" class="px-4 py-2 rounded-lg bg-emerald-600 text-white font-semibold transition">Сдать экзамен →</a>{% endif %}
 </div>
 {% endblock %}

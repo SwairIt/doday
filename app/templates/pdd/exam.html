@@ -12,7 +12,7 @@
 {% else %}
 <script type="application/json" id="exam-data">{{ exam_json | safe }}</script>
 
-<div x-data="pddExam()" x-init="init()" x-cloak class="max-w-2xl mx-auto">
+<div x-data="pddExam()" x-init="init()" x-cloak @keydown.window="onKey($event)" class="max-w-2xl mx-auto">
 
   {# ─── exam in progress ─── #}
   <div x-show="!finished">
@@ -38,7 +38,7 @@
         </template>
       </div>
     </article>
-    <p class="text-xs text-slate-400 mt-3 text-center">Допустимо ошибок: {{ mistake_limit }}. Ответ нельзя изменить — как на реальном экзамене.</p>
+    <p class="text-xs text-slate-400 mt-3 text-center">Допустимо ошибок: {{ mistake_limit }}. Ответ нельзя изменить. <span class="hidden sm:inline">Отвечай мышкой или клавишами 1–9.</span></p>
   </div>
 
   {# ─── result ─── #}
@@ -50,7 +50,7 @@
       <template x-if="isPro"><div class="text-xs text-emerald-700 mt-1">Результат сохранён в твою историю</div></template>
       <div class="mt-4 flex items-center justify-center gap-2">
         <button @click="window.location.reload()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition">Пройти ещё раз</button>
-        <a href="/pdd/" class="px-5 py-2.5 bg-white border border-slate-300 hover:border-emerald-400 rounded-lg font-semibold text-slate-800 transition">К билетам</a>
+        <a href="/pdd{{ cat_prefix }}/" class="px-5 py-2.5 bg-white border border-slate-300 hover:border-emerald-400 rounded-lg font-semibold text-slate-800 transition">К билетам</a>
       </div>
       {% if not is_pdd_pro %}
       <p class="text-xs text-slate-500 mt-3">С <a href="/pdd/pro" class="text-emerald-700 underline">ПДД Pro</a> ошибки сохраняются в тренажёр, а результаты — в историю.</p>
@@ -104,6 +104,11 @@ function pddExam() {
       if (this.idx < this.questions.length - 1) this.idx++; else this.finish();
     },
     isWrong(q) { return this.answers[q.id] !== q.correct_position; },
+    onKey(e) {
+      if (this.finished) return;
+      const n = parseInt(e.key, 10);
+      if (n >= 1 && n <= (this.current.options || []).length) this.choose(n);
+    },
     finish() {
       if (this.finished) return;
       this.finished = true;

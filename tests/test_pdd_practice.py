@@ -27,7 +27,7 @@ async def seeded_qid(db_session) -> int:
     await load_dataset(db_session, _DATASET)
     q = (
         await db_session.execute(
-            select(PddQuestion).where(PddQuestion.public_slug == public_slug_for(1, 1))
+            select(PddQuestion).where(PddQuestion.public_slug == public_slug_for("ABM", 1, 1))
         )
     ).scalar_one()
     return q.id

@@ -37,25 +37,35 @@ def question_meta(question: PddQuestion) -> dict[str, str]:
     }
 
 
+def _prefix(category: str) -> str:
+    return "/cd" if category == "CD" else ""
+
+
+def _cat_label(category: str) -> str:
+    return "C, D" if category == "CD" else "A, B, M"
+
+
 def ticket_meta(ticket: PddTicket) -> dict[str, str]:
+    label = _cat_label(ticket.category)
     return {
-        "title": f"Билет {ticket.number} ПДД онлайн — 20 вопросов с ответами и пояснениями",
+        "title": f"Билет {ticket.number} ПДД онлайн ({label}) — 20 вопросов с ответами",
         "description": (
-            f"Билет {ticket.number} ПДД категории АВМ: 20 официальных вопросов с "
+            f"Билет {ticket.number} ПДД категории {label}: 20 официальных вопросов с "
             "правильными ответами и разбором. Решай онлайн бесплатно."
         ),
-        "canonical": f"{BASE}/pdd/bilet/{ticket.number}",
+        "canonical": f"{BASE}/pdd{_prefix(ticket.category)}/bilet/{ticket.number}",
     }
 
 
-def topic_meta(topic: PddTopic) -> dict[str, str]:
+def topic_meta(topic: PddTopic, category: str = "ABM") -> dict[str, str]:
+    label = _cat_label(category)
     return {
-        "title": f"{topic.title} — вопросы ПДД по теме с ответами",
+        "title": f"{topic.title} — вопросы ПДД ({label}) по теме с ответами",
         "description": _trim(
             topic.description
-            or f"Все вопросы ПДД по теме «{topic.title}» с правильными ответами и пояснениями."
+            or f"Все вопросы ПДД по теме «{topic.title}» ({label}) с ответами и пояснениями."
         ),
-        "canonical": f"{BASE}/pdd/tema/{topic.slug}",
+        "canonical": f"{BASE}/pdd{_prefix(category)}/tema/{topic.slug}",
     }
 
 

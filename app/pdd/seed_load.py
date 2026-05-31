@@ -18,9 +18,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.pdd.models import PddOption, PddQuestion, PddTicket, PddTopic
 
 
-def public_slug_for(ticket: int, position: int) -> str:
-    """Stable SEO handle for a question — used in `/pdd/vopros/{slug}`."""
-    return f"bilet-{ticket}-vopros-{position}"
+def public_slug_for(category: str, ticket: int, position: int) -> str:
+    """Stable SEO handle for a question — used in `/pdd/vopros/{slug}`.
+
+    ABM keeps the bare ``bilet-N-vopros-M`` form (already indexed); other
+    categories are prefixed (``cd-bilet-N-vopros-M``) to stay globally unique.
+    """
+    prefix = "" if category == "ABM" else f"{category.lower()}-"
+    return f"{prefix}bilet-{ticket}-vopros-{position}"
 
 
 async def _get_or_create_topic(
@@ -49,20 +54,23 @@ async def _get_or_create_topic(
 
 
 async def _get_or_create_ticket(
-    session: AsyncSession, cache: dict[int, PddTicket], number: int
+    session: AsyncSession, cache: dict[tuple[str, int], PddTicket], category: str, number: int
 ) -> tuple[PddTicket, bool]:
-    if number in cache:
-        return cache[number], False
+    key = (category, number)
+    if key in cache:
+        return cache[key], False
     ticket = (
-        await session.execute(select(PddTicket).where(PddTicket.number == number))
+        await session.execute(
+            select(PddTicket).where(PddTicket.category == category, PddTicket.number == number)
+        )
     ).scalar_one_or_none()
     created = False
     if ticket is None:
-        ticket = PddTicket(number=number)
+        ticket = PddTicket(category=category, number=number)
         session.add(ticket)
         await session.flush()
         created = True
-    cache[number] = ticket
+    cache[key] = ticket
     return ticket, created
 
 
@@ -74,15 +82,18 @@ async def load_dataset(session: AsyncSession, data: list[dict[str, Any]]) -> dic
     """
     counts = {"topics": 0, "tickets": 0, "questions": 0, "options": 0}
     topic_cache: dict[str, PddTopic] = {}
-    ticket_cache: dict[int, PddTicket] = {}
+    ticket_cache: dict[tuple[str, int], PddTicket] = {}
 
     for item in data:
+        category = str(item.get("category", "ABM"))
         topic, t_created = await _get_or_create_topic(session, topic_cache, item)
         counts["topics"] += int(t_created)
-        ticket, k_created = await _get_or_create_ticket(session, ticket_cache, int(item["ticket"]))
+        ticket, k_created = await _get_or_create_ticket(
+            session, ticket_cache, category, int(item["ticket"])
+        )
         counts["tickets"] += int(k_created)
 
-        slug = public_slug_for(int(item["ticket"]), int(item["position"]))
+        slug = public_slug_for(category, int(item["ticket"]), int(item["position"]))
         question = (
             await session.execute(select(PddQuestion).where(PddQuestion.public_slug == slug))
         ).scalar_one_or_none()
@@ -90,6 +101,7 @@ async def load_dataset(session: AsyncSession, data: list[dict[str, Any]]) -> dic
             question = PddQuestion(public_slug=slug)
             session.add(question)
             counts["questions"] += 1
+        question.category = category
         question.ticket_id = ticket.id
         question.position_in_ticket = int(item["position"])
         question.topic_id = topic.id

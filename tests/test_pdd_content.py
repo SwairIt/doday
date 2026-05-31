@@ -73,7 +73,7 @@ async def test_seed_loads_and_is_idempotent(db_session):
 
     q1 = (
         await db_session.execute(
-            select(PddQuestion).where(PddQuestion.public_slug == public_slug_for(1, 1))
+            select(PddQuestion).where(PddQuestion.public_slug == public_slug_for("ABM", 1, 1))
         )
     ).scalar_one()
     assert q1.correct_position == 1

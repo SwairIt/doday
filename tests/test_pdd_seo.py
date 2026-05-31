@@ -64,7 +64,7 @@ async def test_topic_page(client, seeded):
 
 
 async def test_question_page_has_jsonld(client, seeded):
-    slug = public_slug_for(1, 1)
+    slug = public_slug_for("ABM", 1, 1)
     r = await client.get(f"/pdd/vopros/{slug}")
     assert r.status_code == 200
     assert "application/ld+json" in r.text
@@ -75,7 +75,7 @@ async def test_sitemap_lists_questions(client, seeded):
     r = await client.get("/pdd/sitemap.xml")
     assert r.status_code == 200
     assert r.headers["content-type"].startswith("application/xml")
-    assert f"/pdd/vopros/{public_slug_for(1, 1)}" in r.text
+    assert f"/pdd/vopros/{public_slug_for('ABM', 1, 1)}" in r.text
     assert "/pdd/bilet/1" in r.text
 
 

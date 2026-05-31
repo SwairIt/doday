@@ -32,24 +32,52 @@ class NotFound(PddError):
     """Requested content does not exist."""
 
 
+# Categories the user picks on entry. ABM = cars/moto (default), CD = trucks/buses.
+CATEGORIES: dict[str, dict[str, str]] = {
+    "ABM": {"label": "A, B, M", "long": "Легковые и мотоциклы", "path": ""},
+    "CD": {"label": "C, D", "long": "Грузовики и автобусы", "path": "cd"},
+}
+DEFAULT_CATEGORY = "ABM"
+
+
+def normalize_category(value: str | None) -> str:
+    """Map a path segment / param to a valid category code (default ABM)."""
+    if value and value.upper() in CATEGORIES:
+        return value.upper()
+    return DEFAULT_CATEGORY
+
+
+def category_prefix(category: str) -> str:
+    """URL prefix for a category: '' for ABM, '/cd' for CD."""
+    path = CATEGORIES.get(category, {}).get("path", "")
+    return f"/{path}" if path else ""
+
+
 # ─── content reads ──────────────────────────────────────────────────────────
 
 
-async def list_tickets(session: AsyncSession) -> list[PddTicket]:
-    """All 40 tickets ordered by number (cheap — no questions loaded)."""
-    rows = await session.execute(select(PddTicket).order_by(PddTicket.number))
+async def list_tickets(session: AsyncSession, category: str = DEFAULT_CATEGORY) -> list[PddTicket]:
+    """A category's 40 tickets ordered by number (cheap — no questions loaded)."""
+    rows = await session.execute(
+        select(PddTicket).where(PddTicket.category == category).order_by(PddTicket.number)
+    )
     return list(rows.scalars().all())
 
 
-async def list_topics(session: AsyncSession) -> list[PddTopic]:
-    """All topics ordered for the hub + topic index."""
-    rows = await session.execute(select(PddTopic).order_by(PddTopic.position, PddTopic.title))
+async def list_topics(session: AsyncSession, category: str = DEFAULT_CATEGORY) -> list[PddTopic]:
+    """Topics that have at least one question in the category."""
+    used = select(PddQuestion.topic_id).where(PddQuestion.category == category).distinct()
+    rows = await session.execute(
+        select(PddTopic).where(PddTopic.id.in_(used)).order_by(PddTopic.position, PddTopic.title)
+    )
     return list(rows.scalars().all())
 
 
-async def get_ticket(session: AsyncSession, number: int) -> PddTicket | None:
+async def get_ticket(session: AsyncSession, category: str, number: int) -> PddTicket | None:
     return (
-        await session.execute(select(PddTicket).where(PddTicket.number == number))
+        await session.execute(
+            select(PddTicket).where(PddTicket.category == category, PddTicket.number == number)
+        )
     ).scalar_one_or_none()
 
 
@@ -69,11 +97,13 @@ async def get_topic_by_slug(session: AsyncSession, slug: str) -> PddTopic | None
     ).scalar_one_or_none()
 
 
-async def topic_questions(session: AsyncSession, topic_id: int) -> list[PddQuestion]:
-    """All questions of a topic, ordered by ticket then position."""
+async def topic_questions(
+    session: AsyncSession, topic_id: int, category: str = DEFAULT_CATEGORY
+) -> list[PddQuestion]:
+    """A topic's questions within one category, ordered by ticket then position."""
     rows = await session.execute(
         select(PddQuestion)
-        .where(PddQuestion.topic_id == topic_id)
+        .where(PddQuestion.topic_id == topic_id, PddQuestion.category == category)
         .order_by(PddQuestion.ticket_id, PddQuestion.position_in_ticket)
     )
     return list(rows.scalars().all())
@@ -85,15 +115,60 @@ async def get_question_by_slug(session: AsyncSession, public_slug: str) -> PddQu
     ).scalar_one_or_none()
 
 
-async def question_count(session: AsyncSession) -> int:
-    return (await session.execute(select(func.count()).select_from(PddQuestion))).scalar_one()
+async def question_count(session: AsyncSession, category: str = DEFAULT_CATEGORY) -> int:
+    return (
+        await session.execute(
+            select(func.count()).select_from(PddQuestion).where(PddQuestion.category == category)
+        )
+    ).scalar_one()
 
 
 async def all_question_slugs(session: AsyncSession) -> list[str]:
-    """Just the public slugs (no ORM objects) — for the sitemap. Capped at
-    Google's 50k-URLs-per-file limit."""
+    """Public slugs across ALL categories (no ORM objects) — for the sitemap.
+    Capped at Google's 50k-URLs-per-file limit."""
     rows = await session.execute(
         select(PddQuestion.public_slug).order_by(PddQuestion.id).limit(50000)
+    )
+    return list(rows.scalars().all())
+
+
+async def random_ticket_number(session: AsyncSession, category: str) -> int | None:
+    """A random ticket number in the category — for the 'случайный билет' button."""
+    row = await session.execute(
+        select(PddTicket.number)
+        .where(PddTicket.category == category)
+        .order_by(func.random())
+        .limit(1)
+    )
+    return row.scalar_one_or_none()
+
+
+async def search_questions(
+    session: AsyncSession, category: str, query: str, limit: int = 40
+) -> list[PddQuestion]:
+    """Find questions in a category whose text matches `query` (case-insensitive)."""
+    term = query.strip()
+    if len(term) < 3:
+        return []
+    rows = await session.execute(
+        select(PddQuestion)
+        .where(PddQuestion.category == category, PddQuestion.text.ilike(f"%{term}%"))
+        .order_by(PddQuestion.ticket_id, PddQuestion.position_in_ticket)
+        .limit(limit)
+    )
+    return list(rows.scalars().all())
+
+
+async def deck_questions(
+    session: AsyncSession, category: str, offset: int, limit: int = 30
+) -> list[PddQuestion]:
+    """A page of a category's questions in order — powers the marathon deck."""
+    rows = await session.execute(
+        select(PddQuestion)
+        .where(PddQuestion.category == category)
+        .order_by(PddQuestion.ticket_id, PddQuestion.position_in_ticket)
+        .offset(offset)
+        .limit(limit)
     )
     return list(rows.scalars().all())
 
@@ -171,6 +246,34 @@ async def attempt_stats(session: AsyncSession, user: User) -> dict[str, int]:
         )
     ).scalar_one()
     return {"attempts": total, "questions_touched": distinct_q}
+
+
+async def ticket_progress(session: AsyncSession, user: User, category: str) -> dict[int, str]:
+    """Per-ticket status for the grid: 'passed' (all 20 latest-correct),
+    'started' (some attempted), or absent (untouched). Free, logged-in."""
+    latest = _latest_attempt_subquery(user.id)
+    correct_expr = func.sum(case((latest.c.is_correct.is_(True), 1), else_=0))
+    stmt = (
+        select(
+            PddTicket.number,
+            func.count().label("answered"),
+            correct_expr.label("correct"),
+        )
+        .select_from(latest)
+        .join(PddQuestion, PddQuestion.id == latest.c.question_id)
+        .join(PddTicket, PddTicket.id == PddQuestion.ticket_id)
+        .where(latest.c.rn == 1, PddTicket.category == category)
+        .group_by(PddTicket.number)
+    )
+    progress: dict[int, str] = {}
+    for row in (await session.execute(stmt)).all():
+        answered = int(row.answered or 0)
+        correct = int(row.correct or 0)
+        if answered >= 20 and correct >= 20:
+            progress[row.number] = "passed"
+        elif answered > 0:
+            progress[row.number] = "started"
+    return progress
 
 
 # ─── trainer + stats (Pro) ──────────────────────────────────────────────────
@@ -262,9 +365,13 @@ def score_exam(answers: dict[int, int], correct: dict[int, int]) -> tuple[bool, 
     return passed, mistakes, extra_added
 
 
-async def random_exam_questions(session: AsyncSession, n: int = EXAM_SIZE) -> list[PddQuestion]:
+async def random_exam_questions(
+    session: AsyncSession, category: str = DEFAULT_CATEGORY, n: int = EXAM_SIZE
+) -> list[PddQuestion]:
     """A random `n`-question ticket for the simulator (options eager-loaded)."""
-    rows = await session.execute(select(PddQuestion).order_by(func.random()).limit(n))
+    rows = await session.execute(
+        select(PddQuestion).where(PddQuestion.category == category).order_by(func.random()).limit(n)
+    )
     return list(rows.scalars().all())
 
 

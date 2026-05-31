@@ -1,0 +1,110 @@
+{% extends "pdd/_base.html" %}
+
+{% block title %}Марафон ПДД — все вопросы категории {{ categories[cat].label }} подряд{% endblock %}
+{% block description %}Марафон ПДД: реши все официальные вопросы категории {{ categories[cat].label }} подряд, по одному, с мгновенным разбором.{% endblock %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+
+{% block content %}
+<div x-data="pddMarathon()" x-init="init()" x-cloak @keydown.window="onKey($event)" class="max-w-2xl mx-auto">
+
+  {# header: progress #}
+  <div class="flex items-center justify-between mb-3 text-sm">
+    <a href="/pdd{{ cat_prefix }}/" class="text-slate-500 hover:text-emerald-700">← Билеты {{ categories[cat].label }}</a>
+    <div class="text-slate-500">
+      <span x-text="Math.min(idx + 1, total)"></span> / <span x-text="total"></span>
+      <span class="ml-2 text-emerald-600" x-show="answered" x-cloak>✓ <span x-text="correctCount"></span>/<span x-text="answered"></span></span>
+    </div>
+  </div>
+  <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden mb-5">
+    <div class="h-full bg-emerald-500 transition-all" :style="'width:'+(total ? (idx/total*100) : 0)+'%'"></div>
+  </div>
+
+  {# active question #}
+  <div x-show="!done">
+    <article class="bg-white rounded-xl border border-slate-200 p-4 sm:p-5">
+      <p class="font-medium text-slate-900 leading-relaxed" x-text="current.text"></p>
+      <template x-if="current.image_path">
+        <img :src="'/static/'+current.image_path" alt="Иллюстрация" class="mt-3 rounded-lg border border-slate-200 max-h-72 max-w-full w-auto h-auto">
+      </template>
+      <div class="mt-4 space-y-2">
+        <template x-for="opt in current.options" :key="opt.position">
+          <button type="button" @click="choose(opt.position)" x-bind:disabled="revealed"
+            class="opt-btn w-full text-left px-4 py-2.5 rounded-lg border text-sm"
+            :class="!revealed
+              ? 'border-slate-300 hover:border-emerald-400 hover:bg-emerald-50 cursor-pointer'
+              : (opt.position===current.correct_position
+                  ? 'border-emerald-500 bg-emerald-50 text-emerald-900 font-semibold'
+                  : (opt.position===chosen ? 'border-red-400 bg-red-50 text-red-900' : 'border-slate-200 text-slate-400'))">
+            <span class="inline-block w-5 text-slate-400" x-text="opt.position + '.'"></span><span x-text="opt.text"></span>
+          </button>
+        </template>
+      </div>
+      <div x-show="revealed" x-cloak class="mt-4 rounded-lg bg-slate-50 border border-slate-200 p-3 text-sm">
+        <div class="font-semibold mb-1" :class="chosen===current.correct_position ? 'text-emerald-700' : 'text-red-600'"
+             x-text="chosen===current.correct_position ? '✅ Правильно' : '❌ Неправильно'"></div>
+        <p class="text-slate-700 leading-relaxed" x-show="current.explanation" x-text="current.explanation"></p>
+      </div>
+    </article>
+    <div class="mt-4 flex justify-end">
+      <button @click="next()" x-show="revealed" x-cloak
+        class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition">Дальше →</button>
+    </div>
+    <p class="text-xs text-slate-400 mt-3 text-center"><span class="hidden sm:inline">Клавиши 1–9 — ответ, Enter — дальше.</span></p>
+  </div>
+
+  {# finished #}
+  <div x-show="done" x-cloak class="text-center py-10">
+    <div class="text-4xl">🏁</div>
+    <div class="text-2xl font-extrabold text-slate-900 mt-2">Марафон пройден</div>
+    <div class="text-sm text-slate-600 mt-1">Правильно <span x-text="correctCount"></span> из <span x-text="answered"></span></div>
+    <div class="mt-4 flex items-center justify-center gap-2">
+      <button @click="window.location.reload()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition">Заново</button>
+      <a href="/pdd{{ cat_prefix }}/" class="px-5 py-2.5 bg-white border border-slate-300 hover:border-emerald-400 rounded-lg font-semibold text-slate-800 transition">К билетам</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block body_end %}
+<script>
+function pddMarathon() {
+  return {
+    category: '{{ cat }}', total: {{ total_questions }},
+    deck: [], idx: 0, offset: 0, limit: 30, loading: false, done: false,
+    chosen: null, revealed: false, answered: 0, correctCount: 0,
+    async init() { await this.loadMore(); },
+    get current() { return this.deck[this.idx] || { options: [] }; },
+    async loadMore() {
+      if (this.loading || this.offset >= this.total) return;
+      this.loading = true;
+      try {
+        const r = await fetch(`/api/pdd/deck?category=${this.category}&offset=${this.offset}&limit=${this.limit}`);
+        const data = await r.json();
+        this.deck = this.deck.concat(data.questions);
+        this.offset += data.questions.length;
+      } catch (e) { /* keep going */ }
+      this.loading = false;
+    },
+    choose(pos) {
+      if (this.revealed || !this.current.id) return;
+      this.chosen = pos; this.revealed = true; this.answered++;
+      if (pos === this.current.correct_position) this.correctCount++;
+      if (window.pddAttempt) window.pddAttempt(this.current.id, pos, 'practice');
+    },
+    async next() {
+      this.revealed = false; this.chosen = null;
+      this.idx++;
+      if (this.idx >= this.total) { this.done = true; return; }
+      if (this.idx >= this.deck.length - 5) await this.loadMore();
+    },
+    onKey(e) {
+      if (this.done) return;
+      if (!this.revealed) {
+        const n = parseInt(e.key, 10);
+        if (n >= 1 && n <= (this.current.options || []).length) this.choose(n);
+      } else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.next(); }
+    },
+  };
+}
+</script>
+{% endblock %}

@@ -54,13 +54,20 @@ class PddTopic(Base):
 
 
 class PddTicket(Base):
-    """One of the 40 category A/B/M exam tickets (20 questions each)."""
+    """One exam ticket (20 questions). Ticket numbers 1..40 repeat per category,
+    so the natural key is (category, number)."""
 
     __tablename__ = "pdd_tickets"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    number: Mapped[int] = mapped_column(Integer, unique=True, nullable=False, index=True)
+    # "ABM" (cars/moto, the default) or "CD" (trucks/buses).
+    category: Mapped[str] = mapped_column(
+        String(8), nullable=False, default="ABM", server_default="ABM", index=True
+    )
+    number: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     title: Mapped[str | None] = mapped_column(String(200), nullable=True)
+
+    __table_args__ = (UniqueConstraint("category", "number", name="uq_pdd_ticket_category_number"),)
 
 
 class PddQuestion(Base):
@@ -69,8 +76,14 @@ class PddQuestion(Base):
     __tablename__ = "pdd_questions"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    # Stable public handle for `/pdd/vopros/{public_slug}`, e.g. "bilet-1-vopros-3".
+    # Stable public handle for `/pdd/vopros/{public_slug}`, e.g. "bilet-1-vopros-3"
+    # (ABM) or "cd-bilet-1-vopros-3" (CD) — category-prefixed to stay unique.
     public_slug: Mapped[str] = mapped_column(String(80), unique=True, nullable=False, index=True)
+    # Denormalised from the ticket so category-filtered reads (lists, exam,
+    # marathon, search) avoid a join. Set during seeding.
+    category: Mapped[str] = mapped_column(
+        String(8), nullable=False, default="ABM", server_default="ABM", index=True
+    )
     ticket_id: Mapped[int] = mapped_column(
         ForeignKey("pdd_tickets.id", ondelete="CASCADE"), nullable=False, index=True
     )
