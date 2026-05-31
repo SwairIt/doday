@@ -40,14 +40,24 @@
 7. Tests (БД-backed, юзер гоняет): test_billing_entitlements, test_pdd_content/
    _seo/_practice/_exam/_pro_gating.
 
-**Blocked / next (юзер локально — изоляция БД):**
-1. `uv run alembic upgrade head` (0048).
-2. Подготовить+залить датасет АВМ (JSON + картинки `app/static/pdd/img/`,
-   формат — `docs/pdd-dataset-schema.md`) через `load_dataset`. Без сидов сайт
-   рендерится пустым-но-корректным.
-3. `uv run pytest tests/test_pdd_*.py tests/test_billing_entitlements.py`.
-4. Деплой (push master → deploy-poll), затем end-to-end Stars-платёж
-   `pdd_pro_3m` (валидация «за Stars платят» для всей студии).
+**Обновление (тот же день, после ревью):** залит реальный контент + правки.
+- Datasource: `github.com/etspring/pdd_russia` (офиц. билеты ГИБДД) →
+  `scripts/pdd_import_avm.py` скачал 40 билетов + 541 картинку, сконвертил в
+  `app/pdd/seed_data/avm.json` (800 Q, 26 тем). Картинки в `app/static/pdd/img/`.
+- `app/pdd/seed_cli.py` → засижено на ПРОДЕ по SSH (`.venv/bin/python -m
+  app.pdd.seed_cli ...`): topics=26, tickets=40, questions=800, options=2510.
+  getdoday.ru/pdd/ теперь живой с контентом + картинками (проверено).
+- alembic/env.py: добавлены `app.pdd` + `app.billing` модели (как lessio) —
+  иначе autogenerate мог бы дропнуть entitlements/pdd_*.
+- Адаптив проверен Playwright (390/1280, все страницы), картинкам `max-w-full`.
+- Анимации как в студии: `card-hover` (lift) + `.rise` fade-up + стаггер сетки,
+  `prefers-reduced-motion` guard.
+- Code-review (15 агентов): 7 дефектов → 6 фиксов (вкл. pre-existing critical
+  await в refund) + 2 латентные регрессии тестов; 1 ложноположит.
+
+**Осталось юзеру:** (1) прогнать `pytest tests/test_pdd_*.py
+tests/test_billing_entitlements.py` локально; (2) реальный Stars-платёж
+`pdd_pro_3m`; (3) перегон датасета на новый год ПДД (идемпотентно).
 
 **Design decisions (не переигрывать без причины):**
 - ПДД Pro — отдельный entitlement, НЕ глобальный tier (чистая экономика;
