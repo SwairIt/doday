@@ -1,0 +1,44 @@
+{# Renders one PDD question as an interactive, SEO-friendly card.
+   Expects `q` (a PddQuestion with .options/.ticket/.topic eagerly loaded) in
+   context. Content is server-rendered so crawlers see the question, the answer,
+   and the explanation; Alpine only handles the answer-reveal interaction.
+   x-data holds numbers only — never interpolate user strings here (Alpine
+   quoting trap). #}
+<article class="bg-white rounded-xl border border-slate-200 p-4 sm:p-5"
+         x-data='{ chosen: null, revealed: false, correct: {{ q.correct_position }} }'>
+  <div class="flex items-center justify-between gap-3 mb-2 text-xs text-slate-400">
+    <span>Билет {{ q.ticket.number }} · вопрос {{ q.position_in_ticket }}</span>
+    <a href="/pdd/tema/{{ q.topic.slug }}" class="hover:text-emerald-700">{{ q.topic.title }}</a>
+  </div>
+
+  <p class="font-medium text-slate-900 leading-relaxed">{{ q.text }}</p>
+
+  {% if q.image_path %}
+  <img src="/static/{{ q.image_path }}" alt="Иллюстрация к вопросу билета {{ q.ticket.number }}"
+       loading="lazy" class="mt-3 rounded-lg border border-slate-200 max-h-72 w-auto">
+  {% endif %}
+
+  <div class="mt-4 space-y-2">
+    {% for opt in q.options %}
+    <button type="button"
+      class="opt-btn w-full text-left px-4 py-2.5 rounded-lg border text-sm"
+      x-bind:disabled="revealed"
+      @click="if(!revealed){ chosen={{ opt.position }}; revealed=true; window.pddAttempt && window.pddAttempt({{ q.id }}, {{ opt.position }}); }"
+      :class="!revealed
+        ? 'border-slate-300 hover:border-emerald-400 hover:bg-emerald-50 cursor-pointer'
+        : ({{ opt.position }}===correct
+            ? 'border-emerald-500 bg-emerald-50 text-emerald-900 font-semibold'
+            : ({{ opt.position }}===chosen ? 'border-red-400 bg-red-50 text-red-900' : 'border-slate-200 text-slate-400'))">
+      <span class="inline-block w-5 text-slate-400">{{ opt.position }}.</span>{{ opt.text }}
+    </button>
+    {% endfor %}
+  </div>
+
+  <div x-show="revealed" x-cloak class="mt-4 rounded-lg bg-slate-50 border border-slate-200 p-3 text-sm">
+    <div class="font-semibold mb-1"
+         x-text="chosen===correct ? '✅ Правильно' : '❌ Неправильно'"
+         :class="chosen===correct ? 'text-emerald-700' : 'text-red-600'"></div>
+    {% if q.explanation %}<p class="text-slate-700 leading-relaxed">{{ q.explanation }}</p>{% endif %}
+    <a href="/pdd/vopros/{{ q.public_slug }}" class="inline-block mt-2 text-xs text-emerald-700 hover:underline">Ссылка на вопрос →</a>
+  </div>
+</article>

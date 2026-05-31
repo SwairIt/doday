@@ -1,0 +1,25 @@
+{% extends "pdd/_base.html" %}
+
+{% block title %}{{ meta.title }}{% endblock %}
+{% block description %}{{ meta.description }}{% endblock %}
+{% block canonical %}<link rel="canonical" href="{{ meta.canonical }}">{% endblock %}
+{% block head_extra %}
+<script type="application/ld+json">{{ jsonld | safe }}</script>
+{% endblock %}
+
+{% block content %}
+<nav class="text-sm text-slate-500 mb-4">
+  <a href="/pdd/" class="hover:text-emerald-700">Билеты</a> ·
+  <a href="/pdd/bilet/{{ question.ticket.number }}" class="hover:text-emerald-700">Билет {{ question.ticket.number }}</a> ·
+  <span class="text-slate-700">Вопрос {{ question.position_in_ticket }}</span>
+</nav>
+
+<div class="max-w-2xl">
+  {% set q = question %}
+  {% include "pdd/_question_card.html" %}
+</div>
+
+<div class="mt-6">
+  <a href="/pdd/bilet/{{ question.ticket.number }}" class="text-sm text-emerald-700 hover:underline">← Все вопросы билета {{ question.ticket.number }}</a>
+</div>
+{% endblock %}

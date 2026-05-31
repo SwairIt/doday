@@ -1,0 +1,77 @@
+{% extends "pdd/_base.html" %}
+
+{% block title %}ПДД Pro — персональный тренажёр ошибок и симулятор экзамена{% endblock %}
+{% block description %}ПДД Pro от Doday: тренажёр твоих ошибок, история экзаменов, статистика слабых тем и PDF к экзамену. Оплата через Telegram Stars.{% endblock %}
+{% block canonical %}<link rel="canonical" href="https://getdoday.ru/pdd/pro">{% endblock %}
+
+{% block content %}
+<section class="text-center py-6">
+  <h1 class="text-3xl font-extrabold text-slate-900">ПДД Pro</h1>
+  <p class="mt-3 text-slate-600 max-w-2xl mx-auto">
+    Бесплатные билеты учат всех одинаково. <b>Pro учит именно тебя</b>: запоминает твои ошибки,
+    гоняет их до автоматизма и показывает, какие темы проседают перед экзаменом.
+  </p>
+</section>
+
+{% if is_pdd_pro %}
+<div class="max-w-xl mx-auto bg-emerald-50 border border-emerald-200 rounded-xl p-6 text-center">
+  <div class="text-2xl mb-1">✅</div>
+  <p class="font-semibold text-emerald-900">ПДД Pro активен</p>
+  <p class="text-sm text-emerald-700 mt-1">Открой <a href="/pdd/trener" class="underline">тренажёр ошибок</a> или <a href="/pdd/my" class="underline">свою статистику</a>.</p>
+</div>
+{% else %}
+
+<section class="grid sm:grid-cols-3 gap-4 max-w-4xl mx-auto mt-2">
+  {% for p in products %}
+  <div class="bg-white rounded-2xl border {{ 'border-emerald-400 ring-2 ring-emerald-100' if p.code == 'pdd_pro_3m' else 'border-slate-200' }} p-5 flex flex-col">
+    {% if p.code == 'pdd_pro_3m' %}<div class="text-xs font-bold text-emerald-700 mb-1">ВЫГОДНО · К ЭКЗАМЕНУ</div>{% endif %}
+    <div class="font-bold text-slate-900">{{ p.title }}</div>
+    <div class="mt-2 text-3xl font-extrabold text-slate-900">{{ p.stars_amount }} <span class="text-base font-semibold text-slate-400">⭐</span></div>
+    <p class="mt-2 text-sm text-slate-600 flex-1">{{ p.description }}</p>
+    {% if user %}
+    <button type="button" @click="window.buyPdd('{{ p.code }}')"
+      class="mt-4 w-full px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition">
+      Оформить
+    </button>
+    {% else %}
+    <a href="/auth/login?next=/pdd/pro" class="mt-4 w-full text-center px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition">
+      Войти и оформить
+    </a>
+    {% endif %}
+  </div>
+  {% endfor %}
+</section>
+
+<div class="max-w-2xl mx-auto mt-8 grid sm:grid-cols-2 gap-3 text-sm">
+  <div class="bg-white rounded-xl border border-slate-200 p-4"><b>🎯 Тренажёр ошибок</b><p class="text-slate-600 mt-1">Повторяет вопросы, в которых ты ошибся, пока не будешь отвечать уверенно.</p></div>
+  <div class="bg-white rounded-xl border border-slate-200 p-4"><b>📊 Статистика слабых тем</b><p class="text-slate-600 mt-1">Видно, какие темы проседают — готовься точечно, а не вслепую.</p></div>
+  <div class="bg-white rounded-xl border border-slate-200 p-4"><b>🗂 История экзаменов</b><p class="text-slate-600 mt-1">Все твои прогоны симулятора с результатами и динамикой.</p></div>
+  <div class="bg-white rounded-xl border border-slate-200 p-4"><b>📄 PDF к экзамену</b><p class="text-slate-600 mt-1">Сборник твоих слабых тем одним файлом — повтори перед ГИБДД.</p></div>
+</div>
+
+<p class="text-center text-xs text-slate-400 mt-6 max-w-lg mx-auto">
+  Оплата через Telegram Stars. Автопродления нет — Pro действует выбранный срок, дальше можно продлить вручную.
+</p>
+{% endif %}
+{% endblock %}
+
+{% block body_end %}
+<script>
+window.buyPdd = async function (code) {
+  try {
+    if (window.ym && window.YA_METRIKA_ID) { window.ym(window.YA_METRIKA_ID, 'reachGoal', 'pdd_pro_click'); }
+    const r = await fetch('/api/billing/stars/invoice', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ product_code: code }),
+    });
+    if (r.status === 401) { window.location.href = '/auth/login?next=/pdd/pro'; return; }
+    if (!r.ok) { alert('Не удалось создать счёт. Попробуй позже.'); return; }
+    const data = await r.json();
+    const tg = window.Telegram && window.Telegram.WebApp;
+    if (tg && tg.openInvoice) { tg.openInvoice(data.invoice_url); }
+    else { window.location.href = data.invoice_url; }
+  } catch (e) { alert('Ошибка сети. Попробуй позже.'); }
+};
+</script>
+{% endblock %}

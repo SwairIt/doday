@@ -1,0 +1,22 @@
+{% extends "pdd/_base.html" %}
+
+{% block title %}{{ meta.title }}{% endblock %}
+{% block description %}{{ meta.description }}{% endblock %}
+{% block canonical %}<link rel="canonical" href="{{ meta.canonical }}">{% endblock %}
+
+{% block content %}
+<nav class="text-sm text-slate-500 mb-4">
+  <a href="/pdd/" class="hover:text-emerald-700">Билеты</a> ·
+  <span class="text-slate-700">{{ topic.title }}</span>
+</nav>
+
+<h1 class="text-2xl font-extrabold text-slate-900 mb-1">{{ topic.title }}</h1>
+{% if topic.seo_intro %}<p class="text-slate-600 mb-2 max-w-2xl">{{ topic.seo_intro }}</p>{% endif %}
+<p class="text-slate-500 text-sm mb-6">{{ questions|length }} вопросов ПДД по теме с ответами и разбором.</p>
+
+<div class="space-y-4">
+  {% for q in questions %}
+    {% include "pdd/_question_card.html" %}
+  {% endfor %}
+</div>
+{% endblock %}

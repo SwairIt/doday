@@ -60,6 +60,8 @@ from app.logging_setup import configure_logging
 from app.miniapp.router import router as miniapp_router
 from app.mood.router import router as mood_router
 from app.pages.router import router as pages_router
+from app.pdd.router import api_router as pdd_api_router
+from app.pdd.router import router as pdd_router
 from app.profile.router import router as profile_router
 from app.projects.router import invites_router
 from app.projects.router import router as projects_router
@@ -305,6 +307,8 @@ app.include_router(lessio_cron_router)
 app.include_router(lessio_admin_router)
 app.include_router(qa_router)
 app.include_router(qa_api_router)
+app.include_router(pdd_router)
+app.include_router(pdd_api_router)
 
 
 # Static assets for the Three.js meme-game at /game.
@@ -472,8 +476,12 @@ async def robots_txt() -> PlainTextResponse:
         "Disallow: /qa/admin/\n"
         "Disallow: /qa/edit/\n"
         "Disallow: /qa/search\n"
+        "Disallow: /pdd/my\n"
+        "Disallow: /pdd/trener\n"
+        "Disallow: /pdd/ekzamen\n"
         "Allow: /u/\n"
         "Allow: /qa/\n"
+        "Allow: /pdd/\n"
         "Allow: /lessio/help\n"
         "Allow: /lessio/blog\n"
         "Allow: /lessio/dlya-repetitorov\n"
@@ -483,6 +491,7 @@ async def robots_txt() -> PlainTextResponse:
         "Allow: /lessio/oplata-cherez-telegram\n"
         f"Sitemap: {_settings.app_base_url.rstrip('/')}/sitemap.xml\n"
         f"Sitemap: {_settings.app_base_url.rstrip('/')}/qa/sitemap.xml\n"
+        f"Sitemap: {_settings.app_base_url.rstrip('/')}/pdd/sitemap.xml\n"
     )
     return PlainTextResponse(body)
 

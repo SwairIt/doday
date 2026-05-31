@@ -10,6 +10,8 @@ Two groups of tables:
   practice persists nothing.
 """
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
 from uuid import UUID
 
@@ -24,7 +26,7 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
 
@@ -83,6 +85,16 @@ class PddQuestion(Base):
     explanation: Mapped[str] = mapped_column(Text, nullable=False, default="")
     # 1-based index into the question's PddOption.position values.
     correct_position: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    # Eager (selectin) — async-safe and almost always needed alongside a question.
+    options: Mapped[list[PddOption]] = relationship(
+        "PddOption",
+        order_by="PddOption.position",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+    topic: Mapped[PddTopic] = relationship("PddTopic", lazy="selectin")
+    ticket: Mapped[PddTicket] = relationship("PddTicket", lazy="selectin")
 
     __table_args__ = (
         UniqueConstraint("ticket_id", "position_in_ticket", name="uq_pdd_question_ticket_pos"),

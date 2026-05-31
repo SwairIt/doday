@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{% block title %}Doday ПДД — билеты ПДД онлайн 2026, категории A, B, M{% endblock %}</title>
+  <meta name="description" content="{% block description %}Doday ПДД — официальные билеты ПДД категории АВМ онлайн: бесплатно, с ответами и пояснениями. Решай билеты, тренируй ошибки, сдай экзамен в ГИБДД с первого раза.{% endblock %}">
+  <meta name="keywords" content="{% block keywords %}пдд 2026, билеты пдд онлайн, экзамен пдд, категория b, правила дорожного движения, тест пдд, пдд гибдд, подготовка к экзамену пдд{% endblock %}">
+  {% block canonical %}{% endblock %}
+  {% block robots %}{% endblock %}
+
+  <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+  <meta property="og:site_name" content="Doday ПДД">
+  <meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}{{ self.description() }}{% endblock %}">
+  <meta property="og:locale" content="ru_RU">
+  <meta name="twitter:card" content="summary">
+
+  <link rel="icon" href="/favicon.ico">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+  <style>
+    body {
+      background: #f6f8f7;
+      color: #0f172a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+    }
+    [x-cloak] { display: none !important; }
+    .opt-btn { transition: background-color .12s, border-color .12s; }
+  </style>
+
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="antialiased">
+
+<header class="border-b border-slate-200 bg-white sticky top-0 z-30">
+  <nav class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+    <a href="/pdd/" class="flex items-center gap-2 font-bold text-lg">
+      <span class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 to-emerald-800 text-white flex items-center justify-center font-extrabold">П</span>
+      <span class="text-slate-900">Doday ПДД</span>
+      <span class="hidden sm:inline text-xs text-slate-400 font-normal ml-1">· билеты онлайн</span>
+    </a>
+    <div class="flex items-center gap-2 sm:gap-3 text-sm">
+      <a href="/pdd/ekzamen" class="hidden sm:block px-2.5 py-1.5 text-slate-600 hover:text-slate-900 transition">Экзамен</a>
+      {% if user %}
+        <a href="/pdd/my" class="px-2.5 py-1.5 text-slate-700 hover:text-slate-900 transition">Мой прогресс</a>
+        {% if not is_pdd_pro %}
+          <a href="/pdd/pro" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition">Pro</a>
+        {% endif %}
+      {% else %}
+        <a href="/pdd/pro" class="hidden sm:block px-2.5 py-1.5 text-emerald-700 hover:text-emerald-900 font-medium transition">Pro</a>
+        <a href="/auth/login?next=/pdd/" class="px-2.5 py-1.5 text-slate-700 hover:text-slate-900 transition">Войти</a>
+        <a href="/auth/register?next=/pdd/" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition">Регистрация</a>
+      {% endif %}
+    </div>
+  </nav>
+</header>
+
+<main class="max-w-6xl mx-auto px-4 py-6">
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="mt-12 border-t border-slate-200 bg-white">
+  <div class="max-w-6xl mx-auto px-4 py-8 text-sm text-slate-500 grid sm:grid-cols-3 gap-6">
+    <div>
+      <div class="font-bold text-slate-900 mb-2">Doday ПДД</div>
+      <p>Официальные билеты ПДД категории АВМ — бесплатно, с разбором.</p>
+      <p class="mt-2 text-xs">Часть <a href="/" class="text-emerald-700 hover:underline">Doday Studio</a>.</p>
+    </div>
+    <div>
+      <div class="font-bold text-slate-900 mb-2">Разделы</div>
+      <ul class="space-y-1">
+        <li><a href="/pdd/" class="hover:text-slate-900">Все билеты</a></li>
+        <li><a href="/pdd/ekzamen" class="hover:text-slate-900">Экзамен онлайн</a></li>
+        <li><a href="/pdd/pro" class="hover:text-slate-900">ПДД Pro</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="font-bold text-slate-900 mb-2">Связь</div>
+      <p>Поддержка: <a class="text-emerald-700 hover:underline" href="mailto:doday.support@gmail.com">doday.support@gmail.com</a></p>
+      <p class="mt-2 text-xs text-slate-400">Данные основаны на официальных экзаменационных билетах ГИБДД.</p>
+    </div>
+  </div>
+</footer>
+
+{% block body_end %}{% endblock %}
+
+</body>
+</html>
