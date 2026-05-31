@@ -1,0 +1,125 @@
+{% extends "pdd/_base.html" %}
+
+{% block title %}Экзамен ПДД онлайн — 20 вопросов по правилам ГИБДД{% endblock %}
+{% block description %}Сдай экзамен ПДД онлайн бесплатно: 20 случайных вопросов, 20 минут, как в ГИБДД. Проверь готовность к реальному экзамену.{% endblock %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+
+{% block content %}
+{% if exam_count == 0 %}
+<div class="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-500">
+  Вопросы скоро появятся — контент загружается.
+</div>
+{% else %}
+<script type="application/json" id="exam-data">{{ exam_json | safe }}</script>
+
+<div x-data="pddExam()" x-init="init()" x-cloak class="max-w-2xl mx-auto">
+
+  {# ─── exam in progress ─── #}
+  <div x-show="!finished">
+    <div class="flex items-center justify-between mb-4">
+      <div class="text-sm text-slate-500">Вопрос <span x-text="idx+1"></span> из <span x-text="questions.length"></span></div>
+      <div class="text-sm font-semibold tabular-nums" :class="timeLeft < 120 ? 'text-red-600' : 'text-slate-700'" x-text="mmss"></div>
+    </div>
+    <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden mb-5">
+      <div class="h-full bg-emerald-500 transition-all" :style="'width:'+((idx)/questions.length*100)+'%'"></div>
+    </div>
+
+    <article class="bg-white rounded-xl border border-slate-200 p-5">
+      <p class="font-medium text-slate-900 leading-relaxed" x-text="current.text"></p>
+      <template x-if="current.image_path">
+        <img :src="'/static/'+current.image_path" alt="Иллюстрация" class="mt-3 rounded-lg border border-slate-200 max-h-72 w-auto">
+      </template>
+      <div class="mt-4 space-y-2">
+        <template x-for="opt in current.options" :key="opt.position">
+          <button type="button" @click="choose(opt.position)"
+            class="opt-btn w-full text-left px-4 py-2.5 rounded-lg border border-slate-300 hover:border-emerald-400 hover:bg-emerald-50 text-sm cursor-pointer">
+            <span class="inline-block w-5 text-slate-400" x-text="opt.position + '.'"></span><span x-text="opt.text"></span>
+          </button>
+        </template>
+      </div>
+    </article>
+    <p class="text-xs text-slate-400 mt-3 text-center">Допустимо ошибок: {{ mistake_limit }}. Ответ нельзя изменить — как на реальном экзамене.</p>
+  </div>
+
+  {# ─── result ─── #}
+  <div x-show="finished" x-cloak>
+    <div class="text-center py-6 rounded-2xl mb-6" :class="passed ? 'bg-emerald-50' : 'bg-red-50'">
+      <div class="text-4xl" x-text="passed ? '✅' : '❌'"></div>
+      <div class="text-2xl font-extrabold mt-2" :class="passed ? 'text-emerald-800' : 'text-red-700'" x-text="passed ? 'Экзамен сдан' : 'Экзамен не сдан'"></div>
+      <div class="text-sm text-slate-600 mt-1">Ошибок: <span x-text="mistakes"></span> из <span x-text="questions.length"></span></div>
+      <template x-if="isPro"><div class="text-xs text-emerald-700 mt-1">Результат сохранён в твою историю</div></template>
+      <div class="mt-4 flex items-center justify-center gap-2">
+        <button @click="window.location.reload()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition">Пройти ещё раз</button>
+        <a href="/pdd/" class="px-5 py-2.5 bg-white border border-slate-300 hover:border-emerald-400 rounded-lg font-semibold text-slate-800 transition">К билетам</a>
+      </div>
+      {% if not is_pdd_pro %}
+      <p class="text-xs text-slate-500 mt-3">С <a href="/pdd/pro" class="text-emerald-700 underline">ПДД Pro</a> ошибки сохраняются в тренажёр, а результаты — в историю.</p>
+      {% endif %}
+    </div>
+
+    <h2 class="font-bold text-slate-900 mb-3">Разбор</h2>
+    <div class="space-y-3">
+      <template x-for="(q, i) in questions" :key="q.id">
+        <div class="bg-white rounded-xl border p-4" :class="isWrong(q) ? 'border-red-200' : 'border-slate-200'">
+          <div class="text-xs mb-1" :class="isWrong(q) ? 'text-red-500' : 'text-emerald-600'" x-text="(i+1)+'. '+(isWrong(q) ? 'Ошибка' : 'Верно')"></div>
+          <p class="text-sm text-slate-800" x-text="q.text"></p>
+          <div class="mt-2 text-sm space-y-1">
+            <template x-for="opt in q.options" :key="opt.position">
+              <div class="flex items-center gap-2"
+                :class="opt.position===q.correct_position ? 'text-emerald-700 font-semibold' : (opt.position===answers[q.id] ? 'text-red-600' : 'text-slate-400')">
+                <span x-text="opt.position===q.correct_position ? '✓' : (opt.position===answers[q.id] ? '✗' : '·')"></span>
+                <span x-text="opt.text"></span>
+              </div>
+            </template>
+          </div>
+          <template x-if="q.explanation"><p class="mt-2 text-xs text-slate-500" x-text="q.explanation"></p></template>
+        </div>
+      </template>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block body_end %}
+<script>
+function pddExam() {
+  return {
+    questions: [], idx: 0, answers: {}, finished: false, mistakes: 0, passed: false,
+    timeLeft: 20 * 60, timer: null,
+    isPro: {{ 'true' if is_pdd_pro else 'false' }},
+    mistakeLimit: {{ mistake_limit }},
+    init() {
+      const el = document.getElementById('exam-data');
+      this.questions = el ? JSON.parse(el.textContent) : [];
+      if (this.questions.length) {
+        this.timer = setInterval(() => { this.timeLeft--; if (this.timeLeft <= 0) this.finish(); }, 1000);
+      }
+    },
+    get current() { return this.questions[this.idx] || { options: [] }; },
+    get mmss() { const m = Math.floor(Math.max(0, this.timeLeft) / 60), s = Math.max(0, this.timeLeft) % 60; return m + ':' + (s < 10 ? '0' : '') + s; },
+    choose(pos) {
+      if (this.finished) return;
+      this.answers[this.current.id] = pos;
+      if (this.idx < this.questions.length - 1) this.idx++; else this.finish();
+    },
+    isWrong(q) { return this.answers[q.id] !== q.correct_position; },
+    finish() {
+      if (this.finished) return;
+      this.finished = true;
+      if (this.timer) clearInterval(this.timer);
+      let m = 0;
+      for (const q of this.questions) { if (this.answers[q.id] !== q.correct_position) m++; }
+      this.mistakes = m;
+      this.passed = m <= this.mistakeLimit;
+      if (this.isPro) this.save();
+    },
+    save() {
+      const answers = Object.keys(this.answers).map(qid => ({ question_id: parseInt(qid, 10), chosen_position: this.answers[qid] }));
+      if (!answers.length) return;
+      fetch('/api/pdd/exam/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers }) }).catch(function () {});
+    },
+  };
+}
+</script>
+{% endblock %}

@@ -8,13 +8,14 @@ wrapper around the generic billing entitlement.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.pdd.models import PddAttempt, PddQuestion, PddTicket, PddTopic
-from app.pdd.schemas import AttemptIn, AttemptOut
+from app.pdd.models import PddAttempt, PddExamSession, PddQuestion, PddTicket, PddTopic
+from app.pdd.schemas import AttemptIn, AttemptOut, ExamAnswerIn
 
 if TYPE_CHECKING:
     from app.auth.models import User
@@ -238,6 +239,100 @@ async def weak_topics(session: AsyncSession, user: User) -> list[dict[str, objec
         {"title": title, "slug": slug, "wrong": wrong, "total": total, "rate": rate}
         for rate, wrong, title, slug, total in ranked
     ]
+
+
+# ─── exam simulator ─────────────────────────────────────────────────────────
+
+EXAM_SIZE = 20
+EXAM_MISTAKE_LIMIT = 2
+PENALTY_PER_MISTAKE = 5
+
+
+def score_exam(answers: dict[int, int], correct: dict[int, int]) -> tuple[bool, int, int]:
+    """Score one exam run. Pure (no DB) so it is trivially testable.
+
+    Official-rules simplification: 20 questions, an unanswered or wrong question
+    is a mistake; ``EXAM_MISTAKE_LIMIT`` (2) mistakes are allowed; each mistake
+    nominally adds ``PENALTY_PER_MISTAKE`` (5) extra questions. Returns
+    ``(passed, mistakes, extra_added)``.
+    """
+    mistakes = sum(1 for qid, right in correct.items() if answers.get(qid) != right)
+    extra_added = mistakes * PENALTY_PER_MISTAKE
+    passed = mistakes <= EXAM_MISTAKE_LIMIT
+    return passed, mistakes, extra_added
+
+
+async def random_exam_questions(session: AsyncSession, n: int = EXAM_SIZE) -> list[PddQuestion]:
+    """A random `n`-question ticket for the simulator (options eager-loaded)."""
+    rows = await session.execute(select(PddQuestion).order_by(func.random()).limit(n))
+    return list(rows.scalars().all())
+
+
+def exam_payload(questions: list[PddQuestion]) -> list[dict[str, object]]:
+    """Shape questions for the client-side exam component (JSON-embedded)."""
+    return [
+        {
+            "id": q.id,
+            "text": q.text,
+            "image_path": q.image_path,
+            "options": [{"position": o.position, "text": o.text} for o in q.options],
+            "correct_position": q.correct_position,
+            "explanation": q.explanation,
+        }
+        for q in questions
+    ]
+
+
+async def save_exam_session(
+    session: AsyncSession, user: User, answers: list[ExamAnswerIn]
+) -> PddExamSession:
+    """Persist a finished run (Pro only — caller gates) and record each answer as
+    an exam-source attempt so it feeds the trainer + stats. Server re-scores from
+    the DB; the client result is not trusted."""
+    qids = [a.question_id for a in answers]
+    rows = (
+        await session.execute(
+            select(PddQuestion.id, PddQuestion.correct_position).where(PddQuestion.id.in_(qids))
+        )
+    ).all()
+    correct = {row.id: row.correct_position for row in rows}
+    answer_map = {a.question_id: a.chosen_position for a in answers}
+    passed, mistakes, extra = score_exam(answer_map, correct)
+
+    for a in answers:
+        session.add(
+            PddAttempt(
+                user_id=user.id,
+                question_id=a.question_id,
+                chosen_position=a.chosen_position,
+                is_correct=correct.get(a.question_id) == a.chosen_position,
+                source="exam",
+            )
+        )
+    exam = PddExamSession(
+        user_id=user.id,
+        question_ids=qids,
+        total=len(qids),
+        mistakes=mistakes,
+        extra_added=extra,
+        status="passed" if passed else "failed",
+        finished_at=datetime.now(UTC),
+    )
+    session.add(exam)
+    await session.commit()
+    return exam
+
+
+async def list_exam_sessions(
+    session: AsyncSession, user: User, limit: int = 10
+) -> list[PddExamSession]:
+    rows = await session.execute(
+        select(PddExamSession)
+        .where(PddExamSession.user_id == user.id)
+        .order_by(PddExamSession.started_at.desc())
+        .limit(limit)
+    )
+    return list(rows.scalars().all())
 
 
 # ─── pdd_pro gating ─────────────────────────────────────────────────────────

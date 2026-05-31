@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Сборник к экзамену — Doday ПДД</title>
+  <style>
+    body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; color: #111; margin: 0; padding: 24px; max-width: 820px; }
+    h1 { font-size: 22px; margin: 0 0 4px; }
+    .muted { color: #666; font-size: 13px; }
+    .topic-row { display: flex; justify-content: space-between; font-size: 14px; padding: 4px 0; border-bottom: 1px solid #eee; }
+    .q { margin: 14px 0; padding: 12px 0; border-top: 1px solid #ddd; page-break-inside: avoid; }
+    .q-text { font-weight: 600; margin: 0 0 6px; }
+    .opt { font-size: 14px; padding: 1px 0; }
+    .opt.correct { color: #047857; font-weight: 600; }
+    .expl { font-size: 13px; color: #555; margin-top: 4px; }
+    .toolbar { margin: 16px 0 24px; }
+    .btn { background: #059669; color: #fff; border: 0; padding: 9px 16px; border-radius: 8px; font-size: 14px; cursor: pointer; }
+    @media print { .no-print { display: none !important; } body { padding: 0; } }
+  </style>
+</head>
+<body onload="setTimeout(function(){ window.print(); }, 300)">
+  <h1>Сборник к экзамену — Doday ПДД</h1>
+  <p class="muted">Твои слабые темы и вопросы с ошибками. Повтори перед экзаменом в ГИБДД.</p>
+
+  <div class="toolbar no-print">
+    <button class="btn" onclick="window.print()">Сохранить как PDF / Печать</button>
+    <a href="/pdd/my" style="margin-left:12px;font-size:14px;color:#059669;">← Назад</a>
+  </div>
+
+  {% if weak_topics %}
+  <h2 style="font-size:16px;">Слабые темы</h2>
+  {% for w in weak_topics %}
+  <div class="topic-row"><span>{{ w.title }}</span><span class="muted">{{ w.wrong }} из {{ w.total }} с ошибкой</span></div>
+  {% endfor %}
+  {% endif %}
+
+  <h2 style="font-size:16px;margin-top:20px;">Вопросы с ошибками</h2>
+  {% if mistakes %}
+    {% for q in mistakes %}
+    <div class="q">
+      <p class="q-text">{{ loop.index }}. {{ q.text }} <span class="muted">(билет {{ q.ticket.number }})</span></p>
+      {% for opt in q.options %}
+      <div class="opt {{ 'correct' if opt.position == q.correct_position else '' }}">{{ '✓' if opt.position == q.correct_position else '—' }} {{ opt.text }}</div>
+      {% endfor %}
+      {% if q.explanation %}<div class="expl">{{ q.explanation }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  {% else %}
+  <p class="muted">Ошибок пока нет — отличная подготовка!</p>
+  {% endif %}
+</body>
+</html>

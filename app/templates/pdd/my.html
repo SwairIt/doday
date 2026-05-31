@@ -13,10 +13,25 @@
 </div>
 
 {% if is_pdd_pro %}
+{% if exams %}
+<section class="mb-6">
+  <h2 class="text-lg font-bold text-slate-900 mb-3">История экзаменов</h2>
+  <div class="flex flex-wrap gap-2">
+    {% for e in exams %}
+    <span class="text-xs px-3 py-1.5 rounded-full {{ 'bg-emerald-100 text-emerald-800' if e.status == 'passed' else 'bg-red-100 text-red-700' }}">
+      {{ '✅ сдан' if e.status == 'passed' else '❌ не сдан' }} · {{ e.mistakes }} ош.
+    </span>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
 <section class="mb-8">
-  <div class="flex items-center justify-between mb-3">
+  <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
     <h2 class="text-lg font-bold text-slate-900">Слабые темы</h2>
-    <a href="/pdd/trener" class="text-sm px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition">Тренировать ошибки →</a>
+    <div class="flex gap-2">
+      <a href="/pdd/sbornik" class="text-sm px-4 py-2 bg-white border border-slate-300 hover:border-emerald-400 rounded-lg font-semibold text-slate-800 transition">Сборник PDF</a>
+      <a href="/pdd/trener" class="text-sm px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition">Тренировать ошибки →</a>
+    </div>
   </div>
   {% if weak_topics %}
   <div class="space-y-2">

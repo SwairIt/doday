@@ -8,6 +8,8 @@ Both consume ``app.pdd.service``; they never touch the ORM directly.
 
 from __future__ import annotations
 
+import json
+
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
@@ -15,7 +17,7 @@ from fastapi.templating import Jinja2Templates
 from app.auth.deps import CurrentUser, DbSession, RequiredUser
 from app.billing.products import PRODUCTS
 from app.pdd import seo, service
-from app.pdd.schemas import AttemptIn, AttemptOut
+from app.pdd.schemas import AttemptIn, AttemptOut, ExamSaveIn
 
 router = APIRouter(prefix="/pdd", tags=["pdd"])
 api_router = APIRouter(prefix="/api/pdd", tags=["pdd-api"])
@@ -128,6 +130,7 @@ async def my_page(request: Request, session: DbSession, user: CurrentUser) -> Re
     stats = await service.attempt_stats(session, user)
     pro = await service.is_pdd_pro(session, user)
     weak_topics = await service.weak_topics(session, user) if pro else []
+    exams = await service.list_exam_sessions(session, user) if pro else []
     return _templates.TemplateResponse(
         "pdd/my.html",
         {
@@ -137,6 +140,55 @@ async def my_page(request: Request, session: DbSession, user: CurrentUser) -> Re
             "mistakes": mistakes,
             "stats": stats,
             "weak_topics": weak_topics,
+            "exams": exams,
+        },
+    )
+
+
+@router.get("/ekzamen", response_class=HTMLResponse)
+async def exam_page(request: Request, session: DbSession, user: CurrentUser) -> HTMLResponse:
+    questions = await service.random_exam_questions(session)
+    payload = service.exam_payload(questions)
+    return _templates.TemplateResponse(
+        "pdd/exam.html",
+        {
+            "request": request,
+            "user": user,
+            "is_pdd_pro": await service.is_pdd_pro(session, user),
+            "exam_json": json.dumps(payload, ensure_ascii=False),
+            "exam_count": len(payload),
+            "mistake_limit": service.EXAM_MISTAKE_LIMIT,
+        },
+    )
+
+
+@router.get("/trener", response_class=HTMLResponse)
+async def trainer_page(request: Request, session: DbSession, user: CurrentUser) -> Response:
+    if user is None:
+        return RedirectResponse("/auth/login?next=/pdd/trener", status_code=303)
+    if not await service.is_pdd_pro(session, user):
+        return RedirectResponse("/pdd/pro", status_code=303)
+    questions = await service.trainer_queue(session, user)
+    return _templates.TemplateResponse(
+        "pdd/trainer.html",
+        {"request": request, "user": user, "is_pdd_pro": True, "questions": questions},
+    )
+
+
+@router.get("/sbornik", response_class=HTMLResponse)
+async def study_sheet_page(request: Request, session: DbSession, user: CurrentUser) -> Response:
+    if user is None:
+        return RedirectResponse("/auth/login?next=/pdd/sbornik", status_code=303)
+    if not await service.is_pdd_pro(session, user):
+        return RedirectResponse("/pdd/pro", status_code=303)
+    return _templates.TemplateResponse(
+        "pdd/sbornik.html",
+        {
+            "request": request,
+            "user": user,
+            "is_pdd_pro": True,
+            "weak_topics": await service.weak_topics(session, user),
+            "mistakes": await service.recent_mistakes(session, user),
         },
     )
 
@@ -150,6 +202,21 @@ async def record_attempt_endpoint(
         return await service.record_attempt(session, user, data)
     except service.NotFound as exc:
         raise HTTPException(404, str(exc)) from exc
+
+
+@api_router.post("/exam/save")
+async def save_exam_endpoint(
+    data: ExamSaveIn, user: RequiredUser, session: DbSession
+) -> dict[str, object]:
+    """Persist a finished exam run — Pro only (free runs stay client-side)."""
+    await service.require_pdd_pro(session, user)
+    exam = await service.save_exam_session(session, user, data.answers)
+    return {
+        "id": exam.id,
+        "passed": exam.status == "passed",
+        "mistakes": exam.mistakes,
+        "total": exam.total,
+    }
 
 
 @router.get("/sitemap.xml")
