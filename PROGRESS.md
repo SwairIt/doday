@@ -4,6 +4,60 @@
 
 ---
 
+## 2026-05-31 — Doday ПДД (билеты ПДД онлайн) — код-комплит, ждёт seed+deploy
+
+**Goal:** новый продукт студии, выбранный многоагентным анализом (стресс-тест
+убил все маркетплейс-идеи: single-merchant billing = нельзя держать чужие деньги,
++ Stars ToS). Победный паттерн Razbery (free SEO-контент + Pro за Stars),
+применён к evergreen-вертикали «билеты ПДД АВМ» — без пересечений с Razbery,
+доказанная рынком готовность платить.
+
+**State-now (где всё):**
+- Локалка: `c:\www-Yaroslav\SchoolProject`, ветка `master`. Тестовая БД из этой
+  среды НЕ доступна (ConnectionRefused) → БД-тесты писались, но гонялись не здесь.
+- Прод НЕ тронут (нет деплоя этой фичи). Uvicorn :8011 как был.
+- Verified в сессии: `ruff format/check`, `mypy --strict app` (187 файлов, 0),
+  `scripts/lint_templates.py` (0 errors), импорт `app.main`, чистая логика
+  `score_exam` через `python -c`.
+
+**What shipped (коммиты этой сессии):**
+1. Spec+plan: `docs/superpowers/specs/2026-05-31-doday-pdd-design.md`,
+   `docs/superpowers/plans/2026-05-31-doday-pdd.md`.
+2. Billing (аддитивно): generic `Entitlement` модель + `Product.grants_entitlement`;
+   `apply_successful_payment`/`refund_payment` грантят/откатывают entitlement
+   независимо от `user.tier`; `has_entitlement` хелпер; продукты
+   `pdd_pro_1m/3m/forever` (199/399/990 Stars), скрыты из каталога Tasks.
+   Старые `pro_*`/`tutor_pro_*` не тронуты (регресс-тест).
+3. `app/pdd/*`: models (topic/ticket/question/option/attempt/exam_session),
+   schemas, service (контент-reads, attempts, trainer_queue, weak_topics,
+   score_exam + exam save), seo (meta + schema.org Question JSON-LD),
+   seed_load (идемпотентный загрузчик официального датасета), router (HTML+API).
+4. Migration `alembic/0048_doday_pdd.py` (entitlements + pdd_*; parity с create_all).
+5. Templates `app/templates/pdd/*`: _base, index, ticket, topic, question,
+   _question_card (интерактив через Alpine, числовой x-data), pro (покупка Stars),
+   my, exam (симулятор), trainer, sbornik (print-PDF). Карточка на hub-портфолио.
+6. Wire-in `app/main.py`: pdd_router/pdd_api_router, robots, /pdd/sitemap.xml.
+7. Tests (БД-backed, юзер гоняет): test_billing_entitlements, test_pdd_content/
+   _seo/_practice/_exam/_pro_gating.
+
+**Blocked / next (юзер локально — изоляция БД):**
+1. `uv run alembic upgrade head` (0048).
+2. Подготовить+залить датасет АВМ (JSON + картинки `app/static/pdd/img/`,
+   формат — `docs/pdd-dataset-schema.md`) через `load_dataset`. Без сидов сайт
+   рендерится пустым-но-корректным.
+3. `uv run pytest tests/test_pdd_*.py tests/test_billing_entitlements.py`.
+4. Деплой (push master → deploy-poll), затем end-to-end Stars-платёж
+   `pdd_pro_3m` (валидация «за Stars платят» для всей студии).
+
+**Design decisions (не переигрывать без причины):**
+- ПДД Pro — отдельный entitlement, НЕ глобальный tier (чистая экономика;
+  Doday Pro не открывает ПДД). 3-мес тариф — герой (нет авто-продления у Stars).
+- PDF = print-страница (`/pdd/sbornik`), без fpdf2/бинарных шрифтов (нет
+  кириллического TTF в репо + прод-гача `uv sync`). Кириллица идеальна, 0 зависимостей.
+- Free экзамен эфемерный; сохраняется только для Pro.
+
+---
+
 ## 2026-05-28 (overnight) — Razbery (Doday Q&A) flagship MVP shipped
 
 **Goal:** new flagship product `getdoday.ru/qa/` — школьное Q&A с разборами вместо
