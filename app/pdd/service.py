@@ -10,10 +10,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import select
+from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.pdd.models import PddQuestion, PddTicket, PddTopic
+from app.pdd.models import PddAttempt, PddQuestion, PddTicket, PddTopic
+from app.pdd.schemas import AttemptIn, AttemptOut
 
 if TYPE_CHECKING:
     from app.auth.models import User
@@ -84,8 +85,6 @@ async def get_question_by_slug(session: AsyncSession, public_slug: str) -> PddQu
 
 
 async def question_count(session: AsyncSession) -> int:
-    from sqlalchemy import func
-
     return (await session.execute(select(func.count()).select_from(PddQuestion))).scalar_one()
 
 
@@ -96,6 +95,149 @@ async def all_question_slugs(session: AsyncSession) -> list[str]:
         select(PddQuestion.public_slug).order_by(PddQuestion.id).limit(50000)
     )
     return list(rows.scalars().all())
+
+
+# ─── attempts (logged-in) ───────────────────────────────────────────────────
+
+
+async def record_attempt(session: AsyncSession, user: User, data: AttemptIn) -> AttemptOut:
+    """Persist one answer for a logged-in user and report correctness.
+
+    Anonymous practice never reaches here (the endpoint requires auth); it stays
+    purely client-side.
+    """
+    question = await session.get(PddQuestion, data.question_id)
+    if question is None:
+        raise NotFound("вопрос не найден")
+    is_correct = data.chosen_position == question.correct_position
+    session.add(
+        PddAttempt(
+            user_id=user.id,
+            question_id=question.id,
+            chosen_position=data.chosen_position,
+            is_correct=is_correct,
+            source=data.source,
+        )
+    )
+    await session.commit()
+    return AttemptOut(
+        is_correct=is_correct,
+        correct_position=question.correct_position,
+        explanation=question.explanation,
+    )
+
+
+def _latest_attempt_subquery(user_id: object):  # type: ignore[no-untyped-def]
+    """Subquery flagging, per question, the user's most recent attempt (rn == 1)."""
+    rn = (
+        func.row_number()
+        .over(
+            partition_by=PddAttempt.question_id,
+            order_by=PddAttempt.created_at.desc(),
+        )
+        .label("rn")
+    )
+    return (
+        select(PddAttempt.question_id, PddAttempt.is_correct, rn)
+        .where(PddAttempt.user_id == user_id)
+        .subquery()
+    )
+
+
+async def recent_mistakes(session: AsyncSession, user: User, limit: int = 50) -> list[PddQuestion]:
+    """Questions whose latest attempt by this user was wrong (the basic free
+    mistakes list on /pdd/my)."""
+    latest = _latest_attempt_subquery(user.id)
+    wrong_ids = select(latest.c.question_id).where(latest.c.rn == 1, latest.c.is_correct.is_(False))
+    rows = await session.execute(
+        select(PddQuestion).where(PddQuestion.id.in_(wrong_ids)).limit(limit)
+    )
+    return list(rows.scalars().all())
+
+
+async def attempt_stats(session: AsyncSession, user: User) -> dict[str, int]:
+    """Quick counters for the /pdd/my header: answered / correct distinct."""
+    total = (
+        await session.execute(
+            select(func.count()).select_from(PddAttempt).where(PddAttempt.user_id == user.id)
+        )
+    ).scalar_one()
+    distinct_q = (
+        await session.execute(
+            select(func.count(func.distinct(PddAttempt.question_id))).where(
+                PddAttempt.user_id == user.id
+            )
+        )
+    ).scalar_one()
+    return {"attempts": total, "questions_touched": distinct_q}
+
+
+# ─── trainer + stats (Pro) ──────────────────────────────────────────────────
+
+
+async def trainer_queue(session: AsyncSession, user: User, limit: int = 20) -> list[PddQuestion]:
+    """Adaptive queue: questions whose latest attempt is wrong, hardest first
+    (most wrong attempts). Spaced-repetition-lite over the user's mistakes."""
+    latest = _latest_attempt_subquery(user.id)
+    wrong_ids = (
+        select(latest.c.question_id)
+        .where(latest.c.rn == 1, latest.c.is_correct.is_(False))
+        .scalar_subquery()
+    )
+    wrong_counts = (
+        select(
+            PddAttempt.question_id.label("qid"),
+            func.count().label("wc"),
+        )
+        .where(PddAttempt.user_id == user.id, PddAttempt.is_correct.is_(False))
+        .group_by(PddAttempt.question_id)
+        .subquery()
+    )
+    stmt = (
+        select(PddQuestion)
+        .where(PddQuestion.id.in_(wrong_ids))
+        .join(wrong_counts, wrong_counts.c.qid == PddQuestion.id)
+        .order_by(wrong_counts.c.wc.desc(), PddQuestion.id)
+        .limit(limit)
+    )
+    rows = await session.execute(stmt)
+    return list(rows.scalars().all())
+
+
+async def weak_topics(session: AsyncSession, user: User) -> list[dict[str, object]]:
+    """Per-topic error rate over the user's latest attempts — the Pro stats
+    dashboard. Only topics with at least one current mistake, weakest first."""
+    latest = _latest_attempt_subquery(user.id)
+    wrong_expr = func.sum(case((latest.c.is_correct.is_(False), 1), else_=0))
+    stmt = (
+        select(
+            PddTopic.id,
+            PddTopic.title,
+            PddTopic.slug,
+            func.count().label("total"),
+            wrong_expr.label("wrong"),
+        )
+        .select_from(latest)
+        .join(PddQuestion, PddQuestion.id == latest.c.question_id)
+        .join(PddTopic, PddTopic.id == PddQuestion.topic_id)
+        .where(latest.c.rn == 1)
+        .group_by(PddTopic.id, PddTopic.title, PddTopic.slug)
+        .having(wrong_expr > 0)
+    )
+    rows = (await session.execute(stmt)).all()
+    # Sort typed tuples (rate, wrong) before shaping into dicts — keeps the sort
+    # key numeric so the type checker is happy.
+    ranked: list[tuple[float, int, str, str, int]] = []
+    for row in rows:
+        wrong = int(row.wrong or 0)
+        total = int(row.total or 0)
+        rate = (wrong / total) if total else 0.0
+        ranked.append((rate, wrong, row.title, row.slug, total))
+    ranked.sort(key=lambda t: (t[0], t[1]), reverse=True)
+    return [
+        {"title": title, "slug": slug, "wrong": wrong, "total": total, "rate": rate}
+        for rate, wrong, title, slug, total in ranked
+    ]
 
 
 # ─── pdd_pro gating ─────────────────────────────────────────────────────────

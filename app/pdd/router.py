@@ -9,12 +9,13 @@ Both consume ``app.pdd.service``; they never touch the ORM directly.
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 
-from app.auth.deps import CurrentUser, DbSession
+from app.auth.deps import CurrentUser, DbSession, RequiredUser
 from app.billing.products import PRODUCTS
 from app.pdd import seo, service
+from app.pdd.schemas import AttemptIn, AttemptOut
 
 router = APIRouter(prefix="/pdd", tags=["pdd"])
 api_router = APIRouter(prefix="/api/pdd", tags=["pdd-api"])
@@ -117,6 +118,38 @@ async def pro_landing(request: Request, session: DbSession, user: CurrentUser) -
             "products": products,
         },
     )
+
+
+@router.get("/my", response_class=HTMLResponse)
+async def my_page(request: Request, session: DbSession, user: CurrentUser) -> Response:
+    if user is None:
+        return RedirectResponse("/auth/login?next=/pdd/my", status_code=303)
+    mistakes = await service.recent_mistakes(session, user)
+    stats = await service.attempt_stats(session, user)
+    pro = await service.is_pdd_pro(session, user)
+    weak_topics = await service.weak_topics(session, user) if pro else []
+    return _templates.TemplateResponse(
+        "pdd/my.html",
+        {
+            "request": request,
+            "user": user,
+            "is_pdd_pro": pro,
+            "mistakes": mistakes,
+            "stats": stats,
+            "weak_topics": weak_topics,
+        },
+    )
+
+
+@api_router.post("/attempt", response_model=AttemptOut)
+async def record_attempt_endpoint(
+    data: AttemptIn, user: RequiredUser, session: DbSession
+) -> AttemptOut:
+    """Persist one practice/exam/trainer answer for a logged-in user."""
+    try:
+        return await service.record_attempt(session, user, data)
+    except service.NotFound as exc:
+        raise HTTPException(404, str(exc)) from exc
 
 
 @router.get("/sitemap.xml")

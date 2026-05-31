@@ -84,6 +84,21 @@
   </div>
 </footer>
 
+{# Persist practice answers for logged-in users. Explicit fetch (not hx-post) —
+   Alpine-driven dynamic answers don't reliably trigger htmx. Fire-and-forget:
+   the answer reveal already happened client-side. #}
+<script>
+window.PDD_LOGGED_IN = {{ 'true' if user else 'false' }};
+window.pddAttempt = function (questionId, chosenPosition, source) {
+  if (!window.PDD_LOGGED_IN) return;
+  fetch('/api/pdd/attempt', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question_id: questionId, chosen_position: chosenPosition, source: source || 'practice' }),
+  }).catch(function () {});
+};
+</script>
+
 {% block body_end %}{% endblock %}
 
 </body>

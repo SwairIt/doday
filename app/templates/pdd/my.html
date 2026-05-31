@@ -1,0 +1,63 @@
+{% extends "pdd/_base.html" %}
+
+{% block title %}Мой прогресс — Doday ПДД{% endblock %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between flex-wrap gap-3 mb-6">
+  <h1 class="text-2xl font-extrabold text-slate-900">Мой прогресс</h1>
+  <div class="flex gap-4 text-sm text-slate-500">
+    <div><span class="font-bold text-slate-900">{{ stats.attempts }}</span> ответов</div>
+    <div><span class="font-bold text-slate-900">{{ stats.questions_touched }}</span> вопросов пройдено</div>
+  </div>
+</div>
+
+{% if is_pdd_pro %}
+<section class="mb-8">
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="text-lg font-bold text-slate-900">Слабые темы</h2>
+    <a href="/pdd/trener" class="text-sm px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition">Тренировать ошибки →</a>
+  </div>
+  {% if weak_topics %}
+  <div class="space-y-2">
+    {% for w in weak_topics %}
+    <a href="/pdd/tema/{{ w.slug }}" class="block bg-white rounded-lg border border-slate-200 p-3 hover:border-emerald-400 transition">
+      <div class="flex items-center justify-between text-sm">
+        <span class="font-medium text-slate-800">{{ w.title }}</span>
+        <span class="text-slate-500">{{ w.wrong }} из {{ w.total }} с ошибкой</span>
+      </div>
+      <div class="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+        <div class="h-full bg-red-400 rounded-full" style="width: {{ (w.rate * 100) | round(0, 'floor') }}%"></div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="text-sm text-slate-500 bg-white rounded-lg border border-slate-200 p-4">Пока нет ошибок для анализа — порешай билеты, и здесь появятся слабые темы.</p>
+  {% endif %}
+</section>
+{% else %}
+<section class="mb-8 rounded-xl bg-emerald-50 border border-emerald-200 p-5 flex items-center justify-between flex-wrap gap-3">
+  <div>
+    <div class="font-semibold text-emerald-900">Заведи персональный тренажёр ошибок</div>
+    <p class="text-sm text-emerald-700 mt-1">ПДД Pro покажет слабые темы и прогонит твои ошибки до автоматизма.</p>
+  </div>
+  <a href="/pdd/pro" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition">Открыть Pro</a>
+</section>
+{% endif %}
+
+<section>
+  <h2 class="text-lg font-bold text-slate-900 mb-3">Вопросы, где ты ошибся</h2>
+  {% if mistakes %}
+  <div class="space-y-4">
+    {% for q in mistakes %}
+      {% include "pdd/_question_card.html" %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="text-sm text-slate-500 bg-white rounded-lg border border-slate-200 p-4">
+    Ошибок нет 🎉 Порешай <a href="/pdd/" class="text-emerald-700 hover:underline">билеты</a> — те, где ошибёшься, появятся здесь.
+  </p>
+  {% endif %}
+</section>
+{% endblock %}
