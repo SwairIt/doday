@@ -15,7 +15,7 @@
 
   {% if q.image_path %}
   <img src="/static/{{ q.image_path }}" alt="Иллюстрация к вопросу билета {{ q.ticket.number }}"
-       loading="lazy" class="mt-3 rounded-lg border border-slate-200 max-h-72 w-auto">
+       loading="lazy" class="mt-3 rounded-lg border border-slate-200 max-h-72 max-w-full w-auto h-auto">
   {% endif %}
 
   <div class="mt-4 space-y-2">

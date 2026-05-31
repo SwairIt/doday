@@ -10,10 +10,12 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 from app.admin import models as _admin_models  # noqa: F401
 from app.auth import models as _auth_models  # noqa: F401  register tables with Base.metadata
+from app.billing import models as _billing_models  # noqa: F401
 from app.config import get_settings
 from app.db import Base
 from app.labels import models as _labels_models  # noqa: F401
 from app.lessio import models as _lessio_models  # noqa: F401
+from app.pdd import models as _pdd_models  # noqa: F401
 from app.projects import models as _projects_models  # noqa: F401
 from app.qa import models as _qa_models  # noqa: F401
 from app.sections import models as _sections_models  # noqa: F401
