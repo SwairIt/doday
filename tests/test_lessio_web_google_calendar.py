@@ -22,6 +22,15 @@ from app.lessio.service import (
     find_free_slots,
 )
 
+# A future Monday/Tuesday (4–10 days out) so the past-filter in find_free_slots
+# doesn't eat the test slots. Replaces the old hardcoded 2026-06-01/02 time-bomb.
+_today = datetime.now(UTC).date()
+_to_mon = (7 - _today.weekday()) % 7
+_MONDAY = _today + timedelta(days=_to_mon if _to_mon >= 4 else _to_mon + 7)
+_MON_Y, _MON_M, _MON_D = _MONDAY.year, _MONDAY.month, _MONDAY.day
+_TUESDAY = _MONDAY + timedelta(days=1)
+_TUE_Y, _TUE_M, _TUE_D = _TUESDAY.year, _TUESDAY.month, _TUESDAY.day
+
 # ── Fernet encryption (no creds needed) ───────────────────────────────
 
 
@@ -65,8 +74,8 @@ async def test_fetch_google_busy_times_parses_events(
         "calendars": {
             "primary": {
                 "busy": [
-                    {"start": "2026-06-01T10:00:00Z", "end": "2026-06-01T11:30:00Z"},
-                    {"start": "2026-06-01T14:00:00Z", "end": "2026-06-01T15:00:00Z"},
+                    {"start": f"{_MONDAY}T10:00:00Z", "end": f"{_MONDAY}T11:30:00Z"},
+                    {"start": f"{_MONDAY}T14:00:00Z", "end": f"{_MONDAY}T15:00:00Z"},
                 ]
             }
         }
@@ -77,12 +86,12 @@ async def test_fetch_google_busy_times_parses_events(
 
     intervals = await fetch_google_busy_times(
         refresh_token="dummy",
-        date_from=datetime(2026, 6, 1, tzinfo=UTC),
-        date_to=datetime(2026, 6, 2, tzinfo=UTC),
+        date_from=datetime(_MON_Y, _MON_M, _MON_D, tzinfo=UTC),
+        date_to=datetime(_TUE_Y, _TUE_M, _TUE_D, tzinfo=UTC),
     )
     assert len(intervals) == 2
-    assert intervals[0][0] == datetime(2026, 6, 1, 10, 0, tzinfo=UTC)
-    assert intervals[0][1] == datetime(2026, 6, 1, 11, 30, tzinfo=UTC)
+    assert intervals[0][0] == datetime(_MON_Y, _MON_M, _MON_D, 10, 0, tzinfo=UTC)
+    assert intervals[0][1] == datetime(_MON_Y, _MON_M, _MON_D, 11, 30, tzinfo=UTC)
 
 
 @patch("app.lessio.google_calendar.httpx.AsyncClient")
@@ -94,8 +103,8 @@ async def test_fetch_busy_returns_empty_on_api_error(
     mock_client.post.side_effect = Exception("Google API down")
     intervals = await fetch_google_busy_times(
         refresh_token="dummy",
-        date_from=datetime(2026, 6, 1, tzinfo=UTC),
-        date_to=datetime(2026, 6, 2, tzinfo=UTC),
+        date_from=datetime(_MON_Y, _MON_M, _MON_D, tzinfo=UTC),
+        date_to=datetime(_TUE_Y, _TUE_M, _TUE_D, tzinfo=UTC),
     )
     assert intervals == []
 
@@ -124,12 +133,12 @@ async def test_find_free_slots_subtracts_google_busy(
     # Mock: 10:00-11:30 UTC занято в GCal на пн 2026-06-01
     mock_fetch.return_value = [
         (
-            datetime(2026, 6, 1, 10, 0, tzinfo=UTC),
-            datetime(2026, 6, 1, 11, 30, tzinfo=UTC),
+            datetime(_MON_Y, _MON_M, _MON_D, 10, 0, tzinfo=UTC),
+            datetime(_MON_Y, _MON_M, _MON_D, 11, 30, tzinfo=UTC),
         )
     ]
 
-    monday = datetime(2026, 6, 1, 0, 0, tzinfo=UTC)
+    monday = datetime(_MON_Y, _MON_M, _MON_D, 0, 0, tzinfo=UTC)
     slots = await find_free_slots(
         db_session,
         tutor,
@@ -139,8 +148,8 @@ async def test_find_free_slots_subtracts_google_busy(
     )
     # 10:15 был бы в обычном расписании (9:00, 10:15, 11:30, ...) — но GCal-busy
     # 10:00-11:30 его перекрывает. 11:30 на границе — должен остаться.
-    assert datetime(2026, 6, 1, 10, 15, tzinfo=UTC) not in slots
-    assert datetime(2026, 6, 1, 9, 0, tzinfo=UTC) in slots  # до busy
+    assert datetime(_MON_Y, _MON_M, _MON_D, 10, 15, tzinfo=UTC) not in slots
+    assert datetime(_MON_Y, _MON_M, _MON_D, 9, 0, tzinfo=UTC) in slots  # до busy
     mock_fetch.assert_awaited()
 
 
@@ -162,7 +171,7 @@ async def test_find_free_slots_skips_gcal_if_no_token(
     db_session.add(service)
     await db_session.commit()
 
-    monday = datetime(2026, 6, 1, 0, 0, tzinfo=UTC)
+    monday = datetime(_MON_Y, _MON_M, _MON_D, 0, 0, tzinfo=UTC)
     await find_free_slots(
         db_session,
         tutor,

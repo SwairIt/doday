@@ -102,6 +102,9 @@ async def test_pro_payment_still_sets_tier_and_no_entitlement(db_session):
         payload=payload,
         stars_amount=250,
     )
+    # apply_successful_payment doesn't self-commit (the bot handler does); commit
+    # here before refresh so we read the persisted row, not a discarded in-memory edit.
+    await db_session.commit()
     await db_session.refresh(user)
     assert user.tier == "pro"
     assert user.pro_until is not None

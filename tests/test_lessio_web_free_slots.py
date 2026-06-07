@@ -1,8 +1,9 @@
 """find_free_slots алгоритм — granular cases.
 
-Каждый кейс независим: свой tutor (уникальный tg_id), своя услуга. Конкретные
-даты (понедельник 2026-06-01) выбраны намеренно — они в будущем относительно
-"сегодня" 2026-05-25, поэтому past-filter не пожирает слоты теста.
+Каждый кейс независим: свой tutor (уникальный tg_id), своя услуга. Базовый день —
+понедельник в нескольких днях от "сегодня" (вычисляется динамически), чтобы
+past-filter в find_free_slots не пожирал слоты теста. Раньше дата была захардкожена
+(2026-06-01) и тесты "протухали", когда календарь проходил эту дату.
 """
 
 from __future__ import annotations
@@ -17,6 +18,15 @@ from app.lessio.service import (
     create_tutor_profile,
     find_free_slots,
 )
+
+# A Monday a handful of days in the future (4–10 days out) — always ahead of "now"
+# so the past-filter keeps the slots, but close enough to fit any booking window.
+_today = datetime.now(UTC).date()
+_to_mon = (7 - _today.weekday()) % 7
+_MONDAY = _today + timedelta(days=_to_mon if _to_mon >= 4 else _to_mon + 7)
+_MON_Y, _MON_M, _MON_D = _MONDAY.year, _MONDAY.month, _MONDAY.day
+_SATURDAY = _MONDAY + timedelta(days=5)
+_SAT_Y, _SAT_M, _SAT_D = _SATURDAY.year, _SATURDAY.month, _SATURDAY.day
 
 
 async def _setup_tutor(session: AsyncSession, *, tg_id: int) -> LessioTutorProfile:
@@ -56,7 +66,7 @@ async def test_no_bookings_returns_all_slots(db_session: AsyncSession) -> None:
     service = await _add_service(db_session, tutor)
     await db_session.commit()
 
-    monday = datetime(2026, 6, 1, 0, 0, tzinfo=UTC)
+    monday = datetime(_MON_Y, _MON_M, _MON_D, 0, 0, tzinfo=UTC)
     slots = await find_free_slots(
         db_session,
         tutor,
@@ -67,7 +77,7 @@ async def test_no_bookings_returns_all_slots(db_session: AsyncSession) -> None:
     # Окно 9:00-21:00 = 720 мин, шаг (60+15)=75 мин → 9:00,10:15,11:30,...,19:30
     # фитнес: 9 слотов (последний 19:30 + 60 = 20:30 ≤ 21:00).
     assert len(slots) == 9
-    assert slots[0] == datetime(2026, 6, 1, 9, 0, tzinfo=UTC)
+    assert slots[0] == datetime(_MON_Y, _MON_M, _MON_D, 9, 0, tzinfo=UTC)
 
 
 async def test_weekend_returns_empty(db_session: AsyncSession) -> None:
@@ -76,7 +86,7 @@ async def test_weekend_returns_empty(db_session: AsyncSession) -> None:
     service = await _add_service(db_session, tutor)
     await db_session.commit()
 
-    saturday = datetime(2026, 6, 6, 0, 0, tzinfo=UTC)
+    saturday = datetime(_SAT_Y, _SAT_M, _SAT_D, 0, 0, tzinfo=UTC)
     slots = await find_free_slots(
         db_session,
         tutor,
@@ -95,7 +105,7 @@ async def test_existing_booking_blocks_slot(db_session: AsyncSession) -> None:
     db_session.add(client)
     await db_session.flush()
 
-    booked_slot = datetime(2026, 6, 1, 10, 15, tzinfo=UTC)
+    booked_slot = datetime(_MON_Y, _MON_M, _MON_D, 10, 15, tzinfo=UTC)
     booking = LessioBooking(
         tutor_id=tutor.id,
         client_id=client.id,
@@ -113,7 +123,7 @@ async def test_existing_booking_blocks_slot(db_session: AsyncSession) -> None:
     db_session.add(booking)
     await db_session.commit()
 
-    monday = datetime(2026, 6, 1, 0, 0, tzinfo=UTC)
+    monday = datetime(_MON_Y, _MON_M, _MON_D, 0, 0, tzinfo=UTC)
     slots = await find_free_slots(
         db_session,
         tutor,
@@ -132,7 +142,7 @@ async def test_cancelled_booking_does_not_block(db_session: AsyncSession) -> Non
     db_session.add(client)
     await db_session.flush()
 
-    cancelled_at = datetime(2026, 6, 1, 11, 30, tzinfo=UTC)
+    cancelled_at = datetime(_MON_Y, _MON_M, _MON_D, 11, 30, tzinfo=UTC)
     cancelled = LessioBooking(
         tutor_id=tutor.id,
         client_id=client.id,
@@ -150,7 +160,7 @@ async def test_cancelled_booking_does_not_block(db_session: AsyncSession) -> Non
     db_session.add(cancelled)
     await db_session.commit()
 
-    monday = datetime(2026, 6, 1, 0, 0, tzinfo=UTC)
+    monday = datetime(_MON_Y, _MON_M, _MON_D, 0, 0, tzinfo=UTC)
     slots = await find_free_slots(
         db_session,
         tutor,
@@ -173,7 +183,7 @@ async def test_buffer_respected(db_session: AsyncSession) -> None:
         tutor_id=tutor.id,
         client_id=client.id,
         service_id=service.id,
-        starts_at=datetime(2026, 6, 1, 10, 15, tzinfo=UTC),
+        starts_at=datetime(_MON_Y, _MON_M, _MON_D, 10, 15, tzinfo=UTC),
         duration_minutes=60,
         status="confirmed",
         price_kopecks=100000,
@@ -186,7 +196,7 @@ async def test_buffer_respected(db_session: AsyncSession) -> None:
     db_session.add(booking)
     await db_session.commit()
 
-    monday = datetime(2026, 6, 1, 0, 0, tzinfo=UTC)
+    monday = datetime(_MON_Y, _MON_M, _MON_D, 0, 0, tzinfo=UTC)
     slots = await find_free_slots(
         db_session,
         tutor,
@@ -195,10 +205,10 @@ async def test_buffer_respected(db_session: AsyncSession) -> None:
         service=service,
     )
     # 9:00 (before booking) и 11:30 (after booking+buffer) должны быть свободны.
-    assert datetime(2026, 6, 1, 9, 0, tzinfo=UTC) in slots
-    assert datetime(2026, 6, 1, 11, 30, tzinfo=UTC) in slots
+    assert datetime(_MON_Y, _MON_M, _MON_D, 9, 0, tzinfo=UTC) in slots
+    assert datetime(_MON_Y, _MON_M, _MON_D, 11, 30, tzinfo=UTC) in slots
     # 10:15 занят, 11:15 пересекается с buffer.
-    assert datetime(2026, 6, 1, 10, 15, tzinfo=UTC) not in slots
+    assert datetime(_MON_Y, _MON_M, _MON_D, 10, 15, tzinfo=UTC) not in slots
 
 
 async def test_past_slots_excluded(db_session: AsyncSession) -> None:
@@ -228,7 +238,7 @@ async def test_group_service_allows_multiple_at_same_slot(db_session: AsyncSessi
     db_session.add(client)
     await db_session.flush()
 
-    starts_at = datetime(2026, 6, 1, 12, 0, tzinfo=UTC)
+    starts_at = datetime(_MON_Y, _MON_M, _MON_D, 12, 0, tzinfo=UTC)
     for i in range(7):
         b = LessioBooking(
             tutor_id=tutor.id,
@@ -247,7 +257,7 @@ async def test_group_service_allows_multiple_at_same_slot(db_session: AsyncSessi
         db_session.add(b)
     await db_session.commit()
 
-    monday = datetime(2026, 6, 1, 0, 0, tzinfo=UTC)
+    monday = datetime(_MON_Y, _MON_M, _MON_D, 0, 0, tzinfo=UTC)
     slots = await find_free_slots(
         db_session,
         tutor,
@@ -264,7 +274,7 @@ async def test_returns_sorted_slots(db_session: AsyncSession) -> None:
     service = await _add_service(db_session, tutor)
     await db_session.commit()
 
-    monday = datetime(2026, 6, 1, 0, 0, tzinfo=UTC)
+    monday = datetime(_MON_Y, _MON_M, _MON_D, 0, 0, tzinfo=UTC)
     slots = await find_free_slots(
         db_session,
         tutor,
