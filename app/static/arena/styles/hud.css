@@ -50,7 +50,7 @@ body {
 }
 
 /* --- Игровой canvas на весь экран --- */
-#game-canvas {
+#game {
   position: fixed;
   inset: 0;
   width: 100%;

@@ -132,3 +132,4 @@ System Volume Information/
 
 # Выхлоп генератора игры (Kimi)
 .kimi/
+.playwright-mcp/

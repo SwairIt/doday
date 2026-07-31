@@ -189,8 +189,7 @@ function drawSpots(ctx, rng, count, maxRadius, color, alphaMax) {
  * @returns {{map: THREE.Texture, normalMap: THREE.Texture, roughnessMap: THREE.Texture}}
  */
 export function makeConcrete() {
-  const cached```javascript
- = cache.get('concrete');
+  const cached = cache.get('concrete');
   if (cached) return cached;
 
   const size = TEXTURE_SIZE;
@@ -347,8 +346,7 @@ export function makeBrick() {
   const height = createCanvas(size);
 
   // Раствор: светлый по цвету, низкий по высоте
-  color.ctx```javascript
-.fillStyle = '#9a938a';
+  color.ctx.fillStyle = '#9a938a';
   color.ctx.fillRect(0, 0, size, size);
   height.ctx.fillStyle = '#505050';
   height.ctx.fillRect(0, 0, size, size);
@@ -515,8 +513,7 @@ export function makeMetal() {
   // те же пятна понижают высоту (коррозия)
   drawSpots(height.ctx, rng, 24, 20, '#383838', 0.5);
 
-  // --- Шероховатость: металл средней гладкости, вариации от```javascript
- ржавчины и царапин: швы и ржавчина — шероховатые, свежий металл — глаже.
+  // --- Шероховатость: металл средней гладкости, вариации от ржавчины и царапин: швы и ржавчина — шероховатые, свежий металл — глаже.
   const rough = createCanvas(size);
   fillRoughness(rough.ctx, size, 0.42, 0.18, rng);
 
@@ -631,8 +628,7 @@ export function makeWindowAtlas() {
       }
 
       // Блик на стекле
-      color.ctx.global```javascript
-Alpha = 0.18;
+      color.ctx.globalAlpha = 0.18;
       color.ctx.fillStyle = '#ffffff';
       color.ctx.beginPath();
       color.ctx.moveTo(gx, gy + gh);
@@ -659,4 +655,26 @@ Alpha = 0.18;
   const result = buildSet(color.canvas, height.canvas, rough.canvas);
   cache.set('windowAtlas', result);
   return result;
+}
+
+/**
+ * Настраивает повторение у всего набора карт и отдаёт его же.
+ *
+ * Генераторы выше возвращают набор {map, normalMap, roughnessMap}, а не одну
+ * текстуру, поэтому tiling нужно применять ко всем картам сразу — иначе
+ * нормали и шероховатость поедут относительно цвета.
+ *
+ * @param {{map: THREE.Texture, normalMap: THREE.Texture, roughnessMap: THREE.Texture}} set
+ * @param {number} repeatX сколько раз повторить по горизонтали
+ * @param {number} repeatY сколько раз повторить по вертикали
+ * @returns {{map: THREE.Texture, normalMap: THREE.Texture, roughnessMap: THREE.Texture}}
+ */
+export function tileTextures(set, repeatX, repeatY) {
+  for (const texture of [set.map, set.normalMap, set.roughnessMap]) {
+    if (!texture) continue;
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(repeatX, repeatY);
+  }
+  return set;
 }

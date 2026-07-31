@@ -15,7 +15,7 @@ CONTRACT = """
 Сборщика нет — только нативные ES-модули. Зависимости через importmap:
   three            -> https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js
   three/addons/    -> https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/
-  rapier           -> https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.14.0/rapier.mjs
+  rapier           -> https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.19.3/rapier.mjs
 
 Общие соглашения (соблюдать строго, файлы обязаны состыковаться):
 - Каждый модуль экспортирует именованные экспорты, никаких default.
@@ -91,17 +91,41 @@ FILES: list[tuple[str, str]] = [
         "возвращает {map, normalMap, roughnessMap}. Нормали считать из карты высот "
         "по соседним пикселям. Размер текстур 512, кэшировать результат по имени.",
     ),
+    # Город разбит на четыре модуля намеренно: одним файлом он не влезает в
+    # окно модели — на шестом круге продолжений швы ломают синтаксис.
+    (
+        "src/world/rng.js",
+        "Детерминированный ГПСЧ: экспорт mulberry32(seed) -> функция random() в "
+        "[0,1), а также createRng(seed) -> {random(), range(min,max), int(min,max), "
+        "pick(array), chance(p)}. Никаких зависимостей, только чистые функции.",
+    ),
+    (
+        "src/world/streets.js",
+        "Сетка улиц квартала 200x200 м. Экспорт buildStreets(settings, rng) -> "
+        "{meshes, colliders, spawnPoints, plots}. Дороги с асфальтом, тротуары с "
+        "бордюром высотой 0.14 м, разметка. Центры дорог по координатам "
+        "[-80,-40,0,40,80]. plots — список свободных участков {x, z, w, d} под "
+        "здания. spawnPoints — точки на проезжей части и тротуарах. "
+        "colliders — только бордюры, массив {position:[x,y,z], size:[w,h,d]}. "
+        "Текстуры брать из src/world/textures.js.",
+    ),
+    (
+        "src/world/buildings.js",
+        "Здания на участках. Экспорт buildBuildings(plots, settings, rng) -> "
+        "{meshes, colliders}. Высота 8..34 м; у трети первый этаж проходной "
+        "(аркада на колоннах высотой 4 м) — это укрытия; окна эмиссивными "
+        "инстансами (InstancedMesh) со случайным включением света; запечённое "
+        "затенение в вершинных цветах — низ и углы темнее; LOD для дальних. "
+        "Коллайдер на здание — один кубоид, у аркадных — только колонны.",
+    ),
     (
         "src/world/city.js",
-        "Главный файл: seeded-генератор городского квартала 200x200 м. "
-        "Экспорт buildCity(scene, settings, seed) -> {group, colliders, spawnPoints}. "
-        "Сетка улиц с тротуарами и бордюрами; здания разной высоты, у части первый "
-        "этаж проходной (аркады на колоннах) для укрытий; окна эмиссивными "
-        "инстансами со случайным включением света; фонари, машины-коробки, "
-        "контейнеры, отбойники — через InstancedMesh; запечённое затенение в "
-        "вершинных цветах (низ зданий и углы темнее); LOD для дальних зданий. "
-        "colliders — массив {position: [x,y,z], size: [w,h,d]} для физики. "
-        "spawnPoints — массив точек на улицах. Детерминированный ГПСЧ mulberry32.",
+        "Сборка города: экспорт buildCity(scene, settings, seed) -> "
+        "{group, colliders, spawnPoints}. Вызывает createRng, buildStreets, "
+        "buildBuildings, добавляет уличный декор через InstancedMesh (фонари, "
+        "машины-коробки, контейнеры, отбойники), складывает всё в THREE.Group и "
+        "добавляет в сцену, объединяет коллайдеры и точки спавна. "
+        "Файл-композитор: сам геометрию улиц и зданий не строит.",
     ),
     (
         "styles/hud.css",
@@ -120,11 +144,17 @@ FILES: list[tuple[str, str]] = [
     ),
     (
         "src/main.js",
-        "Bootstrap: создаёт Settings, canvas-рендерер, сцену, небо, свет, город, "
-        "временную орбитальную камеру (OrbitControls из three/addons) для облёта, "
-        "запускает Loop, обновляет FPS-счётчик и прячет экран загрузки по "
-        "готовности. Экспортировать единственный объект Game. Обработка ошибок: "
-        "если WebGL2 недоступен — показать понятное сообщение по-русски.",
+        "Bootstrap. В разметке уже есть: canvas#game, оверлей #loading-screen с "
+        "полосой #loading-bar-fill, процентом #loading-percent и подписью "
+        "#loading-status — используй ИМЕННО эти идентификаторы, новых не создавай "
+        "и canvas не добавляй в DOM повторно. Порядок: Settings → createRenderer "
+        "(canvas#game) → THREE.Scene → createSky → createLighting → буферы "
+        "текстур → buildCity → initPhysics (await, вернёт world) → "
+        "addGroundPlane(world) → buildStaticColliders(world, city.colliders) → "
+        "временная орбитальная камера OrbitControls для облёта → Loop с "
+        "onFixed/onRender → скрыть #loading-screen. Экспортировать объект Game. "
+        "Если WebGL2 недоступен — понятное сообщение по-русски вместо игры. "
+        "ВАЖНО: вызывай функции строго по сигнатурам из карты ниже.",
     ),
     # --- фаза 1B: физика, игрок, управление ---
     (
@@ -137,13 +167,24 @@ FILES: list[tuple[str, str]] = [
         "Гравитация -9.81.",
     ),
     (
+        "src/core/input-state.js",
+        "ТОЛЬКО структура состояния ввода, без слушателей событий. Класс "
+        "InputState: поля move {x, y} в диапазоне -1..1, look {x, y} — дельта за "
+        "кадр, кнопки fire/aim/jump/crouch/sprint/reload/interact как объекты "
+        "{pressed, justPressed}. Методы: setButton(name, down), setMove(x, y), "
+        "addLook(dx, dy), endFrame() — сбрасывает justPressed и обнуляет look, "
+        "isTouch — статическое определение тача по 'ontouchstart' и "
+        "maxTouchPoints. Файл маленький, до 120 строк.",
+    ),
+    (
         "src/core/input.js",
-        "Класс Input — единый InputState из клавиатуры, мыши, тача и геймпада. "
-        "Поля: move {x, y} (-1..1), look {x, y} (дельта за кадр, уже умноженная на "
-        "чувствительность), кнопки fire/aim/jump/crouch/sprint/reload/interact как "
-        "{pressed, justPressed}. Pointer lock по клику на canvas с корректным "
-        "выходом по Esc и восстановлением. Определение тача — по 'ontouchstart' и "
-        "maxTouchPoints. Метод endFrame() сбрасывает justPressed и дельту look.",
+        "Слушатели клавиатуры и мыши поверх InputState из "
+        "src/core/input-state.js. Экспорт createInput(canvas, settings) -> "
+        "{state, dispose}. WASD и стрелки в move; Space — jump, Shift — sprint, "
+        "Ctrl/C — crouch, R — reload, E — interact; ЛКМ — fire, ПКМ — aim. "
+        "Pointer lock по клику на canvas, корректный выход по Esc и повторный "
+        "захват; движение мыши в addLook с умножением на settings.sensitivity. "
+        "Тач не трогать — он в src/ui/touch.js. Файл до 150 строк.",
     ),
     (
         "src/ui/touch.js",
@@ -211,15 +252,25 @@ FILES: list[tuple[str, str]] = [
         "hitmarker при попадании. Дёргает ballistics и fx, сам их не реализует.",
     ),
     (
+        "src/ai/perception.js",
+        "Восприятие бота, без логики поведения и без работы со сценой. Экспорт "
+        "createPerception(world, deps) -> {canSee(fromPos, targetPos, forwardDir), "
+        "hearShot(fromPos, shotPos), leadTarget(fromPos, targetPos, targetVel, "
+        "projectileSpeed)}. canSee: конус обзора 110 градусов плюс проверка "
+        "видимости рейкастом через raycast из src/world/collision.js. hearShot: "
+        "слышимость выстрела в радиусе 40 м. leadTarget: точка упреждения по "
+        "скорости цели. Файл до 150 строк, чистые вычисления.",
+    ),
+    (
         "src/ai/bot.js",
         "Бот-противник: конечный автомат patrol -> search -> combat -> retreat. "
         "Экспорт createBot(scene, world, spawnPoint, deps) -> {update(dt, player), "
-        "takeDamage(amount, point), alive, position}. Зрение конусом 110° с "
-        "проверкой рейкастом, слух выстрелов в радиусе 40 м, стрельба очередями с "
-        "разбросом и упреждением по скорости игрока, поиск укрытия при низком "
-        "здоровье, движение по прямой с обходом препятствий рейкастами. Модель — "
-        "капсула с головой и цветной подсветкой команды, при смерти падает "
-        "динамическим телом с импульсом от попадания.",
+        "takeDamage(amount, point), alive, position}. Зрение, слух и упреждение "
+        "БЕРИ ГОТОВЫМИ из src/ai/perception.js, не реализуй заново. Стрельба "
+        "очередями с разбросом, поиск укрытия при низком здоровье, движение с "
+        "обходом препятствий рейкастами. Модель — капсула с головой и цветной "
+        "подсветкой, при смерти падает динамическим телом с импульсом. "
+        "Файл до 250 строк.",
     ),
     (
         "src/ai/spawner.js",
