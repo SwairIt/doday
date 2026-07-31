@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0a0e14">
+    <meta name="description" content="Doday Arena — браузерный арена-шутер от первого лица на Three.js">
+    <title>Doday Arena</title>
+
+    <link rel="stylesheet" href="styles/hud.css">
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/",
+            "rapier": "https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.14.0/rapier.mjs"
+        }
+    }
+    </script>
+</head>
+<body>
+    <canvas id="game"></canvas>
+
+    <!-- Экран загрузки -->
+    <div id="loading-screen">
+        <div class="loading-inner">
+            <h1 class="loading-title">DODAY&nbsp;ARENA</h1>
+            <div class="loading-bar-track">
+                <div id="loading-bar-fill" class="loading-bar-fill"></div>
+            </div>
+            <div id="loading-percent" class="loading-percent">0%</div>
+            <div id="loading-status" class="loading-status">Инициализация…</div>
+        </div>
+    </div>
+
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>

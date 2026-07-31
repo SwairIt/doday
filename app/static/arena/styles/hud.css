@@ -1,0 +1,264 @@
+/* ===== Doday Arena — HUD и базовая страница ===== */
+
+/* --- Переменные темы --- */
+:root {
+  --color-bg: #0b0e14;
+  --color-panel: rgba(13, 17, 26, 0.78);
+  --color-text: #e6ecf5;
+  --color-dim: #8b96a8;
+  --color-accent: #f2a33c;
+  --color-accent-soft: rgba(242, 163, 60, 0.35);
+  --color-track: rgba(255, 255, 255, 0.08);
+  --font-stack: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu,
+    "Helvetica Neue", Arial, sans-serif;
+  --mono-stack: ui-monospace, SFMono-Regular, Menlo, Consolas,
+    "Liberation Mono", monospace;
+
+  /* Safe-area отступы для мобильных устройств */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+}
+
+/* --- Сброс и база --- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-stack);
+  font-size: 16px;
+
+  /* Запрет выделения и стандартных жестов */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+/* --- Игровой canvas на весь экран --- */
+#game-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  outline: none;
+}
+
+/* ===== Экран загрузки ===== */
+#loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding:
+    calc(32px + var(--safe-top))
+    calc(32px + var(--safe-right))
+    calc(32px + var(--safe-bottom))
+    calc(32px + var(--safe-left));
+  background:
+    radial-gradient(120% 90% at 50% 0%, #141b29 0%, var(--color-bg) 70%);
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+#loading-screen.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+#loading-screen .loading-title {
+  font-size: clamp(28px, 6vw, 52px);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  text-shadow: 0 0 24px var(--color-accent-soft);
+}
+
+#loading-screen .loading-subtitle {
+  font-size: 14px;
+  color: var(--color-dim);
+  letter-spacing: 0.06em;
+}
+
+#loading-screen .loading-bar {
+  width: min(420px, 70vw);
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-track);
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+#loading-screen .loading-bar-fill {
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #c9772a, var(--color-accent));
+  box-shadow: 0 0 12px var(--color-accent-soft);
+  transition: width 0.2s ease-out;
+}
+
+#loading-screen .loading-percent {
+  font-family: var(--mono-stack);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-accent);
+}
+
+/* ===== Слой HUD ===== */
+#hud {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  font-family: var(--font-stack);
+}
+
+/* --- Прицел --- */
+#hud .crosshair {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-text);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
+  transform: translate(-50%, -50%);
+}
+
+/* --- Здоровье (левый нижний угол с safe-area) --- */
+#hud .hud-health {
+  position: absolute;
+  left: calc(20px + var(--safe-left));
+  bottom: calc(20px + var(--safe-bottom));
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: var(--color-panel);
+  font-family: var(--mono-stack);
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+
+#hud .hud-health.low {
+  color: #ff5a5a;
+}
+
+/* --- Патроны (правый нижний угол с safe-area) --- */
+#hud .hud-ammo {
+  position: absolute;
+  right: calc(20px + var(--safe-right));
+  bottom: calc(20px + var(--safe-bottom));
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: var(--color-panel);
+  font-family: var(--mono-stack);
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+
+#hud .hud-ammo .ammo-reserve {
+  font-size: 14px;
+  color: var(--color-dim);
+}
+
+/* ===== FPS-счётчик (правый верхний угол) ===== */
+#fps-counter {
+  position: fixed;
+  top: calc(10px + var(--safe-top));
+  right: calc(12px + var(--safe-right));
+  z-index: 50;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  font-family: var(--mono-stack);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: #7ee787;
+  pointer-events: none;
+}
+
+/* --- Виньетка урона --- */
+#damage-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    radial-gradient(100% 100% at 50% 50%, transparent 55%, rgba(200, 20, 20, 0.45) 100%);
+  transition: opacity 0.25s ease-out;
+}
+
+/* --- Меню паузы / оверлей --- */
+.menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding:
+    calc(24px + var(--safe-top))
+    calc(24px + var(--safe-right))
+    calc(24px + var(--safe-bottom))
+    calc(24px + var(--safe-left));
+  background: rgba(5, 8, 13, 0.82);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.menu-overlay.hidden {
+  display: none;
+}
+
+.menu-overlay .menu-button {
+  pointer-events: auto;
+  min-width: 220px;
+  padding: 12px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  background: var(--color-panel);
+  color: var(--color-text);
+  font-family: var(--font-stack);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.menu-overlay .menu-button:hover,
+.menu-overlay .menu-button:focus-visible {
+  background: rgba(242, 163, 60, 0.15);
+  border-color: var(--color-accent);
+  outline: none;
+}
+
+.menu-overlay .menu-button:active {
+  transform: translateY(1px);
+}

@@ -71,6 +71,7 @@ from app.school.router import router as school_router
 from app.sections.router import router as sections_router
 from app.share.router import router as share_router
 from app.stats.router import router as stats_router
+from app.game.router import router as game_router
 from app.taptower_proxy import router as taptower_router
 from app.tasks.router import reorder_router as tasks_reorder_router
 from app.tasks.router import router as tasks_router
@@ -296,6 +297,7 @@ app.include_router(admin_router)
 app.include_router(admin_token_router)
 app.include_router(miniapp_router)
 app.include_router(taptower_router)
+app.include_router(game_router)
 app.include_router(lessio_router)
 app.include_router(lessio_web_router)
 app.include_router(lessio_cabinet_router)

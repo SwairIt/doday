@@ -129,3 +129,6 @@ System Volume Information/
 
 # Local bot worker runtime artifacts — never tracked.
 .bot.local.*
+
+# Выхлоп генератора игры (Kimi)
+.kimi/

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#0b0d14">
+  <title>Doday Arena — шутер в браузере</title>
+  <meta name="description" content="Doday Arena — браузерный шутер от первого лица на Three.js. Процедурный город, честная физика, управление мышью и с телефона. В разработке.">
+  <link rel="stylesheet" href="styles/hud.css">
+  <style>
+    /* Страница-заглушка на время сборки движка: показывает, что раздел живой,
+       и что именно уже готово. Заменится игрой, когда соберётся часть 1. */
+    .dev { min-height: 100svh; display: grid; place-items: center; padding: 2rem 1.25rem; }
+    .dev__inner { max-width: 40rem; width: 100%; }
+    .dev__tag { display: inline-block; font-size: .7rem; letter-spacing: .12em; text-transform: uppercase;
+      padding: .3rem .7rem; border-radius: 999px; background: rgba(139,92,246,.18); color: #c4b5fd; }
+    .dev h1 { font-size: clamp(1.9rem, 6vw, 3rem); margin: 1rem 0 .6rem; line-height: 1.1; }
+    .dev p { color: rgba(226,232,240,.72); line-height: 1.6; margin: 0 0 1rem; }
+    .dev ul { color: rgba(226,232,240,.72); line-height: 1.9; padding-left: 1.1rem; margin: 0 0 1.5rem; }
+    .dev li b { color: #e2e8f0; font-weight: 600; }
+    .dev__bar { height: 6px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; margin: .4rem 0 .6rem; }
+    .dev__fill { height: 100%; width: 38%; border-radius: 999px;
+      background: linear-gradient(90deg, #8b5cf6, #22d3ee); }
+    .dev__meta { font-size: .82rem; color: rgba(226,232,240,.5); }
+    .dev__back { display: inline-block; margin-top: 1.6rem; color: #a78bfa; text-decoration: none; font-size: .9rem; }
+    .dev__back:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <main class="dev">
+    <div class="dev__inner">
+      <span class="dev__tag">В разработке</span>
+      <h1>Doday Arena</h1>
+      <p>
+        Шутер от первого лица, который работает прямо в браузере — без установки,
+        на компьютере и с телефона. Движок на Three.js, физика на Rapier,
+        весь город и все текстуры генерируются кодом.
+      </p>
+
+      <div class="dev__bar"><div class="dev__fill"></div></div>
+      <div class="dev__meta">Движок собран примерно на треть</div>
+
+      <p style="margin-top:1.6rem">Что уже работает:</p>
+      <ul>
+        <li><b>Ядро</b> — игровой цикл с фиксированным шагом, настройки качества, шина событий</li>
+        <li><b>Графика</b> — рендерер с адаптивным разрешением, процедурное закатное небо, солнце с тенями</li>
+        <li><b>Мир</b> — процедурные PBR-текстуры и генератор городского квартала</li>
+      </ul>
+
+      <p>Дальше — физика и управление, затем оружие, боты и режимы.</p>
+
+      <a class="dev__back" href="/">← Все проекты Doday</a>
+    </div>
+  </main>
+</body>
+</html>
