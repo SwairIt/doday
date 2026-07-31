@@ -5,7 +5,6 @@
  */
 
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 import { Settings } from './core/settings.js';
 import { Loop } from './core/loop.js';
@@ -18,12 +17,12 @@ import { createLighting } from './render/lighting.js';
 import { makeConcrete, makeAsphalt, makeBrick, makeMetal, makeWindowAtlas } from './world/textures.js';
 import { buildCity } from './world/city.js';
 import { initPhysics, buildStaticColliders, addGroundPlane } from './world/collision.js';
+import { createInput } from './core/input.js';
+import { createTouchControls } from './ui/touch.js';
+import { createPlayer } from './player/controller.js';
+import { createPlayerCamera } from './player/camera.js';
 
 /** Параметры временной орбитальной камеры для облёта карты. */
-const ORBIT_TARGET = new THREE.Vector3(0, 0, 0);
-const ORBIT_START_POSITION = new THREE.Vector3(80, 60, 80);
-const ORBIT_MIN_DISTANCE = 10;
-const ORBIT_MAX_DISTANCE = 400;
 
 /** Идентификаторы DOM-элементов загрузочного экрана (уже есть в разметке). */
 const LOADING_DELAY_MS = 50;
@@ -94,6 +93,48 @@ function isWebGL2Available(targetCanvas) {
   }
 }
 
+
+/**
+ * Переводит InputState в вид, который ждут контроллер и камера.
+ *
+ * Модули писались независимо: состояние хранит move/look/buttons, контроллер
+ * читает moveX/moveZ/jump/crouch/sprint, камера — mouseDX/mouseDY. Держим один
+ * переиспользуемый объект, чтобы не мусорить в каждом кадре.
+ */
+const inputView = {
+  moveX: 0, moveZ: 0, jump: false, crouch: false, sprint: false,
+  mouseDX: 0, mouseDY: 0,
+};
+
+/**
+ * Заполняет inputView из состояния ввода.
+ * @param {import('./core/input-state.js').InputState} state
+ */
+function syncInputView(state) {
+  inputView.moveX = state.move.x;
+  inputView.moveZ = state.move.y;
+  inputView.jump = state.buttons.jump.pressed;
+  inputView.crouch = state.buttons.crouch.pressed;
+  inputView.sprint = state.buttons.sprint.pressed;
+  inputView.mouseDX = state.look.x;
+  inputView.mouseDY = state.look.y;
+}
+
+/** Временный вектор для вычисления азимута камеры (без аллокаций в кадре). */
+const _forward = new THREE.Vector3();
+
+/**
+ * Азимут взгляда камеры в радианах — контроллеру он нужен, чтобы понимать,
+ * куда «вперёд». Камера своё состояние наружу не отдаёт, поэтому берём
+ * из направления взгляда.
+ * @param {THREE.Camera} camera
+ * @returns {number}
+ */
+function cameraYawOf(camera) {
+  camera.getWorldDirection(_forward);
+  return Math.atan2(-_forward.x, -_forward.z);
+}
+
 /**
  * Основная последовательность инициализации игры.
  * @returns {Promise<void>}
@@ -109,7 +150,7 @@ async function boot() {
   await nextFrame();
 
   // createRenderer отдаёт обёртку {renderer, resize, updateAdaptiveResolution};
-  // ниже нужен сам WebGLRenderer — его ждут и PMREMGenerator в небе, и OrbitControls.
+  // ниже нужен сам WebGLRenderer — его ждёт PMREMGenerator в небе.
   const { renderer, resize, updateAdaptiveResolution } = createRenderer(canvas, settings);
   resize(); // иначе холст остаётся 300x150 до первого события resize
   const scene = new THREE.Scene();
@@ -155,37 +196,41 @@ async function boot() {
   setLoadingProgress(0.9, 'Настройка камеры…');
   await nextFrame();
 
-  // Временная орбитальная камера для облёта карты (до появления игрока).
-  const aspect = window.innerWidth / Math.max(1, window.innerHeight);
-  const camera = new THREE.PerspectiveCamera(settings.fov, aspect, 0.1, 2000);
-  camera.position.copy(ORBIT_START_POSITION);
-  camera.lookAt(ORBIT_TARGET);
+  // Игрок и камера от первого лица.
+  const spawn = city.spawnPoints && city.spawnPoints.length
+    ? city.spawnPoints[0]
+    : { x: 0, y: 2, z: 0 };
+  const player = createPlayer(world, spawn);
 
-  const orbitControls = new OrbitControls(camera, renderer.domElement);
-  orbitControls.target.copy(ORBIT_TARGET);
-  orbitControls.enableDamping = true;
-  orbitControls.minDistance = ORBIT_MIN_DISTANCE;
-  orbitControls.maxDistance = ORBIT_MAX_DISTANCE;
-  orbitControls.update();
+  const input = createInput(canvas, settings);
+  const touch = createTouchControls(document.body, input.state);
+
+  const playerCamera = createPlayerCamera(settings);
+  const camera = playerCamera.camera;
 
   // Главный цикл: физика в onFixed, рендер в onRender.
   const loop = new Loop();
 
   loop.onFixed((dt) => {
+    syncInputView(input.state);
+    player.update(dt, inputView, cameraYawOf(camera));
     world.timestep = dt;
     world.step();
     bus.emit('fixed', dt);
   });
 
-  loop.onRender((dt, alpha) => {
-    orbitControls.update(dt);
+  loop.onRender((dt) => {
+    syncInputView(input.state);
+    playerCamera.update(dt, player, inputView);
+    lighting.update(player.position);
     renderer.render(scene, camera);
+    // Дельты обзора и разовые нажатия живут ровно один кадр.
+    input.state.endFrame();
   });
 
   // Подгонка камеры и рендерера под размер окна.
   window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / Math.max(1, window.innerHeight);
-    camera.updateProjectionMatrix();
+    playerCamera.resize();
     resize();
   });
 
@@ -203,7 +248,10 @@ async function boot() {
     renderer,
     scene,
     camera,
-    orbitControls,
+    player,
+    input,
+    touch,
+    playerCamera,
     sky,
     lighting,
     textures,
@@ -219,7 +267,10 @@ export const Game = {
   renderer: null,
   scene: null,
   camera: null,
-  orbitControls: null,
+  player: null,
+  input: null,
+  touch: null,
+  playerCamera: null,
   sky: null,
   lighting: null,
   textures: null,
