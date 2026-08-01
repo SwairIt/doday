@@ -2,6 +2,7 @@
 // Зрение/слух/упреждение берутся из src/ai/perception.js.
 
 import * as THREE from 'three';
+import { createSoldierModel } from './soldier-model.js';
 import { raycast } from '../world/collision.js';
 
 // --- Константы, недостающие в исходной генерации ---
@@ -69,34 +70,18 @@ const _up = new THREE.Vector3(0, 1, 0);
  * @param {THREE.Scene} scene
  * @returns {{group: THREE.Group, body: THREE.Mesh, light: THREE.PointLight}}
  */
-function buildBotModel() {
+function buildBotModel(quality) {
 	const group = new THREE.Group();
-	const material = new THREE.MeshStandardMaterial({
-		color: 0x554a3f,
-		roughness: 0.6,
-		metalness: 0.3,
-	});
-	const body = new THREE.Mesh(
-		new THREE.CapsuleGeometry(CAPSULE_RADIUS, CAPSULE_HALF_HEIGHT * 2, 4, 8),
-		material
-	);
-	body.position.y = CAPSULE_HALF_HEIGHT + CAPSULE_RADIUS;
-	body.castShadow = true;
-	group.add(body);
-
-	const head = new THREE.Mesh(
-		new THREE.SphereGeometry(0.22, 10, 8),
-		new THREE.MeshStandardMaterial({ color: 0x3a332c, roughness: 0.5 })
-	);
-	head.position.y = CAPSULE_HALF_HEIGHT * 2 + CAPSULE_RADIUS * 2;
-	head.castShadow = true;
-	group.add(head);
+	// Боец в экипировке вместо капсулы: каска, бронежилет, разгрузка,
+	// руки и ноги на суставах, автомат в правой руке.
+	const soldier = createSoldierModel({ quality });
+	group.add(soldier.group);
 
 	const light = new THREE.PointLight(STATE_COLORS.patrol, 1.6, 6);
 	light.position.y = 1.6;
 	group.add(light);
 
-	return { group, body, light };
+	return { group, body: soldier.group, light, soldier };
 }
 
 /**
@@ -124,7 +109,7 @@ export function createBot(scene, world, spawnPoint, deps) {
 	}
 
 	// --- Модель.
-	const { group, light } = buildBotModel();
+	const { group, light, soldier } = buildBotModel(deps?.settings?.quality);
 	group.position.copy(spawnPoint);
 	scene.add(group);
 
@@ -314,6 +299,7 @@ export function createBot(scene, world, spawnPoint, deps) {
 	 * @param {THREE.Vector3} [point] Точка последнего попадания.
 	 */
 	function die(point) {
+		soldier.setDead(true);
 		if (!body) return;
 		body.setBodyType(RAPIER.RigidBodyType.Dynamic, true);
 		// Импульс от точки попадания в сторону от неё.
@@ -342,7 +328,23 @@ export function createBot(scene, world, spawnPoint, deps) {
 	 * @param {number} dt Дельта-время в секундах.
 	 * @param {{position: THREE.Vector3}} player Игрок.
 	 */
+	/** Позиция прошлого кадра — из неё считаем фактическую скорость для шага. */
+	const _prevPos = new THREE.Vector3().copy(group.position);
+	const _poseIn = { speed: 0, aiming: false, firing: false, grounded: true, yaw: 0 };
+
+	/** Обновляет анимацию модели по тому, что бот реально делает. */
+	function animate(dt) {
+		if (dt <= 0) return;
+		_poseIn.speed = _prevPos.distanceTo(group.position) / dt;
+		_prevPos.copy(group.position);
+		_poseIn.aiming = state === 'combat';
+		_poseIn.firing = state === 'combat' && burstShotsLeft > 0;
+		_poseIn.yaw = heading;
+		soldier.update(dt, _poseIn);
+	}
+
 	function update(dt, player) {
+		animate(dt);
 		if (health <= 0) {
 			// Труп: синхронизируем модель с динамическим телом.
 			if (body) {
