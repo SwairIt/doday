@@ -85,9 +85,17 @@ function _buildViewModel(id) {
     const group = new THREE.Group();
     group.name = 'viewmodel_' + id;
 
-    const metal = new THREE.MeshStandardMaterial({ color: 0x3a3d42, roughness: 0.55, metalness: 0.8 });
-    const dark  = new THREE.MeshStandardMaterial({ color: 0x1d1f22, roughness: 0.75, metalness: 0.35 });
-    const grip  = new THREE.MeshStandardMaterial({ color: 0x2a2620, roughness: 0.9,  metalness: 0.05 });
+    // Вью-модель светлее и с лёгким самосвечением: сцена вечерняя, и обычный
+    // тёмный металл в руках превращается в чёрное пятно.
+    const metal = new THREE.MeshStandardMaterial({
+        color: 0x8b9099, roughness: 0.42, metalness: 0.65,
+        emissive: 0x2a2f36, emissiveIntensity: 0.9,
+    });
+    const dark  = new THREE.MeshStandardMaterial({ color: 0x4a4d52, roughness: 0.6, metalness: 0.4,
+        emissive: 0x1c1f23, emissiveIntensity: 0.8 });
+    // Цевьё и приклад — тёплое дерево, как на AK: контраст с металлом.
+    const grip  = new THREE.MeshStandardMaterial({ color: 0x8a5a2e, roughness: 0.85, metalness: 0.02,
+        emissive: 0x2a1a0c, emissiveIntensity: 0.8 });
 
     const parts = {};
 
@@ -258,7 +266,7 @@ export function createWeapon(id, deps) {
         // Отдача: паттерн отклонения камеры на выстрел [pitch, yaw]
         recoilPattern: [[0.012, 0.0]],
         // Позы вью-модели
-        hipPos: new THREE.Vector3(0.20, -0.17, -0.46),
+        hipPos: new THREE.Vector3(0.26, -0.21, -0.30),
         adsPos: new THREE.Vector3(0.0, -0.115, -0.22),
     }, def);
 
@@ -296,9 +304,24 @@ export function createWeapon(id, deps) {
     const model = view.group;
     const muzzle = view.parts.muzzle;
     camera.add(model);
+
+    // Собственный свет вью-модели: сцена вечерняя, и без подсветки ствол
+    // в руках сливается в чёрное пятно. Свет висит на камере, поэтому
+    // на освещение мира не влияет.
+    if (!camera.userData.viewmodelLight) {
+        const key = new THREE.DirectionalLight(0xfff0dd, 2.2);
+        key.position.set(0.6, 0.9, 0.4);
+        camera.add(key);
+        const fill = new THREE.HemisphereLight(0xbfd4ff, 0x2b2620, 1.1);
+        camera.add(fill);
+        camera.userData.viewmodelLight = key;
+    }
     model.position.copy(cfg.hipPos);
     // Ствол у самой камеры занимал пол-экрана: уменьшаем и отодвигаем.
-    model.scale.setScalar(0.8);
+    // Крупная модель у правого нижнего угла: дуло намеренно уходит за кадр,
+    // как в CS — виден ресивер, магазин и рукоять, а не весь ствол.
+    model.scale.setScalar(1.45);
+    model.rotation.y = 0.06;
 
     const muzzleWorld = new THREE.Vector3();
     const hitmarker = _createHitmarker();
@@ -487,7 +510,9 @@ export function createWeapon(id, deps) {
         kick += (0 - kick) * (1 - Math.exp(-KICK_RETURN * dt));
         const speed = getMoveSpeed();
         bobTime += dt * (BOB_SPEED + speed * 0.9) * (1 - adsBlend * 0.85);
-        const bobAmp = BOB_AMP * Math.min(speed / 6, 1) * (1 - adsBlend * 0.8);
+        // Покачивание оставлено едва заметным: в CS ствол при ходьбе
+        // практически не гуляет, крупная модель усиливает любое смещение.
+        const bobAmp = BOB_AMP * 0.18 * Math.min(speed / 6, 1) * (1 - adsBlend * 0.9);
         const bx = Math.cos(bobTime) * bobAmp;
         const by = Math.abs(Math.sin(bobTime)) * bobAmp * 1.4;
 
@@ -497,7 +522,7 @@ export function createWeapon(id, deps) {
         _pos.z += kick * (1 - adsBlend * 0.7);
         model.position.copy(_pos);
         model.rotation.x = kick * 1.6;
-        model.rotation.z = bx * 1.5;
+        model.rotation.z = 0.06 + bx * 0.4;
 
         // Перезарядка: ствол уходит вниз и вбок с наклоном, магазин выпадает
         // и встаёт на место. Без этого перезарядка никак не читается на экране.
