@@ -6,6 +6,18 @@
 import * as THREE from 'three';
 import { EventBus, bus } from '../core/events.js';
 
+// --- Константы, недостающие в исходной генерации ---
+const AXIS_Y = new THREE.Vector3(0, 1, 0);   // опорная ось для ориентации трассера
+const _e1 = new THREE.Euler();               // временный поворот для гильз
+const AXIS_Z = new THREE.Vector3(0, 0, 1);   // опорная ось для декали по нормали
+const GRAVITY = 9.8;                          // ускорение для гильз и искр, м/с^2
+const TRACER_MIN_LEN = 1.2;                   // короче этого трассер не рисуем, м
+const SHELL_EJECT_SPEED = 2.4;                // скорость вылета гильзы, м/с
+const SHELL_FADE = 0.5;                       // за сколько секунд гильза гаснет
+const SPARKS_PER_IMPACT = 10;                 // искр на попадание при высоком качестве
+const SPARK_SPEED = 3.5;                      // разлёт искр, м/с
+const MUZZLE_LIGHT_INTENSITY = 6.0;           // яркость вспышки у ствола
+
 // ------------------------- Константы -------------------------
 
 /** Время жизни трассера (с) */

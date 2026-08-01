@@ -4,6 +4,14 @@
 import * as THREE from 'three';
 import { raycast } from '../world/collision.js';
 
+// --- Константы, недостающие в исходной генерации ---
+const BURST_MIN = 3;              // минимум выстрелов в очереди
+const BURST_MAX = 6;              // максимум выстрелов в очереди
+const FIRE_SPREAD = 0.045;        // разброс стрельбы бота, радианы
+const RAGDOLL_IMPULSE = 5.5;      // импульс, придаваемый трупу при смерти
+const RETREAT_HEALTH_FRAC = 0.35; // доля здоровья, ниже которой бот отступает
+const SPEED_SLOW = 1.6;           // скорость патрулирования, м/с
+
 /** @type {object|null} Ссылка на RAPIER после initPhysics. */
 let RAPIER = null;
 

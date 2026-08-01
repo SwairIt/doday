@@ -114,6 +114,24 @@ function damageFalloffMultiplier(distance, falloff) {
  * }} результат выстрела; point/normal возвращаются как копии (без алиасинга временных)
  */
 export function fireHitscan(world, origin, direction, weapon, spread, rng) {
+  // Совместимость: src/weapons/weapon.js зовёт эту функцию ОДНИМ объектом
+  // {origin, direction, damage, headshotMult, targets, maxDistance}, а не
+  // позиционными аргументами. Разбираем оба вида вызова.
+  if (world && world.origin && world.direction) {
+    const opts = world;
+    world = opts.world ?? null;
+    origin = opts.origin;
+    direction = opts.direction;
+    weapon = {
+      damage: opts.damage,
+      headshotMultiplier: opts.headshotMult,
+      range: opts.maxDistance,
+    };
+    spread = opts.spread ?? 0;
+    rng = opts.rng ?? Math.random;
+    // targets прокидываем через weapon, чтобы не менять остальную логику
+    weapon.targets = opts.targets;
+  }
   const result = {
     hit: false,
     point: null,

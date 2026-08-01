@@ -1,321 +1,355 @@
-/**
- * src/main.js — точка входа Doday Arena.
- * Bootstrap: настройки → рендерер → сцена → небо → свет → текстуры →
- * город → физика → коллайдеры → орбитальная камера → главный цикл.
- */
-
+// Точка входа Doday Arena: загрузка, инициализация подсистем, главный цикл.
 import * as THREE from 'three';
 
 import { Settings } from './core/settings.js';
-import { Loop } from './core/loop.js';
 import { bus } from './core/events.js';
+import { Loop } from './core/loop.js';
+import { InputState } from './core/input-state.js';
+import { createInput } from './core/input.js';
 
 import { createRenderer } from './render/renderer.js';
 import { createSky } from './render/sky.js';
 import { createLighting } from './render/lighting.js';
 
-import { makeConcrete, makeAsphalt, makeBrick, makeMetal, makeWindowAtlas } from './world/textures.js';
 import { buildCity } from './world/city.js';
 import { initPhysics, buildStaticColliders, addGroundPlane } from './world/collision.js';
-import { createInput } from './core/input.js';
-import { createTouchControls } from './ui/touch.js';
+
 import { createPlayer } from './player/controller.js';
 import { createPlayerCamera } from './player/camera.js';
 
-/** Параметры временной орбитальной камеры для облёта карты. */
+import { createAudio } from './audio/audio.js';
+import { createHud } from './ui/hud.js';
+import { createTouchControls } from './ui/touch.js';
+import { createTrackpadInput } from './core/input-trackpad.js';
 
-/** Идентификаторы DOM-элементов загрузочного экрана (уже есть в разметке). */
-const LOADING_DELAY_MS = 50;
+import { createWeaponFx } from './weapons/fx.js';
+import { createWeapon } from './weapons/weapon.js';
+import { WEAPONS, getWeapon } from './weapons/registry.js';
+import { createSpawner } from './ai/spawner.js';
+import { createPerception } from './ai/perception.js';
 
-/** @type {HTMLCanvasElement} */
-let canvas = null;
-/** @type {HTMLElement} */
-let loadingScreen = null;
-/** @type {HTMLElement} */
-let loadingBarFill = null;
-/** @type {HTMLElement} */
-let loadingPercent = null;
-/** @type {HTMLElement} */
-let loadingStatus = null;
+/** Размер первой волны ботов. */
+const FIRST_WAVE_SIZE = 5;
+/** Индекс первого оружия в реестре. */
+const DEFAULT_WEAPON_INDEX = 0;
+/** Порог различения живой цели, HP. */
+const ALIVE_HP = 0;
+
+// --- Элементы экрана загрузки (разметка уже существует) ---
+const canvas = document.getElementById('game');
+const loadingScreen = document.getElementById('loading-screen');
+const loadingBarFill = document.getElementById('loading-bar-fill');
+const loadingPercent = document.getElementById('loading-percent');
+const loadingStatus = document.getElementById('loading-status');
 
 /**
- * Обновляет индикатор загрузки.
- * @param {number} progress прогресс от 0 до 1
- * @param {string} status подпись этапа
+ * Обновить полосу загрузки.
+ * @param {number} fraction Прогресс от 0 до 1.
+ * @param {string} status Подпись текущего шага.
  */
-function setLoadingProgress(progress, status) {
-  const percent = Math.round(Math.min(1, Math.max(0, progress)) * 100);
-  if (loadingBarFill) loadingBarFill.style.width = `${percent}%`;
-  if (loadingPercent) loadingPercent.textContent = `${percent}%`;
-  if (loadingStatus) loadingStatus.textContent = status;
+function setLoadingProgress(fraction, status) {
+  const percent = Math.round(fraction * 100);
+  loadingBarFill.style.width = `${percent}%`;
+  loadingPercent.textContent = `${percent}%`;
+  loadingStatus.textContent = status;
+}
+
+/** Проверить доступность WebGL2 на одноразовом холсте. */
+function isWebGL2Available() {
+  const probe = document.createElement('canvas');
+  const gl = probe.getContext('webgl2');
+  return gl !== null;
 }
 
 /**
- * Уступает кадр браузеру, чтобы индикатор загрузки успел отрисоваться.
- * @returns {Promise<void>}
+ * Отрисовать сообщение об отсутствии WebGL2 вместо игры.
  */
-function nextFrame() {
-  return new Promise((resolve) => setTimeout(resolve, LOADING_DELAY_MS));
+function showWebGL2Unavailable() {
+  loadingStatus.textContent =
+    'Ваш браузер не поддерживает WebGL2. Обновите браузер или включите аппаратное ускорение.';
+  loadingBarFill.style.width = '0%';
+  canvas.style.display = 'none';
 }
 
 /**
- * Показывает сообщение об ошибке вместо игры.
- * @param {string} message текст по-русски
+ * Создать адаптер ввода: единый переиспользуемый объект для контроллера и камеры.
+ * Источники: клавиатура/мышь (createInput) и тач-контролы, пишущие в тот же InputState.
+ * @param {HTMLCanvasElement} domCanvas Игровой холст.
+ * @param {Settings} settings Настройки.
  */
-function showFatalError(message) {
-  if (loadingScreen) {
-    loadingScreen.classList.remove('hidden');
-    loadingScreen.style.display = 'flex';
+function createInputAdapter(domCanvas, settings) {
+  const state = new InputState();
+
+  // Источники ввода пишут в общий InputState.
+  const keyboardMouse = createInput(domCanvas, settings);
+  const touch = createTouchControls(document.body, keyboardMouse);
+  // Управление под трекпад Mac: обзор двухпальцевым свайпом без захвата
+  // курсора, ADS переключателем, огонь на пробел и J.
+  const trackpad = createTrackpadInput(canvas, settings, state);
+  // Включаем безусловно: на Mac это основной способ играть без мыши, а на
+  // остальных машинах слой просто добавляет запасные клавиши (J/Enter — огонь,
+  // F — прицел, стрелки — обзор) и ничему не мешает.
+  trackpad.setEnabled(true);
+
+  // Один объект на всю игру, заполняется каждый кадр в onFixed.
+  const adapter = {
+    moveX: 0,
+    moveZ: 0,
+    lookX: 0,
+    lookY: 0,
+    mouseDX: 0,
+    mouseDY: 0,
+    aim: false,
+    jump: false,
+    crouch: false,
+    sprint: false,
+    fire: false,
+    reload: false,
+    weaponIndex: -1,
+    wheelDelta: 0,
+  };
+
+  // Синхронизация адаптера из InputState (переиспользование, без аллокаций).
+  const sync = () => {
+    adapter.moveX = state.move.x;
+    adapter.moveZ = state.move.y;
+    // Камера читает mouseDX/mouseDY, контроллер — moveX/moveZ: держим оба вида.
+    adapter.lookX = state.look.x;
+    adapter.lookY = state.look.y;
+    adapter.mouseDX = state.look.x;
+    adapter.mouseDY = state.look.y;
+    adapter.jump = state.buttons.jump.pressed;
+    adapter.crouch = state.buttons.crouch.pressed;
+    adapter.sprint = state.buttons.sprint.pressed;
+    adapter.fire = state.buttons.fire.pressed;
+    adapter.reload = state.buttons.reload.justPressed;
+    adapter.aim = state.buttons.aim.pressed;
+    adapter.wheelDelta = state.wheelDelta || 0;
+    adapter.weaponIndex = state.weaponIndex !== undefined ? state.weaponIndex : -1;
+  };
+
+  return { state, adapter, keyboardMouse, touch, trackpad, sync };
+}
+
+/** Главная асинхронная инициализация игры. */
+async function init() {
+  setLoadingProgress(0.05, 'Проверка WebGL2…');
+  if (!isWebGL2Available()) {
+    showWebGL2Unavailable();
+    return null;
   }
-  if (loadingBarFill) loadingBarFill.style.width = '0%';
-  if (loadingPercent) loadingPercent.textContent = '';
-  if (loadingStatus) {
-    loadingStatus.textContent = message;
-    loadingStatus.style.color = '#ff5a5a';
-  }
-}
 
-/**
- * Проверяет доступность WebGL2 на существующем canvas.
- * @param {HTMLCanvasElement} targetCanvas канвас из разметки
- * @returns {boolean} true, если контекст WebGL2 доступен
- */
-function isWebGL2Available(targetCanvas) {
-  try {
-    // Пробу делаем на ОДНОРАЗОВОМ холсте: контекст, взятый на игровом canvas,
-    // остаётся за ним, и WebGLRenderer потом получает уже потерянный контекст
-    // (проверено — падало на getMaxPrecision с gl === null).
-    void targetCanvas;
-    const probe = document.createElement('canvas').getContext('webgl2');
-    return probe !== null;
-  } catch {
-    return false;
-  }
-}
-
-
-/**
- * Переводит InputState в вид, который ждут контроллер и камера.
- *
- * Модули писались независимо: состояние хранит move/look/buttons, контроллер
- * читает moveX/moveZ/jump/crouch/sprint, камера — mouseDX/mouseDY. Держим один
- * переиспользуемый объект, чтобы не мусорить в каждом кадре.
- */
-const inputView = {
-  moveX: 0, moveZ: 0, jump: false, crouch: false, sprint: false,
-  mouseDX: 0, mouseDY: 0,
-};
-
-/**
- * Заполняет inputView из состояния ввода.
- * @param {import('./core/input-state.js').InputState} state
- */
-function syncInputView(state) {
-  inputView.moveX = state.move.x;
-  inputView.moveZ = state.move.y;
-  inputView.jump = state.buttons.jump.pressed;
-  inputView.crouch = state.buttons.crouch.pressed;
-  inputView.sprint = state.buttons.sprint.pressed;
-  inputView.mouseDX = state.look.x;
-  inputView.mouseDY = state.look.y;
-}
-
-/** Временный вектор для вычисления азимута камеры (без аллокаций в кадре). */
-const _forward = new THREE.Vector3();
-
-/**
- * Азимут взгляда камеры в радианах — контроллеру он нужен, чтобы понимать,
- * куда «вперёд». Камера своё состояние наружу не отдаёт, поэтому берём
- * из направления взгляда.
- * @param {THREE.Camera} camera
- * @returns {number}
- */
-function cameraYawOf(camera) {
-  camera.getWorldDirection(_forward);
-  return Math.atan2(-_forward.x, -_forward.z);
-}
-
-/**
- * Основная последовательность инициализации игры.
- * @returns {Promise<void>}
- */
-async function boot() {
-  setLoadingProgress(0.05, 'Загрузка настроек…');
-  await nextFrame();
-
-  // Настройки — до рендерера, т.к. он зависит от пресета качества.
+  // Settings -> рендерер -> сцена.
+  setLoadingProgress(0.10, 'Загрузка настроек…');
   const settings = new Settings();
 
-  setLoadingProgress(0.1, 'Создание рендерера…');
-  await nextFrame();
-
-  // createRenderer отдаёт обёртку {renderer, resize, updateAdaptiveResolution};
-  // ниже нужен сам WebGLRenderer — его ждёт PMREMGenerator в небе.
+  setLoadingProgress(0.15, 'Инициализация рендерера…');
   const { renderer, resize, updateAdaptiveResolution } = createRenderer(canvas, settings);
-  resize(); // иначе холст остаётся 300x150 до первого события resize
+  resize();
+
   const scene = new THREE.Scene();
 
-  setLoadingProgress(0.2, 'Настройка неба и освещения…');
-  await nextFrame();
-
+  setLoadingProgress(0.25, 'Создание неба…');
   const sky = createSky(scene, renderer, settings);
+
+  setLoadingProgress(0.30, 'Настройка освещения…');
   const lighting = createLighting(scene, settings);
 
-  setLoadingProgress(0.3, 'Генерация текстур…');
-  await nextFrame();
+  // Город до физики: коллайдеры создаются после инициализации мира Rapier.
+  setLoadingProgress(0.40, 'Генерация города…');
+  const city = buildCity(scene, settings, settings.get('seed'));
 
-  // Буферы текстур: прогреваем кэш генераторов до постройки города.
-  const textures = {
-    concrete: makeConcrete(),
-    asphalt: makeAsphalt(),
-    brick: makeBrick(),
-    metal: makeMetal(),
-    windowAtlas: makeWindowAtlas(),
-  };
-  Object.values(textures).forEach((texture) => {
-    if (texture) renderer.initTexture(texture);
-  });
-
-  setLoadingProgress(0.45, 'Строительство города…');
-  await nextFrame();
-
-  const citySeed = 1337;
-  const city = buildCity(scene, settings, citySeed);
-
-  setLoadingProgress(0.65, 'Инициализация физики…');
-  await nextFrame();
-
+  setLoadingProgress(0.55, 'Инициализация физики…');
   const world = await initPhysics();
   addGroundPlane(world);
-
-  setLoadingProgress(0.8, 'Постройка коллайдеров…');
-  await nextFrame();
-
   buildStaticColliders(world, city.colliders);
 
-  setLoadingProgress(0.9, 'Настройка камеры…');
-  await nextFrame();
+  // Ввод: один адаптер на все подсистемы.
+  setLoadingProgress(0.65, 'Подключение управления…');
+  const input = createInputAdapter(canvas, settings);
 
-  // Игрок и камера от первого лица.
-  const spawn = city.spawnPoints && city.spawnPoints.length
-    ? city.spawnPoints[0]
-    : { x: 0, y: 2, z: 0 };
-  const player = createPlayer(world, spawn);
+  setLoadingProgress(0.75, 'Создание игрока…');
+  const player = createPlayer(world, city.spawnPoints[0]);
 
-  const input = createInput(canvas, settings);
-  const touch = createTouchControls(document.body, input.state);
-
+  // Здоровья в контроллере нет — модуль player/health.js не генерировался,
+  // поэтому ведём его здесь: HUD и попадания ботов работают с этим объектом.
+  const playerHealth = {
+    max: 100,
+    current: 100,
+    /**
+     * Наносит урон игроку.
+     * @param {number} amount урон в единицах здоровья
+     */
+    damage(amount) {
+      this.current = Math.max(0, this.current - amount);
+    },
+  };
   const playerCamera = createPlayerCamera(settings);
-  const camera = playerCamera.camera;
 
-  // Главный цикл: физика в onFixed, рендер в onRender.
+  setLoadingProgress(0.80, 'Загрузка звука…');
+  const audio = createAudio(playerCamera.listener || playerCamera.camera);
+
+  setLoadingProgress(0.85, 'Создание интерфейса…');
+  const hud = createHud(document.body);
+
+  const fx = createWeaponFx(scene, world, settings);
+
+  setLoadingProgress(0.90, 'Подготовка ботов…');
+  let bots = [];
+
+  // Адаптер камеры не раскрывает своё состояние — азимут из направления взгляда.
+  const camDir = new THREE.Vector3();
+  const getCameraYaw = () => {
+    playerCamera.camera.getWorldDirection(camDir);
+    return Math.atan2(-camDir.x, -camDir.z);
+  };
+
+  const horizontalSpeed = new THREE.Vector3();
+  const getMoveSpeed = () => {
+    horizontalSpeed.copy(player.velocity);
+    horizontalSpeed.y = 0;
+    return horizontalSpeed.length();
+  };
+
+  const getTargets = () => bots.filter((bot) => bot.alive);
+
+  const weaponDeps = {
+    world,
+    camera: playerCamera.camera,
+    fx,
+    settings,
+    getTargets,
+    getMoveSpeed,
+  };
+
+  const weaponIds = Object.keys(WEAPONS);
+  let weaponIndex = DEFAULT_WEAPON_INDEX;
+  let weapon = createWeapon(weaponIds[weaponIndex], weaponDeps);
+
+  const switchWeapon = (index) => {
+    const count = weaponIds.length;
+    weaponIndex = ((index % count) + count) % count;
+    weapon = createWeapon(weaponIds[weaponIndex], weaponDeps);
+    hud.setAmmo(weapon.ammo, weapon.reserveAmmo);
+  };
+
+  // Восприятие общее на всех ботов: зрение конусом с рейкастом и слух.
+  const perception = createPerception(world, { settings });
+
+  // Что боты знают об игроке: позиция, направление взгляда для спавна вне
+  // поля зрения и приём урона. Контроллер здоровьем не занимается.
+  const botTarget = {
+    position: player.position,
+    fov: settings.fov,
+    forward: new THREE.Vector3(),
+    takeDamage(amount) {
+      playerHealth.damage(amount);
+    },
+  };
+
+  const spawner = createSpawner(scene, world, city.spawnPoints, {
+    settings,
+    perception,
+    fx,
+    rng: Math.random,
+    player,
+    onBotSpawned: (bot) => bots.push(bot),
+    onHit: (bot) => {
+      hud.hitmarker();
+      audio.play('hit');
+    },
+    onKill: (bot) => {
+      hud.addKill();
+      audio.play('kill');
+    },
+  });
+  // Спавнер списка не отдаёт: ведём его сами по событиям шины.
+  bus.on('bot:spawned', ({ bot }) => bots.push(bot));
+  bus.on('bot:killed', ({ bot }) => {
+    const at = bots.indexOf(bot);
+    if (at >= 0) bots.splice(at, 1);
+    hud.addKill();
+    audio.play('hit');
+  });
+
+  // Обработка выстрелов: попадания по ботам через fireHitscan уже внутри weapon.update.
+  weapon.onHit = (bot, damage) => {
+    bot.takeDamage(damage);
+    hud.hitmarker();
+    audio.play('hit');
+    if (bot.hp <= ALIVE_HP) {
+      hud.addKill();
+      audio.play('kill');
+    }
+  };
+
+  // Первая волна после загрузки.
+  setLoadingProgress(1.0, 'Готово!');
+  // spawnWave требует позицию и направление взгляда: она спавнит ботов вне
+  // поля зрения игрока, без этих данных возвращает 0.
+  spawner.spawnWave(
+    FIRST_WAVE_SIZE,
+    player.position,
+    settings.fov,
+    playerCamera.camera.getWorldDirection(camDir)
+  );
+
+  hud.setHealth(player.hp, player.maxHp);
+  hud.setAmmo(weapon.ammo, weapon.reserveAmmo);
+  hud.setSpread(0);
+
+  // Главный цикл.
   const loop = new Loop();
 
   loop.onFixed((dt) => {
-    syncInputView(input.state);
-    player.update(dt, inputView, cameraYawOf(camera));
-    world.timestep = dt;
+    input.sync();
+
+    player.update(dt, input.adapter, getCameraYaw());
+
+    // Смена оружия: цифры 1–6 и колесо мыши.
+    if (input.adapter.weaponIndex >= 0 && input.adapter.weaponIndex < weaponIds.length) {
+      switchWeapon(input.adapter.weaponIndex);
+      input.state.weaponIndex = -1;
+    } else if (input.adapter.wheelDelta !== 0) {
+      switchWeapon(weaponIndex + (input.adapter.wheelDelta > 0 ? 1 : -1));
+    }
+
+    weapon.update(dt, {
+      fire: input.adapter.fire,
+      reload: input.adapter.reload,
+      origin: playerCamera.camera.position,
+      direction: playerCamera.camera.getWorldDirection(camDir),
+    });
+
+
+    playerCamera.camera.getWorldDirection(botTarget.forward);
+    spawner.update(dt, botTarget);
     world.step();
-    bus.emit('fixed', dt);
   });
 
-  loop.onRender((dt) => {
-    syncInputView(input.state);
-    playerCamera.update(dt, player, inputView);
+  loop.onRender((dt, alpha) => {
+    playerCamera.update(dt, player, input.adapter);
     lighting.update(player.position);
-    renderer.render(scene, camera);
-    // Дельты обзора и разовые нажатия живут ровно один кадр.
+
+    hud.setHealth(playerHealth.current, playerHealth.max);
+    hud.setAmmo(weapon.ammo, weapon.reserveAmmo);
+    hud.setSpread(weapon.currentSpread);
+
+    updateAdaptiveResolution(dt);
+    renderer.render(scene, playerCamera.camera);
+
     input.state.endFrame();
   });
 
-  // Подгонка камеры и рендерера под размер окна.
-  window.addEventListener('resize', () => {
-    playerCamera.resize();
-    resize();
-  });
-
-  setLoadingProgress(1, 'Готово');
+  loadingScreen.style.display = 'none';
   loop.start();
 
-  // Скрываем загрузочный экран после старта цикла.
-  if (loadingScreen) {
-    loadingScreen.classList.add('hidden');
-    loadingScreen.style.display = 'none';
-  }
-
   return {
-    settings,
-    renderer,
-    scene,
-    camera,
-    player,
-    input,
-    touch,
-    playerCamera,
-    sky,
-    lighting,
-    textures,
-    city,
-    world,
-    loop,
+    settings, renderer, resize, updateAdaptiveResolution, scene, sky, lighting,
+    city, world, input, player, playerCamera, audio, hud, fx,
+    weapon, switchWeapon, spawner, loop, camera: playerCamera.camera,
   };
 }
 
-/** Игровой контекст, доступный другим модулям и консоли отладки. */
-export const Game = {
-  settings: null,
-  renderer: null,
-  scene: null,
-  camera: null,
-  player: null,
-  input: null,
-  touch: null,
-  playerCamera: null,
-  sky: null,
-  lighting: null,
-  textures: null,
-  city: null,
-  world: null,
-  loop: null,
-  ready: false,
-};
-
-/**
- * Старт приложения после готовности DOM.
- */
-function main() {
-  canvas = /** @type {HTMLCanvasElement|null} */ (document.getElementById('game'));
-  loadingScreen = document.getElementById('loading-screen');
-  loadingBarFill = document.getElementById('loading-bar-fill');
-  loadingPercent = document.getElementById('loading-percent');
-  loadingStatus = document.getElementById('loading-status');
-
-  if (!canvas) {
-    showFatalError('Ошибка: канвас #game не найден в разметке.');
-    return;
-  }
-
-  if (!isWebGL2Available(canvas)) {
-    showFatalError(
-      'К сожалению, ваш браузер не поддерживает WebGL2. ' +
-      'Обновите браузер или включите аппаратное ускорение, чтобы играть в Doday Arena.'
-    );
-    return;
-  }
-
-  boot()
-    .then((context) => {
-      Object.assign(Game, context, { ready: true });
-      bus.emit('game:ready', Game);
-    })
-    .catch((err) => {
-      console.error('[DodayArena] Ошибка инициализации:', err);
-      showFatalError('Произошла ошибка при запуске игры. Попробуйте обновить страницу.');
-    });
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', main, { once: true });
-} else {
-  main();
-}
+/** Глобальный объект игры со всеми подсистемами. */
+export const Game = await init();

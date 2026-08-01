@@ -75,12 +75,16 @@ export function createPerception(world, deps = {}) {
 
     // Проверка конуса в горизонтальной плоскости (бот смотрит "по горизонту")
     const invDist = 1 / dist;
-    toHorizontalNorm(forwardDir);
-    const dot = tmpHoriz.x * tmpToTarget.x * invDist +
-      tmpHoriz.z * tmpToTarget.z * invDist;
-    // Acos-free сравнение: угол зависит только от горизонтальной проекции
-    if (dot < COS_HALF_VIEW) {
-      return false;
+    // Без направления взгляда конус проверить нельзя — считаем обзор
+    // круговым и полагаемся только на рейкаст видимости ниже.
+    if (forwardDir) {
+      toHorizontalNorm(forwardDir);
+      const dot = tmpHoriz.x * tmpToTarget.x * invDist +
+        tmpHoriz.z * tmpToTarget.z * invDist;
+      // Acos-free сравнение: угол зависит только от горизонтальной проекции
+      if (dot < COS_HALF_VIEW) {
+        return false;
+      }
     }
 
     // Проверка линии видимости рейкастом
@@ -150,5 +154,6 @@ export function createPerception(world, deps = {}) {
     return out;
   }
 
-  return { canSee, hearShot, leadTarget };
+  // canHear — псевдоним hearShot: под этим именем его зовёт src/ai/bot.js.
+  return { canSee, hearShot, canHear: hearShot, leadTarget };
 }

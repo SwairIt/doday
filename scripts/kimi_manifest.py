@@ -144,17 +144,7 @@ FILES: list[tuple[str, str]] = [
     ),
     (
         "src/main.js",
-        "Bootstrap. В разметке уже есть: canvas#game, оверлей #loading-screen с "
-        "полосой #loading-bar-fill, процентом #loading-percent и подписью "
-        "#loading-status — используй ИМЕННО эти идентификаторы, новых не создавай "
-        "и canvas не добавляй в DOM повторно. Порядок: Settings → createRenderer "
-        "(canvas#game) → THREE.Scene → createSky → createLighting → буферы "
-        "текстур → buildCity → initPhysics (await, вернёт world) → "
-        "addGroundPlane(world) → buildStaticColliders(world, city.colliders) → "
-        "временная орбитальная камера OrbitControls для облёта → Loop с "
-        "onFixed/onRender → скрыть #loading-screen. Экспортировать объект Game. "
-        "Если WebGL2 недоступен — понятное сообщение по-русски вместо игры. "
-        "ВАЖНО: вызывай функции строго по сигнатурам из карты ниже.",
+        "Точка сборки ВСЕЙ игры. В разметке уже есть: canvas#game, оверлей #loading-screen с полосой #loading-bar-fill, процентом #loading-percent и подписью #loading-status — используй ИМЕННО эти идентификаторы, новых не создавай, canvas в DOM не добавляй.\n\nОБЯЗАТЕЛЬНЫЕ ДЕТАЛИ, без них игра не запускается (проверено на реальном запуске):\n- createRenderer отдаёт обёртку {renderer, resize, updateAdaptiveResolution}: разбери её и сразу вызови resize(), иначе холст остаётся 300x150;\n- проверку WebGL2 делай на ОДНОРАЗОВОМ document.createElement('canvas'), не на игровом: занятый контекст ломает WebGLRenderer;\n- initPhysics асинхронна, дождись world до коллайдеров;\n- buildCity отдаёт {group, colliders, spawnPoints}.\n\nПОРЯДОК: Settings -> createRenderer + resize() -> THREE.Scene -> createSky -> createLighting -> buildCity -> await initPhysics -> addGroundPlane -> buildStaticColliders -> createInput -> createTrackpadInput -> createTouchControls -> createPlayer(world, city.spawnPoints[0]) -> createPlayerCamera -> createAudio -> createHud(document.body) -> createWeaponFx -> createWeapon -> createSpawner -> Loop.\n\nАДАПТЕР ВВОДА обязателен: InputState хранит move/look/buttons, контроллер читает input.moveX/moveZ/jump/crouch/sprint, камера — input.mouseDX/mouseDY. Держи ОДИН переиспользуемый объект и заполняй его каждый кадр, не создавай новый.\n\nАзимут камеры для контроллера бери из camera.getWorldDirection: Math.atan2(-dir.x, -dir.z) — камера своё состояние наружу не отдаёт.\n\ncreateWeapon(id, deps) ждёт deps {camera, fx, settings, getTargets, getMoveSpeed}: getTargets возвращает живых ботов от спавнера, getMoveSpeed — длину горизонтальной скорости игрока для разброса.\n\nЦИКЛ: в onFixed — синхронизация ввода, player.update, weapon.update, spawner.update, шаг физики. В onRender — playerCamera.update, lighting.update(player.position), обновление HUD (setHealth, setAmmo, setSpread), рендер, затем input.state.endFrame().\n\nСтрельба по кнопке fire, перезарядка по reload, смена оружия цифрами 1-6 и колесом мыши. Попадание в бота: bot.takeDamage, hud.hitmarker, звук через audio.play. Смерть бота — hud.addKill. Первая волна запускается после загрузки: spawner.spawnWave(5).\n\nЭкспортируй объект Game со всеми подсистемами. Если WebGL2 недоступен — понятное сообщение по-русски вместо игры.",
     ),
     # --- фаза 1B: физика, игрок, управление ---
     (
@@ -185,6 +175,32 @@ FILES: list[tuple[str, str]] = [
         "Pointer lock по клику на canvas, корректный выход по Esc и повторный "
         "захват; движение мыши в addLook с умножением на settings.sensitivity. "
         "Тач не трогать — он в src/ui/touch.js. Файл до 150 строк.",
+    ),
+    (
+        "src/core/input-trackpad.js",
+        "Управление под трекпад Mac, поверх InputState из "
+        "src/core/input-state.js. Экспорт createTrackpadInput(canvas, settings, "
+        "state) -> {enabled, dispose, setEnabled(on)}. Задача: играть без мыши. "
+        "1) Автоопределение Mac и трекпада: navigator.platform/userAgentData "
+        "содержит Mac, либо приходят wheel-события с deltaMode 0 и дробными "
+        "значениями (тачпад), либо pointerType 'touch' на трекпаде. "
+        "2) Обзор: pointer lock плюс сглаживание — накапливать movementX/Y и "
+        "отдавать в state.addLook через экспоненциальный фильтр, чтобы рывки "
+        "пальца не дёргали прицел; отдельный множитель чувствительности "
+        "settings.trackpadSensitivity (по умолчанию 1.8, трекпад даёт меньшую "
+        "дельту, чем мышь). Никакого ускорения курсора — только линейно. "
+        "3) Двухпальцевый свайп БЕЗ pointer lock тоже должен вращать камеру: "
+        "wheel с ctrlKey=false и небольшими дельтами — это скролл двумя "
+        "пальцами, переводим в обзор. Это главный режим, если игрок не хочет "
+        "захват курсора. "
+        "4) Прицеливание переключателем, а не удержанием: правая кнопка на "
+        "трекпаде неудобна, поэтому клавиша F и Shift-клик переключают ADS "
+        "(state.setButton('aim', ...)), а удержание тоже продолжает работать. "
+        "5) Стрельба: левый клик, пробел и клавиша J — чтобы можно было "
+        "стрелять, не отрывая пальцы от трекпада. "
+        "6) Обзор с клавиатуры как запасной вариант: стрелки вращают камеру с "
+        "постоянной скоростью — на случай, если трекпад совсем не подходит. "
+        "Все обработчики снимаются в dispose. Файл до 200 строк.",
     ),
     (
         "src/ui/touch.js",

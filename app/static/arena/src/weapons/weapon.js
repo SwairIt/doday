@@ -10,6 +10,11 @@ import { bus } from '../core/events.js';
 import { fireHitscan } from './ballistics.js';
 import { getWeapon } from './registry.js';
 
+// --- Константы, недостающие в исходной генерации ---
+const KICK_RETURN = 9.0;      // скорость возврата ствола после отдачи, 1/с
+const VMODEL_KICK = 0.045;    // подброс модели оружия при выстреле, м
+const BOB_AMP = 1.0;          // общий множитель покачивания при ходьбе
+
 // ---------------------------------------------------------------------------
 // Константы настройки ощущения оружия
 // ---------------------------------------------------------------------------
@@ -37,6 +42,13 @@ const KICK_ROT_X = 0.05;
 const _vA = new THREE.Vector3();
 const _vB = new THREE.Vector3();
 const _euler = new THREE.Euler(0, 0, 0, 'YXZ');
+// Временные объекты, недостающие в исходной генерации (пул, без аллокаций в кадре)
+const _pos = new THREE.Vector3();
+const _right = new THREE.Vector3();
+const _up = new THREE.Vector3();
+const _v1 = new THREE.Vector3();
+const _v2 = new THREE.Vector3();
+const _v3 = new THREE.Vector3();
 
 // ---------------------------------------------------------------------------
 // Поза вью-модели
@@ -339,6 +351,9 @@ export function createWeapon(id, deps) {
            .normalize();
 
         const result = fireHitscan({
+            // Без мира рейкаст по геометрии невозможен — стрельба била бы
+            // только по ботам и проходила сквозь стены.
+            world: deps.world,
             origin: cam.getWorldPosition(_v3),
             direction: _v2,
             damage: cfg.damage,
@@ -348,7 +363,8 @@ export function createWeapon(id, deps) {
         });
 
         muzzle.getWorldPosition(muzzleWorld);
-        fx.muzzleFlash(muzzleWorld);
+        // muzzleFlash(pos, dir): без направления спрайт тонет в стволе.
+        fx.muzzleFlash(muzzleWorld, _v2);
         if (result && result.point) {
             fx.tracer(muzzleWorld, result.point);
             fx.impact(result.point, result.normal || result.face && result.face.normal || _up, result.target ? 'flesh' : 'concrete');

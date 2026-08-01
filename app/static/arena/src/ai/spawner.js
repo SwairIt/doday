@@ -97,9 +97,7 @@ export function createSpawner(scene, world, spawnPoints, deps) {
     for (let i = 0; i < pool.length; i++) {
       if (!pool[i].alive) return pool[i];
     }
-    const bot = createBot(scene, world, { settings });
-    pool.push(bot);
-    return bot;
+    return null;
   }
 
   /**
@@ -119,9 +117,16 @@ export function createSpawner(scene, world, spawnPoints, deps) {
     for (let i = 0; i < target; i++) {
       const point = pickSpawnPoint(playerPos, forward, cosLimit);
       if (point === null) break;
-      const bot = acquireBot();
       _tmpPos.set(point.x, SPAWN_Y, point.z);
-      bot.reset(_tmpPos, playerPos);
+      // Пул работает только если модуль бота умеет reset(); иначе создаём
+      // нового бота прямо в точке спавна — контракты писались независимо.
+      let bot = acquireBot();
+      if (bot && typeof bot.reset === 'function') {
+        bot.reset(_tmpPos, playerPos);
+      } else {
+        bot = createBot(scene, world, _tmpPos, deps);
+        pool.push(bot);
+      }
       alive++;
       spawned++;
       bus.emit('bot:spawned', { bot });
@@ -152,7 +157,7 @@ export function createSpawner(scene, world, spawnPoints, deps) {
     // тики живых ботов
     for (let i = 0; i < pool.length; i++) {
       const b = pool[i];
-      if (b.alive) b.update(dt, player.position);
+      if (b.alive) b.update(dt, player);
     }
     retireDead();
 
