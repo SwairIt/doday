@@ -198,7 +198,8 @@ export function createTouchControls(container, input) {
                 const dy = t.clientY - touches.lookLastY;
                 touches.lookLastX = t.clientX;
                 touches.lookLastY = t.clientY;
-                input.addLookDelta(dx * LOOK_SENSITIVITY_K, dy * LOOK_SENSITIVITY_K);
+                // InputState умеет addLook и принимает пиксели.
+                input.addLook(dx, dy);
             }
         }
     }

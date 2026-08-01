@@ -6,11 +6,13 @@
  */
 
 /** Скорость взгляда со стрелок, рад/с */
-const ARROW_LOOK_SPEED = 2.4;
+// Скорость обзора стрелками в ПИКСЕЛЯХ в секунду (как если бы вели мышью).
+const ARROW_LOOK_SPEED = 500;
 /** Порог дельты wheel, ниже которого считаем жест двухпальцевым скроллом */
 const WHEEL_SCROLL_MAX_DELTA = 40;
 /** Множитель перевода wheel-дельты в радианы обзора */
-const WHEEL_LOOK_SCALE = 0.0022;
+// Скролл двумя пальцами приходит в «строках прокрутки» — приводим к пикселям.
+const WHEEL_TO_PIXELS = 1.6;
 /** Коэффициент экспоненциального сглаживания movementX/Y (0..1, больше — резче) */
 const LOOK_SMOOTHING = 0.35;
 /** Мёртвая зона сглаженной дельты, рад */
@@ -83,7 +85,8 @@ export function createTrackpadInput(canvas, settings, state) {
     smoothX = 0;
     smoothY = 0;
     if (Math.abs(outX) < LOOK_EPSILON && Math.abs(outY) < LOOK_EPSILON) return;
-    state.addLook(outX * PIXEL_TO_RAD, outY * PIXEL_TO_RAD);
+    // Сырые пиксели: перевод в радианы и чувствительность — на камере.
+    state.addLook(outX, outY);
   }
 
   function onPointerLockChange() {
@@ -106,7 +109,7 @@ export function createTrackpadInput(canvas, settings, state) {
     // Двухпальцевый свайп без pointer lock — вращаем камеру
     e.preventDefault();
     const sens = getSensitivity();
-    state.addLook(e.deltaX * WHEEL_LOOK_SCALE * sens, e.deltaY * WHEEL_LOOK_SCALE * sens);
+    state.addLook(e.deltaX * WHEEL_TO_PIXELS, e.deltaY * WHEEL_TO_PIXELS);
   }
 
   function onPointerDown(e) {
@@ -187,12 +190,22 @@ export function createTrackpadInput(canvas, settings, state) {
   const ARROW_CODES = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown']);
 
   /** Обзор стрелками с постоянной скоростью; null — авто-повтор не требуется. */
+  let arrowLastTime = 0;
+
   function arrowTick() {
     if (!api.enabled) return;
+    const now = performance.now();
+    const elapsed = arrowLastTime ? (now - arrowLastTime) / 1000 : FRAME_MS / 1000;
+    arrowLastTime = now;
+
     const dx = (arrows.right ? 1 : 0) - (arrows.left ? 1 : 0);
     const dy = (arrows.down ? 1 : 0) - (arrows.up ? 1 : 0);
     if (dx === 0 && dy === 0) return;
-    const step = ARROW_LOOK_SPEED * (FRAME_MS / 1000);
+
+    // Шаг считаем по РЕАЛЬНО прошедшему времени, а не по номинальному кадру:
+    // при низком FPS браузер схлопывает накопившиеся вызовы таймера, и по
+    // константе выходил один тик вместо десятка — стрелки почти не поворачивали.
+    const step = ARROW_LOOK_SPEED * Math.min(elapsed, 0.25);
     state.addLook(dx * step, dy * step);
   }
 

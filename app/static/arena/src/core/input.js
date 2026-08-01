@@ -1,10 +1,12 @@
 import { InputState } from './input-state.js';
 
 /** Коды клавиш движения: WASD + стрелки. */
-const KEY_FORWARD = new Set(['KeyW', 'ArrowUp']);
-const KEY_BACK = new Set(['KeyS', 'ArrowDown']);
-const KEY_LEFT = new Set(['KeyA', 'ArrowLeft']);
-const KEY_RIGHT = new Set(['KeyD', 'ArrowRight']);
+// Стрелки намеренно НЕ управляют движением: они работают как мышь —
+// вращают камеру (см. src/core/input-trackpad.js). Движение только WASD.
+const KEY_FORWARD = new Set(['KeyW']);
+const KEY_BACK = new Set(['KeyS']);
+const KEY_LEFT = new Set(['KeyA']);
+const KEY_RIGHT = new Set(['KeyD']);
 const KEY_CROUCH = new Set(['ControlLeft', 'ControlRight', 'KeyC']);
 
 /** Множитель перевода movementX/Y в радианы взгляда (до sensitivity). */
@@ -94,16 +96,31 @@ export function createInput(canvas, settings) {
     }
   }
 
+  /** Зажата ли левая кнопка — для поворота мышью без захвата курсора. */
+  let dragging = false;
+
   function onMouseMove(e) {
-    if (!isLocked()) return;
-    const sens = settings.sensitivity || 1;
-    state.addLook(e.movementX * LOOK_SCALE * sens, e.movementY * LOOK_SCALE * sens);
+    // Чувствительность применяет камера: сюда отдаём сырые пиксели, иначе
+    // множитель накладывается дважды и поворот становится незаметным.
+    if (isLocked()) {
+      state.addLook(e.movementX, e.movementY);
+      return;
+    }
+    // Без захвата курсора работает перетаскивание с зажатой кнопкой —
+    // так мышь крутит камеру даже если pointer lock недоступен.
+    if (dragging) {
+      state.addLook(e.movementX, e.movementY);
+    }
   }
 
   function onMouseDown(e) {
     if (!isLocked()) {
-      // Клик вне лока — запрашиваем захват указателя.
-      canvas.requestPointerLock();
+      // Клик вне лока: пробуем захват, но и без него даём играть —
+      // перетаскивание с зажатой кнопкой крутит камеру, левая кнопка стреляет.
+      dragging = true;
+      if (e.button === MOUSE_LEFT) state.setButton('fire', true);
+      const request = canvas.requestPointerLock?.();
+      if (request && typeof request.catch === 'function') request.catch(() => {});
       return;
     }
     if (e.button === MOUSE_LEFT) state.setButton('fire', true);
@@ -111,6 +128,7 @@ export function createInput(canvas, settings) {
   }
 
   function onMouseUp(e) {
+    dragging = false;
     if (e.button === MOUSE_LEFT) state.setButton('fire', false);
     else if (e.button === MOUSE_RIGHT) state.setButton('aim', false);
   }
