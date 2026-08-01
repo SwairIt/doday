@@ -5,9 +5,26 @@ import * as THREE from 'three';
 import { createSoldierModel } from './soldier-model.js';
 import { raycast } from '../world/collision.js';
 
+/** Насколько точно бот должен целиться, чтобы засчитать попадание (косинус). */
+const BOT_HIT_THRESHOLD = 0.985;
+/** Урон одного выстрела бота по игроку. */
+// 7 урона на попадание при семи выстрелах в секунду убивало игрока за 5 с —
+// это не бой, а расстрел. Снижено вместе с темпом очередей.
+const BOT_DAMAGE = 4;
+const _hitPoint = new THREE.Vector3();
+const _aim = new THREE.Vector3();
+const _eye = new THREE.Vector3();
+const _chest = new THREE.Vector3();
+/** Высота глаз бота над его ногами, м. */
+const EYE_HEIGHT = 1.62;
+/** Точка прицеливания на игроке — грудь, а не ступни. */
+const CHEST_HEIGHT = 1.25;
+/** Насколько вынести начало луча вперёд, чтобы не попасть в свою капсулу. */
+const SELF_CLEARANCE = 0.55;
+
 // --- Константы, недостающие в исходной генерации ---
-const BURST_MIN = 3;              // минимум выстрелов в очереди
-const BURST_MAX = 6;              // максимум выстрелов в очереди
+const BURST_MIN = 2;              // минимум выстрелов в очереди
+const BURST_MAX = 4;              // максимум выстрелов в очереди
 const FIRE_SPREAD = 0.045;        // разброс стрельбы бота, радианы
 const RAGDOLL_IMPULSE = 5.5;      // импульс, придаваемый трупу при смерти
 const RETREAT_HEALTH_FRAC = 0.35; // доля здоровья, ниже которой бот отступает
@@ -93,7 +110,7 @@ function buildBotModel(quality) {
  * @returns {{update(dt:number, player:object):void, takeDamage(amount:number, point:THREE.Vector3):void, alive:boolean, position:THREE.Vector3}}
  */
 export function createBot(scene, world, spawnPoint, deps) {
-	const { perception, weapon, fx, rng, events } = deps;
+	const { perception, weapon, fx, rng, events, audio } = deps;
 
 	// --- Физика: кинематическая капсула до смерти.
 	const bodyDesc = world.constructor && RAPIER
@@ -242,7 +259,7 @@ export function createBot(scene, world, spawnPoint, deps) {
 	 * @param {THREE.Vector3} playerPos
 	 * @param {number} dt
 	 */
-	function fireAt(playerPos, dt) {
+	function fireAt(playerPos, dt, player) {
 		// Наведение: прицел в глаза бота.
 		_tmp.copy(position);
 		_tmp.y += CAPSULE_HALF_HEIGHT * 2 + CAPSULE_RADIUS; // уровень глаз
@@ -259,15 +276,32 @@ export function createBot(scene, world, spawnPoint, deps) {
 			_dir.z += (rng() * 2 - 1) * FIRE_SPREAD;
 			_dir.normalize();
 
-			const hit = fireHitscan(world, _tmp, _dir, weapon, FIRE_SPREAD, rng);
-			if (fx) fx.onShot(_tmp, _dir);
-			if (hit && hit.player && hit.player.takeDamage) {
-				hit.player.takeDamage(weapon.damage, hit.point);
+			// Стреляем по реальным контрактам соседних модулей: рейкаст по миру
+			// из src/world/collision.js, эффекты — muzzleFlash/tracer из fx.
+			const distToPlayer = _tmp.distanceTo(playerPos);
+			const blocked = raycast(world, _tmp, _dir, distToPlayer, null);
+			const reach = blocked ? blocked.distance : distToPlayer;
+
+			_hitPoint.copy(_tmp).addScaledVector(_dir, reach);
+			if (fx) {
+				fx.muzzleFlash(_tmp, _dir);
+				fx.tracer(_tmp, _hitPoint);
+			}
+			if (audio) audio.play('shot', _tmp);
+
+			// Попадание засчитываем, если линия до игрока не перекрыта и
+			// отклонение прицела уложилось в разброс.
+			if (!blocked || blocked.distance >= distToPlayer - 0.5) {
+				_aim.copy(playerPos).sub(_tmp).normalize();
+				const accuracy = _aim.dot(_dir);
+				if (accuracy > BOT_HIT_THRESHOLD && player && player.takeDamage) {
+					player.takeDamage(BOT_DAMAGE, _hitPoint);
+				}
 			}
 			if (events) events.emit('bot:shot', { point: _tmp });
 
 			burstShotsLeft--;
-			burstTimer = weapon ? weapon.fireInterval : 0.12;
+			burstTimer = weapon && weapon.fireInterval ? weapon.fireInterval : 0.12;
 		} else if (burstShotsLeft <= 0 && burstTimer <= 0) {
 			// Начало новой очереди.
 			burstShotsLeft = BURST_MIN + Math.floor(rng() * (BURST_MAX - BURST_MIN + 1));
@@ -363,11 +397,23 @@ export function createBot(scene, world, spawnPoint, deps) {
 		// Периодическая проверка зрения/слуха.
 		if (sightTimer <= 0) {
 			sightTimer = SIGHT_CHECK_INTERVAL;
-			playerVisible = perception.canSee(position, playerPos);
+			// Считать от НОГ нельзя: луч выходит на уровне земли и сразу
+			// упирается в тротуар — игрок не виден никогда. Берём глаза бота
+			// и грудь игрока.
+			_eye.copy(position);
+			_eye.y += EYE_HEIGHT;
+			_chest.copy(playerPos);
+			_chest.y += CHEST_HEIGHT;
+			// Луч из глаз стартует ВНУТРИ собственной капсулы (радиус 0.35 м),
+			// и Rapier сразу отдаёт попадание в самого себя. Выносим начало
+			// луча вперёд, за пределы своего коллайдера.
+			_aim.copy(_chest).sub(_eye).normalize();
+			_eye.addScaledVector(_aim, SELF_CLEARANCE);
+			playerVisible = perception.canSee(_eye, _chest);
 			if (playerVisible) {
 				lastKnownPlayerPos = lastKnownPlayerPos || new THREE.Vector3();
 				lastKnownPlayerPos.copy(playerPos);
-			} else if (perception.canHear(position, playerPos)) {
+			} else if (perception.canHear(_eye, _chest)) {
 				lastKnownPlayerPos = lastKnownPlayerPos || new THREE.Vector3();
 				lastKnownPlayerPos.copy(playerPos);
 			}
@@ -404,7 +450,7 @@ export function createBot(scene, world, spawnPoint, deps) {
 					_dir.set(-_flat.z, 0, _flat.x);
 					_tmp.copy(position).addScaledVector(_dir, Math.sin(stateTime * 1.4) * 2);
 					moveTowards(_tmp, SPEED_COMBAT * 0.6, dt);
-					fireAt(playerPos, dt);
+					fireAt(playerPos, dt, player);
 				} else {
 					setState('search');
 				}
@@ -426,6 +472,10 @@ export function createBot(scene, world, spawnPoint, deps) {
 		update,
 		takeDamage,
 		get alive() { return health > 0; },
+		/** Текущее состояние конечного автомата — нужно для отладки и HUD. */
+		get state() { return state; },
+		/** Видит ли бот игрока прямо сейчас. */
+		get sees() { return playerVisible; },
 		/** Доля здоровья 0..1 — её показывает метка с ником над головой. */
 		get health() { return Math.max(0, health / MAX_HEALTH); },
 		/** Позывной, проставляется точкой сборки при спавне. */

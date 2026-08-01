@@ -186,8 +186,11 @@ async function init() {
      * @param {number} amount урон в единицах здоровья
      */
     damage(amount) {
+      if (this.dead) return;
       this.current = Math.max(0, this.current - amount);
+      if (this.current === 0) this.dead = true;
     },
+    dead: false,
   };
   const playerCamera = createPlayerCamera(settings);
   // Модель оружия висит на камере; без камеры в графе сцены её потомки
@@ -270,6 +273,9 @@ async function init() {
     settings,
     // Спавном управляет режим раундов, иначе волна не кончается.
     autoRespawn: false,
+    // Боту нужны эффекты и звук, иначе его выстрелы невидимы и беззвучны.
+    audio,
+    events: bus,
     perception,
     fx,
     rng: Math.random,
@@ -407,12 +413,40 @@ async function init() {
     }
   }
 
+  // --- Смерть и возрождение --------------------------------------------
+  let respawnTimer = 0;
+
+  /**
+   * Показывает экран смерти и возрождает игрока в точке спавна.
+   * @param {number} dt шаг кадра, секунды
+   */
+  function handleDeath(dt) {
+    if (!playerHealth.dead) return;
+    if (respawnTimer === 0) {
+      hud.showDeath?.();
+      audio.play('hit');
+      respawnTimer = RESPAWN_DELAY;
+    }
+    respawnTimer -= dt;
+    if (respawnTimer > 0) return;
+
+    // Возрождение: полное здоровье и новая точка на улице подальше от боя.
+    const points = city.spawnPoints;
+    const point = points[(Math.random() * points.length) | 0] || spawn;
+    player.body.setNextKinematicTranslation({ x: point.x, y: point.y + 1.2, z: point.z });
+    playerHealth.current = playerHealth.max;
+    playerHealth.dead = false;
+    respawnTimer = 0;
+    hud.hideDeath?.();
+  }
+
   loop.onRender((dt, alpha) => {
     playerCamera.update(dt, player, input.adapter);
     lighting.update(player.position);
     nameplates.update(dt);
     minimapView.playerYaw = getCameraYaw();
     minimap.update(dt, minimapView);
+    handleDeath(dt);
     autoDegrade(dt);
 
     hud.setHealth(playerHealth.current, playerHealth.max);
@@ -431,7 +465,7 @@ async function init() {
   return {
     settings, renderer, resize, updateAdaptiveResolution, scene, sky, lighting,
     city, world, input, player, playerCamera, audio, hud, fx,
-    weapon, switchWeapon, spawner, waves, nameplates, minimap, loop, camera: playerCamera.camera,
+    weapon, switchWeapon, spawner, waves, nameplates, minimap, bots, loop, camera: playerCamera.camera,
   };
 }
 

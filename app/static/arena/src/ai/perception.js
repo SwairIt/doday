@@ -15,6 +15,8 @@ const HEARING_RADIUS_SQ = HEARING_RADIUS * HEARING_RADIUS;
 // Максимальная дистанция зрения (м)
 const MAX_VIEW_DIST = 120;
 // Небольшой запас при рейкасте, чтобы не «сломаться» о геометрию самой цели
+/** Радиус капсулы цели: попадание в неё саму — это не препятствие. */
+const TARGET_RADIUS = 0.6;
 const RAY_EPSILON = 0.3;
 // Минимальная скорость снаряда, защита от деления на ноль
 const MIN_PROJECTILE_SPEED = 0.001;
@@ -94,8 +96,10 @@ export function createPerception(world, deps = {}) {
       z: tmpToTarget.z * invDist,
     };
     const hit = raycast(world, fromPos, dir, dist);
-    // Препятствие ближе цели (с запасом) — цель скрыта
-    if (hit && hit.distance < dist - RAY_EPSILON) {
+    // Препятствие считаем помехой, только если оно заметно ближе цели.
+    // Запас — радиус капсулы цели: иначе луч упирается в саму цель
+    // (её коллайдер стоит на пути) и всё живое считается «за укрытием».
+    if (hit && hit.distance < dist - TARGET_RADIUS) {
       return false;
     }
     return true;
