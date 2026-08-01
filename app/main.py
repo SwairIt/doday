@@ -40,6 +40,7 @@ from app.comments.router import comments_router, task_comments_router
 from app.config import get_settings
 from app.db import get_session
 from app.digest.router import router as digest_router
+from app.game.router import router as game_router
 from app.habits.router import router as habits_router
 from app.help.router import router as help_router
 from app.hub.router import router as hub_router
@@ -71,7 +72,6 @@ from app.school.router import router as school_router
 from app.sections.router import router as sections_router
 from app.share.router import router as share_router
 from app.stats.router import router as stats_router
-from app.game.router import router as game_router
 from app.taptower_proxy import router as taptower_router
 from app.tasks.router import reorder_router as tasks_reorder_router
 from app.tasks.router import router as tasks_router
