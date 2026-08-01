@@ -299,6 +299,8 @@ async function init() {
     const at = bots.indexOf(bot);
     if (at >= 0) bots.splice(at, 1);
     hud.addKill();
+    // Строка в килфид справа сверху: кто кого. Имя берём из метки бота.
+    hud.killfeed(`Игрок  ✖  ${bot?.name ?? 'Противник'}`);
     audio.play('hit');
   });
 

@@ -73,8 +73,10 @@ export function createHud(container) {
     .hud-ammo-mag.empty{color:#ff3b3b}
     .hud-ammo-res{opacity:.7;margin-left:6px}
     .hud-kills{position:absolute;right:24px;top:16px;font-size:22px;text-shadow:0 1px 3px #000}
-    .hud-feed{position:absolute;left:24px;top:16px;margin:0;padding:0;list-style:none;font-size:14px}
-    .hud-feed li{background:rgba(0,0,0,.45);padding:4px 10px;margin-bottom:4px;border-left:3px solid #58a6ff;
+    /* Килфид справа сверху, как в CS: строки прижаты к правому краю. */
+    .hud-feed{position:absolute;right:16px;top:52px;margin:0;padding:0;list-style:none;
+      font-size:14px;text-align:right;display:flex;flex-direction:column;align-items:flex-end}
+    .hud-feed li{background:rgba(0,0,0,.55);padding:4px 10px;margin-bottom:4px;border-right:3px solid #d9a441;
       text-shadow:0 1px 2px #000;transition:opacity .4s}
     .hud-death{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;
       background:rgba(120,0,0,.35);backdrop-filter:blur(2px);pointer-events:auto}
