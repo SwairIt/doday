@@ -28,6 +28,7 @@ import { WEAPONS, getWeapon } from './weapons/registry.js';
 import { createSpawner } from './ai/spawner.js';
 import { createWaveMode } from './modes/waves.js';
 import { createNameplates, pickCallsign } from './ui/nameplates.js';
+import { createMinimap } from './ui/minimap.js';
 import { createPerception } from './ai/perception.js';
 
 /** Размер первой волны ботов. */
@@ -298,6 +299,14 @@ async function init() {
   // Ники над ботами: спрайт с позывным и полоской здоровья.
   const nameplates = createNameplates(scene, playerCamera.camera, { maxDistance: 70 });
 
+  // Радар: вращается вместе с игроком, здания серым, живые боты точками.
+  // Прямоугольники зданий берём из коллайдеров города — отдельного списка нет.
+  const minimapBuildings = city.colliders
+    .filter((c) => c.size.y > 4)
+    .map((c) => ({ x: c.position.x, z: c.position.z, w: c.size.x, d: c.size.z }));
+  const minimap = createMinimap({ size: 180, worldSize: 200 });
+  const minimapView = { playerPos: player.position, playerYaw: 0, bots, buildings: minimapBuildings };
+
   bus.on('bot:spawned', ({ bot }) => {
     bot.name = pickCallsign(Math.random);
     nameplates.add(bot, bot.name);
@@ -402,6 +411,8 @@ async function init() {
     playerCamera.update(dt, player, input.adapter);
     lighting.update(player.position);
     nameplates.update(dt);
+    minimapView.playerYaw = getCameraYaw();
+    minimap.update(dt, minimapView);
     autoDegrade(dt);
 
     hud.setHealth(playerHealth.current, playerHealth.max);
@@ -420,7 +431,7 @@ async function init() {
   return {
     settings, renderer, resize, updateAdaptiveResolution, scene, sky, lighting,
     city, world, input, player, playerCamera, audio, hud, fx,
-    weapon, switchWeapon, spawner, waves, nameplates, loop, camera: playerCamera.camera,
+    weapon, switchWeapon, spawner, waves, nameplates, minimap, loop, camera: playerCamera.camera,
   };
 }
 
