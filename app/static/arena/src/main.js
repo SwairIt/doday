@@ -26,6 +26,7 @@ import { createWeaponFx } from './weapons/fx.js';
 import { createWeapon } from './weapons/weapon.js';
 import { WEAPONS, getWeapon } from './weapons/registry.js';
 import { createSpawner } from './ai/spawner.js';
+import { createWaveMode } from './modes/waves.js';
 import { createPerception } from './ai/perception.js';
 
 /** Размер первой волны ботов. */
@@ -251,6 +252,8 @@ async function init() {
 
   const spawner = createSpawner(scene, world, city.spawnPoints, {
     settings,
+    // Спавном управляет режим раундов, иначе волна не кончается.
+    autoRespawn: false,
     perception,
     fx,
     rng: Math.random,
@@ -265,6 +268,17 @@ async function init() {
       audio.play('kill');
     },
   });
+  // Режим раундов: волны с паузой между ними, ростом сложности и
+  // экранными надписями «РАУНД N» / «ЗАЧИЩЕН».
+  const waves = createWaveMode({
+    spawner,
+    hud,
+    audio,
+    player: botTarget,
+    settings,
+    container: document.body,
+  });
+
   // Спавнер списка не отдаёт: ведём его сами по событиям шины.
   bus.on('bot:spawned', ({ bot }) => bots.push(bot));
   bus.on('bot:killed', ({ bot }) => {
@@ -289,12 +303,7 @@ async function init() {
   setLoadingProgress(1.0, 'Готово!');
   // spawnWave требует позицию и направление взгляда: она спавнит ботов вне
   // поля зрения игрока, без этих данных возвращает 0.
-  spawner.spawnWave(
-    FIRST_WAVE_SIZE,
-    player.position,
-    settings.fov,
-    playerCamera.camera.getWorldDirection(camDir)
-  );
+  waves.start();
 
   hud.setHealth(player.hp, player.maxHp);
   hud.setAmmo(weapon.ammo, weapon.reserveAmmo);
@@ -328,6 +337,7 @@ async function init() {
 
     playerCamera.camera.getWorldDirection(botTarget.forward);
     spawner.update(dt, botTarget);
+    waves.update(dt);
     world.step();
   });
 
@@ -351,7 +361,7 @@ async function init() {
   return {
     settings, renderer, resize, updateAdaptiveResolution, scene, sky, lighting,
     city, world, input, player, playerCamera, audio, hud, fx,
-    weapon, switchWeapon, spawner, loop, camera: playerCamera.camera,
+    weapon, switchWeapon, spawner, waves, loop, camera: playerCamera.camera,
   };
 }
 

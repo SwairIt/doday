@@ -161,7 +161,10 @@ export function createSpawner(scene, world, spawnPoints, deps) {
     }
     retireDead();
 
-    // периодический подспавн до лимита качества
+    // Периодический подспавн до лимита качества. Отключается, когда спавном
+    // управляет режим раундов (deps.autoRespawn === false): иначе волна
+    // никогда не заканчивается — счётчик «осталось» только растёт.
+    if (deps.autoRespawn === false) return;
     respawnTimer -= dt;
     if (respawnTimer <= 0 && alive < maxAlive() && player && player.forward) {
       spawnWave(1, player.position, player.fov, player.forward);
