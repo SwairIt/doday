@@ -210,8 +210,10 @@ export function createWeaponFx(scene, world, settings) {
     const muzzleLights = [];
     if (isHigh) {
         for (let i = 0; i < MUZZLE_LIGHT_POOL; i++) {
+            // visible НЕ трогаем: смена числа активных источников
+            // заставляет Three пересобирать шейдеры на каждый выстрел.
+            // Гасим яркостью — это бесплатно.
             const l = new THREE.PointLight(COLOR_MUZZLE_LIGHT, 0, 6, 2);
-            l.visible = false;
             scene.add(l);
             muzzleLights.push({ light: l, life: 0 });
         }
@@ -349,7 +351,6 @@ export function createWeaponFx(scene, world, settings) {
             lightCursor = (lightCursor + 1) % MUZZLE_LIGHT_POOL;
             ml.light.position.copy(m.sprite.position);
             ml.light.intensity = MUZZLE_LIGHT_INTENSITY;
-            ml.light.visible = true;
             ml.life = MUZZLE_LIFE;
         }
     }
@@ -479,7 +480,6 @@ export function createWeaponFx(scene, world, settings) {
                 ml.life -= dt;
                 ml.light.intensity = MUZZLE_LIGHT_INTENSITY * (ml.life / MUZZLE_LIFE);
                 if (ml.life <= 0) {
-                    ml.light.visible = false;
                     ml.light.intensity = 0;
                 }
             }

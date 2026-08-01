@@ -379,5 +379,22 @@ export function createPlayer(world, spawnPoint) {
     player.position.set(newX, newY - feet, newZ);
   }
 
+  /**
+   * Мгновенно переносит игрока в точку.
+   *
+   * Просто setNextKinematicTranslation не годится: контроллер каждый шаг
+   * считает движение от текущей трансляции тела и перетирает её. Поэтому
+   * ставим позицию телу напрямую и обнуляем скорость.
+   *
+   * @param {{x: number, y: number, z: number}} point точка ног игрока
+   */
+  player.teleport = function teleport(point) {
+    const feet = player._halfHeight + CAPSULE_RADIUS;
+    body.setTranslation({ x: point.x, y: point.y + feet, z: point.z }, true);
+    body.setNextKinematicTranslation({ x: point.x, y: point.y + feet, z: point.z });
+    player.velocity.set(0, 0, 0);
+    player.position.set(point.x, point.y, point.z);
+  };
+
   return player;
 }

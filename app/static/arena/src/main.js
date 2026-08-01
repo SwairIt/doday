@@ -31,6 +31,11 @@ import { createNameplates, pickCallsign } from './ui/nameplates.js';
 import { createMinimap } from './ui/minimap.js';
 import { createPerception } from './ai/perception.js';
 
+/** Пауза перед автоматическим возрождением после смерти, секунды. */
+const RESPAWN_DELAY = 3;
+/** Минимальное расстояние до живых ботов при выборе точки возрождения, метры. */
+const SAFE_RESPAWN_DIST = 45;
+
 /** Размер первой волны ботов. */
 const FIRST_WAVE_SIZE = 5;
 /** Индекс первого оружия в реестре. */
@@ -420,24 +425,40 @@ async function init() {
    * Показывает экран смерти и возрождает игрока в точке спавна.
    * @param {number} dt шаг кадра, секунды
    */
+  /** Немедленное возрождение: по кнопке или по истечении паузы. */
+  function respawnNow() {
+    const points = city.spawnPoints;
+    let point = points[(Math.random() * points.length) | 0] || spawn;
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const candidate = points[(Math.random() * points.length) | 0];
+      if (!candidate) break;
+      const far = bots.every((bot) => !bot.alive ||
+        bot.position.distanceTo(candidate) > SAFE_RESPAWN_DIST);
+      if (far) { point = candidate; break; }
+    }
+    player.teleport(point);
+    playerHealth.current = playerHealth.max;
+    playerHealth.dead = false;
+    respawnTimer = 0;
+    hud.hideDeath?.();
+  }
+
   function handleDeath(dt) {
     if (!playerHealth.dead) return;
     if (respawnTimer === 0) {
-      hud.showDeath?.();
+      // Колбэк обязателен: без него кнопка просто прячет экран.
+      hud.showDeath?.(respawnNow);
       audio.play('hit');
+      // Отпускаем курсор: под захватом нельзя нажать ни одну кнопку экрана.
+      document.exitPointerLock?.();
       respawnTimer = RESPAWN_DELAY;
     }
     respawnTimer -= dt;
     if (respawnTimer > 0) return;
 
-    // Возрождение: полное здоровье и новая точка на улице подальше от боя.
-    const points = city.spawnPoints;
-    const point = points[(Math.random() * points.length) | 0] || spawn;
-    player.body.setNextKinematicTranslation({ x: point.x, y: point.y + 1.2, z: point.z });
-    playerHealth.current = playerHealth.max;
-    playerHealth.dead = false;
-    respawnTimer = 0;
-    hud.hideDeath?.();
+    // Возрождение подальше от места гибели: иначе игрок появляется под тем же
+    // огнём и умирает по кругу — радар дёргается, звуки повторяются.
+    respawnNow();
   }
 
   loop.onRender((dt, alpha) => {
@@ -465,7 +486,7 @@ async function init() {
   return {
     settings, renderer, resize, updateAdaptiveResolution, scene, sky, lighting,
     city, world, input, player, playerCamera, audio, hud, fx,
-    weapon, switchWeapon, spawner, waves, nameplates, minimap, bots, loop, camera: playerCamera.camera,
+    weapon, switchWeapon, spawner, waves, nameplates, minimap, bots, health: playerHealth, loop, camera: playerCamera.camera,
   };
 }
 
