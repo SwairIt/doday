@@ -195,6 +195,16 @@ async function init() {
   setLoadingProgress(0.80, 'Загрузка звука…');
   const audio = createAudio(playerCamera.listener || playerCamera.camera);
 
+  // Браузеры держат AudioContext усыплённым до первого действия пользователя.
+  // Без этого звука нет вообще, а ошибок в консоли не появляется.
+  const wakeAudio = () => {
+    audio.resume?.();
+    window.removeEventListener('pointerdown', wakeAudio);
+    window.removeEventListener('keydown', wakeAudio);
+  };
+  window.addEventListener('pointerdown', wakeAudio);
+  window.addEventListener('keydown', wakeAudio);
+
   setLoadingProgress(0.85, 'Создание интерфейса…');
   const hud = createHud(document.body);
 

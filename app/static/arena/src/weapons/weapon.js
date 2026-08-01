@@ -499,10 +499,25 @@ export function createWeapon(id, deps) {
         model.rotation.x = kick * 1.6;
         model.rotation.z = bx * 1.5;
 
-        // Покачивание магазина при перезарядке
-        if (state === 'reloading' && view.parts.magazine) {
-            const t = 1 - reloadTimer / cfg.reloadTime;
-            view.parts.magazine.position.y = -0.085 - Math.sin(t * Math.PI) * 0.09;
+        // Перезарядка: ствол уходит вниз и вбок с наклоном, магазин выпадает
+        // и встаёт на место. Без этого перезарядка никак не читается на экране.
+        if (state === 'reloading') {
+            const t = 1 - reloadTimer / cfg.reloadTime;      // 0..1 по ходу
+            const arc = Math.sin(t * Math.PI);               // плавно туда и обратно
+            model.position.y -= arc * 0.10;
+            model.position.x += arc * 0.04;
+            model.position.z += arc * 0.05;
+            model.rotation.x += arc * 0.55;
+            model.rotation.z += arc * 0.35;
+            if (view.parts.magazine) {
+                // Магазин уходит вниз в первой половине и возвращается во второй.
+                const drop = t < 0.5 ? t * 2 : (1 - t) * 2;
+                view.parts.magazine.position.y = -0.085 - drop * 0.11;
+                view.parts.magazine.rotation.z = drop * 0.5;
+            }
+        } else if (view.parts.magazine) {
+            view.parts.magazine.position.y = -0.085;
+            view.parts.magazine.rotation.z = 0;
         }
     }
 
