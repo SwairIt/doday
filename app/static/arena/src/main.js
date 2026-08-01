@@ -78,14 +78,16 @@ function showWebGL2Unavailable() {
  * @param {Settings} settings Настройки.
  */
 function createInputAdapter(domCanvas, settings) {
-  const state = new InputState();
-
-  // Источники ввода пишут в общий InputState.
+  // ЕДИНЫЙ InputState на все источники: createInput заводит его внутри себя,
+  // поэтому берём именно его. Свой new InputState() здесь означал бы, что
+  // клавиатура пишет в один объект, а игра читает другой — игрок не двигается.
   const keyboardMouse = createInput(domCanvas, settings);
-  const touch = createTouchControls(document.body, keyboardMouse);
+  const state = keyboardMouse.state;
+
+  const touch = createTouchControls(document.body, state);
   // Управление под трекпад Mac: обзор двухпальцевым свайпом без захвата
   // курсора, ADS переключателем, огонь на пробел и J.
-  const trackpad = createTrackpadInput(canvas, settings, state);
+  const trackpad = createTrackpadInput(domCanvas, settings, state);
   // Включаем безусловно: на Mac это основной способ играть без мыши, а на
   // остальных машинах слой просто добавляет запасные клавиши (J/Enter — огонь,
   // F — прицел, стрелки — обзор) и ничему не мешает.
@@ -299,7 +301,9 @@ async function init() {
   hud.setSpread(0);
 
   // Главный цикл.
-  const loop = new Loop();
+  // maxSubSteps по умолчанию 5: при 10 FPS на кадр нужно 6 шагов, остаток
+  // отбрасывался и игра шла в замедленной съёмке. 15 хватает вплоть до 4 FPS.
+  const loop = new Loop({ step: 1 / 60, maxSubSteps: 15 });
 
   loop.onFixed((dt) => {
     input.sync();
