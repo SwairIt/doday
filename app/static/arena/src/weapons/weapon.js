@@ -6,6 +6,9 @@
  */
 
 import * as THREE from 'three';
+
+/** Слой вью-модели: её освещает отдельный свет, не влияющий на мир. */
+const VIEWMODEL_LAYER = 1;
 import { bus } from '../core/events.js';
 import { fireHitscan } from './ballistics.js';
 import { getWeapon } from './registry.js';
@@ -308,11 +311,18 @@ export function createWeapon(id, deps) {
     // Собственный свет вью-модели: сцена вечерняя, и без подсветки ствол
     // в руках сливается в чёрное пятно. Свет висит на камере, поэтому
     // на освещение мира не влияет.
+    // Слой 1 — только вью-модель. Иначе свет, висящий на камере, засвечивает
+    // весь мир: камера теперь в графе сцены, и её потомки-источники светят всем.
+    model.traverse((node) => node.layers.set(VIEWMODEL_LAYER));
+    camera.layers.enable(VIEWMODEL_LAYER);
+
     if (!camera.userData.viewmodelLight) {
-        const key = new THREE.DirectionalLight(0xfff0dd, 2.2);
+        const key = new THREE.DirectionalLight(0xfff0dd, 2.6);
         key.position.set(0.6, 0.9, 0.4);
+        key.layers.set(VIEWMODEL_LAYER);
         camera.add(key);
-        const fill = new THREE.HemisphereLight(0xbfd4ff, 0x2b2620, 1.1);
+        const fill = new THREE.HemisphereLight(0xbfd4ff, 0x2b2620, 1.4);
+        fill.layers.set(VIEWMODEL_LAYER);
         camera.add(fill);
         camera.userData.viewmodelLight = key;
     }

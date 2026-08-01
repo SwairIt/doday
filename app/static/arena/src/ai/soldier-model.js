@@ -92,6 +92,9 @@ export function createSoldierModel(options) {
 
     const group = new THREE.Group();
     group.name = 'SoldierModel';
+    // Тени от мелких деталей экипировки не видны, но стоят дорого:
+    // включаем их только для корпуса и ног (см. ниже по коду).
+    group.userData.shadowsTrimmed = true;
 
     // Общие материалы: один на группу деталей одного цвета
     const matUniform = new THREE.MeshStandardMaterial({ color: COLOR_UNIFORM, roughness: 0.95, metalness: 0.0 });

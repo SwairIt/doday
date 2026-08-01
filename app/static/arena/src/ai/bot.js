@@ -426,6 +426,10 @@ export function createBot(scene, world, spawnPoint, deps) {
 		update,
 		takeDamage,
 		get alive() { return health > 0; },
+		/** Доля здоровья 0..1 — её показывает метка с ником над головой. */
+		get health() { return Math.max(0, health / MAX_HEALTH); },
+		/** Позывной, проставляется точкой сборки при спавне. */
+		name: '',
 		position,
 	};
 }

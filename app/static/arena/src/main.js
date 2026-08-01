@@ -27,6 +27,7 @@ import { createWeapon } from './weapons/weapon.js';
 import { WEAPONS, getWeapon } from './weapons/registry.js';
 import { createSpawner } from './ai/spawner.js';
 import { createWaveMode } from './modes/waves.js';
+import { createNameplates, pickCallsign } from './ui/nameplates.js';
 import { createPerception } from './ai/perception.js';
 
 /** Размер первой волны ботов. */
@@ -294,10 +295,18 @@ async function init() {
   });
 
   // Спавнер списка не отдаёт: ведём его сами по событиям шины.
-  bus.on('bot:spawned', ({ bot }) => bots.push(bot));
+  // Ники над ботами: спрайт с позывным и полоской здоровья.
+  const nameplates = createNameplates(scene, playerCamera.camera, { maxDistance: 70 });
+
+  bus.on('bot:spawned', ({ bot }) => {
+    bot.name = pickCallsign(Math.random);
+    nameplates.add(bot, bot.name);
+    bots.push(bot);
+  });
   bus.on('bot:killed', ({ bot }) => {
     const at = bots.indexOf(bot);
     if (at >= 0) bots.splice(at, 1);
+    nameplates.remove(bot);
     hud.addKill();
     // Строка в килфид справа сверху: кто кого. Имя берём из метки бота.
     hud.killfeed(`Игрок  ✖  ${bot?.name ?? 'Противник'}`);
@@ -316,6 +325,11 @@ async function init() {
   };
 
   // Первая волна после загрузки.
+  // Прогрев шейдеров: компиляция материала в момент первого показа даёт
+  // заметный рывок. Компилируем всё заранее, пока висит экран загрузки.
+  setLoadingProgress(0.95, 'Прогрев шейдеров…');
+  renderer.compile(scene, playerCamera.camera);
+
   setLoadingProgress(1.0, 'Готово!');
   // spawnWave требует позицию и направление взгляда: она спавнит ботов вне
   // поля зрения игрока, без этих данных возвращает 0.
@@ -357,9 +371,38 @@ async function init() {
     world.step();
   });
 
+  // --- Автоснижение качества -------------------------------------------
+  // Если кадр стабильно проседает, поэтапно отключаем самое дорогое:
+  // сначала тени (они дороже всего в заливке), потом дальность прорисовки.
+  let lowFpsTime = 0;
+  let degradeStep = 0;
+
+  /**
+   * Следит за FPS и режет качество, когда игра не тянет.
+   * @param {number} dt шаг кадра, секунды
+   */
+  function autoDegrade(dt) {
+    if (degradeStep >= 2) return;
+    const fps = loop.fps || 60;
+    lowFpsTime = fps < 45 ? lowFpsTime + dt : 0;
+    if (lowFpsTime < 2.5) return;
+
+    lowFpsTime = 0;
+    degradeStep += 1;
+    if (degradeStep === 1) {
+      renderer.shadowMap.enabled = false;
+      scene.traverse((node) => { if (node.isMesh) node.castShadow = false; });
+    } else {
+      playerCamera.camera.far = Math.max(120, playerCamera.camera.far * 0.6);
+      playerCamera.camera.updateProjectionMatrix();
+    }
+  }
+
   loop.onRender((dt, alpha) => {
     playerCamera.update(dt, player, input.adapter);
     lighting.update(player.position);
+    nameplates.update(dt);
+    autoDegrade(dt);
 
     hud.setHealth(playerHealth.current, playerHealth.max);
     hud.setAmmo(weapon.ammo, weapon.reserveAmmo);
@@ -377,7 +420,7 @@ async function init() {
   return {
     settings, renderer, resize, updateAdaptiveResolution, scene, sky, lighting,
     city, world, input, player, playerCamera, audio, hud, fx,
-    weapon, switchWeapon, spawner, waves, loop, camera: playerCamera.camera,
+    weapon, switchWeapon, spawner, waves, nameplates, loop, camera: playerCamera.camera,
   };
 }
 
