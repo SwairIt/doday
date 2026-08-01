@@ -188,6 +188,9 @@ async function init() {
     },
   };
   const playerCamera = createPlayerCamera(settings);
+  // Модель оружия висит на камере; без камеры в графе сцены её потомки
+  // не рендерятся — руки были пустыми.
+  scene.add(playerCamera.camera);
 
   setLoadingProgress(0.80, 'Загрузка звука…');
   const audio = createAudio(playerCamera.listener || playerCamera.camera);
@@ -218,6 +221,7 @@ async function init() {
 
   const weaponDeps = {
     world,
+    audio,
     camera: playerCamera.camera,
     fx,
     settings,

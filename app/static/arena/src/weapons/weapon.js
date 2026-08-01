@@ -258,7 +258,7 @@ export function createWeapon(id, deps) {
         // Отдача: паттерн отклонения камеры на выстрел [pitch, yaw]
         recoilPattern: [[0.012, 0.0]],
         // Позы вью-модели
-        hipPos: new THREE.Vector3(0.18, -0.16, -0.32),
+        hipPos: new THREE.Vector3(0.20, -0.17, -0.46),
         adsPos: new THREE.Vector3(0.0, -0.115, -0.22),
     }, def);
 
@@ -297,6 +297,8 @@ export function createWeapon(id, deps) {
     const muzzle = view.parts.muzzle;
     camera.add(model);
     model.position.copy(cfg.hipPos);
+    // Ствол у самой камеры занимал пол-экрана: уменьшаем и отодвигаем.
+    model.scale.setScalar(0.8);
 
     const muzzleWorld = new THREE.Vector3();
     const hitmarker = _createHitmarker();
@@ -365,6 +367,8 @@ export function createWeapon(id, deps) {
         muzzle.getWorldPosition(muzzleWorld);
         // muzzleFlash(pos, dir): без направления спрайт тонет в стволе.
         fx.muzzleFlash(muzzleWorld, _v2);
+        // Звук выстрела: без него стрельба ощущается мёртвой.
+        deps.audio?.play?.('shot', muzzleWorld);
         if (result && result.point) {
             fx.tracer(muzzleWorld, result.point);
             fx.impact(result.point, result.normal || result.face && result.face.normal || _up, result.target ? 'flesh' : 'concrete');
