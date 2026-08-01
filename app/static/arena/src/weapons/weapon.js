@@ -6,6 +6,7 @@
  */
 
 import * as THREE from 'three';
+import { buildRifleViewModel } from './viewmodel.js';
 
 /** Слой вью-модели: её освещает отдельный свет, не влияющий на мир. */
 const VIEWMODEL_LAYER = 1;
@@ -14,7 +15,9 @@ import { fireHitscan } from './ballistics.js';
 import { getWeapon } from './registry.js';
 
 // --- Константы, недостающие в исходной генерации ---
-const KICK_RETURN = 14.0;      // скорость возврата ствола после отдачи, 1/с
+const KICK_RETURN = 14.0;
+/** Докуда тянуть трассер, если пуля никуда не попала, метры. */
+const TRACER_RANGE = 90;      // скорость возврата ствола после отдачи, 1/с
 // Модель крупная и близко к камере, поэтому даже небольшой подброс
 // читается как сильная тряска. Ход отдачи уменьшен втрое.
 const VMODEL_KICK = 0.015;    // подброс модели оружия при выстреле, м
@@ -271,7 +274,7 @@ export function createWeapon(id, deps) {
         // Отдача: паттерн отклонения камеры на выстрел [pitch, yaw]
         recoilPattern: [[0.012, 0.0]],
         // Позы вью-модели
-        hipPos: new THREE.Vector3(0.26, -0.21, -0.30),
+        hipPos: new THREE.Vector3(0.24, -0.19, -0.34),
         adsPos: new THREE.Vector3(0.0, -0.115, -0.22),
     }, def);
 
@@ -305,9 +308,15 @@ export function createWeapon(id, deps) {
     const recoilOffset = { pitch: 0, yaw: 0 };
 
     // --- Вью-модель ---------------------------------------------------------
-    const view = _buildViewModel(id, cfg);
+    // Винтовка получает детальную модель с руками в перчатках; остальные
+    // стволы пока собираются прежним простым конструктором.
+    const view = id === 'rifle'
+        ? buildRifleViewModel({ quality: deps?.settings?.quality })
+        : _buildViewModel(id, cfg);
     const model = view.group;
-    const muzzle = view.parts.muzzle;
+    // Старый конструктор кладёт точку дула в parts.muzzle, новый отдаёт
+    // её как muzzlePoint. Берём то, что есть, иначе выстрел падает.
+    const muzzle = view.muzzlePoint || view.parts.muzzle || view.group;
     camera.add(model);
 
     // Собственный свет вью-модели: сцена вечерняя, и без подсветки ствол
@@ -332,7 +341,8 @@ export function createWeapon(id, deps) {
     // Ствол у самой камеры занимал пол-экрана: уменьшаем и отодвигаем.
     // Крупная модель у правого нижнего угла: дуло намеренно уходит за кадр,
     // как в CS — виден ресивер, магазин и рукоять, а не весь ствол.
-    model.scale.setScalar(1.45);
+    // Детальная винтовка собрана в других габаритах, поэтому масштаб свой.
+    model.scale.setScalar(id === 'rifle' ? 0.95 : 1.45);
     model.rotation.y = 0.06;
 
     const muzzleWorld = new THREE.Vector3();
@@ -404,8 +414,17 @@ export function createWeapon(id, deps) {
         fx.muzzleFlash(muzzleWorld, _v2);
         // Звук выстрела: без него стрельба ощущается мёртвой.
         deps.audio?.play?.('shot', muzzleWorld);
+        // Трассер рисуем ВСЕГДА, а не только при попадании: иначе выстрел
+        // в небо или мимо цели не оставляет никакого следа, и кажется,
+        // что пули не летят.
         if (result && result.point) {
-            fx.tracer(muzzleWorld, result.point);
+            _v3.copy(result.point);
+        } else {
+            _v3.copy(muzzleWorld).addScaledVector(_v2, TRACER_RANGE);
+        }
+        fx.tracer(muzzleWorld, _v3);
+
+        if (result && result.point) {
             fx.impact(result.point, result.normal || result.face && result.face.normal || _up, result.target ? 'flesh' : 'concrete');
         }
 
@@ -428,6 +447,12 @@ export function createWeapon(id, deps) {
      * @returns {boolean} произошёл ли выстрел
      */
     function fire() {
+        // Пустой магазин при нажатии — сразу перезаряжаемся, иначе выглядит
+        // так, будто оружие сломалось: щелчков нет, выстрелов нет.
+        if (ammo <= 0 && state !== 'reloading') {
+            reload();
+            return false;
+        }
         if (state !== 'ready') return false;
         if (fireCooldown > 0) return false;
         if (ammo <= 0) {

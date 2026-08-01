@@ -11,7 +11,7 @@ const AXIS_Y = new THREE.Vector3(0, 1, 0);   // опорная ось для о�
 const _e1 = new THREE.Euler();               // временный поворот для гильз
 const AXIS_Z = new THREE.Vector3(0, 0, 1);   // опорная ось для декали по нормали
 const GRAVITY = 9.8;                          // ускорение для гильз и искр, м/с^2
-const TRACER_MIN_LEN = 1.2;                   // короче этого трассер не рисуем, м
+const TRACER_MIN_LEN = 0.5;                   // короче этого трассер не рисуем, м
 const SHELL_EJECT_SPEED = 2.4;                // скорость вылета гильзы, м/с
 const SHELL_FADE = 0.5;                       // за сколько секунд гильза гаснет
 const SPARKS_PER_IMPACT = 10;                 // искр на попадание при высоком качестве
@@ -168,7 +168,7 @@ export function createWeaponFx(scene, world, settings) {
     const tracerMat = new THREE.MeshBasicMaterial({
         color: COLOR_TRACER,
         transparent: true,
-        opacity: 0.9,
+        opacity: 1.0,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
     });
