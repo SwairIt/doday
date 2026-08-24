@@ -121,7 +121,6 @@ ignore = [
 "scripts/kimi_ask.py" = ["RUF001", "RUF002", "RUF003"]      # Russian prompts + docstrings + comments
 "scripts/kimi_build.py" = ["RUF001", "RUF002", "RUF003"]    # Russian prompts + docstrings + comments
 "scripts/kimi_manifest.py" = ["RUF001", "RUF002", "RUF003"] # ТЗ игры целиком на русском
-"scripts/grandfather_beta_users.py" = ["RUF001", "RUF002", "RUF003"]  # русские докстринги
 "app/game/router.py" = ["RUF002", "RUF003"]                 # intentional Cyrillic in docstrings + comments
 "scripts/pdd_import_avm.py" = ["RUF001", "RUF002", "RUF003", "S310"]  # Cyrillic + trusted GitHub raw URLs
 "scripts/build_marketing_html.py" = ["RUF001", "RUF002"]  # Cyrillic in HTML template strings
