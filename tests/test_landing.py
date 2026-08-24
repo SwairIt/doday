@@ -13,7 +13,7 @@ from app.auth.service import register_user
 
 
 async def test_landing_anonymous_shows_login_links(client: AsyncClient) -> None:
-    response = await client.get("/doday")
+    response = await client.get("/")
     assert response.status_code == 200
     assert "Войти" in response.text
     assert "Создать аккаунт" in response.text  # primary CTA
@@ -23,7 +23,7 @@ async def test_landing_anonymous_shows_login_links(client: AsyncClient) -> None:
 async def test_landing_logged_in_redirects_to_app(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
-    """Logged-in users skip the marketing landing — straight to /doday/app/today."""
+    """Logged-in users skip the marketing landing — straight to /app/today."""
     user = await register_user(
         db_session, RegisterIn(email="kid@school.ru", password="strongpass123")
     )
@@ -35,6 +35,6 @@ async def test_landing_logged_in_redirects_to_app(
         data={"email": "kid@school.ru", "password": "strongpass123"},
     )
 
-    response = await client.get("/doday", follow_redirects=False)
+    response = await client.get("/", follow_redirects=False)
     assert response.status_code == 302
-    assert response.headers["location"] == "/doday/app/today"
+    assert response.headers["location"] == "/app/today"
