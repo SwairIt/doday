@@ -2,6 +2,20 @@
 <html lang="ru">
 <head>
     <meta charset="utf-8">
+    <script>
+      // Самоочистка адреса от старого префикса /doday.
+      // У всех, кто пользовался сайтом до переезда, браузер намертво
+      // закэшировал 301-редирект /app → /doday. Сервер уже отдаёт страницу
+      // по обоим адресам, но в строке остаётся уродливый /doday. Здесь мы
+      // без редиректа (значит без петли) убираем префикс из адресной строки.
+      (function () {
+        var p = location.pathname;
+        if (p === '/doday' || p.indexOf('/doday/') === 0) {
+          var clean = (p === '/doday' ? '/' : p.slice('/doday'.length));
+          history.replaceState(null, '', clean + location.search + location.hash);
+        }
+      })();
+    </script>
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
     {# Apple PWA: даёт нам контроль над status-bar в standalone-режиме. #}
     <meta name="apple-mobile-web-app-capable" content="yes">
