@@ -9,7 +9,15 @@ a unique constraint on `telegram_payment_charge_id`; the second delivery hits
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import (
+    BigInteger,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Sequence,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -103,6 +111,15 @@ class CardPayment(Base):
     # Кто провёл платёж: 'yookassa', 'robokassa', ... Провайдера пришлось
     # вынести в колонку: ЮKassa с 29.12.2025 прекратила обслуживать самозанятых,
     # и выбор эквайера теперь может меняться без переписывания схемы.
+    # Робокассе нужен ЧИСЛОВОЙ номер счёта (InvId), UUID она не принимает.
+    # Держим отдельную последовательность: номер должен быть уникальным в
+    # пределах магазина и монотонным, иначе повторная оплата ломает сверку.
+    inv_id: Mapped[int] = mapped_column(
+        BigInteger,
+        Sequence("card_payment_inv_id_seq"),
+        nullable=False,
+        unique=True,
+    )
     provider: Mapped[str] = mapped_column(String(20), nullable=False)
     # Идентификатор платежа на стороне провайдера — ключ идемпотентности вебхука.
     provider_payment_id: Mapped[str] = mapped_column(String(64), nullable=False)

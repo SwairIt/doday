@@ -137,8 +137,29 @@ app.add_middleware(
 # Paths with their own auth model (Telegram HMAC initData / token), loaded inside
 # Telegram's webview where Origin/Referer behaviour is unreliable — exempt from
 # the same-origin CSRF check below.
-_CSRF_EXEMPT_PREFIXES = ("/miniapp", "/taptower")
+# Robokassa шлёт уведомление об оплате серверным POST без Origin/Referer —
+# same-origin проверка для него неприменима, подлинность даёт подпись.
+_CSRF_EXEMPT_PREFIXES = ("/miniapp", "/taptower", "/api/billing/robokassa")
 _UNSAFE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+
+
+# Поддомен витрины. Держать её на отдельном хосте, а не на пути, попросил
+# владелец: getdoday.ru должен принадлежать продукту Doday Tasks, а «что ещё
+# делает автор» живёт на all.getdoday.ru. Переписываем путь, а не редиректим:
+# Robokassa при модерации требует, чтобы страницы открывались прямой ссылкой
+# без промежуточных редиректов.
+_HUB_HOSTS = frozenset({"all.getdoday.ru", "all.localhost"})
+
+
+@app.middleware("http")
+async def _hub_subdomain_rewrite(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
+    """На поддомене витрины корень отдаёт /all, остальные пути работают как обычно."""
+    host = request.headers.get("host", "").split(":")[0].lower()
+    if host in _HUB_HOSTS and request.url.path == "/":
+        request.scope["path"] = "/all"
+    return await call_next(request)
 
 
 @app.middleware("http")
@@ -241,6 +262,9 @@ async def _security_headers(
     request.state.ya_metrika_id = _settings.ya_metrika_id
     # Expose Telegram-канал URL — если пустой, footer не показывает иконку.
     request.state.telegram_channel_url = _settings.telegram_channel_url
+    # Контакты продавца в подвале — требование Robokassa при модерации сайта.
+    request.state.contact_phone = _settings.contact_phone
+    request.state.contact_city = _settings.contact_city
     response = await call_next(request)
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     # Tap Tower Mini App (/taptower/*) is loaded inside Telegram's frame, so

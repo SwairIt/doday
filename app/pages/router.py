@@ -14,13 +14,15 @@ router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
 
-@router.get("/doday")
+@router.get("/")
+@router.get("/doday", include_in_schema=False)
 async def doday_landing(request: Request, user: CurrentUser) -> Response:
     """Doday Tasks marketing landing (todo-list product page).
 
-    Lives at `/doday` since 2026-05-25 when `/` was repurposed as the studio hub
-    (`app.hub.router`). Anonymous visitors see marketing copy; logged-in users
-    are bounced to /doday/app/today unless they explicitly opted into preview.
+    С 2026-08-24 снова живёт на `/`: основной домен getdoday.ru принадлежит
+    продукту, а витрина студии переехала на /all и поддомен all.getdoday.ru.
+    Путь /doday сохранён как алиас — на него ведут старые ссылки и реклама.
+    Анонимным показываем лендинг, залогиненных уводим в приложение.
     """
     preview = request.query_params.get("preview") == "1"
     if user is not None and not preview:
@@ -124,12 +126,23 @@ async def terms(request: Request) -> HTMLResponse:
 
 @router.get("/pricing", response_class=HTMLResponse)
 async def pricing(request: Request, user: CurrentUser) -> HTMLResponse:
-    """Three-tier pricing page — Free / Pro / Family. Real checkout disabled
-    until ЮKassa shop is registered (CTA shows 'Скоро')."""
+    """Тарифы Free / Pro / Family.
+
+    Способ оплаты на странице зависит от РЕАЛЬНОГО состояния магазина: пока
+    ключи Robokassa не заполнены, показываем только Telegram Stars и честно
+    пишем, что карты не принимаем. Как только эквайринг включён — появляется
+    кнопка оплаты картой. Страница не должна обещать то, чего нет.
+    """
+    from app.billing import robokassa
+
     return templates.TemplateResponse(
         request,
         "pricing.html",
-        {"user": user, "beta_free_for_all": get_settings().beta_free_for_all},
+        {
+            "user": user,
+            "beta_free_for_all": get_settings().beta_free_for_all,
+            "cards_enabled": robokassa.is_configured(),
+        },
     )
 
 

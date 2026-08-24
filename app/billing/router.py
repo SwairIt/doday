@@ -1,20 +1,23 @@
 """Billing HTTP endpoints — read current tier, change tier (downgrade-only),
 Telegram Stars invoice creation, and per-user payment history."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Literal
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
+from fastapi.responses import PlainTextResponse, RedirectResponse
 from pydantic import BaseModel
 from sqlalchemy import desc, select
 
 from app.auth.deps import DbSession, RequiredUser
-from app.billing.models import StarPayment
+from app.billing import robokassa
+from app.billing.models import CardPayment, StarPayment
 from app.billing.products import PRODUCTS, get_product
 from app.billing.service import (
     TIERS,
     effective_tier,
+    grant_product_access,
     is_trial_active,
     limits_for,
     trial_days_remaining,
@@ -198,3 +201,103 @@ async def change_tier(
         pro_until=user.pro_until,
         limits=dict(limits_for(user)),
     )
+
+
+# ---------------------------------------------------------------------------
+# Оплата картой через Robokassa
+#
+# Три эндпоинта: увести на оплату, принять уведомление, вернуть пользователя.
+# Доступ выдаём ТОЛЬКО по уведомлению на ResultURL — страницу «успех» можно
+# открыть руками, доверять ей нельзя.
+# ---------------------------------------------------------------------------
+
+
+@router.get("/pay/{product_code}", include_in_schema=False)
+async def start_card_payment(
+    product_code: str, user: RequiredUser, session: DbSession
+) -> RedirectResponse:
+    """Заводит счёт и уводит пользователя на страницу оплаты Robokassa."""
+    if not robokassa.is_configured():
+        raise HTTPException(
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Оплата картой временно недоступна. Напиши в поддержку.",
+        )
+    product = get_product(product_code)
+    if product is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Тариф не найден")
+
+    payment = CardPayment(
+        user_id=user.id,
+        provider="robokassa",
+        provider_payment_id="",  # проставим номером счёта после flush
+        product_code=product.code,
+        amount_kopecks=product.rub_amount * 100,
+        status="pending",
+    )
+    session.add(payment)
+    # flush, а не commit: нужен выданный последовательностью InvId, но фиксируем
+    # запись вместе со ссылкой — иначе при падении останется счёт без адреса.
+    await session.flush()
+    payment.provider_payment_id = str(payment.inv_id)
+
+    url = robokassa.build_payment_url(product, payment.inv_id, email=user.email)
+    payment.confirmation_url = url
+    await session.commit()
+    return RedirectResponse(url=url, status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/robokassa/result", include_in_schema=False)
+async def robokassa_result(request: Request, session: DbSession) -> PlainTextResponse:
+    """Уведомление об оплате. Единственное место, где выдаётся доступ.
+
+    Robokassa повторяет запрос, пока не получит ``OK<InvId>``, поэтому обработка
+    обязана быть идемпотентной: второй раз по тому же счёту доступ не выдаём,
+    но отвечаем успехом, иначе уведомления будут идти вечно.
+    """
+    form = dict((await request.form()).items())
+    out_sum = str(form.get("OutSum", ""))
+    inv_id = str(form.get("InvId", ""))
+    signature = str(form.get("SignatureValue", ""))
+    shp = {k: str(v) for k, v in form.items() if k.startswith("Shp_")}
+
+    if not robokassa.verify_result(out_sum, inv_id, signature, shp):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="bad signature")
+
+    payment = (
+        await session.execute(select(CardPayment).where(CardPayment.inv_id == int(inv_id)))
+    ).scalar_one_or_none()
+    if payment is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="unknown invoice")
+
+    if payment.status == "succeeded":
+        return PlainTextResponse(f"OK{inv_id}")  # повторная доставка
+
+    # Сверяем сумму: подпись верна, но клиент мог подменить цену в ссылке.
+    if round(float(out_sum) * 100) != payment.amount_kopecks:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="amount mismatch")
+
+    product = get_product(payment.product_code)
+    if product is None:
+        raise HTTPException(status.HTTP_409_CONFLICT, detail="product gone")
+
+    payment.status = "succeeded"
+    payment.paid_at = datetime.now(UTC)
+    await grant_product_access(session, payment.user_id, product)
+    await session.commit()
+    return PlainTextResponse(f"OK{inv_id}")
+
+
+@router.get("/robokassa/success", include_in_schema=False)
+async def robokassa_success() -> RedirectResponse:
+    """Куда Robokassa возвращает пользователя после оплаты.
+
+    Доступ здесь НЕ выдаём: адрес открывается вручную. Просто отправляем
+    в приложение — к моменту возврата уведомление обычно уже обработано.
+    """
+    return RedirectResponse(url="/doday/app/today?paid=1", status_code=302)
+
+
+@router.get("/robokassa/fail", include_in_schema=False)
+async def robokassa_fail() -> RedirectResponse:
+    """Оплата не прошла или пользователь отменил её."""
+    return RedirectResponse(url="/pricing?payment=failed", status_code=302)

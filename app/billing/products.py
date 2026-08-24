@@ -93,7 +93,7 @@ PRODUCTS: tuple[Product, ...] = (
         grants_tier="family",
         duration_months=1,
         stars_amount=500,
-        rub_amount=399,
+        rub_amount=299,
     ),
     Product(
         code="family_12m",
@@ -102,7 +102,7 @@ PRODUCTS: tuple[Product, ...] = (
         grants_tier="family",
         duration_months=12,
         stars_amount=5000,
-        rub_amount=3990,
+        rub_amount=2990,
     ),
     # ── Lessio (Telegram-кабинет для репетиторов) — отдельный продукт внутри
     # того же бота @DodayTaskBot. Запускается после прохождения waitlist-

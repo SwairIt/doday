@@ -7,16 +7,16 @@
   <meta name="robots" content="index,follow">
 
   <title>Doday — мини-продукты от одного разработчика</title>
-  <meta name="description" content="Doday — набор небольших web-продуктов одного автора, building in public. Внутри: Doday Tasks (туду-лист, 400+ пользователей), Razbery (школьное Q&A с разборами), Doday ПДД (билеты ПДД онлайн), Lessio (Telegram-кабинет для репетиторов), Беллстрой ТВ (мем-аркада), Tap Tower (кликер).">
+  <meta name="description" content="Doday — набор небольших web-продуктов одного автора, building in public. Внутри: Doday Tasks (туду-лист с проектами и командами), Razbery (школьное Q&A с разборами), Doday ПДД (билеты ПДД онлайн), Lessio (Telegram-кабинет для репетиторов), Беллстрой ТВ (мем-аркада), Tap Tower (кликер).">
   <meta name="keywords" content="doday, studio, indie hacker, building in public, мини-продукты, telegram mini app, fastapi, лендинг, репетиторы, туду-лист, школьное q&a, билеты пдд онлайн">
-  <link rel="canonical" href="https://getdoday.ru/">
+  <link rel="canonical" href="https://all.getdoday.ru/">
 
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Doday">
   <meta property="og:locale" content="ru_RU">
   <meta property="og:title" content="Doday — мини-продукты от одного разработчика">
   <meta property="og:description" content="Студия мини-продуктов: туду-лист, кабинет для репетиторов, мем-игра. Один автор, building in public.">
-  <meta property="og:url" content="https://getdoday.ru/">
+  <meta property="og:url" content="https://all.getdoday.ru/">
   <meta property="og:image" content="https://getdoday.ru/og.svg">
 
   <meta name="twitter:card" content="summary_large_image">
@@ -28,7 +28,7 @@
 
   <!-- Linked-data: Person + Organization so Google knows what this hub is -->
   <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"Organization","name":"Doday","alternateName":"Doday Studio","url":"https://getdoday.ru/","logo":"https://getdoday.ru/favicon.ico","description":"Студия мини-продуктов от одного разработчика","founder":{"@type":"Person","name":"Ярослав","alternateName":"SwairIt","url":"https://github.com/SwairIt"},"sameAs":["https://github.com/SwairIt"]}
+  {"@context":"https://schema.org","@type":"Organization","name":"Doday","alternateName":"Doday Studio","url":"https://all.getdoday.ru/","logo":"https://getdoday.ru/favicon.ico","description":"Студия мини-продуктов от одного разработчика","founder":{"@type":"Person","name":"Ярослав","alternateName":"SwairIt","url":"https://github.com/SwairIt"},"sameAs":["https://github.com/SwairIt"]}
   </script>
 
   <script src="https://cdn.tailwindcss.com"></script>
@@ -111,7 +111,7 @@
       class="block relative bg-gradient-to-br from-doday-violet/30 via-doday-pink/15 to-transparent border border-doday-violet/40 rounded-3xl p-7 sm:p-10 card-hover glow"
     >
       <div class="absolute top-5 right-5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-semibold uppercase tracking-wider">
-        ⚡ Active · 400+ пользователей
+        ⚡ Работает{% if registered_users %} · {{ registered_users }} зарегистрирован{{ 'о' if registered_users % 10 != 1 or registered_users % 100 == 11 else '' }}{% endif %}
       </div>
       <div class="flex items-start gap-5 mb-5">
         <span class="inline-flex w-14 h-14 items-center justify-center rounded-2xl bg-gradient-to-br from-doday-violet to-doday-pink text-white font-extrabold text-2xl shrink-0">D</span>
@@ -123,7 +123,7 @@
       <p class="text-base sm:text-lg text-violet-100/85 mb-6 leading-relaxed">
         Бесплатный планировщик задач на русском: проекты с секциями, лейблы, фильтры,
         календарь, помодоро, статистика, графы связей, привычки. Web + Telegram Mini App +
-        бот. Без рекламы, без слежки. Оплата через Telegram Stars.
+        бот. Без рекламы, без слежки. Оплата картой, через СБП или Telegram Stars.
       </p>
       <div class="flex flex-wrap items-center gap-3 text-sm">
         <span class="px-3 py-1.5 rounded-lg bg-white/10 border border-white/15">Web · Mini App · Bot</span>
@@ -228,12 +228,13 @@
         <div class="text-sm text-violet-200/70">Разработчик</div>
       </div>
       <div>
-        <div class="text-3xl font-extrabold gradient-text mb-1">4</div>
-        <div class="text-sm text-violet-200/70">Продукта в работе</div>
+        <div class="text-3xl font-extrabold gradient-text mb-1">7</div>
+        <div class="text-sm text-violet-200/70">Продуктов на витрине</div>
       </div>
       <div>
-        <div class="text-3xl font-extrabold gradient-text mb-1">400+</div>
-        <div class="text-sm text-violet-200/70">Пользователей у Doday Tasks</div>
+{% if registered_users %}        <div class="text-3xl font-extrabold gradient-text mb-1">{{ registered_users }}</div>
+        <div class="text-sm text-violet-200/70">Зарегистрировано в Doday Tasks</div>
+{% endif %}
       </div>
     </div>
     <p class="text-center text-sm text-violet-200/60 mt-6 max-w-2xl mx-auto leading-relaxed">

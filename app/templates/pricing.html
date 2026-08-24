@@ -195,14 +195,23 @@
           <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span>Безлимит кастомных фильтров</span></li>
           <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span>Priority support</span></li>
         </ul>
-        <a href="/doday/app/settings#subscription"
-           class="btn-primary py-2 text-center"
-           title="Оплата через Telegram Stars">
-          Купить за <span class="font-bold">250 ⭐</span>
-        </a>
-        <p class="text-[10px] text-center text-[var(--text-muted)] mt-2">
-          Оплата через Telegram Stars (работает в любой стране)
-        </p>
+        {% if cards_enabled %}
+          <a href="/api/billing/pay/pro_1m" class="btn-primary py-2 text-center"
+             title="Оплата картой или через СБП">
+            Купить за <span class="font-bold">199 ₽</span>
+          </a>
+          <p class="text-[10px] text-center text-[var(--text-muted)] mt-2">
+            Карта, СБП или Telegram Stars (250 ⭐)
+          </p>
+        {% else %}
+          <a href="/doday/app/settings#subscription" class="btn-primary py-2 text-center"
+             title="Оплата через Telegram Stars">
+            Купить за <span class="font-bold">250 ⭐</span>
+          </a>
+          <p class="text-[10px] text-center text-[var(--text-muted)] mt-2">
+            Оплата через Telegram Stars (работает в любой стране)
+          </p>
+        {% endif %}
       </div>
 
       {# FAMILY #}
@@ -250,7 +259,7 @@
           <span class="text-[var(--text-muted)] text-sm">+</span>
         </summary>
         <p class="mt-3 text-sm text-[var(--text-muted)]">
-          Через <strong>Telegram Stars</strong> ⭐ — внутренняя валюта Telegram. Покупаются картой МИР/Visa/Mastercard прямо в Telegram-приложении (через App Store / Google Play). Без VPN, работает в любой стране. Карты прямо здесь пока не принимаем — это сознательный выбор, без зависимости от ЮKassa / Stripe / иностранных банков.
+          {% if cards_enabled %}Картой МИР/Visa/Mastercard или через СБП — оплата проходит на защищённой странице Robokassa, реквизиты карты к нам не попадают. Чек приходит на почту автоматически. Либо через <strong>Telegram Stars</strong> ⭐, если удобнее платить внутри Telegram.{% else %}Через <strong>Telegram Stars</strong> ⭐ — внутренняя валюта Telegram. Покупаются картой МИР/Visa/Mastercard прямо в Telegram-приложении. Без VPN, работает в любой стране. Оплату картой прямо на сайте сейчас подключаем — пока её нет.{% endif %}
         </p>
         <p class="mt-2 text-sm text-[var(--text-muted)]">
           Купить Stars: открой любой чат в Telegram → /apps → Stars, или прямо в окне оплаты Doday (Mini App).

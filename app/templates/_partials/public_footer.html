@@ -1,6 +1,6 @@
 {# Public-pages footer: brand + links + legal requisites.
-   Must appear on every public page so payment processors (ЮKassa etc.) can
-   see the executor's ИНН + status. #}
+   Обязателен на каждой публичной странице: Robokassa при модерации требует
+   видеть ФИО самозанятого, ИНН, город, телефон и почту. #}
 <footer class="border-t border-[var(--border)] py-10 mt-auto">
   <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-5 gap-8 text-sm">
     <div>
@@ -47,6 +47,11 @@
         <li>Боев Ярослав Дмитриевич</li>
         <li>ИНН&nbsp;<span class="text-[var(--text)] font-mono">550149009405</span></li>
         <li>Плательщик налога на профессиональный доход (НПД)</li>
+        {% if request.state.contact_phone %}
+          <li><a href="tel:{{ request.state.contact_phone | replace(' ', '') }}"
+                 class="hover:text-[var(--text)]">{{ request.state.contact_phone }}</a></li>
+        {% endif %}
+        {% if request.state.contact_city %}<li>{{ request.state.contact_city }}</li>{% endif %}
       </ul>
     </div>
   </div>
