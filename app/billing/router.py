@@ -308,3 +308,62 @@ async def robokassa_success() -> RedirectResponse:
 async def robokassa_fail() -> RedirectResponse:
     """Оплата не прошла или пользователь отменил её."""
     return RedirectResponse(url="/pricing?payment=failed", status_code=302)
+
+
+@router.get("/_diag", include_in_schema=False)
+async def _diag() -> dict[str, object]:
+    """ВРЕМЕННО: диагностика пути оплаты без авторизации. Секреты не отдаёт.
+
+    Проверяет то, из-за чего мог падать 500 при заведении счёта: есть ли
+    последовательность InvId, стоит ли DEFAULT на колонке, строится ли ссылка.
+    Убрать после того, как оплата подтверждена рабочей.
+    """
+    from sqlalchemy import text
+
+    from app.config import get_settings
+    from app.db import get_engine
+
+    out: dict[str, object] = {}
+    engine = get_engine()
+
+    async def scalar(sql: str) -> object:
+        # Свежее соединение на каждый запрос: ошибка одного не «отравляет» others.
+        async with engine.connect() as conn:
+            result = await conn.execute(text(sql))
+            return result.scalar()
+
+    try:
+        out["sequence_exists"] = bool(
+            await scalar(
+                "SELECT 1 FROM pg_class WHERE relkind='S' AND relname='card_payment_inv_id_seq'"
+            )
+        )
+    except Exception as exc:
+        out["sequence_error"] = repr(exc)
+
+    try:
+        out["inv_id_default"] = await scalar(
+            "SELECT column_default FROM information_schema.columns "
+            "WHERE table_name='card_payments' AND column_name='inv_id'"
+        )
+    except Exception as exc:
+        out["inv_id_default_error"] = repr(exc)
+
+    s = get_settings()
+    out["test_mode"] = s.robokassa_test_mode
+    out["configured"] = robokassa.is_configured()
+    out["has_test_password1"] = bool(s.robokassa_test_password1)
+    out["has_test_password2"] = bool(s.robokassa_test_password2)
+
+    try:
+        product = get_product("pro_1m")
+        if product is None:
+            out["build_url_error"] = "product pro_1m not found"
+        else:
+            url = robokassa.build_payment_url(product, 999000002, email="diag@example.com")
+            out["build_url_ok"] = True
+            out["build_url_prefix"] = url[:60]
+    except Exception as exc:
+        out["build_url_error"] = repr(exc)
+
+    return out

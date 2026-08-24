@@ -142,6 +142,64 @@ def _run_migrations_on_startup() -> None:
 _run_migrations_on_startup()
 
 
+def _repair_schema_on_startup() -> None:
+    """Идемпотентно доводит объекты схемы, которые пропустил alembic.
+
+    Зачем мимо alembic: ревизию 0050 дополнили последовательностью InvId уже
+    ПОСЛЕ того, как она применилась на проде. Повторно применённую ревизию
+    alembic не гоняет — поэтому таблица ``card_payments`` есть, а
+    ``card_payment_inv_id_seq`` нет, и вставка платежа падает на ``nextval`` →
+    500 при нажатии «Купить». ``upgrade head`` это не лечит (alembic уже на
+    0050), поэтому чиним прямым SQL. Всё через ``IF NOT EXISTS`` — на здоровой
+    базе это no-op.
+
+    Гоняем ОТДЕЛЬНЫЙ короткоживущий движок в своём цикле и сразу закрываем его:
+    иначе соединение из пула основного движка привяжется к временному циклу
+    asyncio и потом отвалится в рабочем цикле. Ошибку логируем, не роняя старт.
+    """
+    import asyncio
+
+    async def _run() -> None:
+        from sqlalchemy import text
+        from sqlalchemy.ext.asyncio import create_async_engine
+
+        engine = create_async_engine(get_settings().database_url)
+        try:
+            async with engine.begin() as conn:
+                # OWNED BY привязывает жизнь последовательности к колонке.
+                await conn.execute(
+                    text(
+                        "CREATE SEQUENCE IF NOT EXISTS card_payment_inv_id_seq "
+                        "OWNED BY card_payments.inv_id"
+                    )
+                )
+                await conn.execute(
+                    text(
+                        "ALTER TABLE card_payments "
+                        "ALTER COLUMN inv_id SET DEFAULT nextval('card_payment_inv_id_seq')"
+                    )
+                )
+                # Сдвигаем счётчик за максимальный уже выданный номер счёта.
+                await conn.execute(
+                    text(
+                        "SELECT setval('card_payment_inv_id_seq', "
+                        "COALESCE((SELECT MAX(inv_id) FROM card_payments), 0) + 1, false)"
+                    )
+                )
+        finally:
+            await engine.dispose()
+
+    try:
+        asyncio.run(_run())
+    except Exception:
+        import logging
+
+        logging.getLogger("doday.startup").exception("не удалось починить схему при старте")
+
+
+_repair_schema_on_startup()
+
+
 _is_prod = _settings.app_env == "prod"
 
 # Hide the interactive API docs / OpenAPI schema in prod — no need to hand the
