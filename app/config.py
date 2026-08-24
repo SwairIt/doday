@@ -103,10 +103,14 @@ class Settings(BaseSettings):
     contact_city: str = ""
 
     robokassa_login: str = ""
-    robokassa_password1: str = ""  # подпись исходящего платежа
-    robokassa_password2: str = ""  # проверка уведомления об оплате
-    # Тестовый режим магазина: платежи не списывают деньги.
+    robokassa_password1: str = ""  # подпись исходящего платежа (боевой)
+    robokassa_password2: str = ""  # проверка уведомления об оплате (боевой)
+    # Тестовый режим магазина: платежи не списывают деньги. У Robokassa для
+    # него ОТДЕЛЬНЫЕ пароли — подпись тестового платежа считается ими, а не
+    # боевыми, иначе проверка подписи на стороне Robokassa не сойдётся.
     robokassa_test_mode: bool = False
+    robokassa_test_password1: str = ""
+    robokassa_test_password2: str = ""
 
     lessio_bot_token: str = ""
     lessio_bot_username: str = ""

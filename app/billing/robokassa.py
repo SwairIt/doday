@@ -101,9 +101,9 @@ def build_payment_url(product: Product, inv_id: int, email: str | None = None) -
     # MerchantLogin:OutSum:InvId:Receipt:Пароль#1:Shp_-параметры по алфавиту.
     shp = {"Shp_code": product.code}
     shp_part = "".join(f":{k}={v}" for k, v in sorted(shp.items()))
-    signature = _hash(
-        f"{s.robokassa_login}:{out_sum}:{inv_id}:{receipt}:{s.robokassa_password1}{shp_part}"
-    )
+    # В тестовом режиме подпись считается тестовым Паролем №1.
+    password1 = s.robokassa_test_password1 if s.robokassa_test_mode else s.robokassa_password1
+    signature = _hash(f"{s.robokassa_login}:{out_sum}:{inv_id}:{receipt}:{password1}{shp_part}")
 
     params = {
         "MerchantLogin": s.robokassa_login,
@@ -136,7 +136,9 @@ def verify_result(out_sum: str, inv_id: str, signature: str, shp: dict[str, str]
     """
     s = get_settings()
     shp_part = "".join(f":{k}={v}" for k, v in sorted(shp.items()))
-    expected = _hash(f"{out_sum}:{inv_id}:{s.robokassa_password2}{shp_part}")
+    # Уведомление тестового платежа подписано тестовым Паролем №2.
+    password2 = s.robokassa_test_password2 if s.robokassa_test_mode else s.robokassa_password2
+    expected = _hash(f"{out_sum}:{inv_id}:{password2}{shp_part}")
     ok = expected.lower() == signature.lower()
     if not ok:
         logger.warning("подпись Robokassa не совпала: inv_id=%s", inv_id)
