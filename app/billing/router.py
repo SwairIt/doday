@@ -43,6 +43,10 @@ class ProductOut(BaseModel):
     grants_tier: str | None
     duration_months: int | None
     stars_amount: int
+    rub_amount: int
+    # Прямая ссылка на оплату картой. None, когда эквайринг не настроен —
+    # фронт тогда показывает только Stars.
+    card_pay_url: str | None
 
 
 class InvoiceCreateIn(BaseModel):
@@ -98,6 +102,7 @@ async def list_products_endpoint(_: RequiredUser) -> list[ProductOut]:
     from app.config import get_settings
 
     beta = get_settings().beta_free_for_all
+    cards_on = robokassa.is_configured()
     products_visible = [p for p in PRODUCTS if p.code == "pro_forever"] if beta else list(PRODUCTS)
     # ПДД products are sold on their own /pdd/pro page, not in the Doday Tasks
     # pricing catalog — keep them out of this endpoint.
@@ -110,6 +115,8 @@ async def list_products_endpoint(_: RequiredUser) -> list[ProductOut]:
             grants_tier=p.grants_tier,
             duration_months=p.duration_months,
             stars_amount=p.stars_amount,
+            rub_amount=p.rub_amount,
+            card_pay_url=(f"/api/billing/pay/{p.code}" if cards_on else None),
         )
         for p in products_visible
     ]

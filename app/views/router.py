@@ -10,6 +10,7 @@ from fastapi.templating import Jinja2Templates
 
 from app.auth.deps import DbSession, RequiredUser
 from app.auth.models import User
+from app.billing.service import effective_tier
 from app.comments.service import comment_counts_for
 from app.projects.models import Project
 from app.projects.service import (
@@ -36,6 +37,10 @@ router = APIRouter(prefix="/app", tags=["app"])
 templates = Jinja2Templates(directory="app/templates")
 templates.env.globals["due_state"] = due_state
 templates.env.globals["due_label"] = due_label
+# effective_tier как глобаль шаблона: даёт любому шаблону узнать, Pro ли
+# пользователь, без прокидывания флага через каждый роут. Нужен для
+# Pro-апселлов в сайдбаре и баннеров «купить подписку».
+templates.env.globals["effective_tier"] = effective_tier
 
 _RU_WEEKDAYS = [
     "понедельник",

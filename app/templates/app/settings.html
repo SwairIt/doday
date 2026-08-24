@@ -68,24 +68,37 @@
       </p>
     {% else %}
       <p class="text-sm text-[var(--text-muted)] mb-4">
-        Free-тариф. Pro снимает лимиты на проекты/задачи и открывает премиум-темы,
-        утренний дайджест, Telegram-бот и эксп-функции. Оплата через Telegram Stars —
-        списываются в Telegram-приложении.
+        Free-тариф. Pro снимает лимиты на проекты и задачи, открывает премиум-темы,
+        утренний дайджест, Telegram-бот и эксп-функции. Оплатить можно картой,
+        через СБП или Telegram Stars.
       </p>
     {% endif %}
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
       {# Server-rendered product cards; load from /api/billing/products on hover for now. #}
       <template x-for="product in products" :key="product.code">
-        <button type="button" @click="buy(product.code)"
-                :disabled="busy"
-                :class="busy === product.code ? 'opacity-60' : ''"
-                class="text-left p-3 rounded-xl bg-[var(--surface-2)]/40 border border-[var(--border)] hover:border-[var(--accent)]/50 hover:bg-[var(--surface-2)] transition">
+        <div class="p-3 rounded-xl bg-[var(--surface-2)]/40 border border-[var(--border)] hover:border-[var(--accent)]/50 transition flex flex-col">
           <div class="flex items-center justify-between gap-2 mb-1">
             <span class="font-medium text-sm" x-text="product.title"></span>
-            <span class="text-xs font-bold text-amber-400 shrink-0" x-text="product.stars_amount + ' ⭐'"></span>
+            <span class="text-sm font-extrabold text-[var(--accent)] shrink-0" x-text="product.rub_amount + '₽'"></span>
           </div>
-          <div class="text-[11px] text-[var(--text-muted)] leading-relaxed" x-text="product.description"></div>
-        </button>
+          <div class="text-[11px] text-[var(--text-muted)] leading-relaxed mb-2.5 flex-1" x-text="product.description"></div>
+          <div class="flex gap-1.5">
+            {# Оплата картой — основная кнопка, если эквайринг включён. #}
+            <template x-if="product.card_pay_url">
+              <a :href="product.card_pay_url"
+                 class="flex-1 text-center text-xs font-semibold py-1.5 rounded-lg bg-[var(--accent)] text-white hover:opacity-90 transition">
+                Картой / СБП
+              </a>
+            </template>
+            {# Telegram Stars — всегда доступны как альтернатива. #}
+            <button type="button" @click="buy(product.code)" :disabled="busy"
+                    :class="[busy === product.code ? 'opacity-60' : '', product.card_pay_url ? 'px-2.5' : 'flex-1']"
+                    class="text-xs font-semibold py-1.5 rounded-lg bg-[var(--surface-2)] border border-[var(--border)] hover:border-[var(--accent)]/50 transition whitespace-nowrap"
+                    :title="product.stars_amount + ' Telegram Stars'">
+              <span x-text="product.stars_amount + ' ⭐'"></span>
+            </button>
+          </div>
+        </div>
       </template>
     </div>
     <template x-if="err">

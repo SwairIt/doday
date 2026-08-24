@@ -276,6 +276,22 @@
     {% endif %}
   </nav>
 
+  {# Pro-апселл для Free-юзеров: постоянный, но ненавязчивый. Скрывается,
+     если пользователь уже Pro/Family — незачем продавать то, что куплено. #}
+  {% if current_user and effective_tier(current_user) == 'free' %}
+  <a href="/pricing"
+     class="mx-3 mb-2 mt-1 px-3 py-2.5 rounded-xl bg-gradient-to-br from-violet-500/20 via-fuchsia-500/15 to-amber-500/10 border border-[var(--accent)]/40 hover:border-[var(--accent)]/70 text-sm transition block group">
+    <div class="flex items-center gap-2 mb-1">
+      <span class="text-base shrink-0">⭐</span>
+      <span class="font-semibold flex-1">Doday Pro</span>
+      <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--accent)]/20 text-[var(--accent)] font-bold whitespace-nowrap">от 199₽</span>
+    </div>
+    <p class="text-xs text-[var(--text-muted)] leading-snug group-hover:text-[var(--text)] transition">
+      Безлимит проектов и задач, премиум-темы, дайджест и бот. Оплата картой, СБП или Stars.
+    </p>
+  </a>
+  {% endif %}
+
   {# Invite-friends affordance — самый недооценённый growth-канал.
      Размещён прямо над профилем, чтобы было заметно но не агрессивно. #}
   <button type="button" @click="window.dodayInviteFriends()"

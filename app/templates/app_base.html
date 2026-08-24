@@ -93,6 +93,28 @@
 {% include "_partials/notifications.html" %}
 {% include "_partials/undo_toast.html" %}
 {% include "_partials/toast.html" %}
+
+{# Приветствие после успешной оплаты. Robokassa возвращает на ?paid=1;
+   показываем тост «Pro открыт» и чистим параметр из адреса, чтобы при
+   обновлении страницы поздравление не всплывало снова. #}
+<script>
+  (function () {
+    var params = new URLSearchParams(location.search);
+    if (params.get('paid') === '1') {
+      var show = function () {
+        if (window.dodayToast) {
+          window.dodayToast('Оплата прошла — Doday Pro открыт! Спасибо 💜', { icon: '⭐', duration: 6000 });
+        } else {
+          setTimeout(show, 200);
+        }
+      };
+      show();
+      params.delete('paid');
+      var clean = location.pathname + (params.toString() ? '?' + params : '') + location.hash;
+      history.replaceState(null, '', clean);
+    }
+  })();
+</script>
 {% include "_partials/incoming_invites.html" %}
 {% include "_partials/invite_friends_modal.html" %}
 {% include "_partials/tab_badge.html" %}
