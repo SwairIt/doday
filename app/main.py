@@ -3,6 +3,7 @@
 import os
 import subprocess
 from collections.abc import Awaitable, Callable
+from pathlib import Path
 from urllib.parse import urlparse
 
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -113,6 +114,33 @@ def _init_sentry() -> None:
 
 
 _init_sentry()
+
+
+def _run_migrations_on_startup() -> None:
+    """Догоняет схему БД до head при запуске приложения.
+
+    Идемпотентно: если миграции уже применены, alembic просто ничего не делает.
+    Ошибку логируем, но НЕ роняем процесс — иначе одна кривая миграция уложит
+    весь сайт; лучше поднять приложение и увидеть проблему в логах.
+    """
+    try:
+        from alembic.config import Config
+
+        from alembic import command
+
+        # alembic.ini лежит в корне репозитория, рядом с этим файлом на уровень выше.
+        root = Path(__file__).resolve().parent.parent
+        cfg = Config(str(root / "alembic.ini"))
+        cfg.set_main_option("script_location", str(root / "alembic"))
+        command.upgrade(cfg, "head")
+    except Exception:
+        import logging
+
+        logging.getLogger("doday.startup").exception("не удалось применить миграции при старте")
+
+
+_run_migrations_on_startup()
+
 
 _is_prod = _settings.app_env == "prod"
 
