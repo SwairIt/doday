@@ -67,8 +67,32 @@ plink -batch -ssh -hostkey "SHA256:NwU1dGS29JAjs2K5LfEtu3DLFgg04yo7ZEA4iOGkM6E" 
 
 ## Деплой
 
+Одной командой НА СЕРВЕРЕ из каталога проекта:
+
+```bash
+bash scripts/deploy.sh
+```
+
+Скрипт: git pull → зависимости → `alembic upgrade head` → перезапуск сервиса →
+проверка четырёх ключевых адресов. Любой шаг упал — останавливается, чтобы не
+оставить прод в половинчатом состоянии.
+
 `deploy/` содержит `doday.service`, `doday-bot.service`, `nginx.conf`.
-После деплоя гоняется `scripts/smoke_test.py` — проверяет 18 ключевых endpoint'ов.
+Более полная проверка — `scripts/smoke_test.py` (18 endpoint'ов).
+
+## Домены
+
+| Адрес | Что отдаёт |
+|---|---|
+| `getdoday.ru/` | лендинг Doday Tasks |
+| `getdoday.ru/app/today` | само приложение (раньше было `/doday/app/today`) |
+| `all.getdoday.ru/` | витрина всех продуктов студии (она же `/all`) |
+
+Поддомен работает через host-rewrite в `app/main.py`, поэтому nginx ОБЯЗАН
+передавать `proxy_set_header Host $host;` — иначе на поддомене откроется
+лендинг вместо витрины.
+
+Старые адреса `/doday/*` отдают 301 на новые.
 
 ## Проверки перед коммитом
 
