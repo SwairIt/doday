@@ -98,9 +98,7 @@ def test_parser_empty_falls_back() -> None:
 
 @pytest.mark.asyncio
 async def test_quickadd_endpoint_creates_task(logged_in_client: AsyncClient) -> None:
-    response = await logged_in_client.post(
-        "/htmx/quickadd", data={"text": "Хлеб купить завтра !!"}
-    )
+    response = await logged_in_client.post("/htmx/quickadd", data={"text": "Хлеб купить завтра !!"})
     assert response.status_code == 200
     assert "task-row" in response.text
     assert "Хлеб купить" in response.text

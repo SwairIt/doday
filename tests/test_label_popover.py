@@ -16,9 +16,7 @@ async def test_toggle_attach_then_detach(logged_in_client: AsyncClient) -> None:
     task = (await logged_in_client.post("/api/tasks", json={"title": "T"})).json()
     label = (await logged_in_client.post("/api/labels", json={"name": "x"})).json()
 
-    response = await logged_in_client.post(
-        f"/htmx/tasks/{task['id']}/labels/{label['id']}/toggle"
-    )
+    response = await logged_in_client.post(f"/htmx/tasks/{task['id']}/labels/{label['id']}/toggle")
     assert response.status_code == 200
     attached = (await logged_in_client.get(f"/api/tasks/{task['id']}/labels")).json()
     assert any(lab["id"] == label["id"] for lab in attached)

@@ -16,9 +16,7 @@ async def test_snooze_pushes_due_by_one_day(logged_in_client: AsyncClient) -> No
     task = (
         await logged_in_client.post("/api/tasks", json={"title": "S", "due_at": today_iso})
     ).json()
-    response = await logged_in_client.post(
-        f"/htmx/tasks/{task['id']}/snooze", data={"days": "1"}
-    )
+    response = await logged_in_client.post(f"/htmx/tasks/{task['id']}/snooze", data={"days": "1"})
     assert response.status_code == 200
     fetched = (await logged_in_client.get("/api/tasks?include_completed=true")).json()
     saved = next(t for t in fetched if t["id"] == task["id"])
@@ -28,9 +26,7 @@ async def test_snooze_pushes_due_by_one_day(logged_in_client: AsyncClient) -> No
 
 async def test_snooze_no_due_sets_today_plus_one(logged_in_client: AsyncClient) -> None:
     task = (await logged_in_client.post("/api/tasks", json={"title": "Nope"})).json()
-    response = await logged_in_client.post(
-        f"/htmx/tasks/{task['id']}/snooze", data={"days": "1"}
-    )
+    response = await logged_in_client.post(f"/htmx/tasks/{task['id']}/snooze", data={"days": "1"})
     assert response.status_code == 200
     fetched = (await logged_in_client.get("/api/tasks?include_completed=true")).json()
     saved = next(t for t in fetched if t["id"] == task["id"])
@@ -39,9 +35,7 @@ async def test_snooze_no_due_sets_today_plus_one(logged_in_client: AsyncClient) 
 
 async def test_snooze_caps_at_30_days(logged_in_client: AsyncClient) -> None:
     task = (await logged_in_client.post("/api/tasks", json={"title": "Far"})).json()
-    response = await logged_in_client.post(
-        f"/htmx/tasks/{task['id']}/snooze", data={"days": "999"}
-    )
+    response = await logged_in_client.post(f"/htmx/tasks/{task['id']}/snooze", data={"days": "999"})
     assert response.status_code == 200
     fetched = (await logged_in_client.get("/api/tasks?include_completed=true")).json()
     saved = next(t for t in fetched if t["id"] == task["id"])

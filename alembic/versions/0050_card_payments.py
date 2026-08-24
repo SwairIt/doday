@@ -41,8 +41,12 @@ def upgrade() -> None:
     )
     op.create_index(op.f("ix_card_payments_user_id"), "card_payments", ["user_id"])
     # Последовательность для InvId — номер счёта должен быть монотонным.
-    op.execute("CREATE SEQUENCE IF NOT EXISTS card_payment_inv_id_seq OWNED BY card_payments.inv_id")
-    op.execute("ALTER TABLE card_payments ALTER COLUMN inv_id SET DEFAULT nextval('card_payment_inv_id_seq')")
+    op.execute(
+        "CREATE SEQUENCE IF NOT EXISTS card_payment_inv_id_seq OWNED BY card_payments.inv_id"
+    )
+    op.execute(
+        "ALTER TABLE card_payments ALTER COLUMN inv_id SET DEFAULT nextval('card_payment_inv_id_seq')"
+    )
 
 
 def downgrade() -> None:

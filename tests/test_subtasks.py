@@ -44,9 +44,7 @@ async def test_subtasks_hidden_from_top_level_today(logged_in_client: AsyncClien
     today = datetime.now(UTC).replace(hour=23, minute=59).isoformat()
     parent = await logged_in_client.post("/api/tasks", json={"title": "ParentDue", "due_at": today})
     parent_id = parent.json()["id"]
-    await logged_in_client.post(
-        f"/htmx/tasks/{parent_id}/subtasks", data={"title": "SubChild"}
-    )
+    await logged_in_client.post(f"/htmx/tasks/{parent_id}/subtasks", data={"title": "SubChild"})
 
     today_view = await logged_in_client.get("/app/today")
     assert today_view.status_code == 200

@@ -70,9 +70,7 @@ async def test_detail_open_trigger_in_task_row(logged_in_client: AsyncClient) ->
 
 
 async def test_detail_unknown_task_404(logged_in_client: AsyncClient) -> None:
-    response = await logged_in_client.get(
-        "/htmx/tasks/00000000-0000-0000-0000-000000000000/detail"
-    )
+    response = await logged_in_client.get("/htmx/tasks/00000000-0000-0000-0000-000000000000/detail")
     assert response.status_code == 404
 
 

@@ -38,9 +38,7 @@ async def test_bulk_uncomplete_reopens_all(
     ids = [a["id"], b["id"]]
     # Complete them first, then bulk-reopen.
     await logged_in_client.post("/htmx/bulk", data={"action": "complete", "ids": ids})
-    response = await logged_in_client.post(
-        "/htmx/bulk", data={"action": "uncomplete", "ids": ids}
-    )
+    response = await logged_in_client.post("/htmx/bulk", data={"action": "uncomplete", "ids": ids})
     assert response.status_code == 200
     assert response.headers.get("HX-Refresh") == "true"
 

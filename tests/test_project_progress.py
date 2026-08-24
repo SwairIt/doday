@@ -36,9 +36,7 @@ async def test_kanban_view_also_shows_progress(logged_in_client: AsyncClient) ->
     await logged_in_client.post(f"/api/tasks/{t1['id']}/complete")
     await logged_in_client.post(f"/api/tasks/{t2['id']}/complete")
 
-    page = await logged_in_client.get(
-        f"/app/projects/{proj['slug']}", params={"view": "kanban"}
-    )
+    page = await logged_in_client.get(f"/app/projects/{proj['slug']}", params={"view": "kanban"})
     # 2 of 2 done → 100%
     assert "100%" in page.text
     assert "2 / 2" in page.text

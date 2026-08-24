@@ -175,7 +175,5 @@ async def test_simple_pages_have_add_button(logged_in_client: AsyncClient) -> No
 
 
 async def test_simple_toggle_requires_auth(client: AsyncClient) -> None:
-    response = await client.post(
-        "/app/simple/task/00000000-0000-0000-0000-000000000001/toggle"
-    )
+    response = await client.post("/app/simple/task/00000000-0000-0000-0000-000000000001/toggle")
     assert response.status_code == 401

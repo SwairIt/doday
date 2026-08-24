@@ -78,9 +78,7 @@ async def test_landing_footer_links_to_seo_pages() -> None:
     does not link to per-product SEO pages.)
     """
     async with await _public_client() as c:
-        resp = await c.get(
-            "/?preview=1"
-        )  # ?preview=1 lets logged-out users see the landing too
+        resp = await c.get("/?preview=1")  # ?preview=1 lets logged-out users see the landing too
     body = resp.text
     assert "/for-students" in body
     assert "/for-teachers" in body

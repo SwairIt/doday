@@ -95,7 +95,5 @@ async def test_member_can_open_shared_project_by_slug(
     await db_session.commit()
     await add_member(db_session, project.id, second_user.id, role="member")  # type: ignore[attr-defined]
     await db_session.commit()
-    r = await second_logged_in_client.get(
-        f"/app/projects/{project.slug}", follow_redirects=False
-    )
+    r = await second_logged_in_client.get(f"/app/projects/{project.slug}", follow_redirects=False)
     assert r.status_code == 200
