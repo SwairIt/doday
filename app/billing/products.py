@@ -37,6 +37,10 @@ class Product:
     # How long the paid period lasts. None == lifetime (no expiry).
     duration_months: int | None
     stars_amount: int
+    # Цена в рублях для оплаты картой через ЮKassa. Stars и рубли живут
+    # параллельно: в Telegram Mini App оплата картой за цифровой товар
+    # запрещена правилами Telegram, поэтому там остаются звёзды.
+    rub_amount: int
     # If set, the purchase upserts an Entitlement(feature=...) instead of (or in
     # addition to) the global tier. Lets a vertical (pdd_pro) be sold and priced
     # independently of Doday Pro. Defaults to None → behaves exactly as before.
@@ -54,6 +58,7 @@ PRODUCTS: tuple[Product, ...] = (
         grants_tier="pro",
         duration_months=1,
         stars_amount=250,
+        rub_amount=199,
     ),
     Product(
         code="pro_12m",
@@ -64,6 +69,7 @@ PRODUCTS: tuple[Product, ...] = (
         grants_tier="pro",
         duration_months=12,
         stars_amount=2500,
+        rub_amount=1990,
     ),
     Product(
         code="pro_forever",
@@ -75,6 +81,7 @@ PRODUCTS: tuple[Product, ...] = (
         grants_tier="pro",
         duration_months=None,  # lifetime
         stars_amount=12500,
+        rub_amount=9900,
     ),
     Product(
         code="family_1m",
@@ -86,6 +93,7 @@ PRODUCTS: tuple[Product, ...] = (
         grants_tier="family",
         duration_months=1,
         stars_amount=500,
+        rub_amount=399,
     ),
     Product(
         code="family_12m",
@@ -94,6 +102,7 @@ PRODUCTS: tuple[Product, ...] = (
         grants_tier="family",
         duration_months=12,
         stars_amount=5000,
+        rub_amount=3990,
     ),
     # ── Lessio (Telegram-кабинет для репетиторов) — отдельный продукт внутри
     # того же бота @DodayTaskBot. Запускается после прохождения waitlist-
@@ -108,6 +117,7 @@ PRODUCTS: tuple[Product, ...] = (
         grants_tier="pro",
         duration_months=1,
         stars_amount=1000,
+        rub_amount=799,
     ),
     Product(
         code="tutor_pro_12m",
@@ -118,6 +128,7 @@ PRODUCTS: tuple[Product, ...] = (
         grants_tier="pro",
         duration_months=12,
         stars_amount=10000,
+        rub_amount=7990,
     ),
     Product(
         code="tutor_pro_forever",
@@ -129,6 +140,7 @@ PRODUCTS: tuple[Product, ...] = (
         grants_tier="pro",
         duration_months=None,  # lifetime
         stars_amount=50000,
+        rub_amount=39900,
     ),
     # ── Doday ПДД (driving-exam prep) — standalone `pdd_pro` entitlement,
     # independent of the global tier. Revenue lands on @DodayTaskBot's Stars
@@ -144,6 +156,7 @@ PRODUCTS: tuple[Product, ...] = (
         grants_tier=None,
         duration_months=1,
         stars_amount=199,
+        rub_amount=159,
         grants_entitlement="pdd_pro",
     ),
     Product(
@@ -156,6 +169,7 @@ PRODUCTS: tuple[Product, ...] = (
         grants_tier=None,
         duration_months=3,
         stars_amount=399,
+        rub_amount=319,
         grants_entitlement="pdd_pro",
     ),
     Product(
@@ -165,6 +179,7 @@ PRODUCTS: tuple[Product, ...] = (
         grants_tier=None,
         duration_months=None,  # lifetime
         stars_amount=990,
+        rub_amount=790,
         grants_entitlement="pdd_pro",
     ),
 )

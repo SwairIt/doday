@@ -77,3 +77,51 @@ class Entitlement(Base):
     )
 
     __table_args__ = (UniqueConstraint("user_id", "feature", name="uq_entitlement_user_feature"),)
+
+
+class CardPayment(Base):
+    """Платёж картой или через СБП через внешнего эквайера.
+
+    Отдельная таблица от ``star_payments``, а не общая «payments»: у провайдеров
+    разные идентификаторы, разный жизненный цикл (у Stars нет состояния
+    «ожидает оплаты») и разные поля возврата. Смешивать их в одну таблицу
+    значило бы половину колонок держать NULL и разбирать провайдера в каждом
+    запросе.
+
+    Идемпотентность: ЮKassa повторяет webhook, пока не получит 200, поэтому
+    ``yookassa_payment_id`` уникален — повторная доставка падает в
+    ``IntegrityError``, и сервис считает её «уже обработано». Тот же приём, что
+    и для Telegram-платежей.
+    """
+
+    __tablename__ = "card_payments"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    # Кто провёл платёж: 'yookassa', 'robokassa', ... Провайдера пришлось
+    # вынести в колонку: ЮKassa с 29.12.2025 прекратила обслуживать самозанятых,
+    # и выбор эквайера теперь может меняться без переписывания схемы.
+    provider: Mapped[str] = mapped_column(String(20), nullable=False)
+    # Идентификатор платежа на стороне провайдера — ключ идемпотентности вебхука.
+    provider_payment_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    # Код позиции каталога — см. app.billing.products.PRODUCTS.
+    product_code: Mapped[str] = mapped_column(String(50), nullable=False)
+    # Сумма в КОПЕЙКАХ: хранить деньги во float нельзя, а в рублях нельзя из-за
+    # возможных дробных цен и скидок. В ЮKassa уходит строкой «199.00».
+    amount_kopecks: Mapped[int] = mapped_column(Integer, nullable=False)
+    # pending → succeeded | canceled. Права выдаём только на succeeded.
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
+    # Ссылка на страницу оплаты — на случай если пользователь потерял вкладку.
+    confirmation_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, nullable=False
+    )
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    refunded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    # Идемпотентность в паре: у разных провайдеров идентификаторы могут совпасть.
+    __table_args__ = (
+        UniqueConstraint("provider", "provider_payment_id", name="uq_card_payment_provider_id"),
+    )

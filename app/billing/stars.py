@@ -38,6 +38,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.models import User
 from app.billing.models import StarPayment
 from app.billing.products import BY_CODE, Product, get_product
+from app.billing.service import grant_product_access
 from app.config import get_settings
 
 logger = logging.getLogger("doday.billing.stars")
@@ -267,25 +268,10 @@ async def apply_successful_payment(
         logger.error("paid user not found: %s", user_id)
         return payment
 
-    # Tier products (Doday Tasks / Lessio) extend the global tier + pro_until.
-    # Entitlement-only products (ПДД) leave the tier untouched — grants_tier None.
-    if product.grants_tier is not None:
-        user.tier = product.grants_tier
-        if product.duration_months is None:
-            # Lifetime — set far future (year 2099) so effective_tier always sees
-            # it as active. We don't use None because that would clash with the
-            # «never had Pro» semantics elsewhere.
-            user.pro_until = datetime(2099, 12, 31, tzinfo=UTC)
-        else:
-            # Extend from max(now, current pro_until). Renewals don't lose remaining days.
-            now = datetime.now(UTC)
-            base = user.pro_until if (user.pro_until and user.pro_until > now) else now
-            user.pro_until = base + timedelta(days=30 * product.duration_months)
-
-    # Entitlement products (ПДД, future verticals) upsert a per-feature grant
-    # without touching the global tier.
-    if product.grants_entitlement is not None:
-        await _grant_entitlement(session, user_id, product)
+    # Выдача доступа общая для Stars и ЮKassa — см. app.billing.service.
+    # Держать её здесь означало бы, что при добавлении второго провайдера
+    # правила тарифов разъедутся между платёжными путями.
+    await grant_product_access(session, user_id, product)
 
     logger.info(
         "applied star payment: user=%s product=%s stars=%s pro_until=%s",
@@ -295,51 +281,6 @@ async def apply_successful_payment(
         user.pro_until.isoformat() if user.pro_until else None,
     )
     return payment
-
-
-async def _grant_entitlement(session: AsyncSession, user_id: UUID, product: Product) -> None:
-    """Upsert the per-feature Entitlement for an entitlement product (idempotent
-    on renewal). Lifetime grants set expires_at=None and never downgrade to a
-    dated expiry. Dated renewals extend from max(now, current expiry)."""
-    from app.billing.models import Entitlement
-
-    feature = product.grants_entitlement
-    if feature is None:  # caller guarantees non-None; narrow for the type checker
-        return
-    ent = (
-        await session.execute(
-            select(Entitlement).where(
-                Entitlement.user_id == user_id,
-                Entitlement.feature == feature,
-            )
-        )
-    ).scalar_one_or_none()
-
-    if product.duration_months is None:
-        new_expiry: datetime | None = None  # lifetime
-    else:
-        now = datetime.now(UTC)
-        if ent is not None and ent.expires_at is not None and ent.expires_at > now:
-            base = ent.expires_at
-        else:
-            base = now
-        new_expiry = base + timedelta(days=30 * product.duration_months)
-
-    if ent is None:
-        session.add(
-            Entitlement(
-                user_id=user_id,
-                feature=feature,
-                expires_at=new_expiry,
-                source_code=product.code,
-            )
-        )
-        return
-    # Existing grant: a lifetime grant never downgrades to a dated one.
-    if ent.expires_at is None:
-        return
-    ent.expires_at = new_expiry
-    ent.source_code = product.code
 
 
 # ---------------------------------------------------------------------------

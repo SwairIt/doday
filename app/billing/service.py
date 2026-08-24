@@ -6,15 +6,21 @@ Pricing model (revised 2026-05-07):
 - Family:  Pro for up to 5 accounts + parent dashboard — 299₽/мес
 """
 
-from datetime import UTC, datetime
+import logging
+from datetime import UTC, datetime, timedelta
 from typing import TypedDict
+from uuid import UUID
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import User
+from app.billing.models import Entitlement
+from app.billing.products import Product
 from app.projects.models import Project
 from app.tasks.models import Task
+
+logger = logging.getLogger(__name__)
 
 
 class TierLimits(TypedDict):
@@ -252,3 +258,90 @@ def require_pro(user: User, feature_name: str) -> None:
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
             detail=f"{feature_name} — фича Pro-тарифа. Обнови подписку чтобы использовать.",
         )
+
+
+# ---------------------------------------------------------------------------
+# Выдача купленного доступа — общая для всех платёжных провайдеров.
+#
+# Раньше эта логика жила внутри обработчика Telegram Stars. С появлением ЮKassa
+# её пришлось вынести: иначе два платёжных пути начали бы расходиться при первом
+# же изменении тарифов, а расхождение в биллинге — это выданный или потерянный
+# доступ за деньги.
+# ---------------------------------------------------------------------------
+
+
+async def grant_product_access(session: AsyncSession, user_id: UUID, product: Product) -> None:
+    """Открывает пользователю то, что он купил: тариф и/или доступ к вертикали.
+
+    Продлевает от максимума из «сейчас» и текущего срока — при досрочном
+    продлении остаток дней не сгорает. Пожизненная покупка не понижается до
+    срочной при повторной оплате.
+
+    :param session: активная сессия БД (коммит делает вызывающий код)
+    :param user_id: кому выдаём
+    :param product: позиция каталога из app.billing.products
+    """
+    user = await session.get(User, user_id)
+    if user is None:
+        logger.error("оплаченный пользователь не найден: %s", user_id)
+        return
+
+    # Тарифные продукты (Doday Tasks, Lessio) двигают глобальный тариф.
+    # Продукты-вертикали (ПДД) тариф не трогают — у них grants_tier is None.
+    if product.grants_tier is not None:
+        user.tier = product.grants_tier
+        if product.duration_months is None:
+            # Пожизненно — ставим 2099 год, а не None: None означает «Pro
+            # никогда не было» в остальном коде.
+            user.pro_until = datetime(2099, 12, 31, tzinfo=UTC)
+        else:
+            now = datetime.now(UTC)
+            base = user.pro_until if (user.pro_until and user.pro_until > now) else now
+            user.pro_until = base + timedelta(days=30 * product.duration_months)
+
+    if product.grants_entitlement is not None:
+        await grant_entitlement(session, user_id, product)
+
+
+async def grant_entitlement(session: AsyncSession, user_id: UUID, product: Product) -> None:
+    """Заводит или продлевает доступ к отдельной вертикали (например ``pdd_pro``).
+
+    Идемпотентна при повторном продлении: пожизненный доступ никогда не
+    понижается до срочного, срочный продлевается от максимума из «сейчас» и
+    текущего срока.
+    """
+    feature = product.grants_entitlement
+    if feature is None:  # вызывающий гарантирует непустое; сужаем для типизации
+        return
+
+    ent = (
+        await session.execute(
+            select(Entitlement).where(
+                Entitlement.user_id == user_id,
+                Entitlement.feature == feature,
+            )
+        )
+    ).scalar_one_or_none()
+
+    if product.duration_months is None:
+        new_expiry: datetime | None = None  # пожизненно
+    else:
+        now = datetime.now(UTC)
+        base = ent.expires_at if (ent and ent.expires_at and ent.expires_at > now) else now
+        new_expiry = base + timedelta(days=30 * product.duration_months)
+
+    if ent is None:
+        session.add(
+            Entitlement(
+                user_id=user_id,
+                feature=feature,
+                expires_at=new_expiry,
+                source_code=product.code,
+            )
+        )
+        return
+
+    if ent.expires_at is None:
+        return  # пожизненный доступ не понижаем
+    ent.expires_at = new_expiry
+    ent.source_code = product.code

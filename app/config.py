@@ -92,6 +92,14 @@ class Settings(BaseSettings):
     # Lessio Application не создаётся, Doday bot работает как раньше. Stars-invoice
     # для tutor_pro_* продуктов выписываются на этом боте, потому что Stars-выручка
     # привязана к боту-источнику createInvoiceLink.
+    # --- ЮKassa (оплата картой и СБП) ------------------------------------
+    # Самозанятому подключение доступно без ИП: паспорт + ИНН, договор через
+    # курьера. Чеки в ФНС и покупателю ЮKassa формирует сама, вручную в
+    # «Мой налог» вбивать ничего не нужно.
+    # Пусто → оплата картой отключена, остаются только Telegram Stars.
+    yookassa_shop_id: str = ""
+    yookassa_secret_key: str = ""
+
     lessio_bot_token: str = ""
     lessio_bot_username: str = ""
 
