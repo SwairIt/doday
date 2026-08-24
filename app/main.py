@@ -10,7 +10,6 @@ from fastapi.responses import (
     FileResponse,
     JSONResponse,
     PlainTextResponse,
-    RedirectResponse,
     Response,
 )
 from fastapi.staticfiles import StaticFiles
@@ -166,19 +165,27 @@ async def _hub_subdomain_rewrite(
 async def _doday_legacy_url_redirect(
     request: Request, call_next: Callable[[Request], Awaitable[Response]]
 ) -> Response:
-    """301 со старых адресов `/doday/*` на новые в корне домена.
+    """Старые адреса `/doday/*` отдают ту же страницу, БЕЗ редиректа.
 
-    С 2026-08-24 getdoday.ru принадлежит продукту целиком, поэтому приложение
-    живёт по `/app/...`, а не `/doday/app/...`. Старые ссылки — закладки,
-    письма, поисковый индекс — продолжают работать через 301.
+    С 2026-08-24 приложение живёт по `/app/...`, а не `/doday/app/...`.
+    Казалось бы, напрашивается 301 со старого адреса на новый — но так делать
+    нельзя: предыдущая версия сайта отдавала 301 в ОБРАТНУЮ сторону
+    (`/app/*` → `/doday/*`), а 301 браузеры кэшируют бессрочно. У всех, кто
+    заходил раньше, получилась бы петля: кэш ведёт на /doday/..., сервер
+    отправляет назад на /app/..., и так до ERR_TOO_MANY_REDIRECTS.
+
+    Поэтому старый префикс просто срезается внутри запроса: страница
+    открывается по обоим адресам, петли нет. Дубли в индексе закрыты
+    `Disallow: /doday/` в robots.txt.
+
+    Убрать эту прослойку можно, когда кэш 301 у пользователей истечёт —
+    ориентир не раньше 2027 года, браузеры держат такие записи долго.
     """
     path = request.url.path
     if path == "/doday":
-        return RedirectResponse(url="/", status_code=301)
-    if path.startswith("/doday/"):
-        tail = path[len("/doday") :]
-        query = f"?{request.url.query}" if request.url.query else ""
-        return RedirectResponse(url=f"{tail}{query}", status_code=301)
+        request.scope["path"] = "/"
+    elif path.startswith("/doday/"):
+        request.scope["path"] = path[len("/doday") :]
     return await call_next(request)
 
 
@@ -538,7 +545,6 @@ async def sitemap_xml(session: AsyncSession = Depends(get_session)) -> Response:
     # priority 1.0 — главная; 0.8 — топ-2 продуктовых лендинга; 0.7 — остальное
     static_high_paths = [
         "/",
-        "/doday",
         "/lessio",
         "/qa/",
     ]
