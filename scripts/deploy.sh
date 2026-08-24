@@ -1,55 +1,52 @@
 #!/usr/bin/env bash
-# Деплой Doday на сервер. Запускать НА СЕРВЕРЕ из каталога проекта.
+# Деплой Doday на прод. Запускать НА СЕРВЕРЕ под пользователем getdoday —
+# из планировщика FastPanel (cron) или из SSH-сессии.
 #
-#   bash scripts/deploy.sh
+#   bash /var/www/getdoday/data/www/getdoday.ru/app/scripts/deploy.sh
 #
-# Что делает: подтягивает код, ставит зависимости, накатывает миграции,
-# перезапускает сервис и проверяет, что сайт отвечает. Любой шаг падает —
-# скрипт останавливается, чтобы не оставить прод в половинчатом состоянии.
-set -euo pipefail
+# Механизм взят из рабочего деплой-скрипта проекта: сервис поднимается не
+# через systemd, а скриптом start_uvicorn.py на порту 8011 под этим же
+# пользователем — root и sudo не нужны.
+set -uo pipefail
 
-SERVICE="${DODAY_SERVICE:-doday}"
-BASE_URL="${DODAY_BASE_URL:-http://127.0.0.1:8011}"
+APP_DIR="/var/www/getdoday/data/www/getdoday.ru/app"
+START="/var/www/getdoday/data/start_uvicorn.py"
+PORT=8011
 
-step() { printf '\n\033[1;36m== %s\033[0m\n' "$1"; }
+log() { printf '\n== %s\n' "$1"; }
 
-step "Текущая версия"
-git rev-parse --short HEAD
+cd "$APP_DIR" || { echo "нет каталога $APP_DIR"; exit 1; }
 
-step "Забираю код"
-git pull --ff-only
+log "Было"
+git log -1 --oneline
 
-step "Зависимости"
+log "Забираю код"
+git fetch origin --quiet
+git reset --hard origin/master
+git log -1 --oneline
+
+log "Чищу .pyc"
+find "$APP_DIR" -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true
+
+log "Миграции базы"
 if command -v uv >/dev/null 2>&1; then
-  uv sync --frozen || uv sync
+  uv run python -m alembic upgrade head || python3 -m alembic upgrade head
 else
-  echo "uv не найден — пропускаю (зависимости не менялись?)"
+  python3 -m alembic upgrade head
 fi
 
-step "Миграции базы"
-# Через python -m: обёртки в .venv собраны под путь другой машины и падают
-# с «uv trampoline failed to canonicalize script path».
-if command -v uv >/dev/null 2>&1; then
-  uv run python -m alembic upgrade head
+log "Перезапуск uvicorn на :$PORT"
+for pid in $(lsof -ti:$PORT 2>/dev/null); do kill -9 "$pid"; done
+sleep 1
+python3 "$START"
+sleep 4
+
+log "Проверка"
+code=$(curl -s -o /dev/null -w '%{http_code}' -m 8 "http://127.0.0.1:$PORT/" || echo 000)
+echo "  / -> $code"
+if [ "$code" = "200" ]; then
+  echo "== ГОТОВО, деплой успешен"
 else
-  python -m alembic upgrade head
+  echo "== сайт не отвечает 200, смотри логи uvicorn"
+  exit 1
 fi
-
-step "Перезапуск $SERVICE"
-sudo systemctl restart "$SERVICE"
-sleep 3
-systemctl is-active "$SERVICE"
-
-step "Проверка"
-for path in / /all /pricing /app/today; do
-  code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$BASE_URL$path" || echo 000)
-  printf '  %-14s %s\n' "$path" "$code"
-  case "$path:$code" in
-    /:200|/all:200|/pricing:200) ;;
-    "/app/today:401"|"/app/today:302"|"/app/today:303") ;;  # требует входа — норма
-    *) echo "  ! неожиданный ответ, смотри journalctl -u $SERVICE -n 50"; exit 1 ;;
-  esac
-done
-
-step "Готово"
-git rev-parse --short HEAD
