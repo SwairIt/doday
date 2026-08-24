@@ -294,7 +294,7 @@ async def robokassa_success() -> RedirectResponse:
     Доступ здесь НЕ выдаём: адрес открывается вручную. Просто отправляем
     в приложение — к моменту возврата уведомление обычно уже обработано.
     """
-    return RedirectResponse(url="/doday/app/today?paid=1", status_code=302)
+    return RedirectResponse(url="/app/today?paid=1", status_code=302)
 
 
 @router.get("/robokassa/fail", include_in_schema=False)

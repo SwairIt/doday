@@ -15,7 +15,6 @@ templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("/")
-@router.get("/doday", include_in_schema=False)
 async def doday_landing(request: Request, user: CurrentUser) -> Response:
     """Doday Tasks marketing landing (todo-list product page).
 
@@ -26,7 +25,7 @@ async def doday_landing(request: Request, user: CurrentUser) -> Response:
     """
     preview = request.query_params.get("preview") == "1"
     if user is not None and not preview:
-        return RedirectResponse(url="/doday/app/today", status_code=302)
+        return RedirectResponse(url="/app/today", status_code=302)
     return templates.TemplateResponse(
         request,
         "landing.html",
@@ -225,4 +224,4 @@ async def invite_accept(
                 **ctx,
             },
         )
-    return RedirectResponse("/doday/app/projects", status_code=303)
+    return RedirectResponse("/app/projects", status_code=303)

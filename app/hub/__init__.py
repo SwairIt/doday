@@ -3,7 +3,7 @@
 Doday is no longer a single product (todo-list). It's an umbrella for several
 solo-built products on shared infrastructure:
 
-- **Doday Tasks** — original todo + teams app → `/doday`, app at `/doday/app/today`
+- **Doday Tasks** — original todo + teams app → `/` (getdoday.ru), приложение на `/app/today`
 - **Lessio** — Telegram-кабинет for tutors → `/lessio`
 - **Беллстрой ТВ** — meme arcade game → `/game`
 - **Tap Tower** — clicker mini-app → `/taptower`
