@@ -159,6 +159,12 @@ async def create_stars_invoice(payload: InvoiceCreateIn, user: RequiredUser) -> 
         raise HTTPException(
             status.HTTP_404_NOT_FOUND, f"продукт «{payload.product_code}» не найден"
         )
+    # Та же защита, что и у оплаты картой: уже покрытый тариф повторно не продаём.
+    if purchase_state(user, product) == "owned":
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="У тебя уже есть этот тариф или выше — повторно платить не нужно.",
+        )
     try:
         invoice_url = await create_invoice_link(user, payload.product_code)
     except StarsError as exc:
