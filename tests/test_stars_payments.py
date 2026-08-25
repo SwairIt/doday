@@ -364,11 +364,13 @@ async def test_list_products_endpoint(logged_in_client: AsyncClient) -> None:
     assert resp.status_code == 200
     products = resp.json()
     codes = {p["code"] for p in products}
-    # ПДД products are sold on /pdd/pro, not in the Doday Tasks catalog.
-    assert codes == {p.code for p in PRODUCTS if not p.code.startswith("pdd_")}
+    # Каталог Doday Tasks: без ПДД (продаётся на /pdd/pro) и без Lessio
+    # (tutor_ — своя страница). Свежий пользователь на Free видит все апгрейды.
+    assert codes == {p.code for p in PRODUCTS if not p.code.startswith(("pdd_", "tutor_"))}
     for p in products:
         assert p["stars_amount"] > 0
         assert "title" in p and "description" in p
+        assert p["state"] == "buy"  # для Free всё это новые покупки
 
 
 async def test_billing_me_includes_pro_until(logged_in_client: AsyncClient) -> None:

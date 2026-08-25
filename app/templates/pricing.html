@@ -181,7 +181,14 @@
           <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span>Безлимит кастомных фильтров</span></li>
           <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span>Priority support</span></li>
         </ul>
-        {% if cards_enabled %}
+        {% if paid_tier in ['pro', 'team', 'family'] %}
+          <a href="/app/today" class="btn-ghost py-2 text-center">
+            У тебя уже Pro ✓
+          </a>
+          <p class="text-[10px] text-center text-[var(--text-muted)] mt-2">
+            Продление и управление — в настройках
+          </p>
+        {% elif cards_enabled %}
           <a href="/api/billing/pay/pro_1m" class="btn-primary py-2 text-center"
              title="Оплата картой или через СБП">
             Купить за <span class="font-bold">199 ₽</span>
@@ -220,9 +227,13 @@
           <li class="flex items-start gap-2"><span class="text-amber-400 mt-0.5">◐</span><span>Уведомления родителю <span class="text-[10px] text-amber-400">скоро</span></span></li>
           <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">✓</span><span>Один счёт, не нужно платить за каждого ребёнка</span></li>
         </ul>
-        <a href="/app/settings#subscription" class="btn-ghost py-2 text-center">
-          Купить за <span class="font-bold">500 ⭐</span>
-        </a>
+        {% if paid_tier == 'family' %}
+          <a href="/app/today" class="btn-ghost py-2 text-center">У тебя уже Family ✓</a>
+        {% else %}
+          <a href="/app/settings#subscription" class="btn-ghost py-2 text-center">
+            Купить за <span class="font-bold">500 ⭐</span>
+          </a>
+        {% endif %}
       </div>
 
     </div>

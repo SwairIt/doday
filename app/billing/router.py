@@ -20,6 +20,7 @@ from app.billing.service import (
     grant_product_access,
     is_trial_active,
     limits_for,
+    purchase_state,
     trial_days_remaining,
 )
 from app.billing.stars import StarsError, create_invoice_link
@@ -47,6 +48,10 @@ class ProductOut(BaseModel):
     # Прямая ссылка на оплату картой. None, когда эквайринг не настроен —
     # фронт тогда показывает только Stars.
     card_pay_url: str | None
+    # Что это за покупка для ТЕКУЩЕГО пользователя: "buy" (новый тариф) или
+    # "extend" (продление того, что уже есть). Уже купленное («owned») в каталог
+    # не попадает вовсе — фронт по этому полю подписывает кнопку.
+    state: str
 
 
 class InvoiceCreateIn(BaseModel):
@@ -91,35 +96,54 @@ async def me_endpoint(user: RequiredUser) -> TierMeOut:
 
 
 @router.get("/products", response_model=list[ProductOut])
-async def list_products_endpoint(_: RequiredUser) -> list[ProductOut]:
-    """Public catalog of buyable products — Mini App / pricing page consume this.
+async def list_products_endpoint(user: RequiredUser) -> list[ProductOut]:
+    """Каталог покупок для Doday Tasks, отфильтрованный под ТЕКУЩИЙ тариф.
 
-    During beta (`BETA_FREE_FOR_ALL=true`), the API returns ONLY the lifetime
-    founder offer. Monthly / annual subs are confusing when everything is
-    already free — anyone considering payment in beta is buying the
-    «lock-in before paid mode returns» founder deal.
+    Показываем только то, что осмысленно купить именно этому пользователю:
+    - уже купленное (равный/старший тариф, либо пожизненный) — не показываем;
+    - помесячное продление тому, у кого подписка уже есть, — не показываем
+      (предлагаем год или «навсегда»), чтобы не было «купил год → купи месяц»;
+    - остальное помечаем ``state`` = "buy" (новый тариф) / "extend" (продление).
+
+    В бете (`BETA_FREE_FOR_ALL=true`) отдаём только founder-«навсегда»: месячные
+    и годовые сбивают с толку, когда всё и так бесплатно — платят лишь за то,
+    чтобы закрепить тариф до включения оплаты.
+
+    ПДД и Lessio (`pdd_`, `tutor_`) продаются на своих страницах — в каталог
+    Doday Tasks их не пускаем.
     """
     from app.config import get_settings
 
     beta = get_settings().beta_free_for_all
     cards_on = robokassa.is_configured()
-    products_visible = [p for p in PRODUCTS if p.code == "pro_forever"] if beta else list(PRODUCTS)
-    # ПДД products are sold on their own /pdd/pro page, not in the Doday Tasks
-    # pricing catalog — keep them out of this endpoint.
-    products_visible = [p for p in products_visible if not p.code.startswith("pdd_")]
-    return [
-        ProductOut(
-            code=p.code,
-            title=p.title,
-            description=p.description,
-            grants_tier=p.grants_tier,
-            duration_months=p.duration_months,
-            stars_amount=p.stars_amount,
-            rub_amount=p.rub_amount,
-            card_pay_url=(f"/api/billing/pay/{p.code}" if cards_on else None),
+    if beta:
+        candidates = [p for p in PRODUCTS if p.code == "pro_forever"]
+    else:
+        candidates = [p for p in PRODUCTS if not p.code.startswith(("pdd_", "tutor_"))]
+
+    out: list[ProductOut] = []
+    for p in candidates:
+        state = purchase_state(user, p)
+        if state == "owned":
+            continue  # уже есть — не предлагаем
+        if state == "extend" and p.duration_months is not None and p.duration_months < 12:
+            # У пользователя уже есть подписка этого тарифа — помесячное продление
+            # не показываем: пусть берёт год или «навсегда».
+            continue
+        out.append(
+            ProductOut(
+                code=p.code,
+                title=p.title,
+                description=p.description,
+                grants_tier=p.grants_tier,
+                duration_months=p.duration_months,
+                stars_amount=p.stars_amount,
+                rub_amount=p.rub_amount,
+                card_pay_url=(f"/api/billing/pay/{p.code}" if cards_on else None),
+                state=state,
+            )
         )
-        for p in products_visible
-    ]
+    return out
 
 
 @router.post("/stars/invoice", response_model=InvoiceCreateOut)
@@ -232,6 +256,15 @@ async def start_card_payment(
     product = get_product(product_code)
     if product is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Тариф не найден")
+
+    # Защита от повторной/бессмысленной покупки по прямой ссылке: если тариф уже
+    # покрыт (равный/старший или пожизненный), оплату не заводим. Каталог такие
+    # продукты и так прячет, но ссылку можно открыть руками.
+    if purchase_state(user, product) == "owned":
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="У тебя уже есть этот тариф или выше — повторно платить не нужно.",
+        )
 
     payment = CardPayment(
         user_id=user.id,

@@ -133,6 +133,7 @@ async def pricing(request: Request, user: CurrentUser) -> HTMLResponse:
     кнопка оплаты картой. Страница не должна обещать то, чего нет.
     """
     from app.billing import robokassa
+    from app.billing.service import paid_tier
 
     return templates.TemplateResponse(
         request,
@@ -141,6 +142,9 @@ async def pricing(request: Request, user: CurrentUser) -> HTMLResponse:
             "user": user,
             "beta_free_for_all": get_settings().beta_free_for_all,
             "cards_enabled": robokassa.is_configured(),
+            # Реально оплаченный тариф (без беты/триала): по нему прячем «Купить»
+            # у того, кто этот тариф уже держит. Аноним → None.
+            "paid_tier": paid_tier(user) if user else None,
         },
     )
 

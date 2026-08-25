@@ -77,7 +77,11 @@
       <template x-for="product in products" :key="product.code">
         <div class="p-3 rounded-xl bg-[var(--surface-2)]/40 border border-[var(--border)] hover:border-[var(--accent)]/50 transition flex flex-col">
           <div class="flex items-center justify-between gap-2 mb-1">
-            <span class="font-medium text-sm" x-text="product.title"></span>
+            <span class="font-medium text-sm">
+              <span x-text="product.title"></span>
+              <span x-show="product.state === 'extend'"
+                    class="ml-1 text-[9px] px-1 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-bold uppercase align-middle">продлить</span>
+            </span>
             <span class="text-sm font-extrabold text-[var(--accent)] shrink-0" x-text="product.rub_amount + '₽'"></span>
           </div>
           <div class="text-[11px] text-[var(--text-muted)] leading-relaxed mb-2.5 flex-1" x-text="product.description"></div>
@@ -105,6 +109,12 @@
     </template>
     <template x-if="loading && !products.length">
       <p class="text-xs text-[var(--text-muted)] mt-3 italic">Загружаю список тарифов…</p>
+    </template>
+    {# Пусто и без ошибки — значит покупать уже нечего (максимальный/пожизненный тариф). #}
+    <template x-if="!loading && !err && !products.length">
+      <p class="text-xs text-[var(--text-muted)] mt-3">
+        У тебя максимальный тариф — докупать нечего ✨
+      </p>
     </template>
     <p class="text-[11px] text-[var(--text-muted)] mt-3">
       Stars покупаются в любом приложении Telegram. На десктопе нажми кнопку —

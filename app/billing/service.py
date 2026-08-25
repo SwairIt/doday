@@ -220,6 +220,68 @@ def has_pro_features(user: User) -> bool:
     return effective_tier(user) in ("pro", "team", "family")
 
 
+# ---------------------------------------------------------------------------
+# Что пользователю осмысленно покупать при его текущем тарифе.
+#
+# Нельзя показывать «Купить Pro» тому, у кого уже Pro, и предлагать помесячную
+# тому, у кого годовая. Логику держим тут, а не в шаблоне: её используют и
+# каталог `/api/billing/products`, и защита эндпоинта оплаты — иначе фронт и
+# бэкенд разойдутся, а расхождение в биллинге стоит денег.
+# ---------------------------------------------------------------------------
+
+# Ранг тарифа: выше ранг — больше возможностей. team — legacy-синоним pro.
+_TIER_RANK: dict[str, int] = {"free": 0, "team": 1, "pro": 1, "family": 2}
+
+
+def _has_lifetime(user: User) -> bool:
+    """Пожизненная подписка: pro_until выставлен в далёкое будущее (год 2099)."""
+    return user.pro_until is not None and user.pro_until.year >= 2099
+
+
+def paid_tier(user: User) -> str:
+    """Реально ОПЛАЧЕННЫЙ тариф — без beta-оверрайда и без trial.
+
+    Отличается от :func:`effective_tier`: тот показывает, что пользователю
+    доступно (включая бету и триал), а этот — что он реально купил. Для решения
+    «предлагать ли покупку» нужен именно оплаченный: триальному и бета-юзеру
+    покупку показывать НАДО, хотя фичи у них уже открыты.
+    """
+    now = datetime.now(UTC)
+    if user.tier in ("pro", "team", "family") and user.pro_until and user.pro_until > now:
+        return user.tier
+    return "free"
+
+
+def purchase_state(user: User, product: Product) -> str:
+    """Как показывать тарифный продукт данному пользователю.
+
+    Возвращает:
+    - ``"buy"``    — честный апгрейд, которого у пользователя ещё нет
+      (Free→Pro, Pro→Family, срочный→навсегда);
+    - ``"extend"`` — тот же тариф, срочная подписка: покупка продлевает срок;
+    - ``"owned"``  — уже покрыто (равный/старший тариф или уже пожизненно);
+      предлагать бессмысленно — прячем в каталоге и запрещаем оплату.
+
+    Считаем от ОПЛАЧЕННОГО тарифа (:func:`paid_tier`), а не effective: иначе в
+    бете, где всем показывается pro, никто не смог бы купить founder-навсегда.
+    У вертикалей (ПДД, ``grants_tier is None``) своя логика — тут всегда ``buy``.
+    """
+    if product.grants_tier is None:
+        return "buy"
+    user_rank = _TIER_RANK.get(paid_tier(user), 0)
+    prod_rank = _TIER_RANK.get(product.grants_tier, 0)
+    if user_rank < prod_rank:
+        return "buy"  # апгрейд на тариф выше
+    if user_rank > prod_rank:
+        return "owned"  # у пользователя тариф выше — этот не нужен
+    # Равный тариф и он реально оплачен:
+    if _has_lifetime(user):
+        return "owned"  # уже навсегда на этом тарифе — покупка ничего не даст
+    if product.duration_months is None:
+        return "buy"  # срочный → навсегда: осмысленный апгрейд
+    return "extend"  # продление того же тарифа
+
+
 async def has_entitlement(session: AsyncSession, user: User, feature: str) -> bool:
     """True if the beta override is on, or the user holds a non-expired grant.
 
