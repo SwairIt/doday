@@ -30,6 +30,7 @@ from app.admin.router import (
 from app.auth.router import router as auth_router
 from app.backup.router import router as backup_router
 from app.billing.router import router as billing_router
+from app.blog.router import router as blog_router
 from app.calendar_feed.router import (
     router as calendar_feed_router,
 )
@@ -396,6 +397,7 @@ async def _csrf_origin_check(
 # bot-флуд = блок). nginx уровень был бы лучше, но без sudo на FastPanel-сервере
 # — это резервная защита от DDoS на статические render'ы.
 _ANON_LESSIO_PREFIXES = (
+    "/blog",
     "/lessio/help",
     "/lessio/blog",
     "/lessio/dlya-",
@@ -594,6 +596,7 @@ app.include_router(lessio_cabinet_router)
 app.include_router(lessio_help_router)
 app.include_router(lessio_seo_router)
 app.include_router(lessio_blog_router)
+app.include_router(blog_router)
 app.include_router(lessio_public_router)
 app.include_router(lessio_cron_router)
 app.include_router(lessio_admin_router)
@@ -783,6 +786,7 @@ async def robots_txt() -> PlainTextResponse:
         "Allow: /pdd/\n"
         "Allow: /lessio/help\n"
         "Allow: /lessio/blog\n"
+        "Allow: /blog\n"
         "Allow: /lessio/dlya-repetitorov\n"
         "Allow: /lessio/dlya-trenerov\n"
         "Allow: /lessio/dlya-psihologov\n"
@@ -791,6 +795,7 @@ async def robots_txt() -> PlainTextResponse:
         f"Sitemap: {_settings.app_base_url.rstrip('/')}/sitemap.xml\n"
         f"Sitemap: {_settings.app_base_url.rstrip('/')}/qa/sitemap.xml\n"
         f"Sitemap: {_settings.app_base_url.rstrip('/')}/pdd/sitemap.xml\n"
+        f"Sitemap: {_settings.app_base_url.rstrip('/')}/blog/sitemap.xml\n"
     )
     return PlainTextResponse(body)
 
@@ -819,6 +824,7 @@ async def sitemap_xml(session: AsyncSession = Depends(get_session)) -> Response:
         "/changelog",
         "/roadmap",
         "/help",
+        "/blog",
         "/lessio/help",
         "/lessio/blog",
         "/lessio/dlya-repetitorov",

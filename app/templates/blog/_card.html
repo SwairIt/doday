@@ -1,0 +1,22 @@
+{# Карточка статьи. Ожидает `p` (Post) и `cat_names` (dict slug→Category). #}
+<a href="/blog/{{ p.slug }}"
+   class="blog-card card p-6 flex flex-col gap-3 transition-transform hover:-translate-y-1 hover:shadow-card hover:border-[var(--accent)]"
+   data-category="{{ p.category }}"
+   data-search="{{ (p.title ~ ' ' ~ p.summary ~ ' ' ~ (p.tags|join(' ')) ~ ' ' ~ (p.keywords|join(' ')))|lower }}">
+  <div class="flex items-center justify-between gap-2">
+    <span class="text-2xl leading-none">{{ p.emoji }}</span>
+    <span class="text-[11px] uppercase tracking-wider font-semibold text-[var(--accent)] bg-[var(--surface-2)] rounded-full px-2.5 py-1">
+      {{ cat_names[p.category].name if p.category in cat_names else p.category }}
+    </span>
+  </div>
+  <h3 class="text-lg font-bold leading-snug">{{ p.title }}</h3>
+  <p class="text-sm text-[var(--text-muted)] leading-relaxed flex-1">{{ p.summary }}</p>
+  <div class="flex items-center gap-3 text-xs text-[var(--text-muted)] pt-1">
+    <span class="inline-flex items-center gap-1">
+      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      {{ p.reading_min }} мин чтения
+    </span>
+    <span aria-hidden="true">·</span>
+    <time datetime="{{ p.published_at }}">{{ p.published_at[8:10] }}.{{ p.published_at[5:7] }}.{{ p.published_at[0:4] }}</time>
+  </div>
+</a>

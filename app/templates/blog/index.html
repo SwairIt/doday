@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% set page_url = base_url ~ '/blog' ~ ('/c/' ~ category.slug if category else '') %}
+{% block title %}{% if category %}{{ category.seo_title }}{% else %}Блог Doday — учёба, домашка, продуктивность: {{ total_count }} статей{% endif %}{% endblock %}
+{% block seo_description %}{% if category %}{{ category.seo_description }}{% else %}Статьи для школьников, студентов и родителей: как делать домашку быстрее, готовиться к ОГЭ и ЕГЭ, не прокрастинировать и ничего не забывать. Всё бесплатно и без воды.{% endif %}{% endblock %}
+{% block seo_keywords %}блог для школьников, как быстро сделать домашнее задание, продуктивность в учёбе, подготовка к егэ, статьи про учёбу, планировщик для школьника{% if category %}, {{ category.name|lower }}{% endif %}{% endblock %}
+{% block seo_canonical %}{{ page_url }}{% endblock %}
+{% block og_url %}{{ page_url }}{% endblock %}
+{% block og_title %}{% if category %}{{ category.seo_title }}{% else %}Блог Doday — учёба без выгорания{% endif %}{% endblock %}
+{% block tw_title %}{% if category %}{{ category.seo_title }}{% else %}Блог Doday — учёба без выгорания{% endif %}{% endblock %}
+{% block seo_robots %}{% if search_query %}noindex,follow{% else %}index,follow{% endif %}{% endblock %}
+
+{% block ld_json %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Blog",
+  "name": "Блог Doday",
+  "url": "{{ base_url }}/blog",
+  "description": "Статьи про учёбу, домашние задания, продуктивность, экзамены — для школьников, студентов, родителей и учителей.",
+  "inLanguage": "ru",
+  "publisher": {"@type": "Organization", "name": "Doday", "url": "{{ base_url }}/"}
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Doday", "item": "{{ base_url }}/"},
+    {"@type": "ListItem", "position": 2, "name": "Блог", "item": "{{ base_url }}/blog"}{% if category %},
+    {"@type": "ListItem", "position": 3, "name": "{{ category.name }}", "item": "{{ page_url }}"}{% endif %}
+  ]
+}
+</script>
+{% endblock %}
+
+{% block layout %}
+{% set cat_names = {} %}
+{% for c in all_categories %}{% set _ = cat_names.update({c.slug: c}) %}{% endfor %}
+<div class="min-h-screen flex flex-col">
+  {% include "blog/_header.html" %}
+
+  <main class="flex-1 w-full">
+    {# ── Hero + поиск ─────────────────────────────────────────────── #}
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 pb-8">
+      <nav class="text-sm text-[var(--text-muted)] mb-6 flex items-center gap-2" aria-label="Хлебные крошки">
+        <a href="/" class="hover:text-[var(--text)]">Doday</a>
+        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+        {% if category %}
+          <a href="/blog" class="hover:text-[var(--text)]">Блог</a>
+          <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          <span class="text-[var(--text)]">{{ category.name }}</span>
+        {% else %}
+          <span class="text-[var(--text)]">Блог</span>
+        {% endif %}
+      </nav>
+
+      <div class="max-w-3xl">
+        <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">
+          {% if category %}{{ category.emoji }} {{ category.name }}{% else %}Блог Doday{% endif %}
+        </p>
+        <h1 class="text-4xl md:text-5xl font-extrabold leading-tight mb-4">
+          {% if category %}{{ category.name }}{% else %}Учёба без выгорания:<br class="hidden sm:block"> статьи, которые реально помогают{% endif %}
+        </h1>
+        <p class="text-[var(--text-muted)] text-lg leading-relaxed">
+          {% if category %}{{ category.description }}{% else %}Как делать домашку быстрее, готовиться к экзаменам без паники, не прокрастинировать и ничего не забывать. {{ total_count }} {{ 'статья' if total_count % 10 == 1 and total_count % 100 != 11 else 'статьи' if 2 <= total_count % 10 <= 4 and not 12 <= total_count % 100 <= 14 else 'статей' }} для школьников, студентов, родителей и учителей.{% endif %}
+        </p>
+      </div>
+
+      <form action="{{ '/blog/c/' ~ category.slug if category else '/blog' }}" method="get" class="mt-8 max-w-2xl relative" role="search">
+        <svg class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z"/></svg>
+        <input id="blog-search" type="search" name="q" value="{{ search_query }}" autocomplete="off"
+               placeholder="Найти статью: домашка, ЕГЭ, прокрастинация, расписание…"
+               class="input w-full !pl-12 !pr-28 !py-3.5 text-base"
+               aria-label="Поиск по статьям">
+        <button type="submit" class="btn-primary absolute right-1.5 top-1/2 -translate-y-1/2 !py-2 !px-4 text-sm">Найти</button>
+      </form>
+      <p id="blog-search-hint" class="text-xs text-[var(--text-muted)] mt-2 min-h-[1rem]">
+        {% if search_query %}По запросу «{{ search_query }}» — {{ posts|length }} {{ 'статья' if posts|length % 10 == 1 and posts|length % 100 != 11 else 'статьи' if 2 <= posts|length % 10 <= 4 and not 12 <= posts|length % 100 <= 14 else 'статей' }}. <a href="{{ '/blog/c/' ~ category.slug if category else '/blog' }}" class="text-[var(--accent)] hover:underline">Сбросить</a>{% endif %}
+      </p>
+    </section>
+
+    {# ── Категории ─────────────────────────────────────────────────── #}
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 pb-8">
+      <div class="flex flex-wrap gap-2" role="list" aria-label="Категории">
+        <a href="/blog" role="listitem"
+           class="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm border transition
+                  {% if not category %}grad-bg text-white border-transparent shadow-glow{% else %}border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)] hover:text-[var(--text)] hover:border-[var(--accent)]{% endif %}">
+          Все <span class="opacity-70">{{ total_count }}</span>
+        </a>
+        {% for c, n in categories %}
+          <a href="/blog/c/{{ c.slug }}" role="listitem"
+             class="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm border transition
+                    {% if category and category.slug == c.slug %}grad-bg text-white border-transparent shadow-glow{% else %}border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)] hover:text-[var(--text)] hover:border-[var(--accent)]{% endif %}">
+            <span aria-hidden="true">{{ c.emoji }}</span> {{ c.name }} <span class="opacity-70">{{ n }}</span>
+          </a>
+        {% endfor %}
+      </div>
+    </section>
+
+    {# ── Сетка статей ──────────────────────────────────────────────── #}
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
+      {% if posts %}
+        <div id="blog-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {% for p in posts %}
+            {% include "blog/_card.html" %}
+          {% endfor %}
+        </div>
+        <div id="blog-empty" class="hidden card p-10 text-center text-[var(--text-muted)]">
+          Ничего не нашлось. Попробуй другое слово — например, «домашка», «ЕГЭ» или «расписание».
+        </div>
+        {% if posts|length > 24 %}
+          <div class="text-center mt-10">
+            <button id="blog-more" type="button" class="btn-ghost">Показать ещё</button>
+          </div>
+        {% endif %}
+      {% else %}
+        <div class="card p-10 text-center">
+          <div class="text-4xl mb-3">🔎</div>
+          <p class="text-lg font-semibold mb-1">Ничего не нашлось</p>
+          <p class="text-[var(--text-muted)] text-sm">Попробуй другое слово — например, «домашка», «ЕГЭ» или «расписание».</p>
+        </div>
+      {% endif %}
+    </section>
+
+    {# ── CTA ────────────────────────────────────────────────────────── #}
+    <section class="max-w-5xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
+      <div class="card p-8 sm:p-12 text-center relative overflow-hidden">
+        <div class="absolute inset-0 grad-bg opacity-[0.06] pointer-events-none"></div>
+        <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Читать мало — надо делать</p>
+        <h2 class="text-2xl sm:text-3xl font-bold mb-3">Домашка, расписание и напоминания — в одном месте</h2>
+        <p class="text-[var(--text-muted)] max-w-xl mx-auto mb-6">Doday бесплатно для школьников: задачи по предметам, импорт дз из дневника, напоминания в Telegram и стрики за каждый день без пропусков.</p>
+        <div class="flex flex-wrap justify-center gap-3">
+          <a href="/auth/register" class="btn-primary">Начать бесплатно</a>
+          <a href="/for-students" class="btn-ghost">Как это работает</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  {% include "_partials/public_footer.html" %}
+</div>
+
+<script>
+  // Мгновенный фильтр карточек по мере ввода + «показать ещё».
+  (() => {
+    const input = document.getElementById('blog-search');
+    const grid = document.getElementById('blog-grid');
+    const empty = document.getElementById('blog-empty');
+    const more = document.getElementById('blog-more');
+    const hint = document.getElementById('blog-search-hint');
+    if (!input || !grid) return;
+    const cards = Array.from(grid.querySelectorAll('.blog-card'));
+    const PAGE = 24;
+    let shown = PAGE;
+    const serverQuery = input.value.trim();
+
+    const apply = () => {
+      const q = input.value.trim().toLowerCase();
+      const words = q.split(/\s+/).filter(w => w.length > 1);
+      let visible = 0;
+      cards.forEach(card => {
+        const hay = card.dataset.search || '';
+        const ok = words.every(w => hay.includes(w));
+        const show = ok && (q ? true : visible < shown);
+        card.classList.toggle('hidden', !show);
+        if (ok) visible++;
+      });
+      if (empty) empty.classList.toggle('hidden', visible > 0);
+      if (more) more.classList.toggle('hidden', !!q || visible <= shown);
+      if (hint && q && q !== serverQuery.toLowerCase()) {
+        hint.textContent = visible ? `Найдено: ${visible}` : 'Ничего не нашлось — нажми «Найти», чтобы поискать по тексту статей';
+      }
+    };
+    input.addEventListener('input', apply);
+    if (more) more.addEventListener('click', () => { shown += PAGE; apply(); });
+    apply();
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+{% set page_url = base_url ~ '/blog/' ~ post.slug %}
+{% block title %}{{ post.title }} — Блог Doday{% endblock %}
+{% block seo_description %}{{ post.summary }}{% endblock %}
+{% block seo_keywords %}{{ post.keywords|join(', ') }}{% if post.tags %}, {{ post.tags|join(', ') }}{% endif %}{% endblock %}
+{% block seo_canonical %}{{ page_url }}{% endblock %}
+{% block og_url %}{{ page_url }}{% endblock %}
+{% block og_title %}{{ post.title }}{% endblock %}
+{% block tw_title %}{{ post.title }}{% endblock %}
+
+{% block ld_json %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": {{ post.title|tojson|forceescape }},
+  "description": {{ post.summary|tojson|forceescape }},
+  "url": "{{ page_url }}",
+  "mainEntityOfPage": "{{ page_url }}",
+  "datePublished": "{{ post.published_at }}",
+  "dateModified": "{{ post.updated_at }}",
+  "inLanguage": "ru",
+  "articleSection": {{ category.name|tojson|forceescape }},
+  "keywords": {{ post.keywords|join(', ')|tojson|forceescape }},
+  "wordCount": {{ post.word_count }},
+  "timeRequired": "PT{{ post.reading_min }}M",
+  "image": "{{ base_url }}/og.svg",
+  "author": {"@type": "Organization", "name": "Doday", "url": "{{ base_url }}/"},
+  "publisher": {"@type": "Organization", "name": "Doday", "url": "{{ base_url }}/", "logo": {"@type": "ImageObject", "url": "{{ base_url }}/og.svg"}}
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Doday", "item": "{{ base_url }}/"},
+    {"@type": "ListItem", "position": 2, "name": "Блог", "item": "{{ base_url }}/blog"},
+    {"@type": "ListItem", "position": 3, "name": {{ category.name|tojson|forceescape }}, "item": "{{ base_url }}/blog/c/{{ category.slug }}"},
+    {"@type": "ListItem", "position": 4, "name": {{ post.title|tojson|forceescape }}, "item": "{{ page_url }}"}
+  ]
+}
+</script>
+{% if post.faq %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {% for f in post.faq %}
+    {"@type": "Question", "name": {{ f.question|tojson|forceescape }}, "acceptedAnswer": {"@type": "Answer", "text": {{ f.answer|tojson|forceescape }}}}{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ]
+}
+</script>
+{% endif %}
+{% endblock %}
+
+{% block layout %}
+<style>
+  .blog-prose { font-size: 1.0625rem; line-height: 1.75; color: var(--text); }
+  .blog-prose > p:first-child { font-size: 1.15rem; color: var(--text-muted); }
+  .blog-prose h2 { font-size: 1.6rem; font-weight: 700; margin-top: 2.75rem; margin-bottom: 0.9rem; letter-spacing: -0.01em; scroll-margin-top: 6rem; text-wrap: balance; position: relative; }
+  .blog-prose h3 { font-size: 1.2rem; font-weight: 600; margin-top: 1.9rem; margin-bottom: 0.6rem; scroll-margin-top: 6rem; text-wrap: balance; }
+  .blog-prose h2 a.anchor, .blog-prose h3 a.anchor { position: absolute; left: -1.4rem; top: 0; color: var(--accent); opacity: 0; text-decoration: none; font-weight: 400; transition: opacity .15s; }
+  .blog-prose h2:hover a.anchor, .blog-prose h3:hover a.anchor { opacity: .7; }
+  .blog-prose p { margin-bottom: 1rem; text-wrap: pretty; }
+  .blog-prose ul, .blog-prose ol { padding-left: 1.5rem; margin: 0 0 1.1rem; }
+  .blog-prose ul { list-style: disc; }
+  .blog-prose ol { list-style: decimal; }
+  .blog-prose li { margin-bottom: 0.4rem; }
+  .blog-prose li::marker { color: var(--accent); font-weight: 600; }
+  .blog-prose a { color: var(--accent); text-decoration: underline; text-decoration-color: color-mix(in oklab, var(--accent) 35%, transparent); text-underline-offset: 3px; }
+  .blog-prose a:hover { text-decoration-color: var(--accent); }
+  .blog-prose strong { font-weight: 650; color: var(--text); }
+  .blog-prose code { background: var(--surface-2); border: 1px solid var(--border); padding: 0.1rem 0.4rem; border-radius: 6px; font-size: 0.86em; word-break: break-word; }
+  .blog-prose pre { background: var(--surface-2); border: 1px solid var(--border); padding: 0.9rem 1.1rem; border-radius: 12px; overflow-x: auto; margin: 0 0 1.2rem; font-size: 0.9rem; line-height: 1.6; }
+  .blog-prose pre code { background: transparent; border: 0; padding: 0; }
+  .blog-prose blockquote { margin: 1.4rem 0; padding: 1rem 1.25rem; border-left: 4px solid var(--accent); background: color-mix(in oklab, var(--accent) 8%, var(--surface)); border-radius: 0 12px 12px 0; }
+  .blog-prose blockquote p { margin: 0; }
+  .blog-prose blockquote p + p { margin-top: 0.6rem; }
+  .blog-prose hr { border: 0; border-top: 1px solid var(--border); margin: 2.25rem 0; }
+  .blog-prose .table-wrap { overflow-x: auto; margin: 1.25rem 0 1.5rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+  .blog-prose table { border-collapse: collapse; width: 100%; font-size: 0.93rem; min-width: 420px; }
+  .blog-prose th, .blog-prose td { padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+  .blog-prose thead th { background: var(--surface-2); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+  .blog-prose tbody tr:last-child td { border-bottom: 0; }
+  .blog-prose tbody tr:hover td { background: color-mix(in oklab, var(--accent) 4%, transparent); }
+  .blog-prose del { color: var(--text-muted); }
+  .blog-prose img { max-width: 100%; border-radius: 12px; }
+
+  /* Оглавление */
+  .toc-link { display: block; padding: 0.35rem 0.75rem; border-left: 2px solid transparent; color: var(--text-muted); font-size: 0.875rem; line-height: 1.35; border-radius: 0 8px 8px 0; transition: color .15s, border-color .15s, background .15s; }
+  .toc-link:hover { color: var(--text); background: var(--surface-2); }
+  .toc-link.toc-l3 { padding-left: 1.5rem; font-size: 0.8125rem; }
+  .toc-link.toc-active { color: var(--accent); border-left-color: var(--accent); font-weight: 600; background: color-mix(in oklab, var(--accent) 8%, transparent); }
+  #toc-nav { max-height: calc(100vh - 8rem); overflow-y: auto; scrollbar-width: thin; }
+
+  /* Прогресс чтения */
+  #reading-progress { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 60; pointer-events: none; background: transparent; }
+  #reading-progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--grad-from), var(--grad-to)); box-shadow: 0 0 12px color-mix(in oklab, var(--accent) 60%, transparent); transition: width .08s linear; }
+</style>
+
+<div id="reading-progress" role="progressbar" aria-label="Прогресс чтения" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+  <div id="reading-progress-fill"></div>
+</div>
+
+<div class="min-h-screen flex flex-col">
+  {% include "blog/_header.html" %}
+
+  <main class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+    <nav class="text-sm text-[var(--text-muted)] mb-6 flex items-center gap-2 flex-wrap" aria-label="Хлебные крошки">
+      <a href="/" class="hover:text-[var(--text)]">Doday</a>
+      <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      <a href="/blog" class="hover:text-[var(--text)]">Блог</a>
+      <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      <a href="/blog/c/{{ category.slug }}" class="hover:text-[var(--text)]">{{ category.name }}</a>
+    </nav>
+
+    <div class="grid lg:grid-cols-[minmax(0,1fr)_300px] gap-10 xl:gap-16 items-start">
+      <article class="min-w-0 max-w-3xl">
+        <header class="mb-8">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 rounded-xl grad-bg flex items-center justify-center shadow-glow text-2xl">{{ post.emoji }}</div>
+            <a href="/blog/c/{{ category.slug }}" class="text-[11px] uppercase tracking-wider font-semibold text-[var(--accent)] bg-[var(--surface-2)] rounded-full px-2.5 py-1 hover:bg-[var(--accent)] hover:text-white transition">{{ category.name }}</a>
+          </div>
+          <h1 class="text-3xl md:text-4xl lg:text-[2.6rem] font-extrabold leading-tight tracking-tight mb-4">{{ post.title }}</h1>
+          <p class="text-lg text-[var(--text-muted)] leading-relaxed mb-5">{{ post.summary }}</p>
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[var(--text-muted)]">
+            <span class="inline-flex items-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span data-reading-min="{{ post.reading_min }}">{{ post.reading_min }} мин чтения</span>
+            </span>
+            <span class="inline-flex items-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              <time datetime="{{ post.published_at }}">{{ post.published_at[8:10] }}.{{ post.published_at[5:7] }}.{{ post.published_at[0:4] }}</time>
+            </span>
+            <span class="inline-flex items-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h10"/></svg>
+              {{ post.word_count }} слов
+            </span>
+          </div>
+        </header>
+
+        {# Оглавление для мобильных — сворачиваемое #}
+        {% if post.toc %}
+        <details class="lg:hidden card p-4 mb-8">
+          <summary class="cursor-pointer font-semibold text-sm flex items-center justify-between">
+            <span>Содержание</span>
+            <span class="text-xs text-[var(--text-muted)]">{{ post.toc|length }} пунктов</span>
+          </summary>
+          <ol class="mt-3 space-y-1">
+            {% for item in post.toc %}
+              <li><a href="#{{ item.anchor }}" class="toc-link toc-mobile {% if item.level == 3 %}toc-l3{% endif %}">{{ item.text }}</a></li>
+            {% endfor %}
+          </ol>
+        </details>
+        {% endif %}
+
+        <div id="article-body" class="blog-prose">{{ post.html|safe }}</div>
+
+        {# Поделиться #}
+        <div class="mt-10 pt-6 border-t border-[var(--border)] flex flex-wrap items-center gap-2 text-sm">
+          <span class="text-[var(--text-muted)] mr-1">Поделиться:</span>
+          <a class="btn-ghost !py-1.5 !px-3 text-sm" target="_blank" rel="noopener" href="https://t.me/share/url?url={{ page_url|urlencode }}&text={{ post.title|urlencode }}">Telegram</a>
+          <a class="btn-ghost !py-1.5 !px-3 text-sm" target="_blank" rel="noopener" href="https://vk.com/share.php?url={{ page_url|urlencode }}&title={{ post.title|urlencode }}">VK</a>
+          <button type="button" class="btn-ghost !py-1.5 !px-3 text-sm" data-copy-link="{{ page_url }}">Скопировать ссылку</button>
+        </div>
+
+        {# CTA #}
+        <div class="mt-10 card p-6 sm:p-8 relative overflow-hidden">
+          <div class="absolute inset-0 grad-bg opacity-[0.06] pointer-events-none"></div>
+          {% if category.slug == 'razbery' %}
+            <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-2">Razbery</p>
+            <h2 class="text-xl sm:text-2xl font-bold mb-2">Не понял задачу? Спроси — разберут, а не спишут</h2>
+            <p class="text-[var(--text-muted)] mb-5">Школьное Q&A 5–11 класс: задаёшь вопрос по предмету, получаешь ответ с объяснением логики. Бесплатно.</p>
+            <a href="/qa/" class="btn-primary">Задать вопрос в Razbery</a>
+          {% else %}
+            <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-2">Doday для учёбы</p>
+            <h2 class="text-xl sm:text-2xl font-bold mb-2">Домашка быстрее, ни одно дз не пропущено</h2>
+            <p class="text-[var(--text-muted)] mb-5">Задачи по предметам, расписание уроков, импорт дз из дневника, напоминания в Telegram и стрики. Бесплатно, без карты.</p>
+            <div class="flex flex-wrap gap-3">
+              <a href="/auth/register" class="btn-primary">Начать бесплатно</a>
+              <a href="/for-students" class="btn-ghost">Как это работает</a>
+            </div>
+          {% endif %}
+        </div>
+
+        {# Похожие #}
+        {% if related %}
+        <section class="mt-12">
+          <h2 class="text-xl font-bold mb-5">Читайте также</h2>
+          <div class="grid sm:grid-cols-2 gap-4">
+            {% for r in related %}
+              <a href="/blog/{{ r.slug }}" class="card p-5 flex flex-col gap-2 transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:shadow-card">
+                <span class="text-xl">{{ r.emoji }}</span>
+                <span class="font-semibold leading-snug">{{ r.title }}</span>
+                <span class="text-xs text-[var(--text-muted)]">{{ r.reading_min }} мин чтения</span>
+              </a>
+            {% endfor %}
+          </div>
+        </section>
+        {% endif %}
+      </article>
+
+      {# ── Sticky оглавление (desktop) ─────────────────────────────── #}
+      <aside class="hidden lg:block sticky top-24 self-start">
+        {% if post.toc %}
+        <div class="text-xs uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-3 px-3">Содержание</div>
+        <nav id="toc-nav" aria-label="Оглавление статьи">
+          {% for item in post.toc %}
+            <a href="#{{ item.anchor }}" class="toc-link {% if item.level == 3 %}toc-l3{% endif %}" data-anchor="{{ item.anchor }}">{{ item.text }}</a>
+          {% endfor %}
+        </nav>
+        {% endif %}
+        <div class="mt-6 px-3 text-xs text-[var(--text-muted)]">
+          <span id="toc-progress-label">0 %</span> прочитано · <span>{{ post.reading_min }} мин</span>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  {% include "_partials/public_footer.html" %}
+</div>
+
+<script>
+  (() => {
+    // 1. Прогресс чтения — считаем по границам статьи, а не всей страницы.
+    const body = document.getElementById('article-body');
+    const bar = document.getElementById('reading-progress');
+    const fill = document.getElementById('reading-progress-fill');
+    const label = document.getElementById('toc-progress-label');
+    const onScroll = () => {
+      if (!body || !fill) return;
+      const rect = body.getBoundingClientRect();
+      const start = window.scrollY + rect.top - window.innerHeight * 0.6;
+      const end = window.scrollY + rect.bottom - window.innerHeight * 0.9;
+      const pct = end > start ? Math.min(100, Math.max(0, ((window.scrollY - start) / (end - start)) * 100)) : 0;
+      fill.style.width = pct + '%';
+      if (bar) bar.setAttribute('aria-valuenow', String(Math.round(pct)));
+      if (label) label.textContent = Math.round(pct) + ' %';
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    onScroll();
+
+    // 2. Якорные ссылки на заголовках.
+    if (body) {
+      body.querySelectorAll('h2[id], h3[id]').forEach(h => {
+        const a = document.createElement('a');
+        a.className = 'anchor';
+        a.href = '#' + h.id;
+        a.setAttribute('aria-label', 'Ссылка на раздел');
+        a.textContent = '#';
+        h.prepend(a);
+      });
+    }
+
+    // 3. Плавный скролл по оглавлению (desktop + mobile).
+    document.querySelectorAll('.toc-link').forEach(link => {
+      link.addEventListener('click', e => {
+        const id = link.getAttribute('href').slice(1);
+        const target = document.getElementById(id);
+        if (!target) return;
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        history.replaceState(null, '', '#' + id);
+        const details = link.closest('details');
+        if (details) details.open = false;
+      });
+    });
+
+    // 4. Подсветка активного пункта оглавления.
+    const links = Array.from(document.querySelectorAll('#toc-nav .toc-link'));
+    const headings = body ? Array.from(body.querySelectorAll('h2[id], h3[id]')) : [];
+    if (links.length && headings.length) {
+      const byId = new Map(links.map(l => [l.dataset.anchor, l]));
+      let current = null;
+      const setActive = id => {
+        if (current === id) return;
+        current = id;
+        links.forEach(l => l.classList.toggle('toc-active', l.dataset.anchor === id));
+        const el = byId.get(id);
+        const nav = document.getElementById('toc-nav');
+        if (el && nav) {
+          const r = el.getBoundingClientRect(), n = nav.getBoundingClientRect();
+          if (r.top < n.top || r.bottom > n.bottom) el.scrollIntoView({ block: 'nearest' });
+        }
+      };
+      const pick = () => {
+        const line = window.innerHeight * 0.25;
+        let active = headings[0].id;
+        for (const h of headings) {
+          if (h.getBoundingClientRect().top <= line) active = h.id; else break;
+        }
+        setActive(active);
+      };
+      window.addEventListener('scroll', pick, { passive: true });
+      pick();
+    }
+
+    // 5. Копировать ссылку.
+    document.querySelectorAll('[data-copy-link]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(btn.dataset.copyLink);
+          const old = btn.textContent; btn.textContent = 'Скопировано ✓';
+          setTimeout(() => { btn.textContent = old; }, 1500);
+        } catch (_) {}
+      });
+    });
+  })();
+</script>
+{% endblock %}
