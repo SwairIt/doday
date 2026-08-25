@@ -11,10 +11,13 @@ from datetime import UTC, date, datetime, time, timedelta
 
 from app.tasks.models import TaskPriority
 
+# Больше «!» — выше срочность. Одна «!» НЕ должна давать P4: P4 — это дефолт
+# («без приоритета»), поэтому «!» выглядело бы как «ничего». Поэтому 1→P3, 2→P2,
+# 3→P1, а 4 «!» упираются в тот же максимум P1.
 _BANGS_TO_PRIORITY = {
-    1: TaskPriority.P4,
-    2: TaskPriority.P3,
-    3: TaskPriority.P2,
+    1: TaskPriority.P3,
+    2: TaskPriority.P2,
+    3: TaskPriority.P1,
     4: TaskPriority.P1,
 }
 
@@ -102,13 +105,19 @@ def parse_quick_add(text: str, *, now: datetime | None = None) -> ParsedQuickAdd
     today = now.date()
     text = text.strip()
 
-    # Trailing !{1..4} priority hint (highest precedence — explicit beats word).
+    # !{1..4} priority hint (highest precedence — explicit beats word). Ловим
+    # «!» как ОТДЕЛЬНЫЙ токен в любом месте строки (напр. «сделать !! завтра»),
+    # а не только в самом конце — иначе «!!!» в середине уезжали в название.
+    # Приклеенные к слову в конце («сделать!!!») ловим запасным вариантом,
+    # но приклеенные в середине (типа «Ура!») НЕ трогаем.
     priority = TaskPriority.P4
     bang_priority: TaskPriority | None = None
-    m = re.search(r"(!{1,4})\s*$", text)
+    m = re.search(r"(?<!\S)(!{1,4})(?!\S)", text)
+    if m is None:
+        m = re.search(r"(!{1,4})\s*$", text)
     if m:
         bang_priority = _BANGS_TO_PRIORITY[len(m.group(1))]
-        text = text[: m.start()].rstrip()
+        text = (text[: m.start()] + text[m.end() :]).strip()
 
     # Word-level priority hints (lower precedence than bangs).
     word_priority: TaskPriority | None = None
@@ -281,7 +290,10 @@ def parse_quick_add(text: str, *, now: datetime | None = None) -> ParsedQuickAdd
             text = (text[: wm.start()] + text[wm.end() :]).strip()
             break
 
-    title = re.sub(r"\s+", " ", text).strip() or "(без названия)"
+    title = re.sub(r"\s+", " ", text).strip()
+    # После выноса меток/срока/приоритета мог остаться ведущий разделитель
+    # (например «@X сегодня !!! : сделать» → «: сделать»). Срезаем его.
+    title = re.sub(r"^[:\-–—]\s*", "", title).strip() or "(без названия)"
 
     return ParsedQuickAdd(
         title=title,

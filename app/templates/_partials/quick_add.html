@@ -42,12 +42,7 @@
   hx-on::after-request="if(event.detail.successful){this.reset();try{if(!localStorage.getItem('doday-fired-first-task')){window.dodayGoal&&window.dodayGoal('first_task');localStorage.setItem('doday-fired-first-task','1');}}catch(e){}}"
   class="mb-4"
 >
-  <div class="card flex items-center gap-2 p-2 shadow-sm focus-within:shadow-glow transition">
-    <span class="grad-bg w-7 h-7 rounded-lg flex items-center justify-center text-white shrink-0 ml-1">
-      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-      </svg>
-    </span>
+  <div class="card flex items-center gap-2 p-2 pl-3 shadow-sm focus-within:shadow-glow transition">
     <input
       type="text"
       name="text"

@@ -17,10 +17,30 @@ def test_parser_extracts_priority_high() -> None:
     assert p.priority is TaskPriority.P1
 
 
-def test_parser_extracts_priority_low() -> None:
+def test_parser_single_bang_is_p3_not_default() -> None:
+    # Одна «!» должна давать видимый приоритет (P3), а не дефолтный P4.
     p = parse_quick_add("Полить цветы !", now=_FIXED_NOW)
     assert p.title == "Полить цветы"
-    assert p.priority is TaskPriority.P4
+    assert p.priority is TaskPriority.P3
+
+
+def test_parser_bangs_in_the_middle() -> None:
+    # «!» отдельным токеном в середине строки — тоже приоритет, а не часть
+    # названия (регрессия: раньше ловилось только в самом конце).
+    p = parse_quick_add("Сделать !! завтра", now=_FIXED_NOW)
+    assert p.title == "Сделать"
+    assert p.priority is TaskPriority.P2
+    assert p.due_at is not None
+    assert p.due_at.date() == (_FIXED_NOW + timedelta(days=1)).date()
+
+
+def test_parser_user_scenario_label_date_bangs() -> None:
+    # Точный кейс из поддержки: метка + срок + «!!!» в середине + ведущий «:».
+    p = parse_quick_add("@Швейцар сегодня !!! : Исправить 2 бага", now=_FIXED_NOW)
+    assert p.priority is TaskPriority.P1  # 3 bangs → максимум
+    assert p.label_names == ["Швейцар"]
+    assert p.due_at is not None and p.due_at.date() == _FIXED_NOW.date()
+    assert p.title == "Исправить 2 бага"  # без «!!!», без ведущего «:»
 
 
 def test_parser_no_priority_default_p4() -> None:
@@ -76,7 +96,7 @@ def test_parser_combined() -> None:
         now=_FIXED_NOW,
     )
     assert p.title == "Записаться на массаж"
-    assert p.priority is TaskPriority.P2  # 3 bangs
+    assert p.priority is TaskPriority.P1  # 3 bangs → максимум
     assert p.due_at is not None
     assert p.due_at.date() == (_FIXED_NOW + timedelta(days=1)).date()
     assert p.label_names == ["здоровье"]
@@ -93,7 +113,7 @@ def test_parser_email_address_not_label() -> None:
 def test_parser_empty_falls_back() -> None:
     p = parse_quick_add("   !!!", now=_FIXED_NOW)
     assert p.title == "(без названия)"
-    assert p.priority is TaskPriority.P2
+    assert p.priority is TaskPriority.P1
 
 
 @pytest.mark.asyncio
