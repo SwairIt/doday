@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class ComplaintIn(BaseModel):
     body: str = Field(min_length=3, max_length=4000)
+    contact_email: str | None = Field(default=None, max_length=320)
     page_url: str | None = Field(default=None, max_length=500)
     viewport: str | None = Field(default=None, max_length=20)
     user_agent: str | None = Field(default=None, max_length=500)
@@ -19,6 +20,7 @@ class ComplaintOut(BaseModel):
     id: UUID
     user_id: UUID | None
     body: str
+    contact_email: str | None
     page_url: str | None
     viewport: str | None
     user_agent: str | None

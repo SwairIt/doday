@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Поддержка — Doday{% endblock %}
+{% block seo_description %}Написать в поддержку Doday: вопрос, проблема, предложение. Ответим на почту. Форма доступна всем — вход не нужен.{% endblock %}
+{% block layout %}
+<div class="min-h-screen flex flex-col">
+  <header class="px-4 sm:px-6 py-4">
+    <a href="/" class="inline-flex items-center gap-2.5 font-bold text-xl">
+      <span class="grad-bg w-9 h-9 rounded-xl flex items-center justify-center text-white font-extrabold shadow-glow">D</span>
+      <span class="grad-text">Doday</span>
+    </a>
+  </header>
+
+  <main class="flex-1 w-full max-w-xl mx-auto px-4 sm:px-6 py-8">
+    <h1 class="text-3xl font-bold mb-2">Написать в поддержку</h1>
+    <p class="text-[var(--text-muted)] mb-6">
+      Вопрос, баг, идея — пиши что угодно. Отвечаем на почту, которую укажешь.
+      Вход не нужен.
+    </p>
+
+    {% if sent %}
+      <div class="card p-6 border border-emerald-500/40 bg-emerald-500/10">
+        <div class="text-lg font-semibold mb-1">✓ Обращение отправлено</div>
+        <p class="text-sm text-[var(--text-muted)]">
+          Спасибо! Мы получили сообщение и ответим на указанную почту.
+        </p>
+        <a href="/" class="inline-block mt-4 btn-ghost px-4 py-2 text-sm">← На главную</a>
+      </div>
+    {% else %}
+      {% if error %}
+        <div class="card p-3 mb-4 border border-rose-500/40 bg-rose-500/10 text-sm text-rose-300">
+          {{ error }}
+        </div>
+      {% endif %}
+
+      <form method="post" action="/support" class="card p-6 space-y-4">
+        <div>
+          <label for="message" class="block text-sm font-medium mb-1">Сообщение</label>
+          <textarea id="message" name="message" rows="6" required minlength="3" maxlength="4000"
+                    class="w-full bg-[var(--surface-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm focus:border-[var(--accent)] focus:outline-none"
+                    placeholder="Что случилось или что предлагаешь?">{{ prefill }}</textarea>
+        </div>
+
+        <div>
+          <label for="email" class="block text-sm font-medium mb-1">
+            Почта для ответа
+            <span class="text-[var(--text-muted)] font-normal">— чтобы мы могли ответить</span>
+          </label>
+          <input id="email" name="email" type="email" maxlength="320" autocomplete="email"
+                 value="{{ user.email if user else '' }}"
+                 class="w-full bg-[var(--surface-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm focus:border-[var(--accent)] focus:outline-none"
+                 placeholder="you@example.com">
+        </div>
+
+        {# Honeypot: поле-ловушка. Живой человек его не видит и не заполняет;
+           боты заполняют все поля — такие обращения молча отбрасываются. #}
+        <div aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;height:0;overflow:hidden">
+          <label for="website">Не заполняйте это поле</label>
+          <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
+        </div>
+
+        <button type="submit" class="btn-primary w-full py-2.5 text-sm font-semibold">
+          Отправить
+        </button>
+        <p class="text-[11px] text-[var(--text-muted)] text-center">
+          Можно также написать напрямую на
+          <a href="mailto:doday.support@gmail.com" class="text-[var(--accent)] hover:underline">doday.support@gmail.com</a>
+        </p>
+      </form>
+    {% endif %}
+  </main>
+
+  {% include "_partials/public_footer.html" %}
+</div>
+{% endblock %}

@@ -199,6 +199,59 @@ async def send_verification_email(*, to: str, verification_url: str) -> None:
     )
 
 
+async def send_support_notification(
+    *,
+    to: str,
+    message: str,
+    reply_to: str | None,
+    from_user: str | None,
+    page_url: str | None,
+) -> None:
+    """Письмо владельцу о новом обращении в поддержку.
+
+    Reply-To ставим на почту отправителя (если оставил) — можно ответить прямо
+    из почтового клиента. Всё пользовательское экранируем: тело письма не должно
+    исполнять чужой HTML. Best-effort: вызывающий код глушит ошибки SMTP, чтобы
+    обращение всё равно сохранилось на сайте.
+    """
+    import html as _html
+
+    settings = get_settings()
+    who = from_user or reply_to or "аноним"
+    body_text = (
+        "Новое обращение в поддержку Doday.\n\n"
+        f"От: {who}\n"
+        f"Почта для ответа: {reply_to or '—'}\n"
+        f"Страница: {page_url or '—'}\n\n"
+        f"Сообщение:\n{message}\n"
+    )
+    body_html = (
+        "<p><b>Новое обращение в поддержку Doday</b></p>"
+        f"<p>От: {_html.escape(who)}<br>"
+        f"Почта для ответа: {_html.escape(reply_to or '—')}<br>"
+        f"Страница: {_html.escape(page_url or '—')}</p>"
+        "<p style='white-space:pre-wrap;border-left:3px solid #7c3aed;padding-left:12px'>"
+        f"{_html.escape(message)}</p>"
+    )
+    msg = EmailMessage()
+    msg["From"] = f"Doday support <{settings.smtp_from}>"
+    msg["To"] = to
+    msg["Subject"] = "🆘 Новое обращение в поддержку Doday"
+    if reply_to:
+        msg["Reply-To"] = reply_to
+    msg.set_content(body_text)
+    msg.add_alternative(body_html, subtype="html")
+
+    await aiosmtplib.send(
+        msg,
+        hostname=settings.smtp_host,
+        port=settings.smtp_port,
+        username=settings.smtp_username or None,
+        password=settings.smtp_password or None,
+        start_tls=settings.smtp_start_tls,
+    )
+
+
 async def send_invitation_email(
     *, to: str, invite_url: str, project_name: str, inviter_email: str
 ) -> None:

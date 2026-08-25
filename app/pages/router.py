@@ -1,11 +1,14 @@
 """Static / shared pages — landing, privacy."""
 
-from fastapi import APIRouter, Request
+from typing import Annotated
+
+from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
 
 from app.auth.deps import CurrentUser, DbSession, RequiredUser
+from app.auth.rate_limit import client_key, hit
 from app.config import get_settings
 from app.pages.changelog_data import ENTRIES as CHANGELOG_ENTRIES
 from app.pages.roadmap_data import SECTIONS as ROADMAP_SECTIONS
@@ -121,6 +124,101 @@ async def terms(request: Request) -> HTMLResponse:
     """Публичная оферта на оказание услуг — нужна для подключения эквайринга
     (ЮKassa/T-Bank проверяют наличие условий на сайте)."""
     return templates.TemplateResponse(request, "terms.html", {})
+
+
+@router.get("/support", response_class=HTMLResponse)
+async def support_form(request: Request, user: CurrentUser) -> HTMLResponse:
+    """Публичная форма обращения в поддержку — доступна всем, даже без входа."""
+    return templates.TemplateResponse(
+        request,
+        "support.html",
+        {
+            "user": user,
+            "sent": request.query_params.get("sent") == "1",
+            "error": None,
+            "prefill": "",
+        },
+    )
+
+
+@router.post("/support", response_class=HTMLResponse)
+async def support_submit(
+    request: Request,
+    user: CurrentUser,
+    session: DbSession,
+    message: Annotated[str, Form()],
+    email: Annotated[str, Form()] = "",
+    website: Annotated[str, Form()] = "",  # honeypot: люди это поле не видят
+) -> Response:
+    """Приём обращения от кого угодно.
+
+    Сохраняем на сайт (видно в /app/root) И шлём владельцу письмо. Оба канала
+    сразу, как просил владелец. Антиспам: honeypot + rate-limit по IP. Письмо —
+    best-effort: даже если SMTP не настроен, обращение уже сохранено.
+    """
+    from app.admin.service import create_complaint
+    from app.auth.email import send_support_notification
+
+    # Honeypot заполнен — это бот. Тихо отвечаем «успехом», ничего не делая.
+    if website.strip():
+        return RedirectResponse(url="/support?sent=1", status_code=303)
+
+    ip = request.client.host if request.client else None
+    if not hit(client_key(ip, "support"), max_calls=5, per_seconds=600):
+        return templates.TemplateResponse(
+            request,
+            "support.html",
+            {
+                "user": user,
+                "sent": False,
+                "error": "Слишком много обращений подряд. Подожди пару минут.",
+                "prefill": message,
+            },
+            status_code=429,
+        )
+
+    message = message.strip()
+    if len(message) < 3:
+        return templates.TemplateResponse(
+            request,
+            "support.html",
+            {
+                "user": user,
+                "sent": False,
+                "error": "Напиши хотя бы пару слов — что случилось?",
+                "prefill": message,
+            },
+            status_code=400,
+        )
+
+    contact = (email.strip() or (user.email if user else "")) or None
+    complaint = await create_complaint(
+        session,
+        user_id=user.id if user else None,
+        body=message,
+        contact_email=contact,
+        page_url=request.headers.get("referer"),
+        viewport=None,
+        user_agent=request.headers.get("user-agent"),
+    )
+
+    try:
+        await send_support_notification(
+            to=get_settings().root_admin_email,
+            message=message,
+            reply_to=contact,
+            from_user=(user.email if user else None),
+            page_url=complaint.page_url,
+        )
+    except Exception:
+        import logging
+
+        logging.getLogger("doday.support").warning(
+            "не удалось отправить письмо о поддержке (обращение сохранено на сайте)",
+            exc_info=True,
+        )
+
+    return RedirectResponse(url="/support?sent=1", status_code=303)
 
 
 @router.get("/pricing", response_class=HTMLResponse)

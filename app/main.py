@@ -192,6 +192,12 @@ def _repair_schema_on_startup() -> None:
                 await conn.execute(
                     text("ALTER TABLE card_payments ALTER COLUMN confirmation_url TYPE TEXT")
                 )
+                # Почта для ответа на обращения в поддержку (в т.ч. анонимные).
+                await conn.execute(
+                    text(
+                        "ALTER TABLE complaints ADD COLUMN IF NOT EXISTS contact_email VARCHAR(320)"
+                    )
+                )
         finally:
             await engine.dispose()
 

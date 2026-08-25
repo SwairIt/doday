@@ -20,6 +20,7 @@ async def create_complaint(
     *,
     user_id: UUID | None,
     body: str,
+    contact_email: str | None = None,
     page_url: str | None,
     viewport: str | None,
     user_agent: str | None,
@@ -31,6 +32,7 @@ async def create_complaint(
     complaint = Complaint(
         user_id=user_id,
         body=body,
+        contact_email=(contact_email or "").strip()[:320] or None,
         page_url=(page_url or "")[:500] or None,
         viewport=(viewport or "")[:20] or None,
         user_agent=(user_agent or "")[:500] or None,

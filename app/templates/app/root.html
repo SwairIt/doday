@@ -113,7 +113,12 @@
                 <span class="text-[var(--text-muted)]">·</span>
                 <span class="font-mono text-[var(--text)]">{{ user_emails.get(c.user_id, '?') }}</span>
               {% else %}
-                <span class="text-[var(--text-muted)]">· anonymous</span>
+                <span class="text-[var(--text-muted)]">· аноним</span>
+              {% endif %}
+              {% if c.contact_email %}
+                <span class="text-[var(--text-muted)]">·</span>
+                <a href="mailto:{{ c.contact_email|e }}?subject=Ответ поддержки Doday"
+                   class="text-[var(--accent)] hover:underline">✉ {{ c.contact_email }}</a>
               {% endif %}
             </div>
             <div class="flex items-center gap-1 text-xs shrink-0">

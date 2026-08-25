@@ -21,6 +21,9 @@ class Complaint(Base):
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
     body: Mapped[str] = mapped_column(Text, nullable=False)
+    # Почта для ответа. Для анонимных обращений (без user_id) — единственный
+    # способ ответить; у залогиненных дублирует их почту для удобства.
+    contact_email: Mapped[str | None] = mapped_column(String(320), nullable=True)
     page_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     viewport: Mapped[str | None] = mapped_column(String(20), nullable=True)
     user_agent: Mapped[str | None] = mapped_column(String(500), nullable=True)

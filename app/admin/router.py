@@ -68,10 +68,30 @@ async def submit_complaint(
         session,
         user_id=user.id,
         body=payload.body,
+        contact_email=payload.contact_email or user.email,
         page_url=payload.page_url,
         viewport=payload.viewport,
         user_agent=payload.user_agent,
     )
+    # Письмо владельцу — тем же путём, что и с публичной формы. Best-effort:
+    # обращение уже сохранено и видно в /app/root, даже если SMTP молчит.
+    try:
+        from app.auth.email import send_support_notification
+        from app.config import get_settings
+
+        await send_support_notification(
+            to=get_settings().root_admin_email,
+            message=payload.body,
+            reply_to=payload.contact_email or user.email,
+            from_user=user.email,
+            page_url=payload.page_url,
+        )
+    except Exception:
+        import logging
+
+        logging.getLogger("doday.support").warning(
+            "не удалось отправить письмо о жалобе (сохранена на сайте)", exc_info=True
+        )
     return ComplaintOut.model_validate(c)
 
 
