@@ -38,6 +38,23 @@ async def test_filter_overdue_returns_only_overdue(db_session: AsyncSession) -> 
     assert "no-date" not in titles
 
 
+async def test_filter_excludes_soft_deleted_task(db_session: AsyncSession) -> None:
+    """Регрессия: удалённая (в корзину) задача не должна оставаться в фильтрах —
+    раньше приходилось вручную чистить её в каждом фильтре."""
+    from app.tasks.service import delete_task
+
+    user = await _user(db_session)
+    yesterday = datetime.now(UTC) - timedelta(days=1)
+    task = await create_task(db_session, user.id, title="del-overdue", due_at=yesterday)
+
+    before = [t.title for t in await list_for_filter(db_session, user.id, "overdue")]
+    assert "del-overdue" in before
+
+    await delete_task(db_session, user.id, task.id)
+    after = [t.title for t in await list_for_filter(db_session, user.id, "overdue")]
+    assert "del-overdue" not in after
+
+
 async def test_filter_no_date_returns_only_undated(db_session: AsyncSession) -> None:
     user = await _user(db_session)
     await create_task(db_session, user.id, title="dated", due_at=datetime.now(UTC))

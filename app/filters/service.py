@@ -64,6 +64,9 @@ def _filter_conditions(user_id: UUID, slug: str) -> list[ColumnElement[bool]]:
         Task.user_id == user_id,
         Task.is_completed.is_(False),
         Task.parent_task_id.is_(None),
+        # Исключаем мягко-удалённые: иначе удалённая задача продолжала висеть
+        # в фильтрах (просрочено/без даты/важное/неделя) до ручной зачистки.
+        Task.deleted_at.is_(None),
     ]
 
     if slug == "overdue":

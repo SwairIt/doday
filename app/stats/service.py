@@ -42,6 +42,7 @@ async def _completed_dates(session: AsyncSession, user_id: UUID) -> list[date]:
             Task.user_id == user_id,
             Task.is_completed.is_(True),
             Task.completed_at.is_not(None),
+            Task.deleted_at.is_(None),
         )
         .distinct()
     )
@@ -113,6 +114,7 @@ async def compute_user_stats(session: AsyncSession, user_id: UUID) -> UserStats:
                 Task.user_id == user_id,
                 Task.is_completed.is_(True),
                 Task.completed_at.is_not(None),
+                Task.deleted_at.is_(None),
             )
         )
         if since is not None:
@@ -133,6 +135,7 @@ async def compute_user_stats(session: AsyncSession, user_id: UUID) -> UserStats:
             Task.user_id == user_id,
             Task.is_completed.is_(True),
             Task.completed_at.is_not(None),
+            Task.deleted_at.is_(None),
             func.date(Task.completed_at) >= last_14_start,
         )
         .group_by(func.date(Task.completed_at))
@@ -171,6 +174,7 @@ async def compute_user_stats(session: AsyncSession, user_id: UUID) -> UserStats:
             Task.user_id == user_id,
             Task.is_completed.is_(True),
             Task.completed_at.is_not(None),
+            Task.deleted_at.is_(None),
         )
     )
     durations: list[float] = []

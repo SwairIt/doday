@@ -27,14 +27,25 @@ async def list_labels(session: AsyncSession, user_id: UUID) -> list[Label]:
 
 async def list_labels_with_counts(session: AsyncSession, user_id: UUID) -> list[tuple[Label, int]]:
     """Return [(label, task_count)] for every label owned by user."""
-    from sqlalchemy import func
+    from sqlalchemy import and_, func
 
     from app.tasks.models import Task
 
+    # Считаем только ЖИВЫЕ незавершённые задачи (как в list_tasks_by_label):
+    # условия в ON, а не в WHERE — иначе лейблы без задач пропали бы из списка.
+    # count(Task.id), а не task_labels.c.task_id — иначе junction-строка
+    # удалённой задачи всё равно попадала бы в счётчик.
     rows = await session.execute(
-        select(Label, func.count(task_labels.c.task_id))
+        select(Label, func.count(Task.id))
         .outerjoin(task_labels, task_labels.c.label_id == Label.id)
-        .outerjoin(Task, Task.id == task_labels.c.task_id)
+        .outerjoin(
+            Task,
+            and_(
+                Task.id == task_labels.c.task_id,
+                Task.is_completed.is_(False),
+                Task.deleted_at.is_(None),
+            ),
+        )
         .where(Label.user_id == user_id)
         .group_by(Label.id)
         .order_by(Label.name)
