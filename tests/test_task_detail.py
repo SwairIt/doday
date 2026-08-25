@@ -32,6 +32,26 @@ async def test_detail_save_updates_title_and_description(logged_in_client: Async
     assert saved["description"] == "Now described"
 
 
+async def test_detail_save_returns_oob_row_and_toast_trigger(
+    logged_in_client: AsyncClient,
+) -> None:
+    """Регрессия: сохранение из детали должно обновлять и строку в списке (OOB),
+    иначе список оставался старым до ручного reload («пустая кнопка»). Плюс
+    HX-Trigger, по которому фронт показывает тост «Сохранено»."""
+    task = (await logged_in_client.post("/api/tasks", json={"title": "Old title"})).json()
+    response = await logged_in_client.patch(
+        f"/htmx/tasks/{task['id']}/detail",
+        data={"title": "Fresh title", "description": ""},
+    )
+    assert response.status_code == 200
+    # Out-of-band строка списка с обновлённым заголовком есть в ответе.
+    assert 'hx-swap-oob="true"' in response.text
+    assert f'id="task-wrap-{task["id"]}"' in response.text
+    assert "Fresh title" in response.text
+    # Заголовок-триггер тоста.
+    assert response.headers.get("HX-Trigger") == "doday-task-saved"
+
+
 async def test_detail_lists_subtasks(logged_in_client: AsyncClient) -> None:
     parent = (await logged_in_client.post("/api/tasks", json={"title": "Parent"})).json()
     await logged_in_client.post(

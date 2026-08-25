@@ -38,11 +38,20 @@ async def _project_color_map(session: DbSession, user_id: UUID) -> dict[UUID, st
     return {pid: color for pid, color in rows.all()}
 
 
-def _row_response(request: Request, task: Task, project_color_map: dict[UUID, str]) -> HTMLResponse:
+def _row_response(
+    request: Request,
+    task: Task,
+    project_color_map: dict[UUID, str],
+    *,
+    oob: bool = False,
+) -> HTMLResponse:
+    # oob=True добавляет hx-swap-oob="true" на корень строки — тогда её можно
+    # приложить к ЛЮБОМУ ответу, и HTMX сам обновит строку в списке по id,
+    # не завися от основного hx-target.
     return templates.TemplateResponse(
         request,
         "_partials/task_row.html",
-        {"task": task, "project_color_map": project_color_map},
+        {"task": task, "project_color_map": project_color_map, "oob": oob},
     )
 
 
@@ -541,7 +550,17 @@ async def task_detail_save(
     if recurrence is not None:
         task.recurrence = recurrence.strip() or None
     await session.commit()
-    return await task_detail(request, task_id, user, session)
+
+    # Форма свапает #task-detail-slot, В КОТОРОМ живёт сама форма, поэтому её
+    # hx-on::after-request после свапа уже не сработает. Обновляем строку в
+    # списке ВНЕ основного свапа — прикладываем её к ответу с hx-swap-oob, и
+    # HTMX сам заменит #task-wrap-{id}. Иначе список оставался старым до ручного
+    # reload (и правка выглядела как «пустая кнопка»). HX-Trigger даёт тост.
+    detail = await task_detail(request, task_id, user, session)
+    row = _row_response(request, task, await _project_color_map(session, user.id), oob=True)
+    combined = HTMLResponse(detail.body + row.body)
+    combined.headers["HX-Trigger"] = "doday-task-saved"
+    return combined
 
 
 @router.get("/tasks/{task_id}/labels-popover", response_class=HTMLResponse)

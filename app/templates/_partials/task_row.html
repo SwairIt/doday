@@ -6,6 +6,7 @@
 {% set tid = task.id|string %}
 
 <div id="task-wrap-{{ task.id }}"
+     {% if oob %}hx-swap-oob="true"{% endif %}
      data-priority="{{ task.priority.value }}"
      data-due="{{ task.due_at.isoformat() if task.due_at else '' }}"
      data-title="{{ task.title|lower }}"

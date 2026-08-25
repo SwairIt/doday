@@ -75,6 +75,7 @@ ignore = [
 ]
 "app/quickadd/parser.py" = ["RUF001"]  # intentional Cyrillic in date keywords
 "app/views/router.py" = ["RUF001"]  # intentional Cyrillic in month / weekday names
+"app/views/htmx.py" = ["RUF001", "RUF002", "RUF003"]  # intentional Cyrillic in comments
 "app/filters/service.py" = ["RUF001"]  # intentional Cyrillic in filter labels
 "app/stats/service.py" = ["RUF001"]  # intentional Cyrillic in weekday labels
 "app/projects/templates_data.py" = ["RUF001"]  # intentional Cyrillic in template content

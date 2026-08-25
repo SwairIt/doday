@@ -115,6 +115,15 @@
     }
   })();
 </script>
+
+{# Тост «Сохранено» при сохранении задачи из детальной панели. Событие шлёт
+   сервер заголовком HX-Trigger: doday-task-saved — HTMX диспатчит его ДО свапа,
+   поэтому оно надёжно всплывает на body, даже когда форма свапает сама себя. #}
+<script>
+  document.body.addEventListener('doday-task-saved', function () {
+    if (window.dodayToast) window.dodayToast('Сохранено', { icon: '✓' });
+  });
+</script>
 {% include "_partials/incoming_invites.html" %}
 {% include "_partials/invite_friends_modal.html" %}
 {% include "_partials/tab_badge.html" %}
