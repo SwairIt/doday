@@ -113,6 +113,17 @@
          const r = await fetch('/api/admin/complaints/' + id, {method:'DELETE', credentials:'include'});
          if (r.ok || r.status === 204) location.reload();
        },
+       async reply(id, textarea) {
+         const body = (textarea.value || '').trim();
+         if (body.length < 1) { alert('Напиши ответ'); return; }
+         const r = await fetch('/api/admin/complaints/' + id + '/reply', {
+           method: 'POST', credentials: 'include',
+           headers: {'Content-Type': 'application/json'},
+           body: JSON.stringify({body})
+         });
+         if (r.ok) location.reload();
+         else alert('Не получилось: ' + r.status);
+       },
        matches(row) {
          if (this.statusFilter !== 'all' && row.dataset.status !== this.statusFilter) return false;
          if (this.priorityFilter !== 'all' && row.dataset.priority !== this.priorityFilter) return false;
@@ -221,6 +232,23 @@
               <option value="normal" {% if c.priority == 'normal' %}selected{% endif %}>Normal</option>
               <option value="high" {% if c.priority == 'high' %}selected{% endif %}>High</option>
             </select>
+          </div>
+
+          {# Ответ автору — уходит ему в колокольчик и на почту #}
+          <div class="mt-2 pt-2 border-t border-[var(--border)]">
+            {% if c.admin_reply %}
+              <div class="text-[11px] text-[var(--text-muted)] mb-1.5">
+                💬 Ты ответил: <span class="text-[var(--text)] whitespace-pre-wrap">{{ c.admin_reply }}</span>
+              </div>
+            {% endif %}
+            <div class="flex items-start gap-2">
+              <textarea rows="1" placeholder="Ответить автору…"
+                        class="flex-1 bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-1 text-xs resize-y"></textarea>
+              <button type="button" @click="reply('{{ c.id }}', $el.previousElementSibling)"
+                      class="px-3 py-1 rounded bg-[var(--accent)] text-white text-xs font-semibold shrink-0 hover:opacity-90">
+                Ответить
+              </button>
+            </div>
           </div>
         </article>
       {% endfor %}

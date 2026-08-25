@@ -252,6 +252,40 @@ async def send_support_notification(
     )
 
 
+async def send_support_reply_to_user(*, to: str, subject: str, title: str, body: str) -> None:
+    """Письмо АВТОРУ обращения: ответ поддержки или «взяли в работу».
+
+    Отдельно от send_support_notification (та шлёт ВЛАДЕЛЬЦУ). Всё
+    пользовательское экранируем. Best-effort: ошибки глушит вызывающий код.
+    """
+    import html as _html
+
+    settings = get_settings()
+    text_body = f"{title}\n\n{body}\n\n— Поддержка Doday\nhttps://getdoday.ru/support"
+    html_body = (
+        f"<p><b>{_html.escape(title)}</b></p>"
+        "<p style='white-space:pre-wrap;border-left:3px solid #7c3aed;padding-left:12px'>"
+        f"{_html.escape(body)}</p>"
+        "<p style='color:#888;font-size:13px'>— Поддержка Doday · "
+        "<a href='https://getdoday.ru/support'>написать ещё</a></p>"
+    )
+    msg = EmailMessage()
+    msg["From"] = f"Doday <{settings.smtp_from}>"
+    msg["To"] = to
+    msg["Subject"] = subject
+    msg.set_content(text_body)
+    msg.add_alternative(html_body, subtype="html")
+
+    await aiosmtplib.send(
+        msg,
+        hostname=settings.smtp_host,
+        port=settings.smtp_port,
+        username=settings.smtp_username or None,
+        password=settings.smtp_password or None,
+        start_tls=settings.smtp_start_tls,
+    )
+
+
 async def send_invitation_email(
     *, to: str, invite_url: str, project_name: str, inviter_email: str
 ) -> None:

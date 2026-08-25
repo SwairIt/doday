@@ -20,17 +20,69 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Header, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
+from app.admin.models import Complaint
 from app.admin.schemas import ComplaintAdminPatch, ComplaintIn, ComplaintOut
 from app.admin.service import (
     create_complaint,
     delete_complaint,
+    get_complaint,
     list_complaints,
     update_complaint,
 )
 from app.auth.deps import DbSession, RequiredAdmin, RequiredUser
 from app.config import get_settings
+
+
+async def _notify_complaint_author(
+    session: DbSession,
+    complaint: Complaint,
+    *,
+    kind: str,
+    title: str,
+    body: str,
+    subject: str,
+    email_when_inapp: bool,
+) -> None:
+    """Уведомляет автора обращения по доступным каналам.
+
+    Зарегистрированному — колокольчик в приложении; анониму (и, при
+    ``email_when_inapp``, зарегистрированному тоже) — письмо на оставленную почту.
+    Оба канала best-effort: сбой одного не мешает другому и не роняет запрос.
+    """
+    import logging
+
+    has_inapp = False
+    if complaint.user_id is not None:
+        try:
+            from app.notifications.service import create_notification
+
+            await create_notification(
+                session,
+                user_id=complaint.user_id,
+                kind=kind,
+                title=title,
+                body=body,
+                link="/support",
+            )
+            has_inapp = True
+        except Exception:
+            logging.getLogger("doday.notifications").warning(
+                "не создал уведомление автору обращения", exc_info=True
+            )
+
+    if complaint.contact_email and (email_when_inapp or not has_inapp):
+        try:
+            from app.auth.email import send_support_reply_to_user
+
+            await send_support_reply_to_user(
+                to=complaint.contact_email, subject=subject, title=title, body=body
+            )
+        except Exception:
+            logging.getLogger("doday.notifications").warning(
+                "не отправил письмо автору обращения", exc_info=True
+            )
 
 
 def _parse_since(since: str | None) -> datetime | None:
@@ -210,6 +262,13 @@ async def admin_patch_complaint(
     _: RequiredAdmin,
     session: DbSession,
 ) -> ComplaintOut:
+    before = await get_complaint(session, complaint_id)
+    if before is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "complaint not found")
+    # Захватываем ДО обновления: after — тот же объект в identity map, его status
+    # мутирует update_complaint, поэтому сравнивать после было бы поздно.
+    was_in_progress = before.status == "in_progress"
+
     c = await update_complaint(
         session,
         complaint_id,
@@ -219,6 +278,51 @@ async def admin_patch_complaint(
     )
     if c is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "complaint not found")
+
+    # Автору — уведомление, когда обращение ТОЛЬКО ЧТО взяли в работу.
+    if payload.status == "in_progress" and not was_in_progress:
+        await _notify_complaint_author(
+            session,
+            c,
+            kind="support_in_progress",
+            title="Твоё обращение взяли в работу 🛠️",
+            body="Мы посмотрели твоё сообщение в поддержку и занялись им. Скоро ответим.",
+            subject="Doday: твоё обращение взяли в работу",
+            email_when_inapp=False,  # зарегистрированному хватит колокольчика
+        )
+    return ComplaintOut.model_validate(c)
+
+
+class ComplaintReplyIn(BaseModel):
+    body: str = Field(min_length=1, max_length=4000)
+
+
+@admin_router.post("/complaints/{complaint_id}/reply", response_model=ComplaintOut)
+async def admin_reply_complaint(
+    complaint_id: UUID,
+    payload: ComplaintReplyIn,
+    _: RequiredAdmin,
+    session: DbSession,
+) -> ComplaintOut:
+    """Ответить автору обращения: сохраняем ответ и шлём его пользователю
+    (колокольчик + письмо), чтобы он увидел ответ и в приложении, и на почте."""
+    c = await get_complaint(session, complaint_id)
+    if c is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "complaint not found")
+    reply = payload.body.strip()[:4000]
+    c.admin_reply = reply
+    await session.commit()
+    await session.refresh(c)
+
+    await _notify_complaint_author(
+        session,
+        c,
+        kind="support_reply",
+        title="Ответ поддержки Doday 💬",
+        body=reply,
+        subject="Ответ поддержки Doday",
+        email_when_inapp=True,  # ответ важен — дублируем и в письмо
+    )
     return ComplaintOut.model_validate(c)
 
 

@@ -36,6 +36,9 @@ class Complaint(Base):
         String(10), nullable=False, default="normal", server_default="normal"
     )
     admin_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Последний ответ админа автору обращения — дублируется в уведомление/письмо,
+    # но храним и здесь, чтобы в панели было видно, что уже отвечали.
+    admin_reply: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False
     )

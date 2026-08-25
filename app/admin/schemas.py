@@ -27,6 +27,7 @@ class ComplaintOut(BaseModel):
     status: str
     priority: str
     admin_note: str | None
+    admin_reply: str | None
     created_at: datetime
     resolved_at: datetime | None
 

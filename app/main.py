@@ -60,6 +60,7 @@ from app.links.router import router as links_router
 from app.logging_setup import configure_logging
 from app.miniapp.router import router as miniapp_router
 from app.mood.router import router as mood_router
+from app.notifications.router import router as notifications_router
 from app.pages.router import router as pages_router
 from app.pdd.router import api_router as pdd_api_router
 from app.pdd.router import router as pdd_router
@@ -217,6 +218,27 @@ def _repair_schema_on_startup() -> None:
                 )
                 await conn.execute(
                     text("CREATE INDEX IF NOT EXISTS ix_page_views_path ON page_views (path)")
+                )
+                # Уведомления (колокольчик) — на случай рассинхрона alembic.
+                await conn.execute(
+                    text(
+                        "CREATE TABLE IF NOT EXISTS notifications ("
+                        "id UUID PRIMARY KEY, "
+                        "user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, "
+                        "kind VARCHAR(30) NOT NULL DEFAULT 'generic', "
+                        "title VARCHAR(200) NOT NULL, "
+                        "body TEXT, link VARCHAR(300), "
+                        "read_at TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL)"
+                    )
+                )
+                await conn.execute(
+                    text(
+                        "CREATE INDEX IF NOT EXISTS ix_notifications_user_id "
+                        "ON notifications (user_id)"
+                    )
+                )
+                await conn.execute(
+                    text("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS admin_reply TEXT")
                 )
         finally:
             await engine.dispose()
@@ -545,6 +567,7 @@ app.include_router(calendar_feed_router)
 app.include_router(ical_token_router)
 app.include_router(habits_router)
 app.include_router(mood_router)
+app.include_router(notifications_router)
 app.include_router(time_tracking_router)
 app.include_router(achievements_router)
 app.include_router(user_templates_router)

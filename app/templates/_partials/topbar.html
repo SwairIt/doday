@@ -56,6 +56,39 @@
     <kbd class="ml-2 px-1.5 py-0.5 text-xs rounded bg-[var(--surface-2)] border border-[var(--border)]">⌘K</kbd>
   </button>
 
+  {# Колокольчик уведомлений — для всех пользователей #}
+  <div x-data="dodayNotifications()" x-init="init()" class="relative">
+    <button type="button" @click="toggle()"
+            class="relative p-2 rounded-lg hover:bg-[var(--surface-2)] transition"
+            title="Уведомления" aria-label="Уведомления">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+      </svg>
+      <span x-show="unread > 0" x-cloak
+            class="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center"
+            x-text="unread > 9 ? '9+' : unread"></span>
+    </button>
+
+    <div x-show="open" x-cloak @click.outside="open = false" x-transition
+         class="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] card p-0 shadow-xl z-50 overflow-hidden">
+      <div class="px-4 py-2.5 border-b border-[var(--border)] font-semibold text-sm">Уведомления</div>
+      <div class="max-h-96 overflow-y-auto">
+        <template x-if="!items.length">
+          <div class="px-4 py-8 text-center text-xs text-[var(--text-muted)]">Пока пусто</div>
+        </template>
+        <template x-for="n in items" :key="n.id">
+          <a :href="n.link || '#'"
+             class="block px-4 py-3 border-b border-[var(--border)] last:border-0 hover:bg-[var(--surface-2)] transition"
+             :class="!n.read ? 'bg-[var(--accent)]/5' : ''">
+            <div class="text-sm font-medium" x-text="n.title"></div>
+            <div x-show="n.body" class="text-xs text-[var(--text-muted)] mt-0.5 whitespace-pre-wrap break-words" x-text="n.body"></div>
+            <div class="text-[10px] text-[var(--text-muted)] mt-1" x-text="fmt(n.created_at)"></div>
+          </a>
+        </template>
+      </div>
+    </div>
+  </div>
+
   <button
     type="button"
     x-data="{
@@ -86,3 +119,40 @@
     </svg>
   </button>
 </header>
+
+<script>
+  // Колокольчик уведомлений: тянет непрочитанные, помечает прочитанными при открытии.
+  function dodayNotifications() {
+    return {
+      open: false, items: [], unread: 0,
+      async init() {
+        await this.load();
+        // Периодически подтягиваем новые, пока панель закрыта.
+        setInterval(() => { if (!this.open) this.load(); }, 60000);
+      },
+      async load() {
+        try {
+          const r = await fetch('/api/notifications', { credentials: 'include' });
+          if (r.ok) { const d = await r.json(); this.items = d.items || []; this.unread = d.unread || 0; }
+        } catch (e) {}
+      },
+      async toggle() {
+        this.open = !this.open;
+        if (this.open && this.unread > 0) {
+          try { await fetch('/api/notifications/read', { method: 'POST', credentials: 'include' }); } catch (e) {}
+          this.unread = 0;
+          this.items = this.items.map(n => ({ ...n, read: true }));
+        }
+      },
+      fmt(iso) {
+        try {
+          const d = new Date(iso), diff = (Date.now() - d.getTime()) / 1000;
+          if (diff < 60) return 'только что';
+          if (diff < 3600) return Math.floor(diff / 60) + ' мин назад';
+          if (diff < 86400) return Math.floor(diff / 3600) + ' ч назад';
+          return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+        } catch (e) { return ''; }
+      },
+    };
+  }
+</script>
