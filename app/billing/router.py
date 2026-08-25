@@ -245,6 +245,11 @@ async def start_card_payment(
     # flush, а не commit: нужен выданный последовательностью InvId, но фиксируем
     # запись вместе со ссылкой — иначе при падении останется счёт без адреса.
     await session.flush()
+    # inv_id — серверный DEFAULT (nextval) и НЕ первичный ключ, поэтому после
+    # INSERT его значение SQLAlchemy сразу не подтягивает. Ленивое чтение
+    # атрибута в async-сессии падает в MissingGreenlet (IO вне await) — поэтому
+    # подгружаем номер счёта явно, в await-контексте.
+    await session.refresh(payment, ["inv_id"])
     payment.provider_payment_id = str(payment.inv_id)
 
     url = robokassa.build_payment_url(product, payment.inv_id, email=user.email)
@@ -394,6 +399,14 @@ async def _diag() -> dict[str, object]:
                 )
                 sess.add(probe)
                 await sess.flush()
+                # Точно как в start_card_payment: подгружаем inv_id в await-
+                # контексте, затем читаем и строим ссылку — воспроизводим весь
+                # путь заведения счёта, чтобы фикс был доказан до нажатия.
+                await sess.refresh(probe, ["inv_id"])
+                probe.provider_payment_id = str(probe.inv_id)
+                product = get_product("pro_1m")
+                if product is not None:
+                    robokassa.build_payment_url(product, probe.inv_id, email="diag@example.com")
                 out["insert_dry_run_ok"] = True
                 out["insert_inv_id"] = int(probe.inv_id)
                 await sess.rollback()
