@@ -16,6 +16,7 @@ from sqlalchemy import (
     Integer,
     Sequence,
     String,
+    Text,
     UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column
@@ -131,7 +132,9 @@ class CardPayment(Base):
     # pending → succeeded | canceled. Права выдаём только на succeeded.
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
     # Ссылка на страницу оплаты — на случай если пользователь потерял вкладку.
-    confirmation_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # TEXT, а не varchar: ссылка Robokassa с url-кодированным чеком легко
+    # переваливает за 500 символов, и varchar(500) обрывал её с ошибкой.
+    confirmation_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False
     )

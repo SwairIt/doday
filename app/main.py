@@ -186,6 +186,12 @@ def _repair_schema_on_startup() -> None:
                         "COALESCE((SELECT MAX(inv_id) FROM card_payments), 0) + 1, false)"
                     )
                 )
+                # confirmation_url был varchar(500), но ссылка Robokassa с чеком
+                # длиннее — расширяем до TEXT, иначе UPDATE обрывает её ошибкой
+                # StringDataRightTruncation и заведение счёта падает в 500.
+                await conn.execute(
+                    text("ALTER TABLE card_payments ALTER COLUMN confirmation_url TYPE TEXT")
+                )
         finally:
             await engine.dispose()
 
