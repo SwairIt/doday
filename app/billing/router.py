@@ -253,19 +253,25 @@ async def start_card_payment(
     return RedirectResponse(url=url, status_code=status.HTTP_303_SEE_OTHER)
 
 
-@router.post("/robokassa/result", include_in_schema=False)
+@router.api_route("/robokassa/result", methods=["GET", "POST"], include_in_schema=False)
 async def robokassa_result(request: Request, session: DbSession) -> PlainTextResponse:
     """Уведомление об оплате. Единственное место, где выдаётся доступ.
 
     Robokassa повторяет запрос, пока не получит ``OK<InvId>``, поэтому обработка
     обязана быть идемпотентной: второй раз по тому же счёту доступ не выдаём,
     но отвечаем успехом, иначе уведомления будут идти вечно.
+
+    Принимаем И GET, И POST: метод отправки Result URL задаётся в настройках
+    магазина Robokassa, и по умолчанию там часто стоит GET. Параметры берём из
+    query-строки (GET) и из тела формы (POST) — что пришло, то и читаем.
     """
-    form = dict((await request.form()).items())
-    out_sum = str(form.get("OutSum", ""))
-    inv_id = str(form.get("InvId", ""))
-    signature = str(form.get("SignatureValue", ""))
-    shp = {k: str(v) for k, v in form.items() if k.startswith("Shp_")}
+    params: dict[str, str] = {k: str(v) for k, v in request.query_params.items()}
+    if request.method == "POST":
+        params.update({k: str(v) for k, v in (await request.form()).items()})
+    out_sum = params.get("OutSum", "")
+    inv_id = params.get("InvId", "")
+    signature = params.get("SignatureValue", "")
+    shp = {k: v for k, v in params.items() if k.startswith("Shp_")}
 
     if not robokassa.verify_result(out_sum, inv_id, signature, shp):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="bad signature")
@@ -365,5 +371,33 @@ async def _diag() -> dict[str, object]:
             out["build_url_prefix"] = url[:60]
     except Exception as exc:
         out["build_url_error"] = repr(exc)
+
+    # Реальная вставка строки платежа через ORM с откатом — ловит ЛЮБУЮ ошибку
+    # INSERT (дефолты колонок, последовательность, ограничения), которую точечные
+    # проверки выше не видят. Ничего не сохраняем: flush → rollback.
+    try:
+        from app.billing.models import CardPayment
+        from app.db import get_session_maker
+
+        user_id = await scalar("SELECT id FROM users LIMIT 1")
+        if user_id is None:
+            out["insert_dry_run"] = "нет пользователей для проверки"
+        else:
+            async with get_session_maker()() as sess:
+                probe = CardPayment(
+                    user_id=user_id,
+                    provider="robokassa",
+                    provider_payment_id="",
+                    product_code="pro_1m",
+                    amount_kopecks=19900,
+                    status="pending",
+                )
+                sess.add(probe)
+                await sess.flush()
+                out["insert_dry_run_ok"] = True
+                out["insert_inv_id"] = int(probe.inv_id)
+                await sess.rollback()
+    except Exception as exc:
+        out["insert_dry_run_error"] = repr(exc)
 
     return out
