@@ -319,3 +319,52 @@ async def robokassa_success() -> RedirectResponse:
 async def robokassa_fail() -> RedirectResponse:
     """Оплата не прошла или пользователь отменил её."""
     return RedirectResponse(url="/pricing?payment=failed", status_code=302)
+
+
+@router.get("/_diag2", include_in_schema=False)
+async def _diag2(session: DbSession) -> dict[str, object]:
+    """ВРЕМЕННО: повторяет start_card_payment ОДИН В ОДИН на сессии запроса,
+    включая commit и email пользователя, и возвращает полный traceback ошибки.
+
+    Нужен, потому что 500 воспроизводится у пользователя, но не в изолированной
+    проверке — значит дело в том, что раньше не воспроизводилось (commit, email,
+    поведение request-scoped сессии). Берём первого пользователя из БД, чтобы не
+    требовать логин. Создаёт реальную pending-строку платежа (безвредно). Убрать
+    после починки.
+    """
+    import traceback
+
+    from app.auth.models import User
+
+    out: dict[str, object] = {}
+    try:
+        user = (await session.execute(select(User).limit(1))).scalar_one_or_none()
+        if user is None:
+            return {"error": "нет пользователей"}
+        out["user_email_is_set"] = bool(user.email)
+        product = get_product("pro_1m")
+        if product is None:
+            return {"error": "продукт pro_1m не найден"}
+
+        payment = CardPayment(
+            user_id=user.id,
+            provider="robokassa",
+            provider_payment_id="",
+            product_code=product.code,
+            amount_kopecks=product.rub_amount * 100,
+            status="pending",
+        )
+        session.add(payment)
+        await session.flush()
+        await session.refresh(payment, ["inv_id"])
+        payment.provider_payment_id = str(payment.inv_id)
+        url = robokassa.build_payment_url(product, payment.inv_id, email=user.email)
+        payment.confirmation_url = url
+        await session.commit()
+        out["ok"] = True
+        out["inv_id"] = payment.inv_id
+        out["url_prefix"] = url[:60]
+    except Exception as exc:
+        out["error"] = repr(exc)
+        out["traceback"] = traceback.format_exc()[-1800:]
+    return out
