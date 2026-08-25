@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Фокус · {{ task_title }} — Doday{% endblock %}
+{% block layout %}
+{# Отдельное мини-окно таймера (pop-out из детали задачи). Тот же origin —
+   поэтому длительность (doday-pomodoro-work-min/break-min) и счётчик сессий
+   берутся из общего localStorage, состояние синхронно с виджетом в задаче. #}
+<div class="min-h-screen flex flex-col items-center justify-center gap-5 px-6 py-8 text-center select-none"
+     x-data="focusTimer({{ task_id|tojson }})" x-init="init()">
+
+  <div class="text-sm text-[var(--text-muted)] max-w-full truncate px-2">{{ task_title }}</div>
+
+  <div class="text-7xl font-mono font-bold tabular-nums leading-none"
+       x-text="fmt(remaining)"
+       :class="mode === 'work' ? 'grad-text' : 'text-emerald-400'"></div>
+
+  <div class="flex items-center gap-2">
+    <button type="button" @click="switchMode('work')"
+            :class="mode === 'work' ? 'bg-[var(--accent)]/20 text-[var(--accent)]' : 'text-[var(--text-muted)] hover:bg-[var(--surface-2)]'"
+            class="px-3 py-1.5 rounded text-sm font-medium transition">Работа <span x-text="workMin"></span></button>
+    <button type="button" @click="switchMode('break')"
+            :class="mode === 'break' ? 'bg-emerald-500/20 text-emerald-400' : 'text-[var(--text-muted)] hover:bg-[var(--surface-2)]'"
+            class="px-3 py-1.5 rounded text-sm font-medium transition">Перерыв <span x-text="breakMin"></span></button>
+  </div>
+
+  <div class="flex items-center gap-2">
+    <button type="button" x-show="!running" @click="start()" class="btn-primary px-6 py-2.5">▶︎ Старт</button>
+    <button type="button" x-show="running" @click="pause()" class="btn-ghost px-6 py-2.5">⏸ Пауза</button>
+    <button type="button" @click="reset()" title="Сбросить" class="btn-ghost px-3 py-2.5">↺</button>
+  </div>
+
+  <div class="flex items-center gap-1.5 flex-wrap justify-center text-xs text-[var(--text-muted)]">
+    <span>Работа:</span>
+    <template x-for="m in [25, 50, 90]" :key="m">
+      <button type="button" @click="setWork(m)"
+              :class="workMin === m ? 'bg-[var(--accent)]/20 text-[var(--accent)]' : 'hover:bg-[var(--surface-2)]'"
+              class="px-2 py-0.5 rounded transition tabular-nums" x-text="m"></button>
+    </template>
+    <input type="number" min="1" max="180" :value="workMin" @change="setWork($event.target.value)"
+           class="w-14 bg-[var(--surface-2)] border border-[var(--border)] rounded px-1.5 py-0.5 text-center outline-none focus:border-[var(--accent)]">
+    <span class="ml-1">Перерыв:</span>
+    <input type="number" min="1" max="60" :value="breakMin" @change="setBreak($event.target.value)"
+           class="w-12 bg-[var(--surface-2)] border border-[var(--border)] rounded px-1.5 py-0.5 text-center outline-none focus:border-[var(--accent)]">
+    <span>мин</span>
+  </div>
+
+  <div class="text-xs text-[var(--text-muted)]">сессий сегодня: <span x-text="sessions"></span></div>
+</div>
+
+<script>
+  function focusTimer(taskId) {
+    const K = 'doday-pomodoro-' + taskId;
+    const SK = 'doday-pomodoro-sessions-' + taskId;
+    const g = (k, d) => { try { return parseInt(localStorage.getItem(k) || d, 10) || parseInt(d, 10); } catch (e) { return parseInt(d, 10); } };
+    return {
+      workMin: g('doday-pomodoro-work-min', '25'),
+      breakMin: g('doday-pomodoro-break-min', '5'),
+      get workSec() { return this.workMin * 60; },
+      get breakSec() { return this.breakMin * 60; },
+      remaining: g('doday-pomodoro-work-min', '25') * 60,
+      mode: 'work', running: false, interval: null,
+      sessions: g(SK, '0'),
+      init() {
+        this.remaining = this.workSec;
+        try {
+          const saved = localStorage.getItem(K);
+          if (saved) {
+            const s = JSON.parse(saved);
+            if (s.endTs && s.endTs > Date.now()) {
+              this.mode = s.mode;
+              this.remaining = Math.ceil((s.endTs - Date.now()) / 1000);
+              this.running = true;
+              this.tick();
+            }
+          }
+        } catch (e) {}
+        if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+      },
+      fmt(s) { const m = Math.floor(s / 60), r = s % 60; return m + ':' + (r < 10 ? '0' : '') + r; },
+      start() { if (this.running) return; this.running = true; const endTs = Date.now() + this.remaining * 1000; try { localStorage.setItem(K, JSON.stringify({ mode: this.mode, endTs })); } catch (e) {} this.tick(); },
+      pause() { this.running = false; clearInterval(this.interval); try { localStorage.removeItem(K); } catch (e) {} },
+      reset() { this.pause(); this.remaining = this.mode === 'work' ? this.workSec : this.breakSec; },
+      switchMode(m) { this.pause(); this.mode = m; this.remaining = m === 'work' ? this.workSec : this.breakSec; },
+      setWork(min) { this.workMin = Math.max(1, Math.min(180, parseInt(min, 10) || 25)); try { localStorage.setItem('doday-pomodoro-work-min', this.workMin); } catch (e) {} if (!this.running && this.mode === 'work') this.remaining = this.workSec; },
+      setBreak(min) { this.breakMin = Math.max(1, Math.min(60, parseInt(min, 10) || 5)); try { localStorage.setItem('doday-pomodoro-break-min', this.breakMin); } catch (e) {} if (!this.running && this.mode === 'break') this.remaining = this.breakSec; },
+      tick() {
+        clearInterval(this.interval);
+        this.interval = setInterval(() => {
+          this.remaining--;
+          if (this.remaining <= 0) {
+            this.pause();
+            if (this.mode === 'work') { this.sessions++; try { localStorage.setItem(SK, this.sessions); } catch (e) {} }
+            this.notify();
+            this.switchMode(this.mode === 'work' ? 'break' : 'work');
+          }
+        }, 1000);
+      },
+      notify() {
+        try {
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification(this.mode === 'work' ? '🍅 Готово, время отдохнуть' : 'Перерыв окончен — назад к делу');
+          }
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const o = ctx.createOscillator();
+          o.frequency.value = 880;
+          o.connect(ctx.destination);
+          o.start();
+          setTimeout(() => o.stop(), 200);
+        } catch (e) {}
+      },
+    };
+  }
+</script>
+{% endblock %}

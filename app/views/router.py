@@ -200,6 +200,31 @@ async def today_view(
     )
 
 
+@router.get("/focus", response_class=HTMLResponse, response_model=None)
+async def focus_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
+    """Отдельное мини-окно с таймером-помодоро (pop-out из детали задачи).
+
+    Standalone-страница без сайдбара/топбара. Тот же origin, что и приложение,
+    поэтому длительность и счётчик сессий берутся из общего localStorage —
+    состояние синхронно с виджетом в детали задачи.
+    """
+    task_id = request.query_params.get("task", "")
+    task_title = "Фокус"
+    if task_id:
+        try:
+            from app.tasks.service import get_task
+
+            t = await get_task(session, user.id, UUID(task_id))
+            task_title = t.title
+        except Exception:
+            task_title = "Фокус"
+    return templates.TemplateResponse(
+        request,
+        "app/focus.html",
+        {"task_id": task_id, "task_title": task_title},
+    )
+
+
 @router.get("/achievements", response_class=HTMLResponse, response_model=None)
 async def achievements_view(
     request: Request, user: RequiredUser, session: DbSession

@@ -308,9 +308,11 @@
 
     <div class="px-5 py-4 border-b border-[var(--border)]"
          x-data="{
-           workSec: 25 * 60,
-           breakSec: 5 * 60,
-           remaining: 25 * 60,
+           workMin: parseInt(localStorage.getItem('doday-pomodoro-work-min') || '25', 10) || 25,
+           breakMin: parseInt(localStorage.getItem('doday-pomodoro-break-min') || '5', 10) || 5,
+           get workSec() { return this.workMin * 60; },
+           get breakSec() { return this.breakMin * 60; },
+           remaining: (parseInt(localStorage.getItem('doday-pomodoro-work-min') || '25', 10) || 25) * 60,
            mode: 'work',
            running: false,
            interval: null,
@@ -356,6 +358,26 @@
              this.mode = m;
              this.remaining = m === 'work' ? this.workSec : this.breakSec;
            },
+           setWork(min) {
+             this.workMin = Math.max(1, Math.min(180, parseInt(min, 10) || 25));
+             try { localStorage.setItem('doday-pomodoro-work-min', this.workMin); } catch (e) {}
+             if (!this.running && this.mode === 'work') this.remaining = this.workSec;
+           },
+           setBreak(min) {
+             this.breakMin = Math.max(1, Math.min(60, parseInt(min, 10) || 5));
+             try { localStorage.setItem('doday-pomodoro-break-min', this.breakMin); } catch (e) {}
+             if (!this.running && this.mode === 'break') this.remaining = this.breakSec;
+           },
+           popOut() {
+             // Отдельное мини-окно с таймером (как focus-режим). Тот же origin —
+             // значит настройки длительности и счётчик сессий берутся из того же
+             // localStorage, состояние общее.
+             window.open(
+               '/app/focus?task={{ task.id }}',
+               'doday-focus-{{ task.id }}',
+               'width=340,height=460,menubar=no,toolbar=no,location=no,status=no,resizable=yes'
+             );
+           },
            tick() {
              clearInterval(this.interval);
              this.interval = setInterval(() => {
@@ -386,7 +408,11 @@
            }
          }">
       <div class="text-xs uppercase font-semibold text-[var(--text-muted)] tracking-wider mb-2 flex items-center justify-between">
-        <span>🍅 Помидор</span>
+        <span class="flex items-center gap-2">
+          🍅 Помидор
+          <button type="button" @click="popOut()" title="Открыть таймер в отдельном окне"
+                  class="normal-case text-sm text-[var(--text-muted)] hover:text-[var(--accent)] transition">⤢</button>
+        </span>
         <span class="normal-case text-[10px]">сессий: <span x-text="sessions"></span></span>
       </div>
       <div class="card p-4 flex items-center gap-4">
@@ -395,16 +421,33 @@
         <div class="flex-1 flex items-center gap-1.5 flex-wrap">
           <button type="button" @click="switchMode('work')"
                   :class="mode === 'work' ? 'bg-[var(--accent)]/20 text-[var(--accent)]' : 'text-[var(--text-muted)] hover:bg-[var(--surface-2)]'"
-                  class="px-2.5 py-1 rounded text-xs font-medium transition">Работа 25</button>
+                  class="px-2.5 py-1 rounded text-xs font-medium transition">Работа <span x-text="workMin"></span></button>
           <button type="button" @click="switchMode('break')"
                   :class="mode === 'break' ? 'bg-emerald-500/20 text-emerald-400' : 'text-[var(--text-muted)] hover:bg-[var(--surface-2)]'"
-                  class="px-2.5 py-1 rounded text-xs font-medium transition">Перерыв 5</button>
+                  class="px-2.5 py-1 rounded text-xs font-medium transition">Перерыв <span x-text="breakMin"></span></button>
         </div>
         <div class="flex items-center gap-1.5 shrink-0">
           <button type="button" x-show="!running" @click="start()" class="btn-primary px-3 py-1.5 text-xs">▶︎ Старт</button>
           <button type="button" x-show="running" @click="pause()" class="btn-ghost px-3 py-1.5 text-xs">⏸ Пауза</button>
           <button type="button" @click="reset()" title="Сбросить" class="btn-ghost px-2 py-1.5 text-xs">↺</button>
         </div>
+      </div>
+      {# Настройка длительности: пресеты + своё число. 25 мин многим мало. #}
+      <div class="mt-2 flex items-center gap-1.5 flex-wrap text-[11px] text-[var(--text-muted)]">
+        <span>Работа:</span>
+        <template x-for="m in [25, 50, 90]" :key="m">
+          <button type="button" @click="setWork(m)"
+                  :class="workMin === m ? 'bg-[var(--accent)]/20 text-[var(--accent)]' : 'hover:bg-[var(--surface-2)]'"
+                  class="px-2 py-0.5 rounded transition tabular-nums" x-text="m"></button>
+        </template>
+        <input type="number" min="1" max="180" :value="workMin" @change="setWork($event.target.value)"
+               title="Своя длительность работы, мин"
+               class="w-14 bg-[var(--surface-2)] border border-[var(--border)] rounded px-1.5 py-0.5 text-center outline-none focus:border-[var(--accent)]">
+        <span class="ml-1">Перерыв:</span>
+        <input type="number" min="1" max="60" :value="breakMin" @change="setBreak($event.target.value)"
+               title="Длительность перерыва, мин"
+               class="w-12 bg-[var(--surface-2)] border border-[var(--border)] rounded px-1.5 py-0.5 text-center outline-none focus:border-[var(--accent)]">
+        <span>мин</span>
       </div>
     </div>
 
