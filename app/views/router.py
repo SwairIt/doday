@@ -1311,7 +1311,13 @@ async def upcoming_view(request: Request, user: RequiredUser, session: DbSession
 @router.get("/root", response_class=HTMLResponse)
 async def admin_root_view(request: Request, session: DbSession) -> HTMLResponse:
     """Admin panel — total control: complaints, users, stats. Requires is_admin."""
-    from app.admin.service import admin_stats, list_complaints, list_recent_users
+    from app.admin.service import (
+        admin_stats,
+        list_complaints,
+        list_recent_users,
+        signups_by_day,
+        top_pages,
+    )
     from app.auth.deps import get_current_user, require_admin, require_user
 
     user = await require_user(await get_current_user(request, session))
@@ -1320,6 +1326,8 @@ async def admin_root_view(request: Request, session: DbSession) -> HTMLResponse:
     complaints = await list_complaints(session, limit=200)
     stats = await admin_stats(session)
     recent_users = await list_recent_users(session, limit=20)
+    pages_top = await top_pages(session, days=7, limit=12)
+    signups = await signups_by_day(session, days=14)
 
     # Map complaint.user_id → user.email for display
     user_emails: dict[UUID, str] = {}
@@ -1340,6 +1348,8 @@ async def admin_root_view(request: Request, session: DbSession) -> HTMLResponse:
             "stats": stats,
             "recent_users": recent_users,
             "user_emails": user_emails,
+            "pages_top": pages_top,
+            "signups": signups,
         },
     )
 

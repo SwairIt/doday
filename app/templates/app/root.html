@@ -34,6 +34,66 @@
   </div>
 </div>
 
+{# ---- Аналитика: куда заходят ---- #}
+<section class="mb-8">
+  <h2 class="text-lg font-bold mb-3">Аналитика <span class="text-[var(--text-muted)] text-sm font-normal">· куда заходят</span></h2>
+
+  <div class="grid grid-cols-3 gap-3 mb-4">
+    <div class="card p-4">
+      <div class="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Просмотров сегодня</div>
+      <div class="text-2xl font-bold tabular-nums">{{ stats.views_today }}</div>
+    </div>
+    <div class="card p-4">
+      <div class="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Просмотров за неделю</div>
+      <div class="text-2xl font-bold tabular-nums">{{ stats.views_week }}</div>
+    </div>
+    <div class="card p-4">
+      <div class="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Заходило юзеров (нед.)</div>
+      <div class="text-2xl font-bold tabular-nums">{{ stats.visitors_week }}</div>
+    </div>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-4">
+    {# Топ страниц #}
+    <div class="card p-4">
+      <div class="text-sm font-semibold mb-3">Топ страниц <span class="text-[var(--text-muted)] font-normal text-xs">· 7 дней</span></div>
+      {% if pages_top %}
+        {% set pmax = pages_top[0].count %}
+        <div class="space-y-1.5">
+          {% for p in pages_top %}
+            <div class="flex items-center gap-2 text-xs">
+              <span class="font-mono truncate flex-1" title="{{ p.path }}">{{ p.path }}</span>
+              <div class="w-20 h-2 rounded-full bg-[var(--surface-2)] overflow-hidden shrink-0">
+                <div class="h-full grad-bg" style="width: {{ (p.count * 100 // pmax) if pmax else 0 }}%"></div>
+              </div>
+              <span class="tabular-nums text-[var(--text-muted)] w-8 text-right shrink-0">{{ p.count }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-xs text-[var(--text-muted)]">Пока пусто — данные появятся, как только начнут заходить.</p>
+      {% endif %}
+    </div>
+
+    {# Регистрации по дням #}
+    <div class="card p-4">
+      <div class="text-sm font-semibold mb-3">Регистрации по дням <span class="text-[var(--text-muted)] font-normal text-xs">· 14 дней</span></div>
+      {% set smax = (signups | map(attribute='count') | max) or 1 %}
+      <div class="flex items-end gap-1" style="height:96px">
+        {% for d in signups %}
+          {% set h = (d.count * 92 // smax) if smax else 0 %}
+          <div class="flex-1 rounded-t grad-bg" style="height: {{ (h + 2) if d.count else 1 }}px"
+               title="{{ d.day }}: {{ d.count }}"></div>
+        {% endfor %}
+      </div>
+      <div class="flex justify-between text-[9px] text-[var(--text-muted)] mt-1">
+        <span>{{ signups[0].day }}</span>
+        <span>{{ signups[-1].day }} · сегодня</span>
+      </div>
+    </div>
+  </div>
+</section>
+
 {# ---- Complaints ---- #}
 <div x-data="{
        statusFilter: 'all',

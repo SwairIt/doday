@@ -198,6 +198,26 @@ def _repair_schema_on_startup() -> None:
                         "ALTER TABLE complaints ADD COLUMN IF NOT EXISTS contact_email VARCHAR(320)"
                     )
                 )
+                # Таблица аналитики посещений — на случай, если учёт alembic
+                # разошёлся и миграция 0053 не применилась.
+                await conn.execute(
+                    text(
+                        "CREATE TABLE IF NOT EXISTS page_views ("
+                        "id UUID PRIMARY KEY, "
+                        "path VARCHAR(300) NOT NULL, "
+                        "user_id UUID REFERENCES users(id) ON DELETE SET NULL, "
+                        "created_at TIMESTAMPTZ NOT NULL)"
+                    )
+                )
+                await conn.execute(
+                    text(
+                        "CREATE INDEX IF NOT EXISTS ix_page_views_created_at "
+                        "ON page_views (created_at)"
+                    )
+                )
+                await conn.execute(
+                    text("CREATE INDEX IF NOT EXISTS ix_page_views_path ON page_views (path)")
+                )
         finally:
             await engine.dispose()
 
@@ -420,6 +440,90 @@ async def _security_headers(
         response.headers.setdefault(
             "Strict-Transport-Security", "max-age=15552000; includeSubDomains"
         )
+    return response
+
+
+# Аналитика «куда заходят» для /app/root. Пишем ТОЛЬКО реальные просмотры
+# HTML-страниц человеком: не API, не статику, не htmx-партиалы, не ботов.
+_PAGEVIEW_SKIP_PREFIXES = (
+    "/static",
+    "/api",
+    "/htmx",
+    "/health",
+    "/version",
+    "/robots",
+    "/sitemap",
+    "/favicon",
+    "/.well-known",
+    "/arena",
+    "/game",
+    "/taptower",
+    "/_",
+)
+_BOT_UA_MARKERS = (
+    "bot",
+    "crawl",
+    "spider",
+    "slurp",
+    "curl",
+    "wget",
+    "python",
+    "httpx",
+    "aiohttp",
+    "axios",
+    "headless",
+    "monitor",
+    "uptime",
+    "probe",
+    "scan",
+    "preview",
+)
+
+
+def _is_trackable_pageview(request: Request, response: Response) -> bool:
+    """True только для успешного GET реальной HTML-страницы от браузера."""
+    if request.method != "GET" or response.status_code != 200:
+        return False
+    if not response.headers.get("content-type", "").startswith("text/html"):
+        return False
+    if request.url.path.startswith(_PAGEVIEW_SKIP_PREFIXES):
+        return False
+    ua = (request.headers.get("user-agent") or "").lower()
+    if not ua or any(marker in ua for marker in _BOT_UA_MARKERS):
+        return False
+    return True
+
+
+@app.middleware("http")
+async def _record_pageview(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
+    response = await call_next(request)
+    try:
+        if _is_trackable_pageview(request, response):
+            from uuid import UUID
+
+            from app.admin.service import record_page_view
+            from app.db import get_session_maker
+
+            uid_raw = None
+            try:
+                uid_raw = request.session.get("user_id")
+            except Exception:
+                uid_raw = None
+            uid: UUID | None = None
+            if uid_raw:
+                try:
+                    uid = UUID(str(uid_raw))
+                except ValueError:
+                    uid = None
+            async with get_session_maker()() as sess:
+                await record_page_view(sess, path=request.url.path, user_id=uid)
+    except Exception:
+        # Аналитика никогда не должна ломать ответ пользователю — глушим тихо.
+        import logging
+
+        logging.getLogger("doday.analytics").debug("не записал просмотр", exc_info=True)
     return response
 
 

@@ -40,3 +40,23 @@ class Complaint(Base):
         DateTime(timezone=True), default=_utcnow, nullable=False
     )
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class PageView(Base):
+    """Один просмотр страницы — для аналитики «куда заходят» в /app/root.
+
+    Пишется middleware'ом только для реальных HTML-страниц (GET, 200, браузер),
+    не для API/статики/ботов. user_id — если посетитель залогинен, иначе NULL
+    (аноним). path без query-строки, чтобы группировка top-страниц была чистой.
+    """
+
+    __tablename__ = "page_views"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    path: Mapped[str] = mapped_column(String(300), nullable=False, index=True)
+    user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, nullable=False, index=True
+    )
