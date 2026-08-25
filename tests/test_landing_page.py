@@ -24,14 +24,24 @@ async def test_landing_renders_for_anon(client: AsyncClient) -> None:
 
 async def test_landing_pricing_lists_three_tiers(client: AsyncClient) -> None:
     body = (await client.get("/")).text
-    # Section heading + tier names.
+    # Section heading + tier names — ровно те тарифы, что есть в billing/products.py.
     assert ">Free<" in body
     assert ">Pro<" in body or 'grad-text">Pro</h3>' in body
-    assert ">Team<" in body
-    # Trial promise + pricing markers.
-    assert "14 дней Pro" in body or "14 дней" in body
+    assert ">Family<" in body
+    assert ">Team<" not in body
+    # Триала при регистрации нет — лендинг не должен его обещать.
+    assert "14 дней Pro" not in body
+    assert "после trial" not in body
     assert "199" in body
-    assert "499" in body
+    assert "299" in body
+
+
+async def test_landing_has_school_and_blog_sections(client: AsyncClient) -> None:
+    body = (await client.get("/")).text
+    assert 'id="school"' in body
+    assert 'id="blog"' in body
+    assert 'href="/blog"' in body
+    assert "МЭШ" in body
 
 
 async def test_landing_includes_help_link(client: AsyncClient) -> None:

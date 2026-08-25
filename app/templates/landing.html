@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block title %}Doday — бесплатный туду-лист для школы, работы и жизни{% endblock %}
-{% block seo_description %}Doday — бесплатный туду-лист и менеджер задач на русском. Проекты, секции, лейблы, фильтры, календарь, помодоро, статистика, импорт-экспорт. Без рекламы, без слежки, работает на компьютере и телефоне.{% endblock %}
-{% block seo_keywords %}бесплатный туду лист, todo list русский, планировщик задач онлайн, ежедневник, менеджер задач бесплатно, помодоро таймер, расписание уроков, doday, getdoday, аналог todoist, аналог things, kanban доска, заметки и задачи{% endblock %}
-{% block og_title %}Doday — бесплатный туду-лист, который не мешает{% endblock %}
-{% block tw_title %}Doday — бесплатный туду-лист, который не мешает{% endblock %}
+{% block title %}Doday — бесплатный планировщик для школы и учёбы: домашка, расписание, напоминания{% endblock %}
+{% block seo_description %}Doday — бесплатный планировщик задач на русском для школьников, студентов и всех остальных: домашка из МЭШ и Школьного портала, расписание уроков, напоминания в Telegram, помодоро, стрики. Без рекламы, без карты, в браузере и в Telegram.{% endblock %}
+{% block seo_keywords %}планировщик для школьника, приложение для домашних заданий, расписание уроков онлайн, напоминание о домашнем задании, бесплатный туду лист, todo list русский, планировщик задач онлайн, менеджер задач бесплатно, помодоро таймер, планировщик для студента, doday, getdoday, аналог todoist, kanban доска{% endblock %}
+{% block og_title %}Doday — домашка быстрее, ни одно дз не пропущено{% endblock %}
+{% block tw_title %}Doday — домашка быстрее, ни одно дз не пропущено{% endblock %}
 {% block ld_json %}
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Doday","url":"https://getdoday.ru/","description":"Бесплатный туду-лист на русском: проекты, секции, лейблы, фильтры, календарь, помодоро, статистика. Работает в браузере и как PWA, без рекламы.","applicationCategory":"BusinessApplication","operatingSystem":"Any","browserRequirements":"Requires JavaScript","inLanguage":"ru","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"RUB"},"creator":{"@type":"Organization","name":"Doday","url":"https://getdoday.ru/"},"featureList":["Проекты и секции","Лейблы и собственные фильтры","Календарь, недельный и месячный вид","Помодоро-таймер","Статистика и стрики","Импорт и экспорт JSON, CSV, Markdown","PWA (можно поставить на телефон)","Без рекламы, без слежки"]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Doday","url":"https://getdoday.ru/","description":"Бесплатный планировщик на русском для школы и жизни: домашка из электронного дневника, расписание уроков, напоминания в Telegram, помодоро, статистика. Работает в браузере, как PWA и в Telegram, без рекламы.","applicationCategory":"BusinessApplication","operatingSystem":"Any","browserRequirements":"Requires JavaScript","inLanguage":"ru","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"RUB"},"creator":{"@type":"Organization","name":"Doday","url":"https://getdoday.ru/"},"featureList":["Импорт домашних заданий из МЭШ и Школьного портала","Расписание уроков с предметами","Напоминания в Telegram и утренний email-дайджест","Проекты и секции","Лейблы и собственные фильтры","Календарь, недельный и месячный вид","Помодоро-таймер","Статистика, стрики, привычки","Совместные проекты и Family на 5 аккаунтов","Импорт и экспорт JSON, CSV, Markdown","PWA и Telegram Mini App","Без рекламы, без слежки"]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Doday","url":"https://getdoday.ru/","logo":"https://getdoday.ru/favicon.ico","sameAs":[]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Doday","url":"https://getdoday.ru/","inLanguage":"ru","potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://getdoday.ru/help?q={search_term_string}"},"query-input":"required name=search_term_string"}}</script>
 {% endblock %}
@@ -47,8 +47,8 @@
         <a href="#workflow" class="hover:text-[var(--text)] transition">Как это работает</a>
         <a href="/qa/" class="hover:text-[var(--text)] transition flex items-center gap-1">Razbery<span class="text-[10px] uppercase tracking-wider bg-indigo-500/20 text-indigo-300 rounded px-1.5 py-0.5">NEW</span></a>
         <a href="#pricing" class="hover:text-[var(--text)] transition">Тарифы</a>
+        <a href="/blog" class="hover:text-[var(--text)] transition">Блог</a>
         <a href="/help" class="hover:text-[var(--text)] transition">Помощь</a>
-        <a href="#faq" class="hover:text-[var(--text)] transition">FAQ</a>
       </div>
       <div class="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
         {% if user %}
@@ -81,7 +81,7 @@
         {% if beta_free_for_all %}
           <span>Бета: все функции бесплатно, без карты</span>
         {% else %}
-          <span>14 дней Pro бесплатно при регистрации, без карты</span>
+          <span>Бесплатно навсегда — без карты, без рекламы</span>
         {% endif %}
       </p>
 
@@ -91,8 +91,8 @@
       </h1>
 
       <p class="reveal text-base sm:text-lg md:text-xl text-[var(--text-muted)] max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed">
-        Задачи, проекты, канбан, календарь, лейблы, повторы, помидор-таймер.
-        Один сайт — для дома, учёбы, работы и команд. Без рекламы и без писем «вернись к нам».
+        Домашка сама подтягивается из дневника, расписание уроков под рукой, напоминания приходят
+        в Telegram. Плюс проекты, канбан, календарь и помодоро — для учёбы, дома и работы. Без рекламы и без писем «вернись к нам».
       </p>
 
       <div class="reveal flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-center gap-3 sm:gap-4">
@@ -106,7 +106,7 @@
       </div>
 
       <div class="reveal mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-[var(--text-muted)]">
-        <span class="inline-flex items-center gap-2"><svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Подтверждение по email</span>
+        <span class="inline-flex items-center gap-2"><svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Без карты и триалов</span>
         <span class="inline-flex items-center gap-2"><svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Открытый исходный код</span>
         <span class="inline-flex items-center gap-2"><svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Экспорт в JSON, Markdown, iCal</span>
       </div>
@@ -201,9 +201,13 @@
           ("Подзадачи без лимитов", "Любая глубина вложенности. Раскрывай и сворачивай в один клик. Задача внутри задачи внутри задачи — пожалуйста.", "M5 12h14M5 12l4-4m-4 4l4 4M19 4v16"),
           ("Лейблы и кастомные фильтры", "Сохраняй любые комбинации условий (приоритет + проект + дата + текст) как фильтр. Появится в сайдбаре.", "M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"),
           ("Pomodoro-таймер", "На каждой задаче. 25 минут работы, 5 минут отдыха, счётчик завершённых сессий. Уведомления через Browser Notification.", "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"),
-          ("Активность и статистика", "Лента событий за 30 дней + графики продуктивности с штрихами streak'ов. Видишь рост.", "M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"),
+          ("Домашка из дневника — сама", "Подключи МЭШ или Школьный портал МО — задания превращаются в задачи с датой сдачи и предметом. Синк каждые 15 минут.", "M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422A12.083 12.083 0 0121 13.5c0 2.5-1 4.5-3 6M12 14v7"),
+          ("Расписание уроков", "Предметы с цветами и эмодзи, слоты по дням недели, школьный стрик за каждый день без пропусков и достижения за 7, 30 и 100 дней.", "M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"),
+          ("Напоминания в Telegram", "Отдельно от дедлайна: «напомни в 20:30 проверить портфель». Приходят в @DodayTaskBot. Утром в 7:00 — email-дайджест со списком на день.", "M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"),
+          ("Активность и статистика", "Лента событий за 30 дней, графики продуктивности, стрики, трекер привычек и настроения. Видишь рост, а не только список.", "M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"),
           ("Bulk-действия", "Выдели N задач — изменяй приоритет, дату, проект, лейблы; завершай и удаляй пачкой. Esc снимает выделение.", "M5 13l4 4L19 7"),
-          ("Шаблоны проектов", "8 готовых сценариев (учёба, работа, переезд, путешествие). Сохранение своих шаблонов — экспериментально (включается в настройках).", "M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2v16z"),
+          ("Шаблоны проектов", "8 готовых сценариев (учёба, работа, переезд, путешествие). Свои шаблоны — в Pro.", "M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2v16z"),
+          ("Вместе: друзья и семья", "Пригласи одноклассника в проект по подготовке к ЕГЭ или родителя — чтобы видел прогресс. Комментарии к задачам, Family на 5 аккаунтов.", "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"),
           ("Импорт-экспорт без замка", "JSON-бэкап всего аккаунта. Markdown проекта. CSV для Excel. Твои данные — твои.", "M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"),
         ] %}
         {% for title, body, icon in features %}
@@ -221,6 +225,36 @@
     </section>
 
     {# ───── WORKFLOW SHOWCASE ───── #}
+    {# ───── ДЛЯ ШКОЛЫ ───── #}
+    <section id="school" class="max-w-6xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
+      <div class="text-center mb-14">
+        <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Для школы и учёбы</p>
+        <h2 class="text-3xl md:text-4xl font-bold mb-3">Домашка быстрее. Ни одно дз не пропущено.</h2>
+        <p class="text-[var(--text-muted)] text-lg max-w-2xl mx-auto">
+          Doday убирает то, на что уходит половина вечера: «а что задано?», «а когда сдавать?», «а я не забыл?».
+        </p>
+      </div>
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {% set school_steps = [
+          ("1", "Подключи дневник", "МЭШ или Школьный портал МО. Задания сами становятся задачами с предметом и датой сдачи — переписывать руками больше не нужно."),
+          ("2", "Смотри расписание", "Предметы с цветами, слоты по дням, праздники и каникулы. Экран «Сегодня» показывает, что сдавать завтра и что уже горит."),
+          ("3", "Получай напоминания", "В Telegram в выбранное время и утренний email-дайджест в 7:00. Телефон в другой комнате их всё равно покажет."),
+          ("4", "Держи стрик", "Каждый день без пропусков — огонёк 🔥. Помодоро на задачу, статистика по предметам, достижения за 7, 30 и 100 дней."),
+        ] %}
+        {% for n, title, body in school_steps %}
+          <div class="reveal card p-7 relative">
+            <div class="absolute -top-4 -left-4 w-10 h-10 rounded-full grad-bg flex items-center justify-center text-white font-bold shadow-glow">{{ n }}</div>
+            <h3 class="text-xl font-bold mb-2 mt-1">{{ title }}</h3>
+            <p class="text-sm text-[var(--text-muted)] leading-relaxed">{{ body }}</p>
+          </div>
+        {% endfor %}
+      </div>
+      <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
+        <a href="/for-students" class="btn-primary">Doday для школьников и студентов</a>
+        <a href="/blog/c/domashka" class="btn-ghost">Как делать домашку быстрее — статьи</a>
+      </div>
+    </section>
+
     <section id="workflow" class="max-w-6xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
       <div class="text-center mb-14">
         <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Как это работает</p>
@@ -349,8 +383,8 @@
         <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Тарифы</p>
         <h2 class="text-3xl md:text-4xl font-bold mb-3">Честно: бесплатно работает на полную</h2>
         <p class="text-[var(--text-muted)] text-lg max-w-2xl mx-auto">
-          Регистрируешься — и 14 дней получаешь Pro. По окончании trial остаётся Free —
-          до 10 проектов, 500 задач, весь базовый набор. Хочешь больше — подписка.
+          Free — навсегда и без карты: до 10 проектов, 500 активных задач, календарь, канбан, помодоро,
+          расписание и напоминания. Хочешь безлимит и премиум — Pro или Family. Отписка одной кнопкой.
         </p>
       </div>
 
@@ -359,7 +393,7 @@
         <div class="reveal card p-7 flex flex-col">
           <div class="flex items-baseline gap-2 mb-1">
             <h3 class="text-xl font-bold">Free</h3>
-            <span class="text-xs px-2 py-0.5 rounded-full bg-[var(--surface-2)] text-[var(--text-muted)]">после trial</span>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-[var(--surface-2)] text-[var(--text-muted)]">навсегда</span>
           </div>
           <div class="my-5">
             <span class="text-4xl font-bold">0 ₽</span>
@@ -390,29 +424,29 @@
             <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>Премиум-темы Forest и Minimal</li>
             <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>Корзина 30 дней (vs 14 в Free)</li>
             <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>Bulk-add 200 строк за раз (vs 50)</li>
-            <li class="flex items-start gap-2 opacity-70"><svg class="w-4 h-4 text-amber-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd"/></svg>Email-дайджест и TG-бот <span class="text-xs text-amber-400">скоро</span></li>
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>Telegram-бот и утренний email-дайджест</li>
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>1 990 ₽ за год или 9 900 ₽ навсегда (founder)</li>
           </ul>
-          <a href="/auth/register" class="btn-primary text-center w-full">14 дней бесплатно</a>
-          <p class="text-[10px] text-[var(--text-muted)] text-center mt-2">Без карты, отписка одной кнопкой</p>
+          <a href="/pricing" class="btn-primary text-center w-full">Оформить Pro</a>
+          <p class="text-xs text-[var(--text-muted)] text-center mt-2">Карта, СБП или Telegram Stars. Отписка одной кнопкой</p>
         </div>
 
         <div class="reveal reveal-delay-200 card p-7 flex flex-col">
           <div class="flex items-baseline gap-2 mb-1">
-            <h3 class="text-xl font-bold">Team</h3>
-            <span class="text-xs px-2 py-0.5 rounded-full bg-fuchsia-500/15 text-fuchsia-400">скоро</span>
+            <h3 class="text-xl font-bold">Family</h3>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-fuchsia-500/15 text-fuchsia-400">для семьи</span>
           </div>
           <div class="my-5">
-            <span class="text-4xl font-bold">499 ₽</span>
-            <span class="text-sm text-[var(--text-muted)]">/ за пользователя в мес.</span>
+            <span class="text-4xl font-bold">299 ₽</span>
+            <span class="text-sm text-[var(--text-muted)]">/ месяц, до 5 человек</span>
           </div>
           <ul class="space-y-2.5 text-sm flex-1 mb-6">
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>Всё из Pro</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>Общие проекты команды</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>Назначение задач коллегам</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>Командные шаблоны и фильтры</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>SAML SSO и audit-log</li>
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>Всё из Pro для каждого члена семьи</li>
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>Общий проект «Семья» для дома и быта</li>
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>Родитель видит прогресс ребёнка без слежки</li>
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>2 990 ₽ за год — как 10 месяцев по цене 12</li>
           </ul>
-          <a href="mailto:hello@doday.app?subject=Doday%20Team" class="btn-ghost text-center w-full">Написать нам</a>
+          <a href="/pricing" class="btn-ghost text-center w-full">Подробнее о Family</a>
         </div>
 
       </div>
@@ -721,7 +755,7 @@
           <p class="text-sm text-[var(--text-muted)] italic mb-4">
             «Место для твоего отзыва»
           </p>
-          <a href="mailto:hello@doday.app?subject=Отзыв%20о%20Doday" class="text-xs text-[var(--accent)] hover:underline">
+          <a href="/support" class="text-xs text-[var(--accent)] hover:underline">
             Отправить отзыв →
           </a>
         </div>
@@ -766,6 +800,62 @@
     </section>
 
     {# ───── FAQ ───── #}
+    {# ───── БЛОГ ───── #}
+    {% if blog_posts %}
+    <section id="blog" class="max-w-7xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
+      <div class="text-center mb-14">
+        <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Блог</p>
+        <h2 class="text-3xl md:text-4xl font-bold mb-3">Учиться проще — читай, как</h2>
+        <p class="text-[var(--text-muted)] text-lg max-w-2xl mx-auto">
+          Домашка, ОГЭ и ЕГЭ, прокрастинация, колледж и вуз, честные сравнения планировщиков и разборы задач.
+          {{ blog_total }} {{ 'статья' if blog_total % 10 == 1 and blog_total % 100 != 11 else 'статьи' if 2 <= blog_total % 10 <= 4 and not 12 <= blog_total % 100 <= 14 else 'статей' }} без воды.
+        </p>
+      </div>
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for p in blog_posts %}
+          <a href="/blog/{{ p.slug }}" class="reveal card p-6 flex flex-col gap-3 transition-transform hover:-translate-y-1 hover:shadow-card hover:border-[var(--accent)]">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-2xl leading-none">{{ p.emoji }}</span>
+              <span class="text-[11px] uppercase tracking-wider font-semibold text-[var(--accent)] bg-[var(--surface-2)] rounded-full px-2.5 py-1">{{ blog_categories[p.category].name if p.category in blog_categories else p.category }}</span>
+            </div>
+            <h3 class="text-lg font-bold leading-snug">{{ p.title }}</h3>
+            <p class="text-sm text-[var(--text-muted)] leading-relaxed flex-1">{{ p.summary }}</p>
+            <div class="text-xs text-[var(--text-muted)] inline-flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              {{ p.reading_min }} мин чтения
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+      <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
+        <a href="/blog" class="btn-primary">Все статьи блога</a>
+        <a href="/blog/c/razbery" class="btn-ghost">Разборы задач от Razbery</a>
+      </div>
+    </section>
+    {% endif %}
+
+    {# ───── ЭКОСИСТЕМА ───── #}
+    <section id="ecosystem" class="max-w-6xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
+      <div class="text-center mb-12">
+        <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Ещё от Doday Studio</p>
+        <h2 class="text-3xl md:text-4xl font-bold">Не только задачи</h2>
+      </div>
+      <div class="grid md:grid-cols-3 gap-6">
+        {% set eco = [
+          ("/qa/", "🧠", "Razbery", "Школьное Q&A 5–11 класс: задаёшь вопрос — получаешь разбор с объяснением, а не «ответ: 42». Бесплатно."),
+          ("/pdd/", "🚗", "Doday ПДД", "Билеты ПДД с разбором каждого вопроса, тренажёр ошибок, экзамен и марафон."),
+          ("/lessio", "📅", "Lessio", "Кабинет записи для репетиторов, тренеров и психологов — прямо в Telegram."),
+        ] %}
+        {% for href, icon, title, body in eco %}
+          <a href="{{ href }}" class="reveal card p-7 flex flex-col gap-3 transition-transform hover:-translate-y-1 hover:shadow-card hover:border-[var(--accent)]">
+            <span class="text-3xl">{{ icon }}</span>
+            <h3 class="text-xl font-bold">{{ title }}</h3>
+            <p class="text-sm text-[var(--text-muted)] leading-relaxed">{{ body }}</p>
+          </a>
+        {% endfor %}
+      </div>
+    </section>
+
     <section id="faq" class="max-w-3xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
       <div class="text-center mb-12">
         <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">FAQ</p>
@@ -780,10 +870,12 @@
           ('Как Doday работает на телефоне?', 'Адаптивная вёрстка под все размеры экрана. Можно установить как PWA (Поделиться → На главный экран на iPhone, Меню → Установить на Android) — будет вести себя как нативное приложение, без адресной строки браузера.'),
           ('Можно как Todoist? Я привык к их синтаксису.', 'Quick-add понимает «купить молоко завтра !!! @дом» — дата, приоритет, лейбл. А ещё «через неделю», «след пн», «15 декабря», «#проект», «срочно», «вечером», «каждый день». Подсказки прямо под полем.'),
           ('Где данные хранятся?', 'Российский PostgreSQL у нас на сервере. Бэкапы каждый день. На своём железе тоже можно — код открыт на GitHub под MIT.'),
-          ('Какие уведомления есть?', 'Браузерные уведомления через Notification API когда вкладка открыта. Утренний email-дайджест в работе (нужен SMTP). Telegram Mini App в активной разработке — будет полноценный апп прямо внутри Telegram-клиента. Следи в TG-канале (ссылка в футере).'),
-          ('Будет ли Telegram-интеграция?', 'Да, в активной разработке Mini App — полноценное приложение Doday прямо внутри Telegram, с Today, Inbox, календарём, swipe-actions, привязкой к твоему аккаунту через initData. Бот-команды как сейчас (/add /today /done) — тоже останутся, но Mini App это совсем другой уровень. Анонс в TG-канале.'),
+          ('Какие уведомления есть?', 'Напоминания к задачам приходят в Telegram через @DodayTaskBot — отдельно от дедлайна, в то время, которое ты выбрал. Утром в 7:00 по Москве — email-дайджест со списком на день (включается в настройках). В браузере — Notification API для помодоро и колокольчик в приложении.'),
+          ('Есть Telegram-версия?', 'Да. Бот @DodayTaskBot понимает /add «физика §12 завтра», /today, /upcoming, /done и присылает напоминания. Внутри бота работает Mini App — Сегодня, Входящие и календарь прямо в Telegram, привязка к аккаунту в один тап.'),
+          ('Подходит для школы и домашки?', 'Для этого и сделано. Подключи МЭШ или Школьный портал Московской области — домашние задания сами станут задачами с датой сдачи и предметом. Расписание уроков, школьный стрик, напоминания в Telegram, помодоро на каждую задачу. Как это ускоряет домашку — в статьях блога.'),
           ('Что если найду баг или что-то не работает?', 'В app-навигации тапни «?» в правом-нижнем углу — откроется drawer с кнопкой «🐞 Сообщить о проблеме». Жалоба сразу попадает в админку и я фиксю в течение дня.'),
           ('А реально все 60+ фич нужны?', 'Нет — у каждого свой набор. Кому-то достаточно Inbox + Сегодня. Кому-то нужны канбан, повторы, фильтры, помодоро и статистика. Сделано так, чтобы лишнее не мешало.'),
+          ('Есть что почитать про учёбу?', 'Да — в блоге сотни статей: как быстро делать домашку, готовиться к ОГЭ и ЕГЭ, не прокрастинировать, выбирать колледж и вуз, а ещё честные сравнения планировщиков и разборы задач от Razbery.'),
         ] %}
         {% for q, a in faqs %}
           <details class="reveal card p-5 group">
@@ -806,7 +898,7 @@
         <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-fuchsia-500 rounded-full blur-3xl opacity-20"></div>
         <h2 class="text-3xl md:text-4xl font-bold mb-4 relative">Хватит планировать в голове</h2>
         <p class="text-lg text-[var(--text-muted)] mb-8 relative max-w-xl mx-auto">
-          Полминуты на регистрацию, подтверждение по email — и поехали. 14 дней Pro, без карты.
+          Полминуты на регистрацию, подтверждение по email — и поехали. Бесплатно навсегда, без карты.
         </p>
         <a href="/auth/register" class="btn-primary text-base px-8 py-4 relative">
           Создать аккаунт бесплатно

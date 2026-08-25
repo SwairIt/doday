@@ -9,6 +9,7 @@ from sqlalchemy import select
 
 from app.auth.deps import CurrentUser, DbSession, RequiredUser
 from app.auth.rate_limit import client_key, hit
+from app.blog.posts import CATEGORY_BY_SLUG, all_posts, featured_posts
 from app.config import get_settings
 from app.pages.changelog_data import ENTRIES as CHANGELOG_ENTRIES
 from app.pages.roadmap_data import SECTIONS as ROADMAP_SECTIONS
@@ -32,7 +33,13 @@ async def doday_landing(request: Request, user: CurrentUser) -> Response:
     return templates.TemplateResponse(
         request,
         "landing.html",
-        {"user": user, "beta_free_for_all": get_settings().beta_free_for_all},
+        {
+            "user": user,
+            "beta_free_for_all": get_settings().beta_free_for_all,
+            "blog_posts": featured_posts(6),
+            "blog_total": len(all_posts()),
+            "blog_categories": CATEGORY_BY_SLUG,
+        },
     )
 
 
