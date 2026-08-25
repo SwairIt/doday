@@ -14,6 +14,12 @@ class Settings(BaseSettings):
     app_base_url: str = "http://localhost:8000"
     log_level: str = "INFO"
 
+    # E-mail владельца проекта. На старте приложения этому аккаунту выдаётся
+    # is_admin (root-доступ к /app/root), а на новые обращения в поддержку сюда
+    # шлётся уведомление. Дефолт — почта владельца, чтобы работало сразу через
+    # git-пуш; можно переопределить в .env (ROOT_ADMIN_EMAIL=...).
+    root_admin_email: str = "yorikoneno@gmail.com"
+
     database_url: str
     test_database_url: str = ""  # tests only; empty in production
 

@@ -206,6 +206,44 @@ def _repair_schema_on_startup() -> None:
 _repair_schema_on_startup()
 
 
+def _bootstrap_admin_on_startup() -> None:
+    """Выдаёт is_admin владельцу (settings.root_admin_email) при старте.
+
+    Идемпотентно и без ручного SQL на сервере: root-доступ к /app/root
+    настраивается через git-пуш. Если аккаунта с такой почтой ещё нет — просто
+    ничего не делает (UPDATE затронет 0 строк). Ошибку логируем, старт не роняем.
+    """
+    email = get_settings().root_admin_email.strip().lower()
+    if not email:
+        return
+
+    import asyncio
+
+    async def _run() -> None:
+        from sqlalchemy import text
+        from sqlalchemy.ext.asyncio import create_async_engine
+
+        engine = create_async_engine(get_settings().database_url)
+        try:
+            async with engine.begin() as conn:
+                await conn.execute(
+                    text("UPDATE users SET is_admin = true WHERE lower(email) = :email"),
+                    {"email": email},
+                )
+        finally:
+            await engine.dispose()
+
+    try:
+        asyncio.run(_run())
+    except Exception:
+        import logging
+
+        logging.getLogger("doday.startup").exception("не удалось выдать root-доступ владельцу")
+
+
+_bootstrap_admin_on_startup()
+
+
 _is_prod = _settings.app_env == "prod"
 
 # Hide the interactive API docs / OpenAPI schema in prod — no need to hand the
