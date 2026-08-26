@@ -251,4 +251,6 @@ async def purge_unverified(session: AsyncSession, *, older_than_days: int = 3) -
     )
     result = await session.execute(stmt)
     await session.commit()
-    return int(result.rowcount or 0)
+    # rowcount не объявлен в типах Result, хотя есть у CursorResult —
+    # тот же приём, что в app/reminders/service.py:81.
+    return int(getattr(result, "rowcount", 0) or 0)

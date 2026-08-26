@@ -41,6 +41,7 @@ async def verify(token: str, ip: str | None) -> bool:
     if resp.status_code != 200:
         return True
     try:
-        return resp.json().get("status") == "ok"
+        # .json() отдаёт Any — сравнение приводит результат к bool явно.
+        return bool(resp.json().get("status") == "ok")
     except Exception:
         return True
