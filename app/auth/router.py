@@ -46,6 +46,7 @@ async def register_submit(
     password: Annotated[str, Form()],
     agree_privacy: Annotated[str | None, Form()] = None,
     website: Annotated[str, Form()] = "",  # honeypot: люди это поле не видят
+    smart_token: Annotated[str, Form(alias="smart-token")] = "",  # токен SmartCaptcha
 ) -> HTMLResponse | RedirectResponse:
     # Honeypot: бот заполнил скрытое поле — отвечаем как на «успех», но аккаунт
     # НЕ создаём. Так поток бот-регистраций с левыми емейлами обрывается, а бот
@@ -60,6 +61,19 @@ async def register_submit(
             "auth/register.html",
             {"error": "Слишком много попыток. Подожди минуту и попробуй снова."},
             status_code=429,
+        )
+
+    # Капча (если включена в .env). Серверная проверка токена — виджет на форме
+    # даёт smart-token, здесь подтверждаем его у Яндекса. request.state отдаёт
+    # шаблону публичный ключ, поэтому при ошибке форма перерисуется с капчей.
+    from app.auth.captcha import verify as verify_captcha
+
+    if not await verify_captcha(smart_token, ip):
+        return templates.TemplateResponse(
+            request,
+            "auth/register.html",
+            {"error": "Подтверди, что ты не робот (капча)."},
+            status_code=400,
         )
 
     if agree_privacy != "on":

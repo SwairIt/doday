@@ -52,6 +52,13 @@ class Settings(BaseSettings):
     yandex_verification: str = "e9193fc520dec1f8"
     google_site_verification: str = "s2j1R02oWLN4m46HbP6tO3gn7SJtiqPc1zDFb8c6U7U"
 
+    # Яндекс SmartCaptcha — защита формы регистрации от ботов. Ключи из
+    # console.yandex.cloud → SmartCaptcha. client_key публичный (идёт в виджет на
+    # странице), server_key секретный (серверная проверка токена). Оба пустые →
+    # капча выключена, регистрация работает как раньше.
+    smartcaptcha_client_key: str = ""
+    smartcaptcha_server_key: str = ""
+
     @field_validator("indexnow_key")
     @classmethod
     def _keep_indexnow_default(cls, v: str) -> str:

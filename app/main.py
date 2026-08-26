@@ -451,6 +451,9 @@ async def _security_headers(
     # Контакты продавца в подвале — требование Robokassa при модерации сайта.
     request.state.contact_phone = _settings.contact_phone
     request.state.contact_city = _settings.contact_city
+    # Публичный ключ SmartCaptcha для виджета на форме регистрации. Пусто → форма
+    # рендерит без капчи (см. app/templates/auth/register.html).
+    request.state.captcha_sitekey = _settings.smartcaptcha_client_key
     response = await call_next(request)
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     # Tap Tower Mini App (/taptower/*) is loaded inside Telegram's frame, so
