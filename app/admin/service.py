@@ -4,7 +4,7 @@ from datetime import UTC, datetime, time, timedelta
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import desc, func, select
+from sqlalchemy import delete, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.admin.models import Complaint, PageView
@@ -219,3 +219,36 @@ async def signups_by_day(session: AsyncSession, *, days: int = 14) -> list[dict[
         day = since_date + timedelta(days=i)
         out.append({"day": day.strftime("%d.%m"), "count": counts.get(str(day), 0)})
     return out
+
+
+async def count_unverified(session: AsyncSession, *, older_than_days: int = 0) -> int:
+    """Сколько НЕподтверждённых (не-админ) аккаунтов — вероятные боты.
+
+    ``older_than_days`` > 0 считает только старше N дней (свежие регистрации,
+    которые ещё могут подтвердиться, не берём)."""
+    stmt = (
+        select(func.count())
+        .select_from(User)
+        .where(User.email_verified_at.is_(None), User.is_admin.is_(False))
+    )
+    if older_than_days > 0:
+        cutoff = datetime.now(UTC) - timedelta(days=older_than_days)
+        stmt = stmt.where(User.created_at < cutoff)
+    return int((await session.execute(stmt)).scalar_one())
+
+
+async def purge_unverified(session: AsyncSession, *, older_than_days: int = 3) -> int:
+    """Удаляет НЕподтверждённые аккаунты старше N дней. Возвращает число удалённых.
+
+    Никогда не трогает подтверждённых и админов. Неподтверждённый войти не может
+    (логин требует verified), поэтому у него нет задач/данных — каскад безопасен.
+    """
+    cutoff = datetime.now(UTC) - timedelta(days=max(0, older_than_days))
+    stmt = delete(User).where(
+        User.email_verified_at.is_(None),
+        User.is_admin.is_(False),
+        User.created_at < cutoff,
+    )
+    result = await session.execute(stmt)
+    await session.commit()
+    return int(result.rowcount or 0)

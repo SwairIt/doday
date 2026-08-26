@@ -92,6 +92,7 @@ ignore = [
 "app/auth/email.py" = ["RUF001", "RUF002"]      # intentional Cyrillic in branded HTML email body + docstring
 "app/admin/router.py" = ["RUF001", "RUF002", "RUF003"]  # intentional Cyrillic in support strings + comments
 "app/admin/models.py" = ["RUF002", "RUF003"]    # intentional Cyrillic in column comments
+"app/admin/service.py" = ["RUF002", "RUF003"]   # intentional Cyrillic in docstrings/comments
 "app/profile/router.py" = ["RUF001", "RUF002", "RUF003"]  # intentional Cyrillic in user-facing error messages + comments
 # app/links/service.py is set just below with RUF001+RUF002 (revived 2026-05-23)
 "app/digest/service.py" = ["RUF001", "RUF002"]  # intentional Cyrillic in email body and docstring

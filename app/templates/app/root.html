@@ -261,12 +261,47 @@
   {% endif %}
 </div>
 
-{# ---- Recent users ---- #}
-<div class="mt-10">
-  <h2 class="text-lg font-bold mb-3">Все юзеры <span class="text-[var(--text-muted)] text-sm font-normal">· {{ stats.users_total }} (показано {{ recent_users|length }})</span></h2>
+{# ---- Users: живые vs боты, фильтр, чистка ---- #}
+<div class="mt-10" x-data="{
+       filter: 'all',
+       purging: false,
+       async purge() {
+         if (!confirm('Удалить {{ unverified_old }} неподтверждённых аккаунтов старше 3 дней? Подтверждённых и админов не трогает.')) return;
+         this.purging = true;
+         const r = await fetch('/api/admin/users/purge-unverified?days=3', {method:'POST', credentials:'include'});
+         if (r.ok) { const d = await r.json(); alert('Удалено: ' + d.deleted); location.reload(); }
+         else { alert('Не получилось: ' + r.status); this.purging = false; }
+       }
+     }">
+  <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
+    <h2 class="text-lg font-bold">Юзеры
+      <span class="text-[var(--text-muted)] text-sm font-normal">·
+        всего {{ stats.users_total }} ·
+        <span class="text-emerald-400">✓ {{ stats.users_verified }} живых</span> ·
+        ○ {{ stats.users_total - stats.users_verified }} неподтв.
+      </span>
+    </h2>
+    <div class="flex items-center gap-1.5 text-xs">
+      <button type="button" @click="filter='all'" :class="filter==='all' ? 'bg-[var(--accent)]/20 text-[var(--accent)]' : 'hover:bg-[var(--surface-2)]'" class="px-2.5 py-1 rounded transition">Все</button>
+      <button type="button" @click="filter='verified'" :class="filter==='verified' ? 'bg-emerald-500/20 text-emerald-400' : 'hover:bg-[var(--surface-2)]'" class="px-2.5 py-1 rounded transition">✓ Живые</button>
+      <button type="button" @click="filter='unverified'" :class="filter==='unverified' ? 'bg-amber-500/20 text-amber-400' : 'hover:bg-[var(--surface-2)]'" class="px-2.5 py-1 rounded transition">○ Боты</button>
+    </div>
+  </div>
+
+  {% if unverified_old > 0 %}
+    <div class="mb-3 flex items-center gap-3 flex-wrap text-sm card p-3 border border-amber-500/30 bg-amber-500/5">
+      <span class="text-[var(--text-muted)]">Неподтверждённых старше 3 дней (вероятные боты): <strong class="text-amber-400">{{ unverified_old }}</strong></span>
+      <button type="button" @click="purge()" :disabled="purging"
+              class="ml-auto px-3 py-1.5 rounded bg-rose-500/15 text-rose-300 hover:bg-rose-500/25 text-xs font-semibold transition disabled:opacity-50">
+        <span x-show="!purging">🗑 Удалить их</span><span x-show="purging" x-cloak>Удаляю…</span>
+      </button>
+    </div>
+  {% endif %}
+
   <div class="card divide-y divide-[var(--border)]">
     {% for u in recent_users %}
-      <div class="px-4 py-3 flex items-center gap-3 text-sm">
+      <div class="px-4 py-3 flex items-center gap-3 text-sm"
+           x-show="filter==='all' || filter==='{{ 'verified' if u.email_verified_at else 'unverified' }}'">
         <span class="font-mono text-[var(--text)] flex-1 min-w-0 truncate">{{ u.email }}</span>
         <span class="text-xs px-2 py-0.5 rounded-full {% if u.tier == 'pro' %}bg-amber-500/15 text-amber-400{% elif u.tier == 'family' %}bg-fuchsia-500/15 text-fuchsia-400{% else %}bg-[var(--surface-2)] text-[var(--text-muted)]{% endif %}">{{ u.tier }}</span>
         {% if u.email_verified_at %}

@@ -29,6 +29,7 @@ from app.admin.service import (
     delete_complaint,
     get_complaint,
     list_complaints,
+    purge_unverified,
     update_complaint,
 )
 from app.auth.deps import DbSession, RequiredAdmin, RequiredUser
@@ -334,6 +335,23 @@ async def admin_delete_complaint(
 ) -> None:
     if not await delete_complaint(session, complaint_id):
         raise HTTPException(status.HTTP_404_NOT_FOUND, "complaint not found")
+
+
+class PurgeUnverifiedOut(BaseModel):
+    deleted: int
+
+
+@admin_router.post("/users/purge-unverified", response_model=PurgeUnverifiedOut)
+async def admin_purge_unverified(
+    _: RequiredAdmin, session: DbSession, days: int = 3
+) -> PurgeUnverifiedOut:
+    """Удаляет НЕподтверждённые аккаунты старше N дней (вероятные боты).
+
+    Подтверждённых и админов не трогает. days по умолчанию 3 — свежие
+    регистрации, которые ещё могут подтвердиться, не сносим.
+    """
+    deleted = await purge_unverified(session, older_than_days=max(0, days))
+    return PurgeUnverifiedOut(deleted=deleted)
 
 
 # ---- Token-secured for Claude (curl-friendly without cookies) ---------------

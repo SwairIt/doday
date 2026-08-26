@@ -1338,6 +1338,7 @@ async def admin_root_view(request: Request, session: DbSession) -> HTMLResponse:
     """Admin panel — total control: complaints, users, stats. Requires is_admin."""
     from app.admin.service import (
         admin_stats,
+        count_unverified,
         list_complaints,
         list_recent_users,
         signups_by_day,
@@ -1353,6 +1354,8 @@ async def admin_root_view(request: Request, session: DbSession) -> HTMLResponse:
     recent_users = await list_recent_users(session, limit=2000)  # практически все
     pages_top = await top_pages(session, days=7, limit=12)
     signups = await signups_by_day(session, days=14)
+    # Сколько неподтверждённых старше 3 дней снесёт кнопка чистки.
+    unverified_old = await count_unverified(session, older_than_days=3)
 
     # Map complaint.user_id → user.email for display
     user_emails: dict[UUID, str] = {}
@@ -1375,6 +1378,7 @@ async def admin_root_view(request: Request, session: DbSession) -> HTMLResponse:
             "user_emails": user_emails,
             "pages_top": pages_top,
             "signups": signups,
+            "unverified_old": unverified_old,
         },
     )
 
