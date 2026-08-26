@@ -125,5 +125,8 @@ def test_existing_today_still_works() -> None:
 
 
 def test_existing_bangs_still_work() -> None:
+    # Маппинг (см. _BANGS_TO_PRIORITY): 1 «!» → P3, 2 → P2, 3 и больше → P1.
     p = parse_quick_add("Дочитать !!!", now=_NOW)
-    assert p.priority == TaskPriority.P2
+    assert p.priority == TaskPriority.P1
+    assert parse_quick_add("Дочитать !!", now=_NOW).priority == TaskPriority.P2
+    assert parse_quick_add("Дочитать !", now=_NOW).priority == TaskPriority.P3

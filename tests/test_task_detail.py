@@ -98,5 +98,9 @@ async def test_detail_includes_pomodoro_widget(logged_in_client: AsyncClient) ->
     task = (await logged_in_client.post("/api/tasks", json={"title": "Focus"})).json()
     html = (await logged_in_client.get(f"/htmx/tasks/{task['id']}/detail")).text
     assert "Помидор" in html
-    assert "Работа 25" in html
-    assert "Перерыв 5" in html
+    # Длительность стала редактируемой: подписи есть, а числа подставляет Alpine
+    # из workMin/breakMin (по умолчанию 25/5, хранится в localStorage).
+    assert "Работа" in html
+    assert "Перерыв" in html
+    assert "workMin" in html
+    assert "breakMin" in html

@@ -64,7 +64,7 @@ async def test_api_parse_returns_preview(logged_in_client: AsyncClient) -> None:
     data = r.json()
     assert "Покупки" in data["title"]
     assert data["due_at"]  # завтрашняя дата
-    assert data["priority"] == "p3"  # !! = P3
+    assert data["priority"] == "p2"  # !! = P2
     assert "label_names" in data
 
 
@@ -83,7 +83,7 @@ async def test_api_create_task_inbox(
     assert r.status_code == 201
     data = r.json()
     assert "Тестовая задача" in data["title"]
-    assert data["priority"] == "p3"  # !! = P3
+    assert data["priority"] == "p2"  # !! = P2
     assert data["due_at"]
 
 
