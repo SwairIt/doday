@@ -27,6 +27,7 @@ from app.admin.router import (
 from app.admin.router import (
     token_router as admin_token_router,
 )
+from app.ai.router import router as ai_router
 from app.auth.router import router as auth_router
 from app.backup.router import router as backup_router
 from app.billing.router import router as billing_router
@@ -603,6 +604,7 @@ app.include_router(lessio_help_router)
 app.include_router(lessio_seo_router)
 app.include_router(lessio_blog_router)
 app.include_router(blog_router)
+app.include_router(ai_router)
 
 # Блог: 300+ markdown-статей парсятся ~10 с. Греем кэш в фоновом потоке, чтобы
 # это время не платил первый посетитель после рестарта (сам старт не блокируем).

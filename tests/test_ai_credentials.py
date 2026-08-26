@@ -7,6 +7,7 @@ from uuid import UUID, uuid4
 import httpx
 import pytest
 import pytest_asyncio
+from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai import service as ai_service
@@ -216,3 +217,69 @@ async def test_verify_key_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
     with pytest.raises(AiProviderError) as exc:
         await verify_key(base_url="https://x.test/v1", api_key="sk-1", model="m")
     assert "не отвечает" in exc.value.user_message
+
+
+# ── REST API ──────────────────────────────────────────────────────────────
+
+
+async def test_providers_endpoint(logged_in_client: AsyncClient) -> None:
+    r = await logged_in_client.get("/api/ai/providers")
+    assert r.status_code == 200
+    body = r.json()
+    keys = {p["key"] for p in body}
+    assert {"cloudru", "mistral", "custom"} <= keys
+    assert all("hint" in p for p in body)
+
+
+async def test_credential_crud_via_api(logged_in_client: AsyncClient) -> None:
+    assert (await logged_in_client.get("/api/ai/credential")).json() is None
+
+    r = await logged_in_client.put(
+        "/api/ai/credential",
+        json={"provider": "cloudru", "api_key": "sk-api-5678"},
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["provider"] == "cloudru"
+    assert body["key_last4"] == "5678"
+    assert "api_key" not in body
+    assert "sk-api-5678" not in r.text
+
+    assert (await logged_in_client.get("/api/ai/credential")).json()["key_last4"] == "5678"
+    assert (await logged_in_client.delete("/api/ai/credential")).status_code == 204
+    assert (await logged_in_client.get("/api/ai/credential")).json() is None
+
+
+async def test_credential_requires_auth(client: AsyncClient) -> None:
+    assert (await client.get("/api/ai/credential")).status_code == 401
+
+
+async def test_unknown_provider_returns_400(logged_in_client: AsyncClient) -> None:
+    r = await logged_in_client.put(
+        "/api/ai/credential", json={"provider": "нет-такого", "api_key": "sk-12345678"}
+    )
+    assert r.status_code == 400
+
+
+async def test_verify_endpoint(
+    logged_in_client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    await logged_in_client.put(
+        "/api/ai/credential", json={"provider": "cloudru", "api_key": "sk-verify-7777"}
+    )
+
+    async def ok(**kwargs: object) -> None:
+        return None
+
+    monkeypatch.setattr("app.ai.router.verify_key", ok)
+    r = await logged_in_client.post("/api/ai/credential/verify")
+    assert r.status_code == 200
+    assert r.json() == {"ok": True}
+
+    async def fail(**kwargs: object) -> None:
+        raise AiProviderError("Ключ не принят провайдером — проверь, что скопировал его целиком.")
+
+    monkeypatch.setattr("app.ai.router.verify_key", fail)
+    r = await logged_in_client.post("/api/ai/credential/verify")
+    assert r.status_code == 400
+    assert "не принят" in r.json()["detail"]
