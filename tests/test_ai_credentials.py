@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from app.ai.crypto import KEY_VERSION, AiKeyError, decrypt_api_key, encrypt_api_key, key_last4
+from app.ai.providers import CUSTOM_KEY, PROVIDER_BY_KEY, PROVIDERS, get_provider
 
 
 def test_encrypt_decrypt_roundtrip() -> None:
@@ -38,3 +39,26 @@ def test_key_last4() -> None:
 
 def test_key_version_is_current() -> None:
     assert KEY_VERSION == 1
+
+
+def test_providers_have_required_fields() -> None:
+    assert len(PROVIDERS) >= 3
+    for p in PROVIDERS:
+        assert p.key and p.title and p.hint
+        if p.key != CUSTOM_KEY:
+            assert p.base_url.startswith("https://")
+            assert p.default_model
+
+
+def test_provider_lookup() -> None:
+    cloudru = get_provider("cloudru")
+    assert cloudru is not None
+    assert cloudru.base_url == "https://foundation-models.api.cloud.ru/v1"
+    assert get_provider("нет-такого") is None
+    assert set(PROVIDER_BY_KEY) == {p.key for p in PROVIDERS}
+
+
+def test_custom_provider_has_no_fixed_url() -> None:
+    custom = get_provider(CUSTOM_KEY)
+    assert custom is not None
+    assert custom.base_url == ""
