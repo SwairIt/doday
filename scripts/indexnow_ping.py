@@ -18,18 +18,23 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import os
 import sys
 from collections.abc import Mapping
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(_ROOT))
+# pydantic-settings ищет .env относительно рабочего каталога, а из планировщика
+# скрипт стартует из домашней папки — без chdir настройки не находятся.
+os.chdir(_ROOT)
 
-import httpx
+import httpx  # noqa: E402
 
-from app.blog.categories import CATEGORIES
-from app.blog.posts import all_posts
-from app.config import get_settings
-from app.help.articles import ARTICLES
+from app.blog.categories import CATEGORIES  # noqa: E402
+from app.blog.posts import all_posts  # noqa: E402
+from app.config import get_settings  # noqa: E402
+from app.help.articles import ARTICLES  # noqa: E402
 
 BATCH = 1000
 
