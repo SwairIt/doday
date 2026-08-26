@@ -94,6 +94,37 @@ bash scripts/deploy.sh
 
 Старые адреса `/doday/*` отдают 301 на новые.
 
+## GitHub: репозиторий и токен
+
+Репозиторий называется **`SwairIt/doday`** — так было всегда. Старое имя
+`SwairIt/SchoolProject` осталось только в редиректе GitHub и в паре строк
+внутри проекта; `origin` указывает на `doday`.
+
+Токен для GitHub API и пуша брать самому из `C:\Users\Yaroslav\.git-credentials`.
+Там несколько строк — нужна **именно строка с пользователем `SwairIt`**
+(строки с `djdes` — другой аккаунт, у него нет прав на этот репозиторий и
+пуш вернёт `403 Permission denied`).
+
+```bash
+T=$(awk -F'[/:@]' '$4=="SwairIt"{print $5; exit}' /c/Users/Yaroslav/.git-credentials)
+curl -s -H "Authorization: Bearer $T" https://api.github.com/repos/SwairIt/doday/actions/runs?per_page=1
+```
+
+Порядок строк в файле важен: git с `credential.helper=store` берёт первую
+подходящую по хосту, поэтому строка `SwairIt` должна лежать первой. Токен
+никогда не печатать в вывод и не коммитить — только подставлять в переменную.
+
+Логи упавшего прогона CI:
+
+```bash
+JID=$(curl -s -H "Authorization: Bearer $T" \
+  "https://api.github.com/repos/SwairIt/doday/actions/runs/<RUN_ID>/jobs" \
+  | python -c "import json,sys; print(json.load(sys.stdin)['jobs'][0]['id'])")
+curl -s -L -H "Authorization: Bearer $T" \
+  "https://api.github.com/repos/SwairIt/doday/actions/jobs/$JID/logs" -o ci.log
+grep -aE "FAILED tests|failed," ci.log
+```
+
 ## Проверки перед коммитом
 
 ```bash

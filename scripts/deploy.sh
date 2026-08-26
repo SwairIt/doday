@@ -50,3 +50,13 @@ else
   echo "== сайт не отвечает 200, смотри логи uvicorn"
   exit 1
 fi
+
+# Сообщаем Яндексу и Bing об обновлении — здесь, а не с локальной машины:
+# ключ IndexNow лежит в .env сервера, и поисковик сверяет его с /<ключ>.txt.
+# Никогда не роняем деплой из-за этого: сайт уже поднят и проверен выше.
+log "Уведомляю поисковики (IndexNow)"
+if command -v uv >/dev/null 2>&1; then
+  uv run python scripts/indexnow_ping.py || echo "  пинг не прошёл — не критично"
+else
+  python3 scripts/indexnow_ping.py || echo "  пинг не прошёл — не критично"
+fi
