@@ -66,7 +66,9 @@ async def delete_credential(session: AsyncSession, user_id: UUID) -> bool:
     """Удалить ключ. True, если было что удалять."""
     result = await session.execute(delete(AiCredential).where(AiCredential.user_id == user_id))
     await session.commit()
-    return bool(result.rowcount)
+    # rowcount не объявлен в типах Result, хотя есть у CursorResult — как в
+    # app/reminders/service.py:81.
+    return bool(getattr(result, "rowcount", 0) or 0)
 
 
 async def resolve_secret(session: AsyncSession, user_id: UUID) -> tuple[str, str, str] | None:
