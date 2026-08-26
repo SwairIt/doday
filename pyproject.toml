@@ -181,6 +181,7 @@ ignore = [
 "app/lessio/blog/router.py" = ["RUF001", "RUF002", "RUF003"]      # Russian docstrings + 404 message
 "app/blog/*" = ["RUF001", "RUF002", "RUF003"]                     # Russian blog categories/docstrings
 "scripts/blog_check.py" = ["RUF001", "RUF002", "RUF003"]
+"scripts/indexnow_ping.py" = ["RUF001", "RUF002", "RUF003"]  # Russian docstring/help
 "tests/test_blog.py" = ["RUF001", "RUF002", "RUF003"]
 "app/qa/__init__.py" = ["RUF002"]
 "app/qa/models.py" = ["RUF001", "RUF002", "RUF003"]

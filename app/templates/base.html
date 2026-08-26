@@ -56,6 +56,16 @@
     <meta name="twitter:description" content="{% block tw_description %}{{ _seo_desc }}{% endblock %}">
     <meta name="twitter:image" content="{% block tw_image %}{{ _seo_image }}{% endblock %}">
 
+    {# Подтверждение прав в Яндекс.Вебмастере и Google Search Console.
+       Коды задаются в .env (YANDEX_VERIFICATION / GOOGLE_SITE_VERIFICATION);
+       пока пусто — тегов нет. #}
+    {% if request.state.yandex_verification is defined and request.state.yandex_verification %}
+    <meta name="yandex-verification" content="{{ request.state.yandex_verification }}">
+    {% endif %}
+    {% if request.state.google_site_verification is defined and request.state.google_site_verification %}
+    <meta name="google-site-verification" content="{{ request.state.google_site_verification }}">
+    {% endif %}
+
     {% block ld_json %}{% endblock %}
 
     <link rel="manifest" href="/manifest.webmanifest">

@@ -18,8 +18,8 @@ _log = structlog.get_logger(__name__)
 
 _INDEXNOW_HOSTS = (
     "https://yandex.com/indexnow",
-    # Bing/Microsoft endpoint commented out: not used in RU market for MVP.
-    # "https://api.indexnow.org/indexnow",
+    # Bing и все, кто использует его индекс: DuckDuckGo, Ecosia, Yahoo.
+    "https://api.indexnow.org/indexnow",
 )
 
 
@@ -42,15 +42,19 @@ async def ping_indexnow(*, urls: list[str]) -> bool:
     }
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
-            r = await client.post(_INDEXNOW_HOSTS[0], json=body)
-            ok = r.status_code in (200, 202)
-            _log.info(
-                "lessio_indexnow_pinged",
-                status=r.status_code,
-                urls_count=len(urls),
-                accepted=ok,
-            )
-            return ok
+            accepted = False
+            for endpoint in _INDEXNOW_HOSTS:
+                r = await client.post(endpoint, json=body)
+                ok = r.status_code in (200, 202)
+                accepted = accepted or ok
+                _log.info(
+                    "lessio_indexnow_pinged",
+                    endpoint=endpoint,
+                    status=r.status_code,
+                    urls_count=len(urls),
+                    accepted=ok,
+                )
+            return accepted
     except Exception as exc:
         _log.warning("lessio_indexnow_failed", error=str(exc), urls_count=len(urls))
         return False

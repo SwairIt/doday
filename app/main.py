@@ -444,6 +444,8 @@ async def _security_headers(
     # Expose Yandex.Metrika counter ID to all templates via request.state.
     # Empty string in dev → base.html silently skips the <script> block.
     request.state.ya_metrika_id = _settings.ya_metrika_id
+    request.state.yandex_verification = _settings.yandex_verification
+    request.state.google_site_verification = _settings.google_site_verification
     # Expose Telegram-канал URL — если пустой, footer не показывает иконку.
     request.state.telegram_channel_url = _settings.telegram_channel_url
     # Контакты продавца в подвале — требование Robokassa при модерации сайта.

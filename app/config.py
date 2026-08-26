@@ -36,8 +36,15 @@ class Settings(BaseSettings):
 
     # IndexNow API key (16+ hex chars). Должен также быть размещён на
     # https://getdoday.ru/<key>.txt — endpoint в app.main отдаёт его автоматически.
-    # Empty → ping no-op. Используется Lessio при создании tutor-профиля.
+    # Empty → ping no-op. Используется Lessio при создании tutor-профиля
+    # и скриптом scripts/indexnow_ping.py для массового пинга.
     indexnow_key: str = ""
+
+    # Подтверждение прав в вебмастерах. Значение — только код из мета-тега,
+    # который выдаёт панель (content="..."), без самого тега.
+    # Пустая строка → мета-тег не выводится.
+    yandex_verification: str = ""
+    google_site_verification: str = ""
 
     # Google OAuth для Lessio Calendar busy-times sync (опционально).
     # Регистрация: https://console.cloud.google.com/apis/credentials
