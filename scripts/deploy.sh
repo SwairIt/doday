@@ -11,12 +11,28 @@ set -uo pipefail
 
 APP_DIR="/var/www/getdoday/data/www/getdoday.ru/app"
 
-# Из планировщика PATH урезан до /usr/bin:/bin, поэтому `command -v uv` не находит
-# uv, установленный в ~/.local/bin. Ищем явно; если не нашли — работаем python3.
+# Из планировщика PATH урезан до /usr/bin:/bin: `command -v uv` возвращает пусто,
+# а системный python3 не видит зависимости (они в .venv проекта). Поэтому ищем
+# сначала питон венва, затем uv по явным путям, и только потом python3.
+PY=""
+if [ -x "$APP_DIR/.venv/bin/python" ]; then
+  PY="$APP_DIR/.venv/bin/python"
+fi
 UV=""
 for candidate in "$HOME/.local/bin/uv" "/usr/local/bin/uv" "$(command -v uv 2>/dev/null)"; do
   if [ -n "$candidate" ] && [ -x "$candidate" ]; then UV="$candidate"; break; fi
 done
+
+# Запустить python-команду тем интерпретатором, который реально видит пакеты.
+run_py() {
+  if [ -n "$PY" ]; then
+    "$PY" "$@"
+  elif [ -n "$UV" ]; then
+    "$UV" run python "$@"
+  else
+    python3 "$@"
+  fi
+}
 START="/var/www/getdoday/data/start_uvicorn.py"
 PORT=8011
 
@@ -36,11 +52,7 @@ log "Чищу .pyc"
 find "$APP_DIR" -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true
 
 log "Миграции базы"
-if [ -n "$UV" ]; then
-  "$UV" run python -m alembic upgrade head || python3 -m alembic upgrade head
-else
-  python3 -m alembic upgrade head
-fi
+run_py -m alembic upgrade head
 
 log "Перезапуск uvicorn на :$PORT"
 for pid in $(lsof -ti:$PORT 2>/dev/null); do kill -9 "$pid"; done
@@ -62,8 +74,4 @@ fi
 # ключ IndexNow лежит в .env сервера, и поисковик сверяет его с /<ключ>.txt.
 # Никогда не роняем деплой из-за этого: сайт уже поднят и проверен выше.
 log "Уведомляю поисковики (IndexNow)"
-if [ -n "$UV" ]; then
-  "$UV" run python scripts/indexnow_ping.py || echo "  пинг не прошёл — не критично"
-else
-  python3 scripts/indexnow_ping.py || echo "  пинг не прошёл — не критично"
-fi
+run_py scripts/indexnow_ping.py || echo "  пинг не прошёл — не критично"
