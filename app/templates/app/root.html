@@ -263,7 +263,7 @@
 
 {# ---- Recent users ---- #}
 <div class="mt-10">
-  <h2 class="text-lg font-bold mb-3">Последние юзеры <span class="text-[var(--text-muted)] text-sm font-normal">· {{ recent_users|length }}</span></h2>
+  <h2 class="text-lg font-bold mb-3">Все юзеры <span class="text-[var(--text-muted)] text-sm font-normal">· {{ stats.users_total }} (показано {{ recent_users|length }})</span></h2>
   <div class="card divide-y divide-[var(--border)]">
     {% for u in recent_users %}
       <div class="px-4 py-3 flex items-center gap-3 text-sm">

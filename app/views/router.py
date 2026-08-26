@@ -1350,7 +1350,7 @@ async def admin_root_view(request: Request, session: DbSession) -> HTMLResponse:
 
     complaints = await list_complaints(session, limit=200)
     stats = await admin_stats(session)
-    recent_users = await list_recent_users(session, limit=20)
+    recent_users = await list_recent_users(session, limit=2000)  # практически все
     pages_top = await top_pages(session, days=7, limit=12)
     signups = await signups_by_day(session, days=14)
 
