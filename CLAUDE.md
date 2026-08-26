@@ -110,9 +110,12 @@ T=$(awk -F'[/:@]' '$4=="SwairIt"{print $5; exit}' /c/Users/Yaroslav/.git-credent
 curl -s -H "Authorization: Bearer $T" https://api.github.com/repos/SwairIt/doday/actions/runs?per_page=1
 ```
 
-Порядок строк в файле важен: git с `credential.helper=store` берёт первую
-подходящую по хосту, поэтому строка `SwairIt` должна лежать первой. Токен
-никогда не печатать в вывод и не коммитить — только подставлять в переменную.
+Чтобы пуш не зависел от порядка строк в файле, в `origin` вшит пользователь:
+`https://SwairIt@github.com/SwairIt/doday.git` — тогда `credential.helper=store`
+ищет строку именно для `SwairIt`, а не берёт первую подходящую по хосту.
+Если пуш всё же вернул 403 — проверь `git remote -v`, там должен быть
+`SwairIt@`. Токен никогда не печатать в вывод и не коммитить — только
+подставлять в переменную.
 
 Логи упавшего прогона CI:
 
