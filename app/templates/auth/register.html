@@ -78,6 +78,13 @@
         {% endif %}
 
         <form method="post" action="/auth/register" class="space-y-5" autocomplete="on">
+          {# Honeypot: поле-ловушка против ботов. Живой человек его не видит и не
+             заполняет; боты заполняют все поля — такие регистрации отбрасываются,
+             аккаунт не создаётся. #}
+          <div aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;height:0;width:0;overflow:hidden">
+            <label for="website">Не заполняйте это поле</label>
+            <input type="text" name="website" id="website" tabindex="-1" autocomplete="off">
+          </div>
           <div class="floating-label relative">
             <input type="email" name="email" id="email" required placeholder=" "
                    x-model="email" @input="validateEmail()"

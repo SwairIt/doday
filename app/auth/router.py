@@ -45,7 +45,14 @@ async def register_submit(
     email: Annotated[str, Form()],
     password: Annotated[str, Form()],
     agree_privacy: Annotated[str | None, Form()] = None,
+    website: Annotated[str, Form()] = "",  # honeypot: люди это поле не видят
 ) -> HTMLResponse | RedirectResponse:
+    # Honeypot: бот заполнил скрытое поле — отвечаем как на «успех», но аккаунт
+    # НЕ создаём. Так поток бот-регистраций с левыми емейлами обрывается, а бот
+    # не понимает, что его отсекли.
+    if website.strip():
+        return RedirectResponse(url="/auth/verify-pending?signup=1", status_code=303)
+
     ip = request.client.host if request.client else None
     if not hit(client_key(ip, "register"), max_calls=5, per_seconds=60):
         return templates.TemplateResponse(
