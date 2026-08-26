@@ -558,7 +558,9 @@ async def task_detail_save(
     # reload (и правка выглядела как «пустая кнопка»). HX-Trigger даёт тост.
     detail = await task_detail(request, task_id, user, session)
     row = _row_response(request, task, await _project_color_map(session, user.id), oob=True)
-    combined = HTMLResponse(detail.body + row.body)
+    # bytes(...) — .body у Response объявлен как bytes | memoryview, а memoryview
+    # не складывается; для HTMLResponse тело всегда bytes, приведение безопасно.
+    combined = HTMLResponse(bytes(detail.body) + bytes(row.body))
     combined.headers["HX-Trigger"] = "doday-task-saved"
     return combined
 
