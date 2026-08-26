@@ -61,6 +61,11 @@ class User(Base):
     # is in the future; otherwise falls back to trial / free. Payment via
     # Telegram Stars extends this — see app/billing/stars.py.
     pro_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Согласие с условиями ИИ-помощника: 18+, ответы генерирует нейросеть,
+    # запросы уходят провайдеру, чей ключ подключён. Показывается один раз.
+    ai_terms_accepted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False
     )

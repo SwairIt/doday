@@ -245,6 +245,20 @@ async def achievements_view(
     )
 
 
+@router.get("/ai", response_class=HTMLResponse)
+async def ai_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
+    """Чат с моделью. Ключ провайдера подключается в настройках."""
+    return templates.TemplateResponse(
+        request,
+        "app/ai.html",
+        {
+            "current_user": user,
+            "current_view": "ai",
+            "projects": await list_projects(session, user.id),
+        },
+    )
+
+
 @router.get("/habits", response_class=HTMLResponse, response_model=None)
 async def habits_view(
     request: Request, user: RequiredUser, session: DbSession

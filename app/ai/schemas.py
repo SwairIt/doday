@@ -26,3 +26,26 @@ class CredentialOut(BaseModel):
     base_url: str
     model: str
     key_last4: str
+
+
+class MessageOut(BaseModel):
+    id: str
+    role: str
+    content: str
+    created_at: str
+
+
+class ChatStateOut(BaseModel):
+    """Всё, что нужно странице чата при открытии."""
+
+    terms_accepted: bool
+    has_credential: bool
+    used_today: int
+    daily_limit: int
+    messages: list[MessageOut]
+    templates: list[dict[str, str]]
+
+
+class AskIn(BaseModel):
+    prompt: str = Field(min_length=1, max_length=4000)
+    task_id: str | None = None

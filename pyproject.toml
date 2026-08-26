@@ -184,6 +184,7 @@ ignore = [
 "app/blog/*" = ["RUF001", "RUF002", "RUF003"]                     # Russian blog categories/docstrings
 "app/ai/*" = ["RUF001", "RUF002", "RUF003"]                       # Russian docstrings/messages
 "tests/test_ai_credentials.py" = ["RUF001", "RUF002", "RUF003"]
+"tests/test_ai_chat.py" = ["RUF001", "RUF002", "RUF003"]
 "scripts/blog_check.py" = ["RUF001", "RUF002", "RUF003"]
 "scripts/indexnow_ping.py" = ["RUF001", "RUF002", "RUF003"]  # Russian docstring/help
 "tests/test_blog.py" = ["RUF001", "RUF002", "RUF003"]

@@ -6,6 +6,10 @@
 
 from __future__ import annotations
 
+import json
+from collections.abc import AsyncIterator, Sequence
+from typing import TypedDict
+
 import httpx
 import structlog
 
@@ -13,6 +17,13 @@ logger = structlog.get_logger(__name__)
 
 # Один токен — нам нужно лишь убедиться, что ключ принят и модель существует.
 _VERIFY_MAX_TOKENS = 1
+
+
+class Message(TypedDict):
+    """Сообщение в формате OpenAI-совместимого API."""
+
+    role: str
+    content: str
 
 
 class AiProviderError(Exception):
@@ -80,3 +91,68 @@ async def verify_key(*, base_url: str, api_key: str, model: str, timeout_s: floa
     if response.status_code >= 400:
         logger.info("ai_verify_rejected", status=response.status_code)
         raise AiProviderError(_message_for(response.status_code, response.text[:500]))
+
+
+async def stream_completion(
+    *,
+    base_url: str,
+    api_key: str,
+    model: str,
+    messages: Sequence[Message],
+    max_tokens: int = 2000,
+    timeout_s: float = 120.0,
+) -> AsyncIterator[str]:
+    """Отдаёт куски ответа модели по мере генерации.
+
+    Провайдер шлёт server-sent events: строки «data: {json}», последняя —
+    «data: [DONE]». Разбираем построчно и отдаём только текст.
+
+    Вызывающий обязан закрыть генератор (например, выйти из `async for`) при
+    обрыве соединения с пользователем — иначе токены продолжат тратиться.
+    """
+    url = f"{base_url.rstrip('/')}/chat/completions"
+    payload = {
+        "model": model,
+        "max_tokens": max_tokens,
+        "stream": True,
+        "messages": list(messages),
+    }
+    try:
+        async with (
+            httpx.AsyncClient(timeout=timeout_s) as client,
+            client.stream(
+                "POST", url, json=payload, headers={"Authorization": f"Bearer {api_key}"}
+            ) as response,
+        ):
+            if response.status_code >= 400:
+                body = (await response.aread()).decode("utf-8", "replace")[:500]
+                logger.info("ai_stream_rejected", status=response.status_code)
+                raise AiProviderError(_message_for(response.status_code, body))
+            async for line in response.aiter_lines():
+                chunk = _chunk_from_line(line)
+                if chunk:
+                    yield chunk
+    except httpx.HTTPError as exc:
+        logger.warning("ai_stream_transport_error", error=type(exc).__name__)
+        raise AiProviderError("Провайдер не отвечает. Попробуй позже.") from exc
+
+
+def _chunk_from_line(line: str) -> str:
+    """Достать текст из строки SSE. Пустая строка — нечего отдавать."""
+    if not line.startswith("data:"):
+        return ""
+    data = line[5:].strip()
+    if not data or data == "[DONE]":
+        return ""
+    try:
+        parsed = json.loads(data)
+        choices = parsed.get("choices") or []
+        if not choices:
+            return ""
+        delta = choices[0].get("delta") or {}
+        content = delta.get("content")
+        return str(content) if content else ""
+    except (json.JSONDecodeError, AttributeError, IndexError):
+        # Провайдер прислал что-то неожиданное — пропускаем кусок, но не
+        # роняем весь ответ: остальные куски могут быть валидными.
+        return ""

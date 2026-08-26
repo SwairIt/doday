@@ -1,0 +1,237 @@
+{% extends "app_base.html" %}
+{% block title %}ИИ-помощник — Doday{% endblock %}
+{% block view_title %}ИИ-помощник{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto" x-data="aiChat()" x-init="init()">
+
+  {# ── Экран согласия: показывается один раз ─────────────────────────── #}
+  <template x-if="state && !state.terms_accepted">
+    <div class="card p-7">
+      <div class="text-3xl mb-4">🤖</div>
+      <h1 class="text-2xl font-bold mb-3">Прежде чем начать</h1>
+      <ul class="space-y-2.5 text-sm text-[var(--text-muted)] mb-6 leading-relaxed">
+        <li>• Помощником можно пользоваться <strong class="text-[var(--text)]">с 18 лет</strong>.</li>
+        <li>• Ответы генерирует нейросеть — она может ошибаться. Проверяй важное.</li>
+        <li>• Не пиши настоящие имя, фамилию, школу, класс и адрес.</li>
+        <li>• Запросы уходят провайдеру, чей ключ ты подключил в настройках.</li>
+      </ul>
+      <button type="button" class="btn-primary" @click="acceptTerms()" :disabled="busy">
+        Принять и продолжить
+      </button>
+    </div>
+  </template>
+
+  {# ── Нет ключа ─────────────────────────────────────────────────────── #}
+  <template x-if="state && state.terms_accepted && !state.has_credential">
+    <div class="card p-7 text-center">
+      <div class="text-3xl mb-3">🔑</div>
+      <h1 class="text-xl font-bold mb-2">Нужен ключ провайдера</h1>
+      <p class="text-sm text-[var(--text-muted)] mb-5 max-w-md mx-auto">
+        Помощник работает на твоём ключе — так ты не зависишь от наших лимитов,
+        а мы не читаем твои разговоры. Подключается за пару минут.
+      </p>
+      <a href="/app/settings" class="btn-primary">Подключить ключ</a>
+    </div>
+  </template>
+
+  {# ── Собственно чат ────────────────────────────────────────────────── #}
+  <template x-if="state && state.terms_accepted && state.has_credential">
+    <div>
+      <div class="flex items-center justify-between gap-3 mb-4 text-sm">
+        <span class="text-[var(--text-muted)]">
+          Сегодня: <span x-text="state.used_today"></span> из <span x-text="state.daily_limit"></span>
+        </span>
+        <button type="button" class="btn-ghost !py-1 !px-3 text-sm"
+                @click="clearThread()" x-show="messages.length" :disabled="busy">
+          Очистить
+        </button>
+      </div>
+
+      <div class="space-y-4 mb-5" id="ai-messages">
+        <template x-if="!messages.length && !streaming">
+          <div class="card p-7 text-center text-[var(--text-muted)]">
+            <div class="text-2xl mb-2">💬</div>
+            Спроси что угодно про учёбу — или нажми шаблон под полем ввода.
+          </div>
+        </template>
+
+        <template x-for="m in messages" :key="m.id">
+          <div :class="m.role === 'user' ? 'flex justify-end' : ''">
+            <div class="card p-4 max-w-[85%]"
+                 :class="m.role === 'user' ? 'bg-[var(--surface-2)]' : ''">
+              <div class="text-sm leading-relaxed whitespace-pre-wrap" x-text="m.content"></div>
+              <div class="text-[11px] text-[var(--text-muted)] mt-2" x-show="m.role === 'assistant'">
+                Сгенерировано ИИ
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <template x-if="streaming">
+          <div>
+            <div class="card p-4 max-w-[85%]">
+              <div class="text-sm leading-relaxed whitespace-pre-wrap" x-text="streamText || '…'"></div>
+              <div class="text-[11px] text-[var(--text-muted)] mt-2">Сгенерировано ИИ</div>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <p class="text-sm text-rose-400 mb-3" x-show="error" x-text="error"></p>
+      <p class="text-sm text-amber-400 mb-3" x-show="warning" x-text="warning"></p>
+
+      {# Шаблоны вопросов #}
+      <div class="flex gap-2 overflow-x-auto pb-2 mb-2">
+        <template x-for="t in state.templates" :key="t.label">
+          <button type="button"
+                  class="shrink-0 px-3 py-1.5 rounded-full border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-muted)] hover:text-[var(--text)] hover:border-[var(--accent)] transition"
+                  @click="useTemplate(t.text)" x-text="t.label"></button>
+        </template>
+      </div>
+
+      <div class="flex gap-2 items-end">
+        <textarea x-model="prompt" x-ref="input" rows="2"
+                  class="input flex-1 resize-none"
+                  placeholder="Спроси что-нибудь…"
+                  @keydown.enter.prevent="$event.shiftKey ? (prompt += '\n') : send()"></textarea>
+        <button type="button" class="btn-primary shrink-0" @click="send()"
+                x-show="!streaming" :disabled="busy || !prompt.trim()">Спросить</button>
+        <button type="button" class="btn-ghost shrink-0" @click="stop()" x-show="streaming">Стоп</button>
+      </div>
+    </div>
+  </template>
+</div>
+
+{# lint-ignore-next-line: long-inline-script #}
+<script>
+  function aiChat() {
+    return {
+      state: null, messages: [], prompt: '', streamText: '',
+      streaming: false, busy: false, error: '', warning: '',
+      controller: null,
+      taskId: new URLSearchParams(location.search).get('task') || null,
+
+      async init() { await this.load(); },
+
+      async load() {
+        const q = this.taskId ? `?task_id=${encodeURIComponent(this.taskId)}` : '';
+        const r = await fetch('/api/ai/state' + q, { credentials: 'include' });
+        if (!r.ok) { this.error = 'Не удалось загрузить чат'; return; }
+        this.state = await r.json();
+        this.messages = this.state.messages;
+        this.$nextTick(() => this.scrollDown());
+      },
+
+      async acceptTerms() {
+        this.busy = true;
+        try {
+          await fetch('/api/ai/terms/accept', { method: 'POST', credentials: 'include' });
+          await this.load();
+        } finally { this.busy = false; }
+      },
+
+      useTemplate(text) {
+        this.prompt = text + this.prompt;
+        this.$nextTick(() => {
+          const el = this.$refs.input;
+          if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+        });
+      },
+
+      scrollDown() {
+        const box = document.getElementById('ai-messages');
+        if (box) box.scrollIntoView({ block: 'end', behavior: 'smooth' });
+      },
+
+      stop() {
+        if (this.controller) this.controller.abort();
+        this.streaming = false;
+      },
+
+      async send() {
+        const text = this.prompt.trim();
+        if (!text || this.streaming) return;
+        this.error = ''; this.warning = '';
+
+        // Предупреждаем про личные данные, но не запрещаем — решает человек.
+        try {
+          const chk = await fetch('/api/ai/check-prompt', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: text }),
+          });
+          if (chk.ok) {
+            const { personal } = await chk.json();
+            if (personal && personal.length) {
+              this.warning = 'Похоже, ты написал ' + personal.join(', ') +
+                '. Эти данные уйдут провайдеру — лучше убрать их из вопроса.';
+            }
+          }
+        } catch (e) { /* подсказка необязательна */ }
+
+        this.messages.push({ id: 'local-' + Date.now(), role: 'user', content: text });
+        this.prompt = '';
+        this.streaming = true; this.streamText = '';
+        this.$nextTick(() => this.scrollDown());
+
+        this.controller = new AbortController();
+        try {
+          const r = await fetch('/api/ai/stream', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: text, task_id: this.taskId }),
+            signal: this.controller.signal,
+          });
+          if (!r.ok) {
+            const body = await r.json().catch(() => ({}));
+            this.error = body.detail || 'Не удалось получить ответ';
+            this.streaming = false;
+            this.messages.pop();
+            return;
+          }
+          const reader = r.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = '';
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const parts = buffer.split('\n\n');
+            buffer = parts.pop() || '';
+            for (const part of parts) {
+              if (part.startsWith('event: error')) {
+                this.error = part.split('data: ')[1] || 'Ошибка провайдера';
+              } else if (part.startsWith('event: blocked')) {
+                this.streamText = part.split('data: ')[1] || '';
+              } else if (part.startsWith('data: ')) {
+                this.streamText += part.slice(6).replace(/\\n/g, '\n');
+                this.$nextTick(() => this.scrollDown());
+              }
+            }
+          }
+        } catch (e) {
+          if (e.name !== 'AbortError') this.error = 'Соединение прервалось';
+        } finally {
+          this.streaming = false;
+          if (this.streamText) {
+            this.messages.push({
+              id: 'local-a-' + Date.now(), role: 'assistant', content: this.streamText,
+            });
+            this.streamText = '';
+          }
+          await this.load();
+        }
+      },
+
+      async clearThread() {
+        this.busy = true;
+        try {
+          const q = this.taskId ? `?task_id=${encodeURIComponent(this.taskId)}` : '';
+          await fetch('/api/ai/messages' + q, { method: 'DELETE', credentials: 'include' });
+          this.messages = [];
+        } finally { this.busy = false; }
+      },
+    };
+  }
+</script>
+{% endblock %}
