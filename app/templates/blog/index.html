@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% set page_url = base_url ~ '/blog' ~ ('/c/' ~ category.slug if category else '') %}
-{% block title %}{% if category %}{{ category.seo_title }}{% else %}Блог Doday — учёба, домашка, продуктивность: {{ total_count }} статей{% endif %}{% endblock %}
+{% block title %}{% if category %}{{ category.seo_title }}{% else %}Блог Doday: {{ total_count }} {{ 'статья' if total_count % 10 == 1 and total_count % 100 != 11 else 'статьи' if 2 <= total_count % 10 <= 4 and not 12 <= total_count % 100 <= 14 else 'статей' }} про учёбу, домашку и экзамены{% endif %}{% endblock %}
 {% block seo_description %}{% if category %}{{ category.seo_description }}{% else %}Статьи для школьников, студентов и родителей: как делать домашку быстрее, готовиться к ОГЭ и ЕГЭ, не прокрастинировать и ничего не забывать. Всё бесплатно и без воды.{% endif %}{% endblock %}
 {% block seo_keywords %}блог для школьников, как быстро сделать домашнее задание, продуктивность в учёбе, подготовка к егэ, статьи про учёбу, планировщик для школьника{% if category %}, {{ category.name|lower }}{% endif %}{% endblock %}
 {% block seo_canonical %}{{ page_url }}{% endblock %}
