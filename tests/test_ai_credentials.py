@@ -2,10 +2,17 @@
 
 from __future__ import annotations
 
-import pytest
+from uuid import UUID, uuid4
 
+import pytest
+import pytest_asyncio
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.ai import service as ai_service
 from app.ai.crypto import KEY_VERSION, AiKeyError, decrypt_api_key, encrypt_api_key, key_last4
 from app.ai.providers import CUSTOM_KEY, PROVIDER_BY_KEY, PROVIDERS, get_provider
+from app.ai.service import UnknownProvider
+from app.auth.models import User
 
 
 def test_encrypt_decrypt_roundtrip() -> None:
@@ -62,3 +69,91 @@ def test_custom_provider_has_no_fixed_url() -> None:
     custom = get_provider(CUSTOM_KEY)
     assert custom is not None
     assert custom.base_url == ""
+
+
+# ── сервисный слой (нужна БД) ─────────────────────────────────────────────
+
+
+@pytest_asyncio.fixture
+async def ai_user_id(db_session: AsyncSession) -> UUID:
+    """Отдельный пользователь под тесты ключей."""
+    user = User(id=uuid4(), email=f"ai-{uuid4().hex[:8]}@test.local", password_hash="x")
+    db_session.add(user)
+    await db_session.commit()
+    return user.id
+
+
+async def test_upsert_and_get_credential(db_session: AsyncSession, ai_user_id: UUID) -> None:
+    cred = await ai_service.upsert_credential(
+        db_session, ai_user_id, provider="cloudru", api_key="sk-secret-1234"
+    )
+    assert cred.provider == "cloudru"
+    assert cred.base_url == "https://foundation-models.api.cloud.ru/v1"
+    assert cred.model == "ai-sage/GigaChat3-10B-A1.8B"
+    assert cred.key_last4 == "1234"
+    assert "sk-secret-1234" not in cred.key_ciphertext
+
+    same = await ai_service.get_credential(db_session, ai_user_id)
+    assert same is not None
+    assert same.id == cred.id
+
+
+async def test_upsert_replaces_existing(db_session: AsyncSession, ai_user_id: UUID) -> None:
+    first = await ai_service.upsert_credential(
+        db_session, ai_user_id, provider="cloudru", api_key="sk-first-1111"
+    )
+    first_id = first.id
+    second = await ai_service.upsert_credential(
+        db_session, ai_user_id, provider="mistral", api_key="sk-second-2222"
+    )
+    assert first_id == second.id, "один ключ на пользователя — запись обновляется"
+    assert second.provider == "mistral"
+    assert second.key_last4 == "2222"
+
+
+async def test_custom_provider_requires_url_and_model(
+    db_session: AsyncSession, ai_user_id: UUID
+) -> None:
+    cred = await ai_service.upsert_credential(
+        db_session,
+        ai_user_id,
+        provider="custom",
+        api_key="sk-custom-3333",
+        base_url="https://example.test/v1",
+        model="some-model",
+    )
+    assert cred.base_url == "https://example.test/v1"
+    assert cred.model == "some-model"
+
+    with pytest.raises(UnknownProvider):
+        await ai_service.upsert_credential(
+            db_session, ai_user_id, provider="custom", api_key="sk-x-4444"
+        )
+
+
+async def test_unknown_provider_rejected(db_session: AsyncSession, ai_user_id: UUID) -> None:
+    with pytest.raises(UnknownProvider):
+        await ai_service.upsert_credential(
+            db_session, ai_user_id, provider="нет-такого", api_key="sk-x-5555"
+        )
+
+
+async def test_resolve_secret_returns_plain_key(db_session: AsyncSession, ai_user_id: UUID) -> None:
+    await ai_service.upsert_credential(
+        db_session, ai_user_id, provider="cloudru", api_key="sk-plain-9999"
+    )
+    resolved = await ai_service.resolve_secret(db_session, ai_user_id)
+    assert resolved is not None
+    base_url, api_key, model = resolved
+    assert api_key == "sk-plain-9999"
+    assert base_url.endswith("/v1")
+    assert model
+
+
+async def test_delete_credential(db_session: AsyncSession, ai_user_id: UUID) -> None:
+    await ai_service.upsert_credential(
+        db_session, ai_user_id, provider="cloudru", api_key="sk-del-4444"
+    )
+    assert await ai_service.delete_credential(db_session, ai_user_id) is True
+    assert await ai_service.get_credential(db_session, ai_user_id) is None
+    assert await ai_service.delete_credential(db_session, ai_user_id) is False
