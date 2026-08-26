@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+import logging
+import threading
 from functools import lru_cache
 
 from app.blog._types import Category, Post
+from app.blog.cache import content_fingerprint, read_cache, write_cache
 from app.blog.categories import CATEGORIES, CATEGORY_BY_SLUG, get_category
-from app.blog.loader import load_all_posts
+from app.blog.loader import CONTENT_DIR, load_all_posts
+
+logger = logging.getLogger("doday.blog")
 
 __all__ = [
     "CATEGORIES",
@@ -22,12 +27,40 @@ __all__ = [
     "related_posts",
     "reset_cache",
     "search_posts",
+    "warm_cache",
 ]
 
 
 @lru_cache(maxsize=1)
 def all_posts() -> tuple[Post, ...]:
-    return tuple(load_all_posts())
+    """Все статьи, отсортированные по дате (новые первыми).
+
+    Сначала пробуем дисковый кэш: парсинг 300+ markdown-файлов занимает ~10 с,
+    и без кэша это время платил бы первый посетитель после каждого рестарта.
+    """
+    fingerprint = content_fingerprint(CONTENT_DIR)
+    cached = read_cache(fingerprint)
+    if cached is not None:
+        return tuple(cached)
+    posts = load_all_posts()
+    write_cache(fingerprint, posts)
+    return tuple(posts)
+
+
+def warm_cache() -> None:
+    """Прогреть кэш в фоне — вызывается на старте приложения.
+
+    Отдельным демон-потоком, чтобы не задерживать старт uvicorn: пока идёт
+    парсинг, приложение уже принимает запросы (не-блоговые страницы работают).
+    """
+
+    def _run() -> None:
+        try:
+            all_posts()
+        except Exception:  # блог не должен ронять старт приложения
+            logger.exception("не удалось прогреть кэш блога")
+
+    threading.Thread(target=_run, name="blog-warm-cache", daemon=True).start()
 
 
 @lru_cache(maxsize=1)

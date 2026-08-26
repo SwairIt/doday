@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from app.blog.cache import content_fingerprint, read_cache, write_cache
 from app.blog.categories import CATEGORIES, CATEGORY_BY_SLUG
 from app.blog.loader import (
     BlogContentError,
@@ -84,9 +85,38 @@ def test_seed_post_metrics() -> None:
 
 def test_search_scores_title_higher_and_requires_all_words() -> None:
     hits = search_posts("домашнее задание")
-    assert hits and hits[0].slug == SEED_SLUG
-    assert search_posts("zzzz-нет-такого") == []
+    # Все статьи в выдаче содержат оба слова, seed-статья — в первой десятке.
+    assert hits
+    assert SEED_SLUG in [p.slug for p in hits[:10]]
+    for p in hits[:5]:
+        assert "домашн" in p.search_text
+    # Слово, которого нет ни в одной статье, обнуляет выдачу.
+    assert search_posts("квазимодоплюмбум") == []
     assert search_posts("") == []
+
+
+def test_search_filters_by_category() -> None:
+    hits = search_posts("домашнее задание", category="domashka")
+    assert hits
+    assert all(p.category == "domashka" for p in hits)
+
+
+def test_disk_cache_roundtrip(tmp_path: Path) -> None:
+    """Кэш восстанавливает статьи один в один и протухает при смене отпечатка."""
+    posts = list(all_posts())
+    cache_file = tmp_path / "posts.json"
+    write_cache("fp-1", posts, cache_file)
+    restored = read_cache("fp-1", cache_file)
+    assert restored is not None
+    assert [p.slug for p in restored] == [p.slug for p in posts]
+    first = next(p for p in restored if p.slug == SEED_SLUG)
+    origin = next(p for p in posts if p.slug == SEED_SLUG)
+    assert first == origin
+    # Отпечаток другой — кэш игнорируется.
+    assert read_cache("fp-2", cache_file) is None
+    # Битый файл не роняет сайт.
+    cache_file.write_text("{ not json", encoding="utf-8")
+    assert read_cache("fp-1", cache_file) is None
 
 
 def test_related_excludes_self() -> None:
@@ -172,3 +202,12 @@ async def test_robots_allows_blog_and_lists_sitemap(blog_client: AsyncClient) ->
     r = await blog_client.get("/robots.txt")
     assert "Allow: /blog" in r.text
     assert "/blog/sitemap.xml" in r.text
+
+
+def test_fingerprint_changes_when_content_changes(tmp_path: Path) -> None:
+    (tmp_path / "domashka").mkdir()
+    f = tmp_path / "domashka" / "x.md"
+    f.write_text("hello", encoding="utf-8")
+    before = content_fingerprint(tmp_path)
+    f.write_text("hello world", encoding="utf-8")
+    assert content_fingerprint(tmp_path) != before

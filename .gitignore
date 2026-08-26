@@ -133,3 +133,5 @@ System Volume Information/
 # Выхлоп генератора игры (Kimi)
 .kimi/
 .playwright-mcp/
+app/blog/.posts-cache.json
+app/blog/.posts-cache-*.tmp

@@ -262,7 +262,9 @@ def load_all_posts(content_dir: Path = CONTENT_DIR) -> list[Post]:
                 raise BlogContentError(f"дубль slug {post.slug!r}: {path} и {seen[post.slug]}")
             seen[post.slug] = path
             posts.append(post)
-    posts.sort(key=lambda p: (p.published_at, p.title), reverse=True)
+    # Новые статьи первыми; при равной дате — по алфавиту (предсказуемый порядок).
+    posts.sort(key=lambda p: p.title)
+    posts.sort(key=lambda p: p.published_at, reverse=True)
     return posts
 
 
