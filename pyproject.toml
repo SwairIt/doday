@@ -183,6 +183,7 @@ ignore = [
 "app/lessio/blog/router.py" = ["RUF001", "RUF002", "RUF003"]      # Russian docstrings + 404 message
 "app/blog/*" = ["RUF001", "RUF002", "RUF003"]                     # Russian blog categories/docstrings
 "app/ai/*" = ["RUF001", "RUF002", "RUF003"]                       # Russian docstrings/messages
+"app/auth/models.py" = ["RUF001", "RUF002", "RUF003"]             # Russian comment on ai_terms_accepted_at
 "tests/test_ai_credentials.py" = ["RUF001", "RUF002", "RUF003"]
 "tests/test_ai_chat.py" = ["RUF001", "RUF002", "RUF003"]
 "scripts/blog_check.py" = ["RUF001", "RUF002", "RUF003"]
