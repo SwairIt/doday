@@ -655,6 +655,54 @@
     </template>
   </section>
 
+  {# ── ИИ-помощник: свой ключ провайдера ─────────────────────────── #}
+  <section class="card p-6" x-data="aiCredential()" x-init="load()">
+    <h2 class="text-lg font-semibold mb-1">ИИ-помощник</h2>
+    <p class="text-sm text-[var(--text-muted)] mb-4">
+      Подключи свой ключ — и сможешь спрашивать модель прямо в задачах.
+      Ключ хранится зашифрованным, обратно не показывается никому, включая нас.
+    </p>
+
+    <template x-if="current">
+      <div class="flex items-center gap-3 mb-4 text-sm flex-wrap">
+        <span class="px-2 py-1 rounded bg-[var(--surface-2)]" x-text="providerTitle(current.provider)"></span>
+        <span class="text-[var(--text-muted)]">ключ ····<span x-text="current.key_last4"></span></span>
+        <span class="text-[var(--text-muted)] text-xs" x-text="current.model"></span>
+        <button type="button" class="btn-ghost !py-1 !px-3 text-sm" @click="verify()" :disabled="busy">Проверить</button>
+        <button type="button" class="btn-ghost !py-1 !px-3 text-sm" @click="remove()" :disabled="busy">Удалить</button>
+      </div>
+    </template>
+
+    <div class="space-y-3 max-w-md">
+      <select class="input w-full" x-model="form.provider">
+        <template x-for="p in providers" :key="p.key">
+          <option :value="p.key" x-text="p.title"></option>
+        </template>
+      </select>
+
+      <p class="text-xs text-[var(--text-muted)]" x-text="hint()"></p>
+
+      <template x-if="signupUrl()">
+        <a :href="signupUrl()" target="_blank" rel="noopener"
+           class="text-xs text-[var(--accent)] hover:underline inline-block">Где взять ключ →</a>
+      </template>
+
+      <template x-if="form.provider === 'custom'">
+        <div class="space-y-3">
+          <input class="input w-full" placeholder="https://адрес-api/v1" x-model="form.base_url">
+          <input class="input w-full" placeholder="название модели" x-model="form.model">
+        </div>
+      </template>
+
+      <input class="input w-full" type="password" autocomplete="off"
+             placeholder="Ключ провайдера" x-model="form.api_key">
+      <button type="button" class="btn-primary" @click="save()" :disabled="busy || !form.api_key">
+        Сохранить ключ
+      </button>
+      <p class="text-sm" :class="ok ? 'text-emerald-400' : 'text-rose-400'" x-text="message"></p>
+    </div>
+  </section>
+
   <section class="card p-6"
            x-data="{
              integrations: [],
@@ -1115,4 +1163,72 @@
     </form>
   </section>
 </div>
+
+{# lint-ignore-next-line: long-inline-script #}
+<script>
+  function aiCredential() {
+    return {
+      providers: [], current: null, busy: false, ok: true, message: '',
+      form: { provider: 'cloudru', api_key: '', model: '', base_url: '' },
+      async load() {
+        try {
+          const [pr, cr] = await Promise.all([
+            fetch('/api/ai/providers', { credentials: 'include' }),
+            fetch('/api/ai/credential', { credentials: 'include' }),
+          ]);
+          if (pr.ok) this.providers = await pr.json();
+          if (cr.ok) this.current = await cr.json();
+          if (this.current) this.form.provider = this.current.provider;
+        } catch (e) { /* настройки должны открыться даже без сети */ }
+      },
+      _provider(key) { return this.providers.find(x => x.key === key) || null; },
+      providerTitle(key) { const p = this._provider(key); return p ? p.title : key; },
+      hint() { const p = this._provider(this.form.provider); return p ? p.hint : ''; },
+      signupUrl() { const p = this._provider(this.form.provider); return p ? p.signup_url : ''; },
+      async save() {
+        this.busy = true; this.message = '';
+        try {
+          const r = await fetch('/api/ai/credential', {
+            method: 'PUT', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(this.form),
+          });
+          this.ok = r.ok;
+          if (r.ok) {
+            this.current = await r.json();
+            this.form.api_key = '';
+            this.message = 'Ключ сохранён';
+          } else {
+            const body = await r.json().catch(() => ({}));
+            this.message = body.detail || 'Не удалось сохранить ключ';
+          }
+        } catch (e) {
+          this.ok = false; this.message = 'Сеть недоступна';
+        } finally { this.busy = false; }
+      },
+      async verify() {
+        this.busy = true; this.ok = true; this.message = 'Проверяю…';
+        try {
+          const r = await fetch('/api/ai/credential/verify', { method: 'POST', credentials: 'include' });
+          this.ok = r.ok;
+          if (r.ok) { this.message = 'Ключ рабочий'; }
+          else {
+            const body = await r.json().catch(() => ({}));
+            this.message = body.detail || 'Провайдер отклонил ключ';
+          }
+        } catch (e) {
+          this.ok = false; this.message = 'Сеть недоступна';
+        } finally { this.busy = false; }
+      },
+      async remove() {
+        this.busy = true;
+        try {
+          await fetch('/api/ai/credential', { method: 'DELETE', credentials: 'include' });
+          this.current = null; this.ok = true; this.message = 'Ключ удалён';
+        } finally { this.busy = false; }
+      },
+    };
+  }
+</script>
+
 {% endblock %}

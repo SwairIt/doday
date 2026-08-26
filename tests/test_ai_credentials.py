@@ -283,3 +283,12 @@ async def test_verify_endpoint(
     r = await logged_in_client.post("/api/ai/credential/verify")
     assert r.status_code == 400
     assert "не принят" in r.json()["detail"]
+
+
+async def test_settings_page_has_ai_section(logged_in_client: AsyncClient) -> None:
+    html = (await logged_in_client.get("/app/settings")).text
+    assert "ИИ-помощник" in html
+    assert "/api/ai/providers" in html
+    assert "/api/ai/credential" in html
+    # шифротекст и сам ключ не должны попадать в разметку
+    assert "key_ciphertext" not in html
