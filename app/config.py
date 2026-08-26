@@ -38,13 +38,14 @@ class Settings(BaseSettings):
     # https://getdoday.ru/<key>.txt — endpoint в app.main отдаёт его автоматически.
     # Empty → ping no-op. Используется Lessio при создании tutor-профиля
     # и скриптом scripts/indexnow_ping.py для массового пинга.
-    indexnow_key: str = ""
+    indexnow_key: str = "ca6fac0a6aa2019332f54f8e4b705f5a"
 
-    # Подтверждение прав в вебмастерах. Значение — только код из мета-тега,
-    # который выдаёт панель (content="..."), без самого тега.
+    # Подтверждение прав в вебмастерах. Это НЕ секреты: коды и так видны в
+    # исходнике страницы, поэтому лежат в коде — на сервере ничего править не надо.
+    # Яндекс дополнительно проверяет файл /yandex_<код>.html (эндпоинт в app.main).
     # Пустая строка → мета-тег не выводится.
-    yandex_verification: str = ""
-    google_site_verification: str = ""
+    yandex_verification: str = "e9193fc520dec1f8"
+    google_site_verification: str = "s2j1R02oWLN4m46HbP6tO3gn7SJtiqPc1zDFb8c6U7U"
 
     # Google OAuth для Lessio Calendar busy-times sync (опционально).
     # Регистрация: https://console.cloud.google.com/apis/credentials

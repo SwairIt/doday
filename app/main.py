@@ -882,6 +882,30 @@ async def favicon() -> Response:
     return Response(content=_PWA_ICON_SVG, media_type="image/svg+xml")
 
 
+@app.get("/yandex_{code:str}.html", include_in_schema=False)
+async def yandex_verification_file(code: str) -> Response:
+    """Файл подтверждения прав для Яндекс.Вебмастера.
+
+    При выборе способа «HTML-файл» Вебмастер скачивает
+    https://getdoday.ru/yandex_<код>.html и ждёт внутри строку
+    `Verification: <код>`. Отдаём роутом, а не статикой: файл в репозитории
+    пережил бы не каждый `git reset --hard` на деплое, а роут — всегда.
+    Мета-тег из base.html работает параллельно; Яндексу достаточно любого способа.
+    """
+    configured = (_settings.yandex_verification or "").strip()
+    if not configured or code != configured:
+        raise HTTPException(404, "Not found")
+    body = (
+        "<html>\n"
+        "    <head>\n"
+        '        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">\n'
+        "    </head>\n"
+        f"    <body>Verification: {configured}</body>\n"
+        "</html>\n"
+    )
+    return Response(content=body, media_type="text/html")
+
+
 @app.get("/{key:str}.txt", include_in_schema=False)
 async def indexnow_key_verification(key: str) -> Response:
     """IndexNow key-verification endpoint (Yandex/Bing fetches /<KEY>.txt to confirm
