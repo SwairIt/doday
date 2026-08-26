@@ -2,8 +2,13 @@
 
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Ключ IndexNow. Не секрет: по протоколу он публикуется на самом сайте
+# (/<ключ>.txt), поэтому держим в коде — иначе пришлось бы прописывать .env
+# на сервере. Пустое значение в .env НЕ должно его затирать: см. валидатор ниже.
+_DEFAULT_INDEXNOW_KEY = "ca6fac0a6aa2019332f54f8e4b705f5a"
 
 
 class Settings(BaseSettings):
@@ -38,7 +43,7 @@ class Settings(BaseSettings):
     # https://getdoday.ru/<key>.txt — endpoint в app.main отдаёт его автоматически.
     # Empty → ping no-op. Используется Lessio при создании tutor-профиля
     # и скриптом scripts/indexnow_ping.py для массового пинга.
-    indexnow_key: str = "ca6fac0a6aa2019332f54f8e4b705f5a"
+    indexnow_key: str = _DEFAULT_INDEXNOW_KEY
 
     # Подтверждение прав в вебмастерах. Это НЕ секреты: коды и так видны в
     # исходнике страницы, поэтому лежат в коде — на сервере ничего править не надо.
@@ -46,6 +51,18 @@ class Settings(BaseSettings):
     # Пустая строка → мета-тег не выводится.
     yandex_verification: str = "e9193fc520dec1f8"
     google_site_verification: str = "s2j1R02oWLN4m46HbP6tO3gn7SJtiqPc1zDFb8c6U7U"
+
+    @field_validator("indexnow_key")
+    @classmethod
+    def _keep_indexnow_default(cls, v: str) -> str:
+        """`INDEXNOW_KEY=` (пустой) в .env не должен отключать пинг.
+
+        На проде переменная объявлена пустой ещё со времён Lessio-MVP, и она
+        перекрывала дефолт — эндпоинт /<ключ>.txt отдавал 404, а без него
+        поисковик отвергает пинг. Явно заданный непустой ключ по-прежнему
+        имеет приоритет.
+        """
+        return v.strip() or _DEFAULT_INDEXNOW_KEY
 
     # Google OAuth для Lessio Calendar busy-times sync (опционально).
     # Регистрация: https://console.cloud.google.com/apis/credentials
