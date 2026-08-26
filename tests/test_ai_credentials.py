@@ -292,3 +292,26 @@ async def test_settings_page_has_ai_section(logged_in_client: AsyncClient) -> No
     assert "/api/ai/credential" in html
     # шифротекст и сам ключ не должны попадать в разметку
     assert "key_ciphertext" not in html
+
+
+async def test_verify_key_400_with_key_marker_reads_as_bad_key(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Cloud.ru на неверный ключ отвечает 400, а не 401 — проверено вживую."""
+    monkeypatch.setattr(
+        httpx.AsyncClient,
+        "post",
+        _fake_post(400, {"code": "InvalidArgument", "message": "invalid api key secret"}),
+    )
+    with pytest.raises(AiProviderError) as exc:
+        await verify_key(base_url="https://x.test/v1", api_key="sk-1", model="m")
+    assert "не принят" in exc.value.user_message
+
+
+async def test_verify_key_400_without_key_marker_points_at_url_and_model(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(httpx.AsyncClient, "post", _fake_post(400, {"message": "bad request"}))
+    with pytest.raises(AiProviderError) as exc:
+        await verify_key(base_url="https://x.test/v1", api_key="sk-1", model="m")
+    assert "адрес API" in exc.value.user_message

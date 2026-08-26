@@ -23,15 +23,37 @@ class AiProviderError(Exception):
         self.user_message = user_message
 
 
-def _message_for_status(status: int) -> str:
+# Признаки «дело в ключе» в теле ответа. Нужны потому, что провайдеры не
+# сходятся в кодах: Cloud.ru на неверный ключ отвечает 400 (проверено
+# 2026-08-27), большинство остальных — 401.
+_BAD_KEY_MARKERS = ("api key", "api_key", "apikey", "unauthorized", "invalid key", "ключ")
+
+_BAD_KEY_MESSAGE = "Ключ не принят провайдером — проверь, что скопировал его целиком."
+
+
+def _looks_like_bad_key(body: str) -> bool:
+    low = body.lower()
+    return any(marker in low for marker in _BAD_KEY_MARKERS)
+
+
+def _message_for(status: int, body: str) -> str:
+    """Понятная фраза по коду ответа и телу.
+
+    Тело используем только для классификации — наружу оно не попадает, чтобы
+    не утащить в интерфейс лишние подробности провайдера.
+    """
     if status in (401, 403):
-        return "Ключ не принят провайдером — проверь, что скопировал его целиком."
+        return _BAD_KEY_MESSAGE
     if status == 402:
         return "На счету провайдера закончились средства."
     if status == 404:
         return "Провайдер не знает такой модели — проверь название."
     if status == 429:
         return "Слишком часто: провайдер ограничил частоту запросов. Попробуй через минуту."
+    if status == 400:
+        if _looks_like_bad_key(body):
+            return _BAD_KEY_MESSAGE
+        return "Провайдер отклонил запрос — проверь адрес API и название модели."
     return "Провайдер не отвечает. Попробуй позже."
 
 
@@ -57,4 +79,4 @@ async def verify_key(*, base_url: str, api_key: str, model: str, timeout_s: floa
 
     if response.status_code >= 400:
         logger.info("ai_verify_rejected", status=response.status_code)
-        raise AiProviderError(_message_for_status(response.status_code))
+        raise AiProviderError(_message_for(response.status_code, response.text[:500]))
