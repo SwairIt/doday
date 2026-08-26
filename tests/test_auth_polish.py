@@ -32,8 +32,10 @@ async def test_register_page_has_strength_meter(client: AsyncClient) -> None:
     assert "Спецсимвол" in body
     # Strength scoring helper.
     assert "scoreLabel" in body
-    # Trial promise on the marketing side.
-    assert "14 дней" in body
+    # Триала нет — страница не должна его обещать (см. app/billing/service.py).
+    assert "14 дней" not in body
+    assert "trial" not in body.lower()
+    assert "Бесплатно" in body
 
 
 async def test_register_page_has_show_hide_and_caps(client: AsyncClient) -> None:

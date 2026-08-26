@@ -68,7 +68,7 @@
              req(test) { return test ? 'text-emerald-400' : 'text-[var(--text-muted)]'; }
            }">
         <h1 class="text-3xl md:text-4xl font-bold mb-2">Создай аккаунт</h1>
-        <p class="text-[var(--text-muted)] mb-8">Полминуты — и можно начинать. <span class="text-[var(--accent)] font-medium">14 дней Pro в подарок</span>.</p>
+        <p class="text-[var(--text-muted)] mb-8">Полминуты — и можно начинать. <span class="text-[var(--accent)] font-medium">Бесплатно навсегда</span>, без карты.</p>
 
         {% if error %}
           <div class="mb-5 px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-sm flex items-start gap-2 animate-fade-in">
@@ -182,22 +182,22 @@
     <div class="relative max-w-md text-left">
       <div class="text-5xl mb-6">🚀</div>
       <h2 class="text-3xl md:text-4xl font-bold leading-tight mb-4">
-        14 дней Pro<br><span class="grad-text">бесплатно</span>
+        Бесплатно<br><span class="grad-text">навсегда</span>
       </h2>
       <p class="text-[var(--text-muted)] mb-8 text-sm leading-relaxed">
-        Сразу после регистрации все функции доступны без ограничений на две недели.
-        Карту просим только если решишь остаться на платном тарифе. Не понравится —
-        просто продолжишь пользоваться Free до 5 проектов.
+        Free-тариф не заканчивается: 10 проектов, 500 активных задач, канбан, календарь,
+        помодоро, расписание уроков и напоминания. Карта не нужна вообще — Pro нужен,
+        только если упрёшься в лимиты или захочешь премиум-функции.
       </p>
 
       <div class="space-y-3 mb-8">
         {% for line in [
-          ("∞", "Безлимит проектов и лейблов"),
           ("📋", "Канбан-доски в каждом проекте"),
-          ("🎨", "Свои шаблоны проектов"),
-          ("🔍", "Кастомные фильтры с JSONB-query"),
-          ("🔔", "Браузерные уведомления и iCal"),
-          ("📊", "Лента активности и статистика")
+          ("📅", "Календарь и расписание уроков"),
+          ("🍅", "Помодоро-таймер на каждой задаче"),
+          ("🔔", "Напоминания и браузерные уведомления"),
+          ("📊", "Лента активности и статистика"),
+          ("💾", "Экспорт в JSON, Markdown и iCal")
         ] %}
           <div class="flex items-center gap-3 text-sm">
             <span class="text-lg shrink-0 w-7">{{ line[0] }}</span>
@@ -210,7 +210,7 @@
         <div class="flex items-center gap-2 mb-1">
           <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-medium">Гарантия</span>
         </div>
-        Никаких автоматических списаний после trial. Карта не нужна. По окончании 14 дней просто переключишься на Free.
+        Никаких автосписаний и пробных периодов, которые незаметно заканчиваются. Карта не нужна: Free работает столько, сколько нужно.
       </div>
     </div>
   </aside>

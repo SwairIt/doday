@@ -17,7 +17,10 @@ from app.blog.loader import (
     slugify,
 )
 from app.blog.posts import all_posts, get_post, related_posts, search_posts
+from app.config import get_settings
 from app.main import app
+
+BASE = get_settings().app_base_url.rstrip("/")
 
 SEED_SLUG = "kak-bystro-sdelat-domashnee-zadanie"
 
@@ -168,7 +171,7 @@ async def test_post_page_has_progress_toc_and_jsonld(blog_client: AsyncClient) -
     assert '"@type": "BlogPosting"' in html
     assert '"@type": "FAQPage"' in html
     assert '"@type": "BreadcrumbList"' in html
-    assert f'rel="canonical" href="https://getdoday.ru/blog/{SEED_SLUG}"' in html
+    assert f'rel="canonical" href="{BASE}/blog/{SEED_SLUG}"' in html
     assert "мин чтения" in html
     assert 'class="table-wrap"' in html
     assert "Читайте также" in html or len(all_posts()) == 1
@@ -192,8 +195,8 @@ async def test_blog_sitemap_and_index_json(blog_client: AsyncClient) -> None:
     assert r.status_code == 200
     root = ET.fromstring(r.text)  # noqa: S314 — наш собственный response
     locs = [u.text for u in root.iter("{http://www.sitemaps.org/schemas/sitemap/0.9}loc")]
-    assert f"https://getdoday.ru/blog/{SEED_SLUG}" in locs
-    assert "https://getdoday.ru/blog/c/domashka" in locs
+    assert f"{BASE}/blog/{SEED_SLUG}" in locs
+    assert f"{BASE}/blog/c/domashka" in locs
     j = (await blog_client.get("/blog/index.json")).json()
     assert any(p["slug"] == SEED_SLUG for p in j["posts"])
 
