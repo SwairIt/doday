@@ -4,11 +4,13 @@ from __future__ import annotations
 
 from uuid import UUID, uuid4
 
+import httpx
 import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai import service as ai_service
+from app.ai.client import AiProviderError, verify_key
 from app.ai.crypto import KEY_VERSION, AiKeyError, decrypt_api_key, encrypt_api_key, key_last4
 from app.ai.providers import CUSTOM_KEY, PROVIDER_BY_KEY, PROVIDERS, get_provider
 from app.ai.service import UnknownProvider
@@ -157,3 +159,60 @@ async def test_delete_credential(db_session: AsyncSession, ai_user_id: UUID) -> 
     assert await ai_service.delete_credential(db_session, ai_user_id) is True
     assert await ai_service.get_credential(db_session, ai_user_id) is None
     assert await ai_service.delete_credential(db_session, ai_user_id) is False
+
+
+# ── проверка ключа у провайдера (без реальных запросов) ───────────────────
+
+
+def _fake_post(status: int, body: object = None):
+    """Подменяет httpx.AsyncClient.post фиксированным ответом."""
+
+    async def post(self: object, url: str, **kwargs: object) -> httpx.Response:
+        return httpx.Response(status, json=body or {"ok": True}, request=httpx.Request("POST", url))
+
+    return post
+
+
+async def test_verify_key_success(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        httpx.AsyncClient, "post", _fake_post(200, {"choices": [{"message": {"content": "ok"}}]})
+    )
+    await verify_key(base_url="https://x.test/v1", api_key="sk-1", model="m")
+
+
+@pytest.mark.parametrize(
+    ("status", "fragment"),
+    [
+        (401, "не принят"),
+        (403, "не принят"),
+        (402, "средства"),
+        (404, "модели"),
+        (429, "часто"),
+        (500, "не отвечает"),
+    ],
+)
+async def test_verify_key_maps_errors(
+    monkeypatch: pytest.MonkeyPatch, status: int, fragment: str
+) -> None:
+    monkeypatch.setattr(httpx.AsyncClient, "post", _fake_post(status, {"error": "boom"}))
+    with pytest.raises(AiProviderError) as exc:
+        await verify_key(base_url="https://x.test/v1", api_key="sk-1", model="m")
+    assert fragment in exc.value.user_message
+
+
+async def test_verify_key_never_leaks_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(httpx.AsyncClient, "post", _fake_post(401, {"error": "denied"}))
+    with pytest.raises(AiProviderError) as exc:
+        await verify_key(base_url="https://x.test/v1", api_key="sk-super-secret", model="m")
+    assert "sk-super-secret" not in exc.value.user_message
+    assert "sk-super-secret" not in str(exc.value)
+
+
+async def test_verify_key_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def boom(self: object, url: str, **kwargs: object) -> httpx.Response:
+        raise httpx.ConnectTimeout("timeout")
+
+    monkeypatch.setattr(httpx.AsyncClient, "post", boom)
+    with pytest.raises(AiProviderError) as exc:
+        await verify_key(base_url="https://x.test/v1", api_key="sk-1", model="m")
+    assert "не отвечает" in exc.value.user_message
