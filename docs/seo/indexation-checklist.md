@@ -29,32 +29,22 @@ bash /var/www/getdoday/data/www/getdoday.ru/app/scripts/deploy.sh
 
 ---
 
-## Шаг 1. Яндекс.Вебмастер — главное для России
+## Шаг 1. Яндекс.Вебмастер — ГОТОВО в коде, осталось нажать «Проверить»
 
-1. Открыть <https://webmaster.yandex.ru/sites/add/>
-2. В поле вписать `https://getdoday.ru` → кнопка **«Добавить»**
-3. Откроется страница «Права на управление сайтом». Выбрать вкладку **«Мета-тег»**
-4. Там будет строка вида:
-   ```html
-   <meta name="yandex-verification" content="a1b2c3d4e5f67890" />
-   ```
-   Скопировать **только то, что внутри `content`** → `a1b2c3d4e5f67890`
-5. В `.env` на сервере дописать:
-   ```
-   YANDEX_VERIFICATION=a1b2c3d4e5f67890
-   ```
-6. Применить: `bash /var/www/getdoday/data/www/getdoday.ru/app/scripts/deploy.sh`
-7. Вернуться в Вебмастер → кнопка **«Проверить»**. Должно стать «Права подтверждены»
-8. Слева меню **«Индексирование» → «Файлы Sitemap»** → поле «Добавить файл Sitemap»,
-   вставлять по одному и жать «Добавить»:
+Код подтверждения `e9193fc520dec1f8` уже вшит и работает на проде:
+- файл <https://getdoday.ru/yandex_e9193fc520dec1f8.html> отдаётся,
+- мета-тег `yandex-verification` стоит на всех страницах.
+
+Тебе осталось:
+1. <https://webmaster.yandex.ru/> → открыть сайт `getdoday.ru` → **«Проверить»**
+2. После «Права подтверждены»: слева **«Индексирование» → «Файлы Sitemap»**, добавить:
    ```
    https://getdoday.ru/sitemap.xml
    https://getdoday.ru/blog/sitemap.xml
    https://getdoday.ru/qa/sitemap.xml
    https://getdoday.ru/pdd/sitemap.xml
    ```
-9. Слева **«Индексирование» → «Переобход страниц»** → вставить самые важные адреса
-   (лимит ~20–30 в сутки, остальное поисковик возьмёт из sitemap):
+3. Слева **«Индексирование» → «Переобход страниц»** → закинуть:
    ```
    https://getdoday.ru/
    https://getdoday.ru/blog
@@ -67,56 +57,35 @@ bash /var/www/getdoday/data/www/getdoday.ru/app/scripts/deploy.sh
    https://getdoday.ru/blog/razbor-vs-gdz
    https://getdoday.ru/blog/napominaniya-ob-uchebe-kotorye-rabotayut
    ```
-10. Полезное там же, на будущее: **«Поисковые запросы»** (по каким словам находят),
-    **«Диагностика»** (ошибки сайта).
 
-## Шаг 2. Google Search Console
+## Шаг 2. Google Search Console — ГОТОВО в коде, осталось «Подтвердить»
 
-1. Открыть <https://search.google.com/search-console/welcome>
-2. Выбрать правую карточку **«Ресурс с префиксом URL»** (не левую «Домен» — там нужен DNS)
-3. Вписать `https://getdoday.ru` → **«Продолжить»**
-4. В окне подтверждения раскрыть **«Тег HTML»** → скопировать код из `content="..."`
-5. В `.env`:
-   ```
-   GOOGLE_SITE_VERIFICATION=<код>
-   ```
-6. Применить деплой-скриптом → в Search Console нажать **«Подтвердить»**
-7. Слева **«Файлы Sitemap»** → в поле «Добавьте файл Sitemap» вставить и отправить:
+Мета-тег `s2j1R02oWLN4m46HbP6tO3gn7SJtiqPc1zDFb8c6U7U` уже на всех страницах.
+
+1. <https://search.google.com/search-console> → **«Подтвердить»**
+2. Слева **«Файлы Sitemap»** → отправить по очереди (без домена):
    ```
    sitemap.xml
    blog/sitemap.xml
    qa/sitemap.xml
    pdd/sitemap.xml
    ```
-   (здесь путь без домена — Google подставит его сам)
-8. Сверху строка **«Проверка любого URL»** → вставить `https://getdoday.ru/blog`
-   → после проверки кнопка **«Запросить индексирование»**. Повторить для 5–10 статей.
+3. Верхняя строка **«Проверка любого URL»** → `https://getdoday.ru/blog` →
+   **«Запросить индексирование»**. Повторить для 5–10 статей из списка выше.
 
-## Шаг 3. IndexNow — сказать поисковикам «придите сейчас»
+## Шаг 3. IndexNow — одна команда на сервере
 
-Это push: вместо ожидания обхода мы сами отправляем список из 386 адресов
-в Яндекс и Bing (Bing = ещё DuckDuckGo, Yahoo, Ecosia).
+Ключ на проде уже настроен (лежит в `.env` с прошлых времён), трогать его не надо.
+Просто выполнить на сервере:
 
-1. Сгенерировать ключ на сервере:
-   ```bash
-   openssl rand -hex 16
-   ```
-   Получится строка вида `3f2a91c8b47e0d65a1f8c3e920b74d1a`
-2. В `.env`:
-   ```
-   INDEXNOW_KEY=3f2a91c8b47e0d65a1f8c3e920b74d1a
-   ```
-3. Применить деплой-скриптом
-4. Проверить в браузере: `https://getdoday.ru/3f2a91c8b47e0d65a1f8c3e920b74d1a.txt`
-   — должен открыться этот же ключ текстом. Отдельный файл создавать не нужно,
-   сайт отдаёт его сам
-5. Отправить все страницы:
-   ```bash
-   cd /var/www/getdoday/data/www/getdoday.ru/app
-   uv run python scripts/indexnow_ping.py
-   ```
-   Ответы `200` или `202` = принято. Повторять после каждой большой публикации
-   (`--only-blog` — только статьи, `--dry-run` — посмотреть список без отправки)
+```bash
+cd /var/www/getdoday/data/www/getdoday.ru/app
+uv run python scripts/indexnow_ping.py
+```
+
+Скрипт сам проверит, что ключ отдаётся сайтом, и отправит 386 адресов в Яндекс
+и Bing. Ответы `200`/`202` = принято. Если напишет, что ключ не подтверждён —
+перезапусти сервис (`bash scripts/deploy.sh`) и повтори.
 
 ## Шаг 4. Метрика — смотреть, что происходит
 

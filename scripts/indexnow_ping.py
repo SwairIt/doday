@@ -113,6 +113,26 @@ async def main() -> int:
         )
         return 1
 
+    # Самопроверка: поисковик примет пинг, только если ключ реально отдаётся
+    # сайтом. Проверяем до отправки, иначе получим тихий отказ на их стороне.
+    key_url = f"{base}/{key}.txt"
+    async with httpx.AsyncClient(timeout=15.0) as probe:
+        try:
+            r = await probe.get(key_url)
+            served = r.text.strip()
+        except Exception as exc:
+            print(f"\nНе удалось проверить {key_url}: {type(exc).__name__}")
+            return 1
+    if r.status_code != 200 or served != key:
+        print(
+            f"\n{key_url} → {r.status_code}, отдаёт {served[:32]!r}, а ключ {key[:8]}…\n"
+            "Пинг не отправляю: поисковик такой запрос отвергнет.\n"
+            "Причина обычно одна — сервис запущен со старым .env. "
+            "Перезапусти его и повтори."
+        )
+        return 1
+    print(f"Ключ подтверждён: {key_url} → 200")
+
     host = base.replace("https://", "").replace("http://", "").strip("/")
     batches = [urls[i : i + BATCH] for i in range(0, len(urls), BATCH)]
     async with httpx.AsyncClient() as client:
