@@ -436,3 +436,43 @@ async def test_settings_page_shows_instructions(logged_in_client: AsyncClient) -
     body = (await logged_in_client.get("/app/settings")).text
     assert "Как получить ключ" in body
     assert 'id="ai"' in body
+
+
+async def test_yandex_is_available_and_needs_folder_id(
+    db_session: AsyncSession, ai_user_id: UUID
+) -> None:
+    """Ключ Yandex Cloud начинается на AQVN — его тоже надо уметь подключить.
+
+    Название модели у них содержит ID каталога, поэтому в поле стоит заглушка:
+    уехав как есть, она дала бы невнятную ошибку провайдера.
+    """
+    yandex = get_provider("yandex")
+    assert yandex is not None
+    assert yandex.base_url == "https://llm.api.cloud.yandex.net/v1"
+    assert "ID-КАТАЛОГА" in yandex.default_model
+
+    with pytest.raises(UnknownProvider):
+        await ai_service.upsert_credential(
+            db_session, ai_user_id, provider="yandex", api_key="AQVNtest1234567890"
+        )
+
+    cred = await ai_service.upsert_credential(
+        db_session,
+        ai_user_id,
+        provider="yandex",
+        api_key="AQVNtest1234567890",
+        model="gpt://b1gtestfolder/yandexgpt-lite/latest",
+    )
+    assert cred.model == "gpt://b1gtestfolder/yandexgpt-lite/latest"
+
+
+def test_key_format_is_never_validated() -> None:
+    """Ключи выглядят по-разному: AIza у Google, AQVN у Yandex, sk- у прочих.
+
+    Проверять формат нельзя — принимаем любой, а прав он или нет, скажет
+    сам провайдер.
+    """
+    from app.ai.schemas import CredentialIn
+
+    for key in ("AIzaSyABC1234567890", "AQVNabcdef1234567890", "sk-proj-1234567890"):
+        assert CredentialIn(provider="custom", api_key=key).api_key == key

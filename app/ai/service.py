@@ -75,6 +75,10 @@ async def upsert_credential(
         raise UnknownProvider("адрес API должен начинаться с https://")
     if provider == CUSTOM_KEY:
         _check_public_url(resolved_url)
+    # У Yandex название модели содержит ID каталога, и по умолчанию в поле
+    # стоит заглушка. Уехав как есть, она дала бы невнятную ошибку провайдера.
+    if "ID-КАТАЛОГА" in resolved_model or "<" in resolved_model:
+        raise UnknownProvider("В названии модели осталась заглушка — подставь свой ID каталога")
 
     existing = await get_credential(session, user_id)
     if existing is None:
