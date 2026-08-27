@@ -688,7 +688,7 @@
          на вопрос, где его вообще берут. #}
       <div class="rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
         <div class="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-2.5">
-          Как получить ключ
+          Как получить ключ — <span x-text="providerTitle(form.provider)"></span>
         </div>
         <ol class="space-y-2 text-sm">
           <template x-for="(step, i) in steps()" :key="i">
@@ -737,7 +737,9 @@
         <input class="input w-full" type="password" autocomplete="off"
                :placeholder="keyPlaceholder()" x-model="form.api_key">
         <p class="text-xs text-[var(--text-muted)] mt-1.5">
-          Формат ключа мы не проверяем — вставляй как есть, даже если он не похож
+          Ключ должен быть выпущен именно у
+          <span x-text="providerTitle(form.provider)"></span> — чужой отклонят.
+          Формат мы не проверяем: вставляй как есть, даже если он не похож
           на подсказку. Ключ шифруется при сохранении и обратно не показывается —
           ни тебе, ни нам.
         </p>
@@ -1223,7 +1225,7 @@
   function aiCredential() {
     return {
       providers: [], current: null, busy: false, ok: true, message: '',
-      form: { provider: 'cloudru', api_key: '', model: '', base_url: '' },
+      form: { provider: 'gemini', api_key: '', model: '', base_url: '' },
       async load() {
         try {
           const [pr, cr] = await Promise.all([
@@ -1232,7 +1234,11 @@
           ]);
           if (pr.ok) this.providers = await pr.json();
           if (cr.ok) this.current = await cr.json();
+          // Выбранным должен быть тот же провайдер, чью инструкцию человек
+          // читает. Раньше в форме по умолчанию стоял Cloud.ru, а первым в
+          // списке шёл Gemini — ключ Google уезжал в Cloud.ru и отклонялся.
           if (this.current) this.form.provider = this.current.provider;
+          else if (this.providers.length) this.form.provider = this.providers[0].key;
         } catch (e) { /* настройки должны открыться даже без сети */ }
       },
       _provider(key) { return this.providers.find(x => x.key === key) || null; },
