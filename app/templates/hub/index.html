@@ -28,7 +28,13 @@
 
   <!-- Linked-data: Person + Organization so Google knows what this hub is -->
   <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"Organization","name":"Doday","alternateName":"Doday Studio","url":"https://all.getdoday.ru/","logo":"https://getdoday.ru/favicon.ico","description":"Студия мини-продуктов от одного разработчика","founder":{"@type":"Person","name":"Ярослав","alternateName":"SwairIt","url":"https://github.com/SwairIt"},"sameAs":["https://github.com/SwairIt"]}
+  {"@context":"https://schema.org","@type":"Organization","name":"Doday","alternateName":"Doday Studio","url":"https://all.getdoday.ru/","logo":"https://getdoday.ru/favicon.ico","description":"Студия мини-продуктов от одного разработчика","founder":{"@type":"Person","name":"Ярослав Боев","alternateName":["Yaroslav Boev","SwairIt"],"url":"https://github.com/SwairIt"},"sameAs":["https://github.com/SwairIt"]}
+  </script>
+
+  {# Отдельная сущность «человек»: поисковики связывают автора с продуктами,
+     когда он описан явно, а не только упомянут в тексте. #}
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"Person","name":"Ярослав Боев","alternateName":["Yaroslav Boev","SwairIt"],"url":"https://all.getdoday.ru/","jobTitle":"Разработчик, автор Doday","knowsAbout":["Python","FastAPI","веб-разработка","информационная безопасность","поисковая оптимизация"],"sameAs":["https://github.com/SwairIt","https://getdoday.ru/","https://all.getdoday.ru/"],"worksFor":{"@type":"Organization","name":"Doday","url":"https://getdoday.ru/"}}
   </script>
 
   <script src="https://cdn.tailwindcss.com"></script>
