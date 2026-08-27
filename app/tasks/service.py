@@ -195,14 +195,16 @@ async def subtask_counts_for(
 async def list_today(session: AsyncSession, user_id: UUID) -> list[Task]:
     """Tasks due today (in UTC) plus everything overdue. Excludes completed."""
     now = datetime.now(UTC)
-    end_of_today = datetime(now.year, now.month, now.day, 23, 59, 59, tzinfo=UTC)
+    # Boundary is the start of tomorrow, not 23:59:59: a task due at
+    # 23:59:59.5 is still today, and the old comparison dropped it from Today.
+    tomorrow = datetime(now.year, now.month, now.day, tzinfo=UTC) + timedelta(days=1)
     stmt = (
         select(Task)
         .where(
             Task.user_id == user_id,
             Task.is_completed.is_(False),
             Task.due_at.is_not(None),
-            Task.due_at <= end_of_today,
+            Task.due_at < tomorrow,
             Task.deleted_at.is_(None),
         )
         .order_by(Task.due_at, Task.priority, Task.position)

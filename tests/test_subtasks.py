@@ -41,7 +41,9 @@ async def test_subtasks_hidden_from_top_level_today(logged_in_client: AsyncClien
     """Subtasks shouldn't pollute the Today view's top-level list."""
     from datetime import UTC, datetime
 
-    today = datetime.now(UTC).replace(hour=23, minute=59).isoformat()
+    # Zero out seconds: .replace(hour=23, minute=59) kept the current seconds,
+    # so once a minute the due time landed past end-of-day and CI went red.
+    today = datetime.now(UTC).replace(hour=23, minute=59, second=0, microsecond=0).isoformat()
     parent = await logged_in_client.post("/api/tasks", json={"title": "ParentDue", "due_at": today})
     parent_id = parent.json()["id"]
     await logged_in_client.post(f"/htmx/tasks/{parent_id}/subtasks", data={"title": "SubChild"})
@@ -55,3 +57,19 @@ async def test_subtasks_hidden_from_top_level_today(logged_in_client: AsyncClien
     titles = [t["title"] for t in api.json()]
     assert "ParentDue" in titles
     assert "SubChild" not in titles  # subtask hidden from top-level list
+
+
+async def test_task_due_at_the_very_end_of_day_is_in_today(logged_in_client: AsyncClient) -> None:
+    """Срок 23:59:59.5 — это всё ещё сегодня.
+
+    Раньше «Сегодня» сравнивалось с 23:59:59 включительно, и задача с
+    дробными секундами из выборки выпадала.
+    """
+    from datetime import UTC, datetime
+
+    due = datetime.now(UTC).replace(hour=23, minute=59, second=59, microsecond=500000)
+    await logged_in_client.post(
+        "/api/tasks", json={"title": "EdgeOfDay", "due_at": due.isoformat()}
+    )
+    titles = [t["title"] for t in (await logged_in_client.get("/api/tasks/today")).json()]
+    assert "EdgeOfDay" in titles
