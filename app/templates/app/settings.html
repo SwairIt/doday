@@ -708,19 +708,29 @@
       </div>
 
       <template x-if="form.provider === 'custom'">
-        <div>
-          <label class="block text-xs text-[var(--text-muted)] mb-1">Адрес API</label>
-          <input class="input w-full" placeholder="https://адрес-провайдера/v1" x-model="form.base_url">
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs text-[var(--text-muted)] mb-1">Адрес API</label>
+            <input class="input w-full" placeholder="https://адрес-провайдера/v1" x-model="form.base_url">
+          </div>
+          <div>
+            <label class="block text-xs text-[var(--text-muted)] mb-1">Модель</label>
+            <input class="input w-full" placeholder="название модели" x-model="form.model">
+          </div>
         </div>
       </template>
 
-      <div>
-        <label class="block text-xs text-[var(--text-muted)] mb-1">
-          Модель
-          <span class="text-[var(--text-muted)]/70">— можно оставить как есть</span>
-        </label>
-        <input class="input w-full" x-model="form.model" :placeholder="defaultModel()">
-      </div>
+      {# У Yandex название модели содержит ID каталога — без него ключ нельзя
+         даже проверить, поэтому здесь поле остаётся. У остальных модель
+         выбирается в самом чате. #}
+      <template x-if="form.provider === 'yandex'">
+        <div>
+          <label class="block text-xs text-[var(--text-muted)] mb-1">
+            Модель — подставь свой ID каталога
+          </label>
+          <input class="input w-full" x-model="form.model" :placeholder="defaultModel()">
+        </div>
+      </template>
 
       <div>
         <label class="block text-xs text-[var(--text-muted)] mb-1">Ключ</label>
@@ -742,7 +752,7 @@
       <p class="text-xs text-[var(--text-muted)]">
         Ключ сохранён — чат открывается тут:
         <a href="/app/ai" class="text-[var(--accent)] hover:underline">ИИ-помощник</a>.
-        Пользоваться им можно с 18 лет.
+        Модель выбирается там же. Пользоваться помощником можно с 18 лет.
       </p>
     </div>
   </section>
@@ -1237,8 +1247,10 @@
       },
       onProviderChange() {
         // Модель у каждого провайдера своя: чужая осталась бы в поле и запрос
-        // ушёл бы с несуществующим названием.
-        this.form.model = '';
+        // ушёл бы с несуществующим названием. У Yandex подставляем шаблон —
+        // человеку остаётся заменить в нём ID каталога.
+        const p = this._provider(this.form.provider);
+        this.form.model = this.form.provider === 'yandex' && p ? p.default_model : '';
         this.form.base_url = '';
         this.message = '';
       },

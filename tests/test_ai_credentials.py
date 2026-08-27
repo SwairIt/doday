@@ -475,5 +475,91 @@ def test_key_format_is_never_validated() -> None:
     """
     from app.ai.schemas import CredentialIn
 
-    for key in ("AQ.Ab8RN6abcdef123", "AIzaSyABC1234567890", "AQVNabcdef1234567890", "sk-1234"):
+    for key in (
+        "AQ.Ab8RN6abcdef123",
+        "AIzaSyABC1234567890",
+        "AQVNabcdef1234567890",
+        "sk-proj-1234567890",
+    ):
         assert CredentialIn(provider="custom", api_key=key).api_key == key
+
+
+async def test_key_is_stripped_before_saving(db_session: AsyncSession, ai_user_id: UUID) -> None:
+    """Копипаст из консоли провайдера приносит пробел или перенос строки —
+    и провайдер отвечает «ключ не принят», хотя ключ верный."""
+    cred = await ai_service.upsert_credential(
+        db_session, ai_user_id, provider="gemini", api_key="  AQ.Ab8RN6secret1234\n"
+    )
+    assert cred.key_last4 == "1234"
+    resolved = await ai_service.resolve_secret(db_session, ai_user_id)
+    assert resolved is not None
+    assert resolved[1] == "AQ.Ab8RN6secret1234"
+
+
+async def test_model_changes_without_the_key(
+    db_session: AsyncSession, ai_user_id: UUID, logged_in_client: AsyncClient
+) -> None:
+    """Модель выбирается в чате, а туда ключ повторно вводить незачем."""
+    from sqlalchemy import select
+
+    from app.auth.models import User
+
+    user = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    await ai_service.upsert_credential(
+        db_session, user.id, provider="gemini", api_key="AQ.Ab8RN6secret1234"
+    )
+
+    r = await logged_in_client.patch("/api/ai/credential/model", json={"model": "gemini-2.5-pro"})
+    assert r.status_code == 200, r.text
+    assert r.json()["model"] == "gemini-2.5-pro"
+
+    state = (await logged_in_client.get("/api/ai/state")).json()
+    assert state["model"] == "gemini-2.5-pro"
+    assert state["provider"] == "gemini"
+
+
+async def test_model_placeholder_rejected_on_change(
+    db_session: AsyncSession, logged_in_client: AsyncClient
+) -> None:
+    from sqlalchemy import select
+
+    from app.auth.models import User
+
+    user = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    await ai_service.upsert_credential(
+        db_session, user.id, provider="gemini", api_key="AQ.Ab8RN6secret1234"
+    )
+    r = await logged_in_client.patch(
+        "/api/ai/credential/model", json={"model": "gpt://ID-КАТАЛОГА/yandexgpt-lite/latest"}
+    )
+    assert r.status_code == 400
+    assert "заглушка" in r.text
+
+
+async def test_settings_no_longer_asks_for_model(logged_in_client: AsyncClient) -> None:
+    body = (await logged_in_client.get("/app/settings")).text
+    assert "Модель выбирается там же" in body
+
+
+def test_provider_detail_hides_the_key() -> None:
+    """Ответ провайдера показываем пользователю — но без самого ключа."""
+    from app.ai.client import _sanitized_detail
+
+    key = "AQ.Ab8RN6verysecretkey"
+    body = f'{{"error": {{"message": "API key not valid: {key}"}}}}'
+    detail = _sanitized_detail(body, key)
+    assert key not in detail
+    assert "AQ.Ab8RN" not in detail
+    assert "API key not valid" in detail
+
+
+def test_provider_detail_strips_html_and_truncates() -> None:
+    from app.ai.client import _sanitized_detail
+
+    detail = _sanitized_detail("<html><body>  Forbidden   </body></html>" + "x" * 600, "")
+    assert "<" not in detail
+    assert len(detail) <= 300

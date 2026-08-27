@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import AsyncIterator, Sequence
 from typing import TypedDict
 
@@ -27,11 +28,17 @@ class Message(TypedDict):
 
 
 class AiProviderError(Exception):
-    """Провайдер отказал. user_message безопасен для показа пользователю."""
+    """Провайдер отказал. user_message безопасен для показа пользователю.
 
-    def __init__(self, user_message: str) -> None:
+    provider_detail — что ответил сам провайдер, с вырезанным ключом. Без
+    него человек видит только «ключ не принят» и не понимает, чинить ключ,
+    модель или тариф.
+    """
+
+    def __init__(self, user_message: str, provider_detail: str = "") -> None:
         super().__init__(user_message)
         self.user_message = user_message
+        self.provider_detail = provider_detail
 
 
 # Признаки «дело в ключе» в теле ответа. Нужны потому, что провайдеры не
@@ -39,7 +46,19 @@ class AiProviderError(Exception):
 # 2026-08-27), большинство остальных — 401.
 _BAD_KEY_MARKERS = ("api key", "api_key", "apikey", "unauthorized", "invalid key", "ключ")
 
-_BAD_KEY_MESSAGE = "Ключ не принят провайдером — проверь, что скопировал его целиком."
+_BAD_KEY_MESSAGE = (
+    "Ключ не принят провайдером. Проверь, что скопировал его целиком, "
+    "что выбран тот же провайдер, где ключ выпущен, и что ключ ещё не отозван."
+)
+
+
+def _sanitized_detail(body: str, api_key: str) -> str:
+    """Ответ провайдера, пригодный для показа: без ключа и без разметки."""
+    text = body.replace(api_key, "···") if api_key else body
+    if api_key and len(api_key) > 8:
+        text = text.replace(api_key[:8], "···")
+    text = re.sub(r"<[^>]+>", " ", text)
+    return " ".join(text.split())[:300]
 
 
 def _looks_like_bad_key(body: str) -> bool:
@@ -89,8 +108,11 @@ async def verify_key(*, base_url: str, api_key: str, model: str, timeout_s: floa
         raise AiProviderError("Провайдер не отвечает. Попробуй позже.") from exc
 
     if response.status_code >= 400:
+        body = response.text[:500]
         logger.info("ai_verify_rejected", status=response.status_code)
-        raise AiProviderError(_message_for(response.status_code, response.text[:500]))
+        raise AiProviderError(
+            _message_for(response.status_code, body), _sanitized_detail(body, api_key)
+        )
 
 
 async def stream_completion(
@@ -127,7 +149,9 @@ async def stream_completion(
             if response.status_code >= 400:
                 body = (await response.aread()).decode("utf-8", "replace")[:500]
                 logger.info("ai_stream_rejected", status=response.status_code)
-                raise AiProviderError(_message_for(response.status_code, body))
+                raise AiProviderError(
+                    _message_for(response.status_code, body), _sanitized_detail(body, api_key)
+                )
             async for line in response.aiter_lines():
                 chunk = _chunk_from_line(line)
                 if chunk:

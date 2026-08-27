@@ -66,10 +66,27 @@
   {# ── Собственно чат ────────────────────────────────────────────────── #}
   <template x-if="state && state.terms_accepted && state.has_credential">
     <div>
-      <div class="flex items-center justify-between gap-3 mb-4 text-sm">
-        <span class="text-[var(--text-muted)]">
-          Сегодня: <span x-text="state.used_today"></span> из <span x-text="state.daily_limit"></span>
-        </span>
+      <div class="flex items-center justify-between gap-3 mb-4 text-sm flex-wrap">
+        <div class="flex items-center gap-3 flex-wrap">
+          <span class="text-[var(--text-muted)]">
+            Сегодня: <span x-text="state.used_today"></span> из <span x-text="state.daily_limit"></span>
+          </span>
+
+          {# Модель меняется здесь, а не в настройках: в настройки заходят
+             один раз подключить ключ, а модель хочется перебирать. #}
+          <button type="button" class="text-[var(--text-muted)] hover:text-[var(--text)] underline decoration-dotted"
+                  @click="modelOpen = !modelOpen" x-show="!modelOpen">
+            Модель: <span x-text="state.model"></span>
+          </button>
+          <span class="flex items-center gap-2" x-show="modelOpen">
+            <input class="input !py-1 !px-2 text-sm w-64" x-model="modelDraft"
+                   @keydown.enter.prevent="saveModel()" placeholder="название модели">
+            <button type="button" class="btn-primary !py-1 !px-3 text-sm"
+                    @click="saveModel()" :disabled="busy">Сохранить</button>
+            <button type="button" class="btn-ghost !py-1 !px-3 text-sm"
+                    @click="modelOpen = false">Отмена</button>
+          </span>
+        </div>
         <button type="button" class="btn-ghost !py-1 !px-3 text-sm"
                 @click="clearThread()" x-show="messages.length" :disabled="busy">
           Очистить
@@ -137,7 +154,28 @@
     return {
       state: null, messages: [], prompt: '', streamText: '',
       streaming: false, busy: false, error: '', warning: '',
-      controller: null,
+      controller: null, modelOpen: false, modelDraft: '',
+
+      async saveModel() {
+        this.busy = true; this.error = '';
+        try {
+          const r = await fetch('/api/ai/credential/model', {
+            method: 'PATCH', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model: this.modelDraft.trim() }),
+          });
+          if (r.ok) {
+            const cred = await r.json();
+            this.state.model = cred.model;
+            this.modelOpen = false;
+          } else {
+            const body = await r.json().catch(() => ({}));
+            this.error = body.detail || 'Не удалось сменить модель';
+          }
+        } catch (e) { this.error = 'Сеть недоступна'; }
+        finally { this.busy = false; }
+      },
+
       taskId: new URLSearchParams(location.search).get('task') || null,
 
       async init() { await this.load(); },
@@ -148,6 +186,7 @@
         if (!r.ok) { this.error = 'Не удалось загрузить чат'; return; }
         this.state = await r.json();
         this.messages = this.state.messages;
+        this.modelDraft = this.state.model || '';
         this.$nextTick(() => this.scrollDown());
       },
 

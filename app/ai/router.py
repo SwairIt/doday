@@ -23,6 +23,7 @@ from app.ai.schemas import (
     CredentialIn,
     CredentialOut,
     MessageOut,
+    ModelIn,
     ProviderOut,
 )
 from app.ai.service import UnknownProvider
@@ -43,6 +44,24 @@ def _to_out(cred: AiCredential) -> CredentialOut:
 @router.get("/providers", response_model=list[ProviderOut])
 async def list_providers(user: RequiredUser) -> list[ProviderOut]:
     return [ProviderOut(**asdict(p)) for p in PROVIDERS]
+
+
+@router.patch("/credential/model", response_model=CredentialOut)
+async def change_model(payload: ModelIn, user: RequiredUser, session: DbSession) -> CredentialOut:
+    """Сменить модель, не вводя ключ заново.
+
+    Модель выбирается в самом чате: в настройках ей не место — там человек
+    подключает ключ один раз и больше туда не заходит.
+    """
+    cred = await ai_service.get_credential(session, user.id)
+    if cred is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "ключ не подключён")
+    try:
+        cred.model = ai_service.clean_model(payload.model)
+    except UnknownProvider as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+    await session.commit()
+    return _to_out(cred)
 
 
 @router.get("/credential", response_model=CredentialOut | None)
@@ -84,7 +103,12 @@ async def check_credential(user: RequiredUser, session: DbSession) -> dict[str, 
     try:
         await verify_key(base_url=base_url, api_key=api_key, model=model)
     except AiProviderError as exc:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, exc.user_message) from exc
+        # Ответ провайдера (без ключа) кладём рядом: без него человек видит
+        # «ключ не принят» и не понимает, чинить ключ, модель или тариф.
+        detail = exc.user_message
+        if exc.provider_detail:
+            detail = f"{exc.user_message} Ответ провайдера: {exc.provider_detail}"
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail) from exc
     return {"ok": True}
 
 
@@ -118,9 +142,12 @@ async def chat_state(
     """Состояние чата при открытии: согласие, ключ, лимит, история, шаблоны."""
     parsed = _parse_task_id(task_id)
     past = await ai_chat.history(session, user.id, parsed)
+    cred = await ai_service.get_credential(session, user.id)
     return ChatStateOut(
         terms_accepted=user.ai_terms_accepted_at is not None,
-        has_credential=(await ai_service.get_credential(session, user.id)) is not None,
+        has_credential=cred is not None,
+        provider=cred.provider if cred else "",
+        model=cred.model if cred else "",
         used_today=await ai_chat.usage_today(session, user.id),
         daily_limit=ai_chat.DAILY_LIMIT,
         messages=[

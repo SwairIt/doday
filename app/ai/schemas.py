@@ -43,10 +43,18 @@ class ChatStateOut(BaseModel):
 
     terms_accepted: bool
     has_credential: bool
+    provider: str
+    model: str
     used_today: int
     daily_limit: int
     messages: list[MessageOut]
     templates: list[dict[str, str]]
+
+
+class ModelIn(BaseModel):
+    """Смена модели без повторного ввода ключа."""
+
+    model: str = Field(min_length=1, max_length=128)
 
 
 class AskIn(BaseModel):
