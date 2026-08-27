@@ -141,7 +141,9 @@ async def _make_user(session: AsyncSession, ip: str, *, minutes_ago: int = 1) ->
 
 
 async def test_ip_limit_triggers(db_session: AsyncSession) -> None:
-    ip = "203.0.113.10"
+    # Адреса нарочно публичные: документационные диапазоны (203.0.113.x и
+    # подобные) считаются служебными, и лимит их не трогает.
+    ip = "45.132.20.10"
     for _ in range(antibot.MAX_PER_IP_HOUR):
         await _make_user(db_session, ip)
     with pytest.raises(antibot.SignupRejected) as exc:
@@ -152,22 +154,22 @@ async def test_ip_limit_triggers(db_session: AsyncSession) -> None:
 async def test_subnet_limit_triggers(db_session: AsyncSession) -> None:
     """Смена последнего октета не помогает обойти защиту."""
     for i in range(antibot.MAX_PER_SUBNET_HOUR):
-        await _make_user(db_session, f"203.0.114.{i + 1}")
+        await _make_user(db_session, f"45.132.21.{i + 1}")
     with pytest.raises(antibot.SignupRejected) as exc:
-        await antibot.check_signup_rate(db_session, "203.0.114.200")
+        await antibot.check_signup_rate(db_session, "45.132.21.200")
     assert exc.value.log_code == "subnet_limit"
 
 
 async def test_old_signups_do_not_count(db_session: AsyncSession) -> None:
     """Окно скользящее: вчерашние регистрации не мешают сегодняшней."""
-    ip = "203.0.115.5"
+    ip = "45.132.22.5"
     for _ in range(antibot.MAX_PER_IP_HOUR + 2):
         await _make_user(db_session, ip, minutes_ago=120)
     await antibot.check_signup_rate(db_session, ip)
 
 
 async def test_first_signup_from_ip_allowed(db_session: AsyncSession) -> None:
-    await antibot.check_signup_rate(db_session, "203.0.116.1")
+    await antibot.check_signup_rate(db_session, "45.132.23.1")
 
 
 async def test_no_ip_does_not_crash(db_session: AsyncSession) -> None:
@@ -290,3 +292,14 @@ async def test_honeypot_still_works(client: AsyncClient) -> None:
         follow_redirects=False,
     )
     assert r.status_code == 303
+
+
+async def test_internal_ip_does_not_limit_everyone(db_session: AsyncSession) -> None:
+    """Если прокси не проставил заголовок, все клиенты выглядят как 127.0.0.1.
+
+    Считать их одним человеком нельзя — регистрация закроется всему сайту.
+    """
+    for _ in range(antibot.MAX_PER_IP_HOUR + 3):
+        await _make_user(db_session, "127.0.0.1")
+    await antibot.check_signup_rate(db_session, "127.0.0.1")
+    await antibot.check_signup_rate(db_session, "10.0.0.7")

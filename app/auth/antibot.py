@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import ipaddress
 import re
 from datetime import UTC, datetime, timedelta
 from functools import lru_cache
@@ -144,13 +145,25 @@ def subnet_of(ip: str | None) -> str | None:
     return ".".join(parts[:3]) if len(parts) == 4 else None
 
 
+def _is_internal(ip: str) -> bool:
+    """Loopback, локальная сеть, мусор — то есть «настоящий адрес неизвестен»."""
+    try:
+        parsed = ipaddress.ip_address(ip)
+    except ValueError:
+        return True
+    return not parsed.is_global
+
+
 async def check_signup_rate(session: AsyncSession, ip: str | None) -> None:
     """Не слишком ли много аккаунтов уже завели с этого адреса за час.
 
     Считаем по таблице пользователей, а не по счётчику в памяти: перезапуск
     сервиса при деплое не должен обнулять защиту.
     """
-    if not ip:
+    if not ip or _is_internal(ip):
+        # Внутренний адрес означает, что настоящий клиент нам не виден: прокси
+        # не проставил заголовок. Считать всех одним человеком нельзя — так
+        # регистрация закроется всему сайту после пятой за час.
         return
     since = datetime.now(UTC) - timedelta(hours=1)
 
