@@ -52,12 +52,12 @@ class Settings(BaseSettings):
     yandex_verification: str = "e9193fc520dec1f8"
     google_site_verification: str = "s2j1R02oWLN4m46HbP6tO3gn7SJtiqPc1zDFb8c6U7U"
 
-    # Яндекс SmartCaptcha — защита формы регистрации от ботов. Ключи из
-    # console.yandex.cloud → SmartCaptcha. client_key публичный (идёт в виджет на
-    # странице), server_key секретный (серверная проверка токена). Оба пустые →
+    # Google reCAPTCHA v2 («я не робот») — защита формы регистрации от ботов.
+    # Ключи из google.com/recaptcha/admin. site_key публичный (идёт в виджет на
+    # странице), secret_key секретный (серверная проверка токена). Оба пустые →
     # капча выключена, регистрация работает как раньше.
-    smartcaptcha_client_key: str = ""
-    smartcaptcha_server_key: str = ""
+    recaptcha_site_key: str = ""
+    recaptcha_secret_key: str = ""
 
     @field_validator("indexnow_key")
     @classmethod

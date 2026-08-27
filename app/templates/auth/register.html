@@ -154,11 +154,11 @@
             <span>Согласен с <a href="/privacy" class="text-[var(--accent)] hover:underline">политикой</a> и обработкой персональных данных. Мы не шлём спам — только письма про подтверждение и сброс пароля.</span>
           </label>
 
-          {# Яндекс SmartCaptcha — только если задан публичный ключ. Виджет сам
-             добавляет в форму скрытое поле smart-token, которое проверяет сервер. #}
+          {# Google reCAPTCHA v2 — только если задан публичный ключ. Виджет сам
+             добавляет в форму скрытое поле g-recaptcha-response для сервера. #}
           {% if request.state.captcha_sitekey %}
-            <div class="smart-captcha" data-sitekey="{{ request.state.captcha_sitekey }}"></div>
-            <script src="https://smartcaptcha.yandexcloud.net/captcha.js" defer></script>
+            <div class="g-recaptcha" data-sitekey="{{ request.state.captcha_sitekey }}"></div>
+            <script src="https://www.google.com/recaptcha/api.js" async defer></script>
           {% endif %}
 
           <button type="submit" class="btn-primary w-full py-3">

@@ -46,7 +46,7 @@ async def register_submit(
     password: Annotated[str, Form()],
     agree_privacy: Annotated[str | None, Form()] = None,
     website: Annotated[str, Form()] = "",  # honeypot: люди это поле не видят
-    smart_token: Annotated[str, Form(alias="smart-token")] = "",  # токен SmartCaptcha
+    captcha_token: Annotated[str, Form(alias="g-recaptcha-response")] = "",  # токен reCAPTCHA
 ) -> HTMLResponse | RedirectResponse:
     # Honeypot: бот заполнил скрытое поле — отвечаем как на «успех», но аккаунт
     # НЕ создаём. Так поток бот-регистраций с левыми емейлами обрывается, а бот
@@ -68,7 +68,7 @@ async def register_submit(
     # шаблону публичный ключ, поэтому при ошибке форма перерисуется с капчей.
     from app.auth.captcha import verify as verify_captcha
 
-    if not await verify_captcha(smart_token, ip):
+    if not await verify_captcha(captcha_token, ip):
         return templates.TemplateResponse(
             request,
             "auth/register.html",

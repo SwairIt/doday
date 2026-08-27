@@ -354,6 +354,66 @@ async def admin_purge_unverified(
     return PurgeUnverifiedOut(deleted=deleted)
 
 
+@admin_router.get("/_userdiag", include_in_schema=False)
+async def _userdiag(session: DbSession) -> dict[str, object]:
+    """ВРЕМЕННО, без авторизации: агрегаты по юзерам, чтобы понять боты/живые.
+
+    Полные емейлы наружу НЕ отдаём — только домены, маска (a***@gmail.com) и
+    разброс регистраций по дням. Убрать после диагностики.
+    """
+    from collections import Counter
+
+    from sqlalchemy import func, select
+
+    from app.auth.models import User
+
+    total = (await session.execute(select(func.count()).select_from(User))).scalar_one()
+    verified = (
+        await session.execute(
+            select(func.count()).select_from(User).where(User.email_verified_at.is_not(None))
+        )
+    ).scalar_one()
+    rows = (
+        await session.execute(
+            select(User.email, User.email_verified_at, User.created_at).order_by(User.created_at)
+        )
+    ).all()
+
+    def _domain(e: str) -> str:
+        return e.rsplit("@", 1)[-1].lower() if "@" in e else "(no@)"
+
+    def _mask(e: str) -> str:
+        name, _, dom = e.partition("@")
+        return (name[:1] or "?") + "***@" + dom
+
+    unv = [r for r in rows if r[1] is None]
+    ver = [r for r in rows if r[1] is not None]
+    real = {
+        "gmail.com",
+        "mail.ru",
+        "yandex.ru",
+        "ya.ru",
+        "outlook.com",
+        "icloud.com",
+        "bk.ru",
+        "inbox.ru",
+        "list.ru",
+        "rambler.ru",
+    }
+    unv_real = sum(1 for r in unv if _domain(r[0]) in real)
+    return {
+        "total": total,
+        "verified": verified,
+        "unverified": total - verified,
+        "unverified_on_real_domains": unv_real,
+        "unverified_on_other_domains": len(unv) - unv_real,
+        "unverified_top_domains": dict(Counter(_domain(r[0]) for r in unv).most_common(15)),
+        "verified_top_domains": dict(Counter(_domain(r[0]) for r in ver).most_common(10)),
+        "unverified_samples_masked": [_mask(r[0]) for r in unv[:25]],
+        "signups_by_day": dict(sorted(Counter(r[2].date().isoformat() for r in rows).items())),
+    }
+
+
 # ---- Token-secured for Claude (curl-friendly without cookies) ---------------
 
 token_router = APIRouter(prefix="/api/admin", tags=["admin"])
