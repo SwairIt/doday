@@ -50,9 +50,13 @@ PROVIDERS: tuple[Provider, ...] = (
         key="gemini",
         title="Google Gemini",
         base_url="https://generativelanguage.googleapis.com/v1beta/openai",
-        default_model="gemini-2.5-flash",
+        default_model="gemini-3.6-flash",
         signup_url="https://aistudio.google.com/apikey",
-        hint="Бесплатный ключ выдают сразу, карта не нужна. Нужен аккаунт Google.",
+        hint=(
+            "Бесплатный ключ выдают сразу, карта не нужна. Нужен аккаунт Google. "
+            "Модели у них меняются часто — если ответит «нет такой модели», "
+            "поменяй её в шапке чата."
+        ),
         price="бесплатно",
         key_looks_like="AQ.Ab… или AIza…",
         steps=(
