@@ -656,7 +656,7 @@
   </section>
 
   {# ── ИИ-помощник: свой ключ провайдера ─────────────────────────── #}
-  <section class="card p-6" x-data="aiCredential()" x-init="load()">
+  <section id="ai" class="card p-6 scroll-mt-24" x-data="aiCredential()" x-init="load()">
     <h2 class="text-lg font-semibold mb-1">ИИ-помощник</h2>
     <p class="text-sm text-[var(--text-muted)] mb-4">
       Подключи свой ключ — и сможешь спрашивать модель прямо в задачах.
@@ -673,33 +673,75 @@
       </div>
     </template>
 
-    <div class="space-y-3 max-w-md">
-      <select class="input w-full" x-model="form.provider">
-        <template x-for="p in providers" :key="p.key">
-          <option :value="p.key" x-text="p.title"></option>
+    <div class="space-y-4 max-w-lg">
+      <div>
+        <label class="block text-xs text-[var(--text-muted)] mb-1">Провайдер</label>
+        <select class="input w-full" x-model="form.provider" @change="onProviderChange()">
+          <template x-for="p in providers" :key="p.key">
+            <option :value="p.key" x-text="p.title + ' — ' + p.price"></option>
+          </template>
+        </select>
+        <p class="text-xs text-[var(--text-muted)] mt-1.5" x-text="hint()"></p>
+      </div>
+
+      {# Пошагово: без этого блока экран читался как «вставь ключ» без ответа
+         на вопрос, где его вообще берут. #}
+      <div class="rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
+        <div class="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-2.5">
+          Как получить ключ
+        </div>
+        <ol class="space-y-2 text-sm">
+          <template x-for="(step, i) in steps()" :key="i">
+            <li class="flex gap-2.5">
+              <span class="shrink-0 w-5 h-5 rounded-full bg-[var(--accent)]/15 text-[var(--accent)] text-[11px] font-semibold grid place-items-center"
+                    x-text="i + 1"></span>
+              <span class="text-[var(--text-muted)]" x-text="step"></span>
+            </li>
+          </template>
+        </ol>
+        <template x-if="signupUrl()">
+          <a :href="signupUrl()" target="_blank" rel="noopener"
+             class="btn-ghost !py-1.5 !px-3 text-sm mt-3 inline-flex">
+            Открыть страницу ключа →
+          </a>
         </template>
-      </select>
-
-      <p class="text-xs text-[var(--text-muted)]" x-text="hint()"></p>
-
-      <template x-if="signupUrl()">
-        <a :href="signupUrl()" target="_blank" rel="noopener"
-           class="text-xs text-[var(--accent)] hover:underline inline-block">Где взять ключ →</a>
-      </template>
+      </div>
 
       <template x-if="form.provider === 'custom'">
-        <div class="space-y-3">
-          <input class="input w-full" placeholder="https://адрес-api/v1" x-model="form.base_url">
-          <input class="input w-full" placeholder="название модели" x-model="form.model">
+        <div>
+          <label class="block text-xs text-[var(--text-muted)] mb-1">Адрес API</label>
+          <input class="input w-full" placeholder="https://адрес-провайдера/v1" x-model="form.base_url">
         </div>
       </template>
 
-      <input class="input w-full" type="password" autocomplete="off"
-             placeholder="Ключ провайдера" x-model="form.api_key">
+      <div>
+        <label class="block text-xs text-[var(--text-muted)] mb-1">
+          Модель
+          <span class="text-[var(--text-muted)]/70">— можно оставить как есть</span>
+        </label>
+        <input class="input w-full" x-model="form.model" :placeholder="defaultModel()">
+      </div>
+
+      <div>
+        <label class="block text-xs text-[var(--text-muted)] mb-1">Ключ</label>
+        <input class="input w-full" type="password" autocomplete="off"
+               :placeholder="keyPlaceholder()" x-model="form.api_key">
+        <p class="text-xs text-[var(--text-muted)] mt-1.5">
+          Ключ шифруется при сохранении и обратно не показывается — ни тебе, ни нам.
+        </p>
+      </div>
+
       <button type="button" class="btn-primary" @click="save()" :disabled="busy || !form.api_key">
-        Сохранить ключ
+        <span x-show="!busy">Сохранить ключ</span>
+        <span x-show="busy">Проверяю…</span>
       </button>
       <p class="text-sm" :class="ok ? 'text-emerald-400' : 'text-rose-400'" x-text="message"></p>
+
+      <p class="text-xs text-[var(--text-muted)]">
+        Ключ сохранён — чат открывается тут:
+        <a href="/app/ai" class="text-[var(--accent)] hover:underline">ИИ-помощник</a>.
+        Пользоваться им можно с 18 лет.
+      </p>
     </div>
   </section>
 
@@ -1185,6 +1227,19 @@
       providerTitle(key) { const p = this._provider(key); return p ? p.title : key; },
       hint() { const p = this._provider(this.form.provider); return p ? p.hint : ''; },
       signupUrl() { const p = this._provider(this.form.provider); return p ? p.signup_url : ''; },
+      steps() { const p = this._provider(this.form.provider); return p ? p.steps : []; },
+      defaultModel() { const p = this._provider(this.form.provider); return p ? p.default_model : ''; },
+      keyPlaceholder() {
+        const p = this._provider(this.form.provider);
+        return p ? 'Ключ провайдера — ' + p.key_looks_like : 'Ключ провайдера';
+      },
+      onProviderChange() {
+        // Модель у каждого провайдера своя: чужая осталась бы в поле и запрос
+        // ушёл бы с несуществующим названием.
+        this.form.model = '';
+        this.form.base_url = '';
+        this.message = '';
+      },
       async save() {
         this.busy = true; this.message = '';
         try {
@@ -1197,7 +1252,13 @@
           if (r.ok) {
             this.current = await r.json();
             this.form.api_key = '';
-            this.message = 'Ключ сохранён';
+            this.message = 'Ключ сохранён, проверяю…';
+            // Сразу дёргаем провайдера: молча сохранённый неверный ключ
+            // означал бы, что человек узнает о проблеме только в чате.
+            this.busy = false;
+            await this.verify();
+            if (this.ok) this.message = 'Ключ сохранён и работает';
+            return;
           } else {
             const body = await r.json().catch(() => ({}));
             this.message = body.detail || 'Не удалось сохранить ключ';

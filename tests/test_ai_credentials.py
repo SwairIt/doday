@@ -372,3 +372,67 @@ async def test_known_provider_does_not_resolve_dns(
         db_session, ai_user_id, provider="mistral", api_key="sk-known-1111"
     )
     assert cred.provider == "mistral"
+
+
+# ── справочник провайдеров ────────────────────────────────────────────────
+
+
+def test_gemini_is_available() -> None:
+    """Ключ Gemini бесплатный и выдаётся сразу — это самый простой путь для
+    пользователя, поэтому он должен быть в списке, а не только через «свой»."""
+    gemini = get_provider("gemini")
+    assert gemini is not None
+    assert gemini.base_url == "https://generativelanguage.googleapis.com/v1beta/openai"
+    assert gemini.default_model.startswith("gemini")
+    assert "aistudio.google.com" in gemini.signup_url
+
+
+def test_every_provider_explains_how_to_get_a_key() -> None:
+    """Жалоба была ровно про это: «нифига непонятно, как подключать»."""
+    for provider in PROVIDERS:
+        assert len(provider.steps) >= 3, provider.key
+        assert all(step.strip() for step in provider.steps), provider.key
+        assert provider.price.strip(), provider.key
+        assert provider.key_looks_like.strip(), provider.key
+        assert provider.hint.strip(), provider.key
+
+
+def test_known_providers_have_url_and_model() -> None:
+    for provider in PROVIDERS:
+        if provider.key == CUSTOM_KEY:
+            continue
+        assert provider.base_url.startswith("https://"), provider.key
+        assert not provider.base_url.endswith("/"), provider.key
+        assert provider.default_model, provider.key
+        assert provider.signup_url.startswith("https://"), provider.key
+
+
+def test_blocked_from_russia_providers_are_absent() -> None:
+    """Groq, OpenRouter, Cerebras и Nebius на запрос с российского адреса
+    отвечают 403 «access denied». Ключ бы выдали, а чат бы не заработал."""
+    urls = " ".join(p.base_url for p in PROVIDERS)
+    for host in ("groq.com", "openrouter.ai", "cerebras.ai", "nebius"):
+        assert host not in urls
+
+
+async def test_gemini_credential_saves(db_session: AsyncSession, ai_user_id: UUID) -> None:
+    cred = await ai_service.upsert_credential(
+        db_session, ai_user_id, provider="gemini", api_key="AIzaSyTestKey1234567890"
+    )
+    assert cred.provider == "gemini"
+    assert cred.base_url == "https://generativelanguage.googleapis.com/v1beta/openai"
+    assert cred.key_last4 == "7890"
+
+
+async def test_providers_endpoint_returns_steps(logged_in_client: AsyncClient) -> None:
+    rows = (await logged_in_client.get("/api/ai/providers")).json()
+    by_key = {r["key"]: r for r in rows}
+    assert "gemini" in by_key
+    assert len(by_key["gemini"]["steps"]) >= 3
+    assert by_key["gemini"]["price"]
+
+
+async def test_settings_page_shows_instructions(logged_in_client: AsyncClient) -> None:
+    body = (await logged_in_client.get("/app/settings")).text
+    assert "Как получить ключ" in body
+    assert 'id="ai"' in body

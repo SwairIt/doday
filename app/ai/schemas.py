@@ -12,6 +12,9 @@ class ProviderOut(BaseModel):
     default_model: str
     signup_url: str
     hint: str
+    price: str
+    key_looks_like: str
+    steps: list[str]
 
 
 class CredentialIn(BaseModel):

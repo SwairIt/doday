@@ -1,13 +1,19 @@
 """Справочник LLM-провайдеров.
 
 Все перечисленные говорят по OpenAI-совместимому протоколу, поэтому код
-общения один, различаются только адрес и имя модели. Адреса и модели
-проверены запросами 2026-08-27.
+общения один: различаются только адрес, имя модели и то, где взять ключ.
 
-Gemini сознательно отсутствует: его условия запрещают использование в
-сервисах, направленных на аудиторию младше 18 лет, а Doday — сервис для
-школьников. Технически ключ Gemini можно ввести через «custom», но
-инструкцию под него мы не даём.
+Список нарочно короткий и проверенный. Каждый адрес проверен запросом
+с российского адреса 2026-08-27: провайдер должен отвечать ошибкой ключа
+(400/401), а не блокировкой. Groq, OpenRouter, Cerebras и Nebius на такой
+запрос отвечают 403 «access denied» — из России они недоступны, и в списке
+им делать нечего: пользователь получил бы ключ, а чат бы не заработал.
+
+Про Gemini. Его условия требуют, чтобы API пользовался человек 18 лет и
+старше, и запрещают строить на нём сервисы для младшей аудитории. У нас
+ключ подключает сам пользователь и только после того, как подтвердит
+возраст на экране согласия (см. `ai_terms_accepted_at`), — то есть с
+Gemini общается он сам и своим ключом, а не Doday за него.
 """
 
 from __future__ import annotations
@@ -25,18 +31,46 @@ class Provider:
     default_model: str
     signup_url: str
     hint: str
+    # Во сколько обойдётся: показывается плашкой рядом с названием.
+    price: str
+    # Как выглядит ключ — чтобы человек понял, то ли он скопировал.
+    key_looks_like: str
+    # Пошаговая инструкция. Показывается прямо в настройках: жалоба
+    # «нифига непонятно как подключать» была именно про её отсутствие.
+    steps: tuple[str, ...]
 
 
 PROVIDERS: tuple[Provider, ...] = (
+    Provider(
+        key="gemini",
+        title="Google Gemini",
+        base_url="https://generativelanguage.googleapis.com/v1beta/openai",
+        default_model="gemini-2.5-flash",
+        signup_url="https://aistudio.google.com/apikey",
+        hint="Бесплатный ключ выдают сразу, карта не нужна. Нужен аккаунт Google.",
+        price="бесплатно",
+        key_looks_like="AIza…",
+        steps=(
+            "Открой aistudio.google.com/apikey и войди в аккаунт Google.",
+            "Нажми «Create API key» — ключ появится сразу, платить ничего не нужно.",
+            "Скопируй его целиком (он начинается на AIza) и вставь в поле ниже.",
+            "Нажми «Сохранить ключ» — мы проверим его коротким запросом к провайдеру.",
+        ),
+    ),
     Provider(
         key="cloudru",
         title="Cloud.ru",
         base_url="https://foundation-models.api.cloud.ru/v1",
         default_model="ai-sage/GigaChat3-10B-A1.8B",
         signup_url="https://cloud.ru/products/evolution-foundation-models",
-        hint=(
-            "Российские серверы, оплата картой от 100 ₽. Зарегистрируйся, "
-            "создай сервисный аккаунт и выпусти API-ключ."
+        hint="Российские серверы и оплата рублями с карты. Модели GigaChat и Qwen.",
+        price="по карте, от 100 ₽",
+        key_looks_like="длинная строка из букв и цифр",
+        steps=(
+            "Зарегистрируйся на cloud.ru и подтверди почту.",
+            "В консоли открой Evolution Foundation Models и включи сервис.",
+            "Создай сервисный аккаунт, затем выпусти для него API-ключ.",
+            "Скопируй ключ и вставь в поле ниже.",
         ),
     ),
     Provider(
@@ -44,8 +78,64 @@ PROVIDERS: tuple[Provider, ...] = (
         title="Mistral",
         base_url="https://api.mistral.ai/v1",
         default_model="ministral-3-3b-2512",
-        signup_url="https://console.mistral.ai/",
-        hint="Зарегистрируйся и создай ключ в разделе API Keys.",
+        signup_url="https://console.mistral.ai/api-keys",
+        hint="Европейский провайдер, есть бесплатный тариф с ограничением частоты.",
+        price="есть бесплатный тариф",
+        key_looks_like="строка из 32 символов",
+        steps=(
+            "Зарегистрируйся на console.mistral.ai (нужен телефон для подтверждения).",
+            "Открой раздел API Keys и нажми «Create new key».",
+            "Скопируй ключ — второй раз его не покажут.",
+            "Вставь в поле ниже и сохрани.",
+        ),
+    ),
+    Provider(
+        key="deepseek",
+        title="DeepSeek",
+        base_url="https://api.deepseek.com/v1",
+        default_model="deepseek-chat",
+        signup_url="https://platform.deepseek.com/api_keys",
+        hint="Дёшево даже по сравнению с остальными, отвечает по-русски хорошо.",
+        price="по карте, около 1 ₽ за длинный ответ",
+        key_looks_like="sk-…",
+        steps=(
+            "Зарегистрируйся на platform.deepseek.com.",
+            "Пополни баланс — минимальная сумма небольшая, её хватит надолго.",
+            "Открой API keys и нажми «Create new API key».",
+            "Скопируй ключ (начинается на sk-) и вставь в поле ниже.",
+        ),
+    ),
+    Provider(
+        key="together",
+        title="Together AI",
+        base_url="https://api.together.xyz/v1",
+        default_model="meta-llama/Llama-3.3-70B-Instruct-Turbo",
+        signup_url="https://api.together.ai/settings/api-keys",
+        hint="Много открытых моделей. При регистрации дают стартовый баланс.",
+        price="стартовый баланс бесплатно",
+        key_looks_like="длинная строка из букв и цифр",
+        steps=(
+            "Зарегистрируйся на together.ai.",
+            "Открой Settings → API Keys и скопируй ключ, он создаётся сам.",
+            "Вставь ключ в поле ниже.",
+            "Если хочешь другую модель — впиши её название в поле «Модель».",
+        ),
+    ),
+    Provider(
+        key="proxyapi",
+        title="ProxyAPI",
+        base_url="https://api.proxyapi.ru/openai/v1",
+        default_model="gpt-4o-mini",
+        signup_url="https://proxyapi.ru/",
+        hint="Российский посредник: даёт доступ к моделям OpenAI за рубли.",
+        price="по карте, рубли",
+        key_looks_like="sk-…",
+        steps=(
+            "Зарегистрируйся на proxyapi.ru.",
+            "Пополни баланс картой.",
+            "В личном кабинете скопируй API-ключ.",
+            "Вставь его в поле ниже.",
+        ),
     ),
     Provider(
         key=CUSTOM_KEY,
@@ -53,7 +143,15 @@ PROVIDERS: tuple[Provider, ...] = (
         base_url="",
         default_model="",
         signup_url="",
-        hint="Укажи адрес API и название модели вручную.",
+        hint="Подойдёт любой провайдер, который умеет /chat/completions.",
+        price="как у выбранного провайдера",
+        key_looks_like="как выдал провайдер",
+        steps=(
+            "Возьми у провайдера адрес API — тот, что заканчивается на /v1.",
+            "Узнай точное название модели: провайдеры пишут его в документации.",
+            "Заполни оба поля и вставь ключ.",
+            "Адрес должен начинаться с https:// и вести в интернет, а не во внутреннюю сеть.",
+        ),
     ),
 )
 
