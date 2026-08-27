@@ -10,7 +10,6 @@ the ORM directly. All state changes go through `service`.
 
 from __future__ import annotations
 
-import json
 from typing import TYPE_CHECKING, Annotated
 
 from fastapi import APIRouter, Form, HTTPException, Query, Request, status
@@ -28,6 +27,7 @@ from app.qa.schemas import (
     UserStatsUpdate,
     VoteIn,
 )
+from app.safe_json import script_json
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -231,7 +231,7 @@ async def question_page(
             "answer_author_stats": answer_author_stats,
             "user_q_votes": user_q_votes,
             "user_a_votes": user_a_votes,
-            "jsonld": json.dumps(jsonld, ensure_ascii=False),
+            "jsonld": script_json(jsonld),
             "canonical_url": f"https://getdoday.ru/qa/q/{q.id}-{q.slug}",
         },
     )

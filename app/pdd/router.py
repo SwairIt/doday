@@ -10,8 +10,6 @@ the category. Both consume ``app.pdd.service`` — never the ORM directly.
 
 from __future__ import annotations
 
-import json
-
 from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
@@ -20,6 +18,7 @@ from app.auth.deps import CurrentUser, DbSession, RequiredUser
 from app.billing.products import PRODUCTS
 from app.pdd import seo, service
 from app.pdd.schemas import AttemptIn, AttemptOut, ExamSaveIn
+from app.safe_json import script_json
 
 router = APIRouter(prefix="/pdd", tags=["pdd"])
 api_router = APIRouter(prefix="/api/pdd", tags=["pdd-api"])
@@ -120,7 +119,7 @@ async def _render_exam(
             user,
             category,
             is_pdd_pro=await service.is_pdd_pro(session, user),
-            exam_json=json.dumps(payload, ensure_ascii=False),
+            exam_json=script_json(payload),
             exam_count=len(payload),
             mistake_limit=service.EXAM_MISTAKE_LIMIT,
         ),

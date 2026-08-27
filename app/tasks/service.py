@@ -9,7 +9,7 @@ from sqlalchemy import CursorResult, and_, case, delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.projects.membership import is_member, member_project_ids
-from app.projects.service import ensure_inbox, get_project
+from app.projects.service import ProjectNotFound, ensure_inbox, get_project
 from app.tasks.models import Task, TaskPriority
 
 
@@ -111,11 +111,17 @@ async def list_tasks(
     """List tasks. By default hides subtasks (parent_task_id IS NOT NULL).
 
     When project_id is given, all members of that project see each other's
-    tasks — the caller must have already verified membership via get_project.
+    tasks; non-members get ProjectNotFound.
     When project_id is None (personal views like Inbox/unfiltered), restrict
     to the user's own tasks.
     """
     if project_id is not None:
+        # Membership is verified HERE, not in the caller. The docstring used to
+        # delegate that to callers — and GET /api/tasks?project_id=<uuid> never
+        # did it, so any logged-in user (a removed member included) could read
+        # every task of any project whose id they knew.
+        if not await is_member(session, project_id, user_id):
+            raise ProjectNotFound(str(project_id))
         # Project-scoped view: show all members' tasks in that project.
         stmt = select(Task).where(Task.project_id == project_id)
     else:

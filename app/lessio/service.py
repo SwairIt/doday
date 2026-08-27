@@ -423,6 +423,37 @@ async def create_services_from_template(
 # ---------------------------------------------------------------------------
 
 
+async def ensure_slot_bookable(
+    session: AsyncSession,
+    *,
+    tutor: LessioTutorProfile,
+    service: LessioService,
+    slot: datetime,
+) -> None:
+    """Слот из публичной формы обязан лежать в сетке свободного времени.
+
+    Рабочие дни и часы, отпуск, буфер, запас на подготовку и «не в прошлом» —
+    всё это было фильтрами только для UI: сервер принимал любое время, которое
+    прислали в форме. То есть аноним мог POST'ом записаться на три часа ночи
+    или на месяц назад и забить репетитору весь календарь.
+
+    Проверка живёт отдельно от `create_booking` сознательно: репетитор в
+    кабинете вправе поставить встречу вне своей обычной сетки, а гость с улицы
+    — нет.
+    """
+    if slot.tzinfo is None:
+        slot = slot.replace(tzinfo=UTC)
+    free = await find_free_slots(
+        session,
+        tutor,
+        date_from=slot,
+        date_to=slot + timedelta(minutes=1),
+        service=service,
+    )
+    if slot not in free:
+        raise BookingConflictError("Это время уже занято или недоступно для записи")
+
+
 async def create_booking(
     session: AsyncSession,
     *,
@@ -524,6 +555,8 @@ async def cancel_booking(
     by: str,
 ) -> LessioBooking:
     """Mark cancelled + send email противоположной стороне (by ∈ {client, tutor})."""
+    if booking.status != "confirmed":
+        raise BookingConflictError("Эта запись уже отменена или завершена")
     booking.status = "cancelled"
     booking.cancelled_at = datetime.now(UTC)
     await session.flush()
@@ -544,7 +577,14 @@ async def reschedule_booking(
     new_slot: datetime,
     by: str,
 ) -> LessioBooking:
-    """Cancel старый + create новый со теми же client/service полями. Возвращает новый."""
+    """Cancel старый + create новый со теми же client/service полями. Возвращает новый.
+
+    Переносить можно только действующую запись: раньше статус не проверялся, и
+    по ссылке из письма отменённую бронь можно было воскрешать сколько угодно
+    раз — ссылка не истекает и не гасится при отмене.
+    """
+    if booking.status != "confirmed":
+        raise BookingConflictError("Эта запись уже отменена или завершена")
     tutor = await session.get(LessioTutorProfile, booking.tutor_id)
     service = await session.get(LessioService, booking.service_id)
     if tutor is None or service is None:

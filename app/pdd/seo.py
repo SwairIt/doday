@@ -7,9 +7,8 @@ drives Razbery.
 
 from __future__ import annotations
 
-import json
-
 from app.pdd.models import PddQuestion, PddTicket, PddTopic
+from app.safe_json import script_json
 
 BASE = "https://getdoday.ru"
 
@@ -87,4 +86,4 @@ def question_jsonld(question: PddQuestion) -> str:
             if option.position != question.correct_position
         ],
     }
-    return json.dumps(data, ensure_ascii=False)
+    return script_json(data)

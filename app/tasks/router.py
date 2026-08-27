@@ -104,9 +104,12 @@ async def list_endpoint(
     project_id: UUID | None = None,
     include_completed: bool = False,
 ) -> list[TaskOut]:
-    tasks = await list_tasks(
-        session, user.id, project_id=project_id, include_completed=include_completed
-    )
+    try:
+        tasks = await list_tasks(
+            session, user.id, project_id=project_id, include_completed=include_completed
+        )
+    except ProjectNotFound as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
     return [TaskOut.model_validate(t) for t in tasks]
 
 

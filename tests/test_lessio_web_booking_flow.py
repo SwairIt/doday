@@ -324,7 +324,17 @@ async def test_post_book_rejects_taken_slot(
     services = await create_services_from_template(db_session, tutor=tutor, niche="english")
     await db_session.commit()
 
-    slot = datetime(2026, 6, 8, 14, 0, tzinfo=UTC)
+    # Слот берём из настоящей сетки: публичная форма принимает только время,
+    # которое сама же и предложила, поэтому фиксированная дата в прошлом
+    # отсеклась бы раньше проверки на занятость.
+    slots = await find_free_slots(
+        db_session,
+        tutor,
+        date_from=datetime.now(UTC),
+        date_to=datetime.now(UTC) + timedelta(days=14),
+        service=services[0],
+    )
+    slot = slots[0]
     await create_booking(
         db_session,
         tutor=tutor,

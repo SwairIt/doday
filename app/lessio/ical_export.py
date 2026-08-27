@@ -50,15 +50,17 @@ def bookings_to_ical(
             (b.starts_at - b.starts_at).__class__(seconds=b.duration_minutes * 60)
         )
         summary = f"{title} — {b.client_full_name}"
-        description_parts = [
-            f"Клиент: {b.client_full_name}",
-            f"Email: {b.client_email}",
-        ]
+        # Ни почты клиента, ни manage-ссылки здесь быть не должно: фид
+        # отдаётся по токену в URL, репетитор вставляет его в Google Calendar,
+        # то есть отдаёт стороннему сервису, а ссылка попадает в логи nginx и
+        # в Referer. Раньше вместе с фидом уезжали почты всех клиентов и
+        # capability-токены на отмену и перенос их записей.
+        description_parts = [f"Клиент: {b.client_full_name}"]
         if b.notes:
             description_parts.append(f"Комментарий: {b.notes}")
         if b.meeting_url:
             description_parts.append(f"Ссылка: {b.meeting_url}")
-        description_parts.append(f"Управление: {base_url}/lessio/manage/{b.manage_token}")
+        description_parts.append(f"Записи: {base_url}/lessio/app/bookings")
         lines.extend(
             [
                 "BEGIN:VEVENT",

@@ -35,6 +35,7 @@ from app.lessio.service import (
     create_booking,
     create_services_from_template,
     create_tutor_profile,
+    ensure_slot_bookable,
     find_free_slots,
     reschedule_booking,
 )
@@ -329,12 +330,13 @@ async def manage_reschedule_submit(
     slot_iso: Annotated[str, Form()],
     session: AsyncSession = Depends(get_session),  # noqa: B008
 ) -> Response:
-    booking, _, _ = await _load_booking_by_token(session, token)
+    booking, tutor, service = await _load_booking_by_token(session, token)
     try:
         new_slot = datetime.fromisoformat(slot_iso)
     except ValueError as exc:
         raise HTTPException(400, "Некорректное время") from exc
     try:
+        await ensure_slot_bookable(session, tutor=tutor, service=service, slot=new_slot)
         new = await reschedule_booking(session, booking=booking, new_slot=new_slot, by="client")
     except BookingConflictError as exc:
         raise HTTPException(400, str(exc)) from exc
@@ -494,6 +496,21 @@ async def book_page(
     )
 
 
+def _check_client_email(email: str) -> None:
+    """Адрес гостя уходит в письмо с нашей SMTP-личности.
+
+    Поле объявлено обычной строкой, а не EmailStr, поэтому без этой проверки
+    форма записи работала как бесплатный релей: без авторизации, без лимита,
+    на любой адрес.
+    """
+    from email_validator import EmailNotValidError, validate_email
+
+    try:
+        validate_email(email, check_deliverability=False)
+    except EmailNotValidError as exc:
+        raise BookingConflictError("Проверь адрес почты") from exc
+
+
 @_public_router.post(
     "/u/{slug}/book/{service_id}", response_class=HTMLResponse, include_in_schema=False
 )
@@ -525,6 +542,8 @@ async def book_submit(
         )
 
     try:
+        _check_client_email(client_email)
+        await ensure_slot_bookable(session, tutor=profile, service=service, slot=slot)
         booking = await create_booking(
             session,
             tutor=profile,

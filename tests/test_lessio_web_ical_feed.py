@@ -94,3 +94,38 @@ async def test_ical_feed_wrong_token_404(client: AsyncClient) -> None:
 async def test_ical_feed_no_token_404(client: AsyncClient) -> None:
     resp = await client.get("/lessio/app/calendar.ics")
     assert resp.status_code in (404, 422)
+
+
+def test_ical_feed_leaks_no_secrets() -> None:
+    """Фид отдаётся по токену в URL и вставляется в Google Calendar — то есть
+    уезжает стороннему сервису и оседает в логах. Ни почты клиентов, ни
+    manage-токенов (ими можно отменить и перенести чужую запись) в нём быть
+    не должно."""
+    from types import SimpleNamespace
+    from uuid import uuid4
+
+    from app.lessio.ical_export import bookings_to_ical
+
+    service_id = uuid4()
+    booking = SimpleNamespace(
+        id=uuid4(),
+        service_id=service_id,
+        starts_at=datetime(2026, 7, 1, 14, 0, tzinfo=UTC),
+        duration_minutes=60,
+        client_full_name="Иван Петров",
+        client_email="secret-client@example.com",
+        notes=None,
+        meeting_url=None,
+        status="confirmed",
+        manage_token="TOP-SECRET-MANAGE-TOKEN",
+    )
+    ics = bookings_to_ical(
+        tutor=SimpleNamespace(display_name="Т", timezone="Europe/Moscow"),  # type: ignore[arg-type]
+        bookings=[booking],  # type: ignore[list-item]
+        service_titles={service_id: "Урок"},
+        base_url="https://getdoday.ru",
+    )
+    assert "Иван Петров" in ics  # репетитору нужно знать, кто придёт
+    assert "secret-client@example.com" not in ics
+    assert "TOP-SECRET-MANAGE-TOKEN" not in ics
+    assert "/lessio/manage/" not in ics

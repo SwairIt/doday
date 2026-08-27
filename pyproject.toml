@@ -185,6 +185,7 @@ ignore = [
 "app/ai/*" = ["RUF001", "RUF002", "RUF003"]                       # Russian docstrings/messages
 "app/auth/models.py" = ["RUF001", "RUF002", "RUF003"]             # Russian comment on ai_terms_accepted_at
 "app/auth/antibot.py" = ["RUF001", "RUF002", "RUF003"]            # Russian docstrings/messages
+"app/safe_json.py" = ["RUF001", "RUF002", "RUF003"]              # Russian docstring
 "app/auth/rate_limit.py" = ["RUF001", "RUF002", "RUF003"]         # Russian note on X-Forwarded-For
 "tests/test_antibot.py" = ["RUF001", "RUF002", "RUF003"]
 "tests/test_ai_credentials.py" = ["RUF001", "RUF002", "RUF003"]

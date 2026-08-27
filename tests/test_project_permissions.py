@@ -97,3 +97,60 @@ async def test_member_can_open_shared_project_by_slug(
     await db_session.commit()
     r = await second_logged_in_client.get(f"/app/projects/{project.slug}", follow_redirects=False)
     assert r.status_code == 200
+
+
+async def test_non_member_cannot_list_project_tasks(
+    db_session: AsyncSession,
+    logged_in_client: AsyncClient,
+    second_logged_in_client: AsyncClient,
+) -> None:
+    """GET /api/tasks?project_id=... отдавал задачи любому, кто знает id.
+
+    HTML-вью проверяла членство перед списком, а JSON-эндпоинт — нет: сервис
+    при заданном project_id просто снимал фильтр по пользователю.
+    """
+    from app.tasks.service import create_task
+
+    owner, project = await _make_project(db_session, "logged-in@example.com", "Secret")
+    await create_task(
+        db_session,
+        owner.id,  # type: ignore[attr-defined]
+        title="Пароль от сейфа",
+        project_id=project.id,  # type: ignore[attr-defined]
+    )
+    await db_session.commit()
+
+    r = await second_logged_in_client.get(f"/api/tasks?project_id={project.id}")  # type: ignore[attr-defined]
+    assert r.status_code == 404
+    assert "Пароль от сейфа" not in r.text
+
+
+async def test_member_still_sees_project_tasks(
+    db_session: AsyncSession,
+    logged_in_client: AsyncClient,
+    second_logged_in_client: AsyncClient,
+    second_user: object,
+) -> None:
+    """Обратная сторона: участник проекта видит задачи соседей, как и раньше."""
+    from app.projects.membership import add_member
+    from app.tasks.service import create_task
+
+    owner, project = await _make_project(db_session, "logged-in@example.com", "Shared tasks")
+    await create_task(
+        db_session,
+        owner.id,  # type: ignore[attr-defined]
+        title="Общая задача",
+        project_id=project.id,  # type: ignore[attr-defined]
+    )
+    await add_member(db_session, project.id, second_user.id, role="member")  # type: ignore[attr-defined]
+    await db_session.commit()
+
+    r = await second_logged_in_client.get(f"/api/tasks?project_id={project.id}")  # type: ignore[attr-defined]
+    assert r.status_code == 200
+    assert [t["title"] for t in r.json()] == ["Общая задача"]
+
+
+async def test_own_tasks_listing_unaffected(logged_in_client: AsyncClient) -> None:
+    """Личный список (без project_id) работает как работал."""
+    r = await logged_in_client.get("/api/tasks")
+    assert r.status_code == 200
