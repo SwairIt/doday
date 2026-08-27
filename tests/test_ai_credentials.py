@@ -377,14 +377,16 @@ async def test_known_provider_does_not_resolve_dns(
 # ── справочник провайдеров ────────────────────────────────────────────────
 
 
-def test_gemini_is_available() -> None:
-    """Ключ Gemini бесплатный и выдаётся сразу — это самый простой путь для
-    пользователя, поэтому он должен быть в списке, а не только через «свой»."""
-    gemini = get_provider("gemini")
-    assert gemini is not None
-    assert gemini.base_url == "https://generativelanguage.googleapis.com/v1beta/openai"
-    assert gemini.default_model.startswith("gemini")
-    assert "aistudio.google.com" in gemini.signup_url
+def test_gemini_is_absent() -> None:
+    """Google отвечает «User location is not supported for the API use».
+
+    Запрос уходит с нашего сервера, а он в России: ключ у человека рабочий,
+    а чат не работает — и узнаёт он об этом на последнем шаге. Проверка
+    неверным ключом это не ловит, Google отвечает про ключ раньше, чем
+    доходит до страны.
+    """
+    assert get_provider("gemini") is None
+    assert "googleapis" not in " ".join(p.base_url for p in PROVIDERS)
 
 
 def test_every_provider_explains_how_to_get_a_key() -> None:
@@ -415,21 +417,23 @@ def test_blocked_from_russia_providers_are_absent() -> None:
         assert host not in urls
 
 
-async def test_gemini_credential_saves(db_session: AsyncSession, ai_user_id: UUID) -> None:
-    cred = await ai_service.upsert_credential(
-        db_session, ai_user_id, provider="gemini", api_key="AIzaSyTestKey1234567890"
-    )
-    assert cred.provider == "gemini"
-    assert cred.base_url == "https://generativelanguage.googleapis.com/v1beta/openai"
-    assert cred.key_last4 == "7890"
+async def test_geo_block_has_its_own_message() -> None:
+    """Гео-блок приходит под тем же 400, что и неверный ключ, а причина другая:
+    ключ рабочий, просто провайдер не пускает нашу страну."""
+    from app.ai.client import _message_for
+
+    body = '{"error": {"message": "User location is not supported for the API use."}}'
+    message = _message_for(400, body)
+    assert "не обслуживает запросы из нашей страны" in message
+    assert "Cloud.ru" in message
 
 
 async def test_providers_endpoint_returns_steps(logged_in_client: AsyncClient) -> None:
     rows = (await logged_in_client.get("/api/ai/providers")).json()
     by_key = {r["key"]: r for r in rows}
-    assert "gemini" in by_key
-    assert len(by_key["gemini"]["steps"]) >= 3
-    assert by_key["gemini"]["price"]
+    assert "cloudru" in by_key
+    assert len(by_key["cloudru"]["steps"]) >= 3
+    assert by_key["cloudru"]["price"]
 
 
 async def test_settings_page_shows_instructions(logged_in_client: AsyncClient) -> None:
@@ -488,7 +492,7 @@ async def test_key_is_stripped_before_saving(db_session: AsyncSession, ai_user_i
     """Копипаст из консоли провайдера приносит пробел или перенос строки —
     и провайдер отвечает «ключ не принят», хотя ключ верный."""
     cred = await ai_service.upsert_credential(
-        db_session, ai_user_id, provider="gemini", api_key="  AQ.Ab8RN6secret1234\n"
+        db_session, ai_user_id, provider="cloudru", api_key="  AQ.Ab8RN6secret1234\n"
     )
     assert cred.key_last4 == "1234"
     resolved = await ai_service.resolve_secret(db_session, ai_user_id)
@@ -508,16 +512,16 @@ async def test_model_changes_without_the_key(
         await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
     ).scalar_one()
     await ai_service.upsert_credential(
-        db_session, user.id, provider="gemini", api_key="AQ.Ab8RN6secret1234"
+        db_session, user.id, provider="cloudru", api_key="AQ.Ab8RN6secret1234"
     )
 
-    r = await logged_in_client.patch("/api/ai/credential/model", json={"model": "gemini-2.5-pro"})
+    r = await logged_in_client.patch("/api/ai/credential/model", json={"model": "qwen3-8b"})
     assert r.status_code == 200, r.text
-    assert r.json()["model"] == "gemini-2.5-pro"
+    assert r.json()["model"] == "qwen3-8b"
 
     state = (await logged_in_client.get("/api/ai/state")).json()
-    assert state["model"] == "gemini-2.5-pro"
-    assert state["provider"] == "gemini"
+    assert state["model"] == "qwen3-8b"
+    assert state["provider"] == "cloudru"
 
 
 async def test_model_placeholder_rejected_on_change(
@@ -531,7 +535,7 @@ async def test_model_placeholder_rejected_on_change(
         await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
     ).scalar_one()
     await ai_service.upsert_credential(
-        db_session, user.id, provider="gemini", api_key="AQ.Ab8RN6secret1234"
+        db_session, user.id, provider="cloudru", api_key="AQ.Ab8RN6secret1234"
     )
     r = await logged_in_client.patch(
         "/api/ai/credential/model", json={"model": "gpt://ID-КАТАЛОГА/yandexgpt-lite/latest"}

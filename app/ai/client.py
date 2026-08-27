@@ -46,6 +46,13 @@ class AiProviderError(Exception):
 # 2026-08-27), большинство остальных — 401.
 _BAD_KEY_MARKERS = ("api key", "api_key", "apikey", "unauthorized", "invalid key", "ключ")
 
+_GEO_MARKERS = ("location is not supported", "country", "not available in your region")
+
+_GEO_MESSAGE = (
+    "Этот провайдер не обслуживает запросы из нашей страны — ключ тут ни при чём. "
+    "Возьми ключ у российского провайдера: Cloud.ru, Yandex или ProxyAPI."
+)
+
 _BAD_KEY_MESSAGE = (
     "Ключ не принят провайдером. Проверь, что скопировал его целиком, "
     "что выбран тот же провайдер, где ключ выпущен, и что ключ ещё не отозван."
@@ -73,6 +80,8 @@ def _message_for(status: int, body: str) -> str:
     не утащить в интерфейс лишние подробности провайдера.
     """
     if status in (401, 403):
+        if any(marker in body.lower() for marker in _GEO_MARKERS):
+            return _GEO_MESSAGE
         return _BAD_KEY_MESSAGE
     if status == 402:
         return "На счету провайдера закончились средства."
@@ -81,6 +90,10 @@ def _message_for(status: int, body: str) -> str:
     if status == 429:
         return "Слишком часто: провайдер ограничил частоту запросов. Попробуй через минуту."
     if status == 400:
+        # Гео-блок отдают под тем же 400, что и «неверный ключ», а причина
+        # совсем другая: ключ рабочий, просто провайдер не пускает нашу страну.
+        if any(marker in body.lower() for marker in _GEO_MARKERS):
+            return _GEO_MESSAGE
         if _looks_like_bad_key(body):
             return _BAD_KEY_MESSAGE
         return "Провайдер отклонил запрос — проверь адрес API и название модели."
