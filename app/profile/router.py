@@ -13,6 +13,42 @@ from app.auth.security import hash_password, verify_password
 router = APIRouter(prefix="/api/profile", tags=["profile"])
 
 
+@router.get("/my-data")
+async def my_data(user: RequiredUser, session: DbSession) -> dict[str, object]:
+    """Что именно о человеке хранится — цифрами, а не общими словами.
+
+    Право знать состав своих данных даёт ст. 14 152-ФЗ, но дело не только в
+    законе: чаще всего люди пишут жалобы просто потому, что не понимают, что
+    о них собрали.
+    """
+    from sqlalchemy import func, select
+    from sqlalchemy.sql.elements import ColumnElement
+
+    from app.ai.models import AiMessage
+    from app.projects.models import Project
+    from app.school.models import SchoolIntegration
+    from app.tasks.models import Task
+    from app.telegram.models import TelegramLink
+
+    async def count(model: type, where: ColumnElement[bool]) -> int:
+        stmt = select(func.count()).select_from(model).where(where)
+        return int(await session.scalar(stmt) or 0)
+
+    return {
+        "email": user.email,
+        "registered_at": user.created_at.date().isoformat(),
+        "email_verified": user.email_verified_at is not None,
+        "signup_ip_stored": user.signup_ip is not None,
+        "tasks": await count(Task, Task.user_id == user.id),
+        "projects": await count(Project, Project.user_id == user.id),
+        "ai_messages": await count(AiMessage, AiMessage.user_id == user.id),
+        "telegram_linked": bool(await count(TelegramLink, TelegramLink.user_id == user.id)),
+        "school_connected": bool(
+            await count(SchoolIntegration, SchoolIntegration.user_id == user.id)
+        ),
+    }
+
+
 @router.post("/delete")
 async def delete_account(request: Request, user: RequiredUser, session: DbSession) -> Response:
     """Cascade-delete the user. Tasks/projects/labels go with them via ON DELETE CASCADE."""

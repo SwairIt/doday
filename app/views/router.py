@@ -245,6 +245,20 @@ async def achievements_view(
     )
 
 
+@router.get("/my-data", response_class=HTMLResponse)
+async def my_data_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
+    """Что сервис хранит о человеке, выгрузка и удаление — на одной странице."""
+    return templates.TemplateResponse(
+        request,
+        "app/my_data.html",
+        {
+            "current_user": user,
+            "current_view": "my-data",
+            "projects": await list_projects(session, user.id),
+        },
+    )
+
+
 @router.get("/ai", response_class=HTMLResponse)
 async def ai_view(request: Request, user: RequiredUser, session: DbSession) -> HTMLResponse:
     """Чат с моделью. Ключ провайдера подключается в настройках."""

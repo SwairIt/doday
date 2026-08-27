@@ -1207,7 +1207,10 @@
 
   <section class="card p-6 border-rose-500/40">
     <h2 class="text-sm uppercase tracking-wider font-semibold text-rose-400 mb-2">Опасная зона</h2>
-    <p class="text-sm text-[var(--text-muted)] mb-4">Удаление аккаунта необратимо. Все проекты, задачи и лейблы будут удалены вместе с ним.</p>
+    <p class="text-sm text-[var(--text-muted)] mb-3">Удаление аккаунта необратимо. Все проекты, задачи и лейблы будут удалены вместе с ним.</p>
+    <a href="/app/my-data" class="text-sm text-[var(--accent)] hover:underline inline-block mb-4">
+      Сначала посмотреть, что о тебе хранится, и скачать копию →
+    </a>
     <form
       method="post"
       action="/api/profile/delete"

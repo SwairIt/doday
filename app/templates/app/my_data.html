@@ -1,0 +1,108 @@
+{% extends "app_base.html" %}
+{% block title %}Мои данные — Doday{% endblock %}
+{% block view_title %}Мои данные{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-5" x-data="myData()" x-init="load()">
+
+  <p class="text-sm text-[var(--text-muted)]">
+    Здесь видно всё, что Doday о тебе хранит. Данные можно скачать одним файлом
+    или удалить вместе с аккаунтом — без писем и объяснений.
+  </p>
+
+  <template x-if="data">
+    <div class="card p-6 space-y-4">
+      <div class="grid gap-3 sm:grid-cols-2">
+        <div>
+          <div class="text-xs text-[var(--text-muted)] mb-0.5">Почта</div>
+          <div class="font-medium break-all" x-text="data.email"></div>
+        </div>
+        <div>
+          <div class="text-xs text-[var(--text-muted)] mb-0.5">Аккаунт создан</div>
+          <div class="font-medium" x-text="data.registered_at"></div>
+        </div>
+      </div>
+
+      <div class="border-t border-[var(--border)] pt-4 grid gap-3 sm:grid-cols-3">
+        <div>
+          <div class="text-2xl font-bold" x-text="data.tasks"></div>
+          <div class="text-xs text-[var(--text-muted)]">задач</div>
+        </div>
+        <div>
+          <div class="text-2xl font-bold" x-text="data.projects"></div>
+          <div class="text-xs text-[var(--text-muted)]">проектов</div>
+        </div>
+        <div>
+          <div class="text-2xl font-bold" x-text="data.ai_messages"></div>
+          <div class="text-xs text-[var(--text-muted)]">сообщений с ИИ</div>
+        </div>
+      </div>
+
+      <div class="border-t border-[var(--border)] pt-4 space-y-2 text-sm">
+        <div class="flex items-center gap-2">
+          <span x-text="data.email_verified ? '✅' : '⬜'"></span>
+          <span class="text-[var(--text-muted)]">почта подтверждена</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span x-text="data.telegram_linked ? '✅' : '⬜'"></span>
+          <span class="text-[var(--text-muted)]">привязан Telegram</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span x-text="data.school_connected ? '✅' : '⬜'"></span>
+          <span class="text-[var(--text-muted)]">подключён школьный дневник</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span x-text="data.signup_ip_stored ? '✅' : '⬜'"></span>
+          <span class="text-[var(--text-muted)]">
+            хранится IP регистрации
+            <span class="text-xs">— он затирается через сутки, нужен только против ботов</span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <div class="card p-6">
+    <h2 class="font-semibold mb-1">Скачать всё</h2>
+    <p class="text-sm text-[var(--text-muted)] mb-4">
+      Один JSON-файл со всеми задачами, проектами, метками и настройками.
+      Его можно загрузить обратно в Doday или открыть чем угодно.
+    </p>
+    <a href="/api/backup/export" class="btn-primary inline-flex">Скачать мои данные</a>
+  </div>
+
+  <div class="card p-6">
+    <h2 class="font-semibold mb-1">Удалить всё</h2>
+    <p class="text-sm text-[var(--text-muted)] mb-4">
+      Аккаунт и все связанные данные удаляются из базы необратимо: задачи,
+      проекты, переписка с ИИ, привязки. Восстановить не получится.
+    </p>
+    <form method="post" action="/api/profile/delete"
+          onsubmit="return confirm('Удалить аккаунт со всеми данными? Это нельзя отменить.')">
+      <button type="submit" class="btn-ghost text-rose-400 border border-rose-500/30">
+        Удалить аккаунт
+      </button>
+    </form>
+  </div>
+
+  <p class="text-xs text-[var(--text-muted)]">
+    Что именно и зачем собирается — в
+    <a href="/privacy" class="text-[var(--accent)] hover:underline">политике конфиденциальности</a>.
+    Вопросы по данным — на
+    <a href="mailto:doday.support@gmail.com" class="text-[var(--accent)] hover:underline">doday.support@gmail.com</a>.
+  </p>
+</div>
+
+<script>
+  function myData() {
+    return {
+      data: null,
+      async load() {
+        try {
+          const r = await fetch('/api/profile/my-data', { credentials: 'include' });
+          if (r.ok) this.data = await r.json();
+        } catch (e) { /* страница остаётся полезной и без цифр */ }
+      },
+    };
+  }
+</script>
+{% endblock %}

@@ -295,6 +295,64 @@ def _bootstrap_admin_on_startup() -> None:
 _bootstrap_admin_on_startup()
 
 
+def _privacy_cleanup_on_startup() -> None:
+    """Убирает то, что хранить дольше нужного незачем.
+
+    Две вещи, обе про «не собирать лишнего»:
+
+    1. IP регистрации нужен ровно на час — по нему считается частота
+       регистраций с адреса и подсети. Через сутки он превращается в
+       бесполезный, но чувствительный след, поэтому затирается.
+    2. Аккаунты, которые никто не подтвердил и в которых нет ни одной задачи,
+       ни привязки к Telegram, ни профиля репетитора, через месяц удаляются:
+       это следы ботов и случайных заходов, и хранить их не за чем.
+
+    Выполняется при старте — то есть на каждом деплое. Ошибку логируем,
+    сервис из-за неё не падает.
+    """
+    import asyncio
+
+    async def _run() -> None:
+        from sqlalchemy import text
+        from sqlalchemy.ext.asyncio import create_async_engine
+
+        engine = create_async_engine(get_settings().database_url)
+        try:
+            async with engine.begin() as conn:
+                await conn.execute(
+                    text(
+                        "UPDATE users SET signup_ip = NULL, signup_subnet = NULL "
+                        "WHERE signup_ip IS NOT NULL "
+                        "AND created_at < now() - interval '1 day'"
+                    )
+                )
+                await conn.execute(
+                    text(
+                        "DELETE FROM users u "
+                        "WHERE u.email_verified_at IS NULL "
+                        "AND u.is_admin = false "
+                        "AND u.created_at < now() - interval '30 days' "
+                        "AND NOT EXISTS (SELECT 1 FROM tasks t WHERE t.user_id = u.id) "
+                        "AND NOT EXISTS "
+                        "(SELECT 1 FROM telegram_links l WHERE l.user_id = u.id) "
+                        "AND NOT EXISTS "
+                        "(SELECT 1 FROM lessio_tutor_profiles p WHERE p.user_id = u.id)"
+                    )
+                )
+        finally:
+            await engine.dispose()
+
+    try:
+        asyncio.run(_run())
+    except Exception:
+        import logging
+
+        logging.getLogger("doday.startup").exception("не удалось прибраться в персональных данных")
+
+
+_privacy_cleanup_on_startup()
+
+
 _is_prod = _settings.app_env == "prod"
 
 # Hide the interactive API docs / OpenAPI schema in prod — no need to hand the
