@@ -319,7 +319,11 @@ app.add_middleware(
 # the same-origin CSRF check below.
 # Robokassa шлёт уведомление об оплате серверным POST без Origin/Referer —
 # same-origin проверка для него неприменима, подлинность даёт подпись.
-_CSRF_EXEMPT_PREFIXES = ("/miniapp", "/taptower", "/api/billing/robokassa")
+# Только /miniapp/auth, а не весь /miniapp: остальные ручки мини-приложения
+# авторизуются обычной cookie-сессией, и снимать с них проверку не за что —
+# защищал их лишь SameSite=Lax, то есть любой соседний хост на нашем домене
+# (all.getdoday.ru) мог менять чужие задачи.
+_CSRF_EXEMPT_PREFIXES = ("/miniapp/auth", "/taptower", "/api/billing/robokassa")
 _UNSAFE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
 
 
@@ -436,6 +440,32 @@ async def _lessio_anon_rate_limit(
     return await call_next(request)
 
 
+# Content-Security-Policy. Единственная CSP была в deploy/nginx.conf, причём
+# только в location / — то есть отдавалась не всем путям, а на сервере стоит
+# FastPanel со своим конфигом. Ставим здесь, чтобы заголовок был всегда.
+#
+# 'unsafe-inline' в script-src убрать нельзя: страницы построены на Alpine.js
+# с инлайновыми x-data и обработчиками, отключение сломает весь интерфейс.
+# Зато connect-src 'self' закрывает главный сценарий кражи: даже если чужой
+# скрипт как-то выполнится, отправить украденное наружу он не сможет.
+_CSP = "; ".join(
+    (
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com "
+        "https://unpkg.com https://cdn.jsdelivr.net https://mc.yandex.ru https://mc.yandex.com "
+        "https://yastatic.net https://telegram.org https://www.google.com https://www.gstatic.com",
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com",
+        "font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com",
+        "img-src 'self' data: blob: https:",
+        "connect-src 'self' https://mc.yandex.ru https://mc.yandex.com https://yastatic.net",
+        "frame-src 'self' https://mc.yandex.ru https://www.google.com https://meet.jit.si",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "object-src 'none'",
+    )
+)
+
+
 # Defence-in-depth: nginx adds these too, but if someone hits uvicorn directly
 # (or runs without nginx for a quick test), we still ship safe defaults.
 @app.middleware("http")
@@ -465,6 +495,7 @@ async def _security_headers(
     else:
         response.headers.setdefault("X-Frame-Options", "DENY")
     response.headers.setdefault("Referrer-Policy", "same-origin")
+    response.headers.setdefault("Content-Security-Policy", _CSP)
     response.headers.setdefault("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
     if _is_prod:
         # 6 months HSTS once HTTPS is wired up; nginx will be terminating TLS.

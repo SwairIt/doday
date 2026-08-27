@@ -9,6 +9,7 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
+    Text,
     UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column
@@ -23,8 +24,9 @@ def _utcnow() -> datetime:
 class SchoolIntegration(Base):
     """One row per (user, provider). Stores token + sync metadata.
 
-    The token is stored as plaintext for now — flagged in the spec; before
-    going to prod this column should be encrypted at rest (KMS / pgcrypto).
+    Токен портала зашифрован — см. app/school/crypto.py. Это `aupd_token`
+    ребёнка от dnevnik.mos.ru / Школьного портала МО, то есть полный доступ
+    к его дневнику; открытым текстом в базе ему не место.
     """
 
     __tablename__ = "school_integrations"
@@ -35,7 +37,8 @@ class SchoolIntegration(Base):
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
     provider: Mapped[str] = mapped_column(String(20), nullable=False)
-    auth_token: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    # Шифротекст длиннее исходного токена, поэтому Text, а не String(2048).
+    auth_token: Mapped[str | None] = mapped_column(Text, nullable=True)
     # Portal student id (e.g. authedu `student_id`/`Profile-Id`). Not a secret —
     # selects which child's diary to pull. Required by the family-web API.
     student_id: Mapped[str | None] = mapped_column(String(32), nullable=True)

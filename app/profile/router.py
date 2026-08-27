@@ -126,12 +126,25 @@ async def get_share_link(user: RequiredUser) -> dict[str, str]:
 
 @router.post("/password")
 async def change_password(
+    request: Request,
     user: RequiredUser,
     session: DbSession,
     current_password: Annotated[str, Form()],
     new_password: Annotated[str, Form()],
 ) -> dict[str, str]:
-    """Change the signed-in user's password (requires current password)."""
+    """Change the signed-in user's password (requires current password).
+
+    Лимит здесь не про CSRF, а про подбор текущего пароля с угнанной сессии:
+    без него перебор ничем не ограничен, и каждая попытка гоняет argon2 на
+    64 МБ памяти — то есть заодно дешёвый способ положить сервер.
+    """
+    from app.auth.rate_limit import client_ip, client_key, hit
+
+    if not hit(client_key(client_ip(request), f"pwd:{user.id}"), max_calls=5, per_seconds=600):
+        raise HTTPException(
+            status.HTTP_429_TOO_MANY_REQUESTS,
+            "Слишком много попыток. Подожди немного.",
+        )
     if user.password_hash is None:
         # Telegram-only Lessio account — у него нет пароля чтобы его менять. Юзер
         # должен сначала установить пароль через /auth/set-password (когда такой
@@ -149,5 +162,9 @@ async def change_password(
             status.HTTP_422_UNPROCESSABLE_ENTITY, "Новый пароль совпадает с текущим"
         )
     user.password_hash = hash_password(new_password)
+    # Все остальные сессии этого аккаунта становятся недействительными —
+    # включая ту, из-за которой пароль и меняют. Текущая остаётся живой.
+    user.session_epoch += 1
     await session.commit()
+    request.session["epoch"] = user.session_epoch
     return {"status": "ok"}

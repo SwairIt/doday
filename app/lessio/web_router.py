@@ -103,6 +103,7 @@ async def lessio_login_submit(
     reset(rl_key)  # сбросить счётчик после успешного входа
     request.session.clear()
     request.session["user_id"] = str(user.id)
+    request.session["epoch"] = user.session_epoch
     # Если у user'а ещё нет LessioTutorProfile — _require_profile отправит на setup-profile
     return RedirectResponse("/lessio/app/today", status_code=303)
 
@@ -152,6 +153,7 @@ async def lessio_register_submit(
         )
 
     request.session["user_id"] = str(user.id)
+    request.session["epoch"] = user.session_epoch
     return RedirectResponse("/lessio/app/setup-profile", status_code=303)
 
 

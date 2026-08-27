@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import ipaddress
+import socket
+from urllib.parse import urlparse
 from uuid import UUID
 
 from sqlalchemy import delete, select
@@ -14,6 +17,31 @@ from app.ai.providers import CUSTOM_KEY, get_provider
 
 class UnknownProvider(Exception):
     """Провайдер отсутствует в справочнике или данные для него неполные."""
+
+
+def _check_public_url(url: str) -> None:
+    """Адрес своего провайдера должен вести наружу, а не внутрь сервера.
+
+    Поле «свой провайдер» — это адрес, по которому наш сервер потом сам ходит
+    с ключом пользователя. Без проверки его можно навести на внутреннюю сеть
+    (SSRF): панель хостинга, соседний сервис, роутер. Ответы у нас
+    различаются по коду, так что это ещё и сканер.
+
+    Резолвим имя и отбрасываем всё, что не публичный адрес. Гонка
+    «резолв→запрос» тут возможна, но для нашей модели угроз (школьник с
+    формой в настройках) этого достаточно.
+    """
+    host = urlparse(url).hostname
+    if not host:
+        raise UnknownProvider("не разобрал адрес API")
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except OSError as exc:
+        raise UnknownProvider("не удалось разобрать имя хоста в адресе API") from exc
+    for info in infos:
+        ip = ipaddress.ip_address(info[4][0])
+        if not ip.is_global or ip.is_multicast:
+            raise UnknownProvider("этот адрес ведёт во внутреннюю сеть — так нельзя")
 
 
 async def get_credential(session: AsyncSession, user_id: UUID) -> AiCredential | None:
@@ -45,6 +73,8 @@ async def upsert_credential(
         raise UnknownProvider("для своего провайдера нужны адрес API и название модели")
     if not resolved_url.startswith("https://"):
         raise UnknownProvider("адрес API должен начинаться с https://")
+    if provider == CUSTOM_KEY:
+        _check_public_url(resolved_url)
 
     existing = await get_credential(session, user_id)
     if existing is None:

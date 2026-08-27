@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 
 from app.auth.deps import CurrentUser, DbSession
+from app.auth.models import User
 from app.config import get_settings
 from app.miniapp.auth import get_telegram_user_id, validate_init_data
 from app.miniapp.static import MINIAPP_JS
@@ -119,8 +120,16 @@ async def auth(
             status_code=status.HTTP_401_UNAUTHORIZED,
         )
 
+    linked_user = await session.get(User, link.user_id)
+    if linked_user is None:
+        return JSONResponse(
+            {"need_link": True, "telegram_user_id": tg_user_id},
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
     request.session.clear()  # drop any pre-login session state (anti-fixation)
-    request.session["user_id"] = str(link.user_id)
+    request.session["user_id"] = str(linked_user.id)
+    request.session["epoch"] = linked_user.session_epoch
     return JSONResponse({"ok": True, "user_id": str(link.user_id)})
 
 

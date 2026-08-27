@@ -14,6 +14,7 @@ import structlog
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.school.crypto import decrypt_token, encrypt_token
 from app.school.models import SchoolIntegration
 from app.school.schemas import PROVIDER_LABELS, IntegrationIn, Provider, SyncResult
 
@@ -50,14 +51,14 @@ async def upsert_integration(
         existing = SchoolIntegration(
             user_id=user_id,
             provider=payload.provider,
-            auth_token=payload.auth_token,
+            auth_token=encrypt_token(payload.auth_token),
             student_id=payload.student_id,
             target_project_id=payload.target_project_id,
             enabled=payload.enabled,
         )
         session.add(existing)
     else:
-        existing.auth_token = payload.auth_token
+        existing.auth_token = encrypt_token(payload.auth_token)
         existing.student_id = payload.student_id
         existing.target_project_id = payload.target_project_id
         existing.enabled = payload.enabled
@@ -82,7 +83,8 @@ async def sync_now(session: AsyncSession, user_id: UUID, provider: Provider) -> 
         raise IntegrationNotFound(provider)
     if not integ.enabled:
         return SyncResult(ok=False, error="Интеграция выключена.")
-    if not integ.auth_token:
+    token = decrypt_token(integ.auth_token)
+    if not token:
         return _save_error(session, integ, "Не задан auth_token.")
     if provider in ("school_mo", "mesh") and not integ.student_id:
         # Pre-flight: the family-web API rejects requests without student_id
@@ -98,9 +100,9 @@ async def sync_now(session: AsyncSession, user_id: UUID, provider: Provider) -> 
 
     try:
         if provider == "school_mo":
-            payload = await _fetch_school_mo(integ.auth_token, integ.student_id)
+            payload = await _fetch_school_mo(token, integ.student_id)
         elif provider == "mesh":
-            payload = await _fetch_mesh(integ.auth_token, integ.student_id)
+            payload = await _fetch_mesh(token, integ.student_id)
         else:  # pragma: no cover — Literal["school_mo","mesh"] guards this
             return _save_error(session, integ, f"Неизвестный провайдер: {provider}")
     except _PortalError as e:

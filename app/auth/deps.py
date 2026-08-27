@@ -20,7 +20,15 @@ async def get_current_user(request: Request, session: DbSession) -> User | None:
         uid = UUID(str(user_id))
     except ValueError:
         return None
-    return await session.get(User, uid)
+    user = await session.get(User, uid)
+    if user is None:
+        return None
+    # Поколение сессии. У cookie, выписанных до появления этого поля, номера
+    # нет — считаем их нулевыми, чтобы никого не разлогинить на ровном месте.
+    if int(request.session.get("epoch", 0)) != user.session_epoch:
+        request.session.clear()
+        return None
+    return user
 
 
 CurrentUser = Annotated[User | None, Depends(get_current_user)]

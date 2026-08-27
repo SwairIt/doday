@@ -3,7 +3,7 @@
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, DateTime, String
+from sqlalchemy import Boolean, DateTime, Integer, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -66,6 +66,14 @@ class User(Base):
     # перезапускает процесс и обнулял бы защиту.
     signup_ip: Mapped[str | None] = mapped_column(String(45), nullable=True, index=True)
     signup_subnet: Mapped[str | None] = mapped_column(String(45), nullable=True, index=True)
+    # Поколение сессий. Сессия живёт только в подписанной cookie, серверного
+    # хранилища нет — то есть отозвать её нечем: смена пароля не выкидывала
+    # того, кто увёл cookie, и она работала все две недели. Номер поколения
+    # кладётся в cookie при входе; смена пароля увеличивает его, и все старые
+    # cookie перестают подходить.
+    session_epoch: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
     # Согласие с условиями ИИ-помощника: 18+, ответы генерирует нейросеть,
     # запросы уходят провайдеру, чей ключ подключён. Показывается один раз.
     ai_terms_accepted_at: Mapped[datetime | None] = mapped_column(

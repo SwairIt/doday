@@ -16,6 +16,13 @@ router = APIRouter(tags=["taptower"])
 _GAME_BACKEND = "http://127.0.0.1:8012"
 _HOP_BY_HOP = {"content-length", "transfer-encoding", "connection", "host", "keep-alive"}
 
+# Tap Tower — отдельный проект на соседнем порту, а не часть Doday. Раньше
+# запрос уходил к нему целиком, вместе с cookie сессии Doday: чужой процесс
+# получал ключ от аккаунтов наших пользователей, а его Set-Cookie мог
+# перезаписать нашу же сессию на общем домене. Режем в обе стороны.
+_SESSION_HEADERS = {"cookie", "authorization"}
+_RESPONSE_SESSION_HEADERS = {"set-cookie"}
+
 
 @router.get("/taptower", include_in_schema=False)
 async def taptower_root() -> RedirectResponse:
@@ -26,7 +33,11 @@ async def taptower_root() -> RedirectResponse:
 async def taptower_proxy(request: Request, path: str = "") -> Response:
     url = f"{_GAME_BACKEND}/{path}"
     body = await request.body()
-    fwd_headers = {k: v for k, v in request.headers.items() if k.lower() not in _HOP_BY_HOP}
+    fwd_headers = {
+        k: v
+        for k, v in request.headers.items()
+        if k.lower() not in _HOP_BY_HOP and k.lower() not in _SESSION_HEADERS
+    }
     try:
         async with httpx.AsyncClient(timeout=65.0) as client:
             upstream = await client.request(
@@ -39,7 +50,11 @@ async def taptower_proxy(request: Request, path: str = "") -> Response:
     except httpx.HTTPError:
         return Response(content=b"Tap Tower backend unavailable", status_code=502)
 
-    resp_headers = {k: v for k, v in upstream.headers.items() if k.lower() not in _HOP_BY_HOP}
+    resp_headers = {
+        k: v
+        for k, v in upstream.headers.items()
+        if k.lower() not in _HOP_BY_HOP and k.lower() not in _RESPONSE_SESSION_HEADERS
+    }
     return Response(
         content=upstream.content,
         status_code=upstream.status_code,

@@ -142,12 +142,9 @@ async def register_submit(
         await send_verification_email(to=user.email, verification_url=verify_url)
     except Exception as e:
         smtp_failed = True
-        _log.warning(
-            "verification_email_send_failed",
-            email=user.email,
-            error=str(e),
-            verify_url=verify_url,
-        )
+        # Ни адреса, ни ссылки с токеном: ссылка действительна трое суток,
+        # и тот, кто читает логи, подтвердил бы по ней чужую почту.
+        _log.warning("verification_email_send_failed", user_id=str(user.id), error=str(e))
 
     # In dev (any non-prod env) auto-verify and render the success page with
     # the verify URL on screen — handy when SMTP either fails or only goes to
@@ -230,6 +227,7 @@ async def login_submit(
     reset(rl_key)
     request.session.clear()  # drop any pre-login session state (anti-fixation)
     request.session["user_id"] = str(user.id)
+    request.session["epoch"] = user.session_epoch
     return RedirectResponse(url="/app/today?welcome=1", status_code=303)
 
 
