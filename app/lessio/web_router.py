@@ -23,7 +23,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.deps import CurrentUser, RequiredUser
-from app.auth.rate_limit import client_key, hit, reset
+from app.auth.rate_limit import client_ip, client_key, hit, reset
 from app.auth.schemas import RegisterIn
 from app.auth.service import EmailAlreadyExists, register_user
 from app.db import get_session
@@ -80,7 +80,7 @@ async def lessio_login_submit(
 ) -> Response:
     from app.auth.service import InvalidCredentials, authenticate
 
-    ip = request.client.host if request.client else None
+    ip = client_ip(request)
     rl_key = client_key(ip, f"lessio_login:{email.lower()}")
     if not hit(rl_key, max_calls=10, per_seconds=60):
         return _templates.TemplateResponse(
@@ -120,7 +120,7 @@ async def lessio_register_submit(
     password: Annotated[str, Form()],
     session: AsyncSession = Depends(get_session),  # noqa: B008
 ) -> Response:
-    ip = request.client.host if request.client else None
+    ip = client_ip(request)
     # Лимит регистрации привязан к IP — 5 попыток в минуту с одного айпи.
     # Защита от bot-флуда / massre-account создания.
     if not hit(client_key(ip, "lessio_register"), max_calls=5, per_seconds=60):

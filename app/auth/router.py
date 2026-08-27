@@ -8,9 +8,10 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from pydantic import ValidationError
 
+from app.auth import antibot
 from app.auth.deps import DbSession
 from app.auth.email import send_verification_email
-from app.auth.rate_limit import client_key, hit, reset
+from app.auth.rate_limit import client_ip, client_key, hit, reset
 from app.auth.schemas import RegisterIn
 from app.auth.security import (
     InvalidToken,
@@ -31,6 +32,9 @@ _log = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 templates = Jinja2Templates(directory="app/templates")
+# Подписанная метка времени отрисовки формы — шаблон берёт её сам, чтобы не
+# прокидывать через каждый из шести рендеров register.html.
+templates.env.globals["form_token"] = antibot.issue_form_token
 
 
 @router.get("/register", response_class=HTMLResponse)
@@ -47,6 +51,7 @@ async def register_submit(
     agree_privacy: Annotated[str | None, Form()] = None,
     website: Annotated[str, Form()] = "",  # honeypot: люди это поле не видят
     captcha_token: Annotated[str, Form(alias="g-recaptcha-response")] = "",  # токен reCAPTCHA
+    form_ts: Annotated[str, Form()] = "",  # метка времени отрисовки формы
 ) -> HTMLResponse | RedirectResponse:
     # Honeypot: бот заполнил скрытое поле — отвечаем как на «успех», но аккаунт
     # НЕ создаём. Так поток бот-регистраций с левыми емейлами обрывается, а бот
@@ -54,8 +59,11 @@ async def register_submit(
     if website.strip():
         return RedirectResponse(url="/auth/verify-pending?signup=1", status_code=303)
 
-    ip = request.client.host if request.client else None
-    if not hit(client_key(ip, "register"), max_calls=5, per_seconds=60):
+    ip = client_ip(request)
+    # Было 5 в минуту (7200 в сутки) — этого хватило, чтобы за раз завели
+    # 170 аккаунтов. Оставляем короткий всплеск на опечатки в форме, а
+    # настоящее ограничение считается по БД ниже.
+    if not hit(client_key(ip, "register"), max_calls=3, per_seconds=600):
         return templates.TemplateResponse(
             request,
             "auth/register.html",
@@ -94,6 +102,22 @@ async def register_submit(
             status_code=400,
         )
 
+    # Три проверки против массовой регистрации. Порядок от дешёвых к дорогим:
+    # разбор строки, потом счёт по БД.
+    try:
+        antibot.check_form_timing(form_ts)
+        antibot.check_email(payload.email)
+        await antibot.check_domain_deliverable(payload.email)
+        await antibot.check_signup_rate(session, ip)
+    except antibot.SignupRejected as exc:
+        _log.info("signup_rejected", code=exc.log_code, ip=ip)
+        return templates.TemplateResponse(
+            request,
+            "auth/register.html",
+            {"error": exc.reason},
+            status_code=400,
+        )
+
     try:
         user = await register_user(session, payload)
     except EmailAlreadyExists:
@@ -103,6 +127,12 @@ async def register_submit(
             {"error": "Этот email уже зарегистрирован."},
             status_code=400,
         )
+
+    # Откуда пришла регистрация — по этим полям считается частота.
+    user.signup_ip = ip
+    user.signup_subnet = antibot.subnet_of(ip)
+    session.add(user)
+    await session.commit()
 
     settings = get_settings()
     token = create_email_verification_token(str(user.id))
@@ -178,7 +208,7 @@ async def login_submit(
     email: Annotated[str, Form()],
     password: Annotated[str, Form()],
 ) -> HTMLResponse | RedirectResponse:
-    ip = request.client.host if request.client else None
+    ip = client_ip(request)
     rl_key = client_key(ip, f"login:{email.lower()}")
     if not hit(rl_key, max_calls=10, per_seconds=60):
         return templates.TemplateResponse(

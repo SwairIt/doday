@@ -61,6 +61,11 @@ class User(Base):
     # is in the future; otherwise falls back to trial / free. Payment via
     # Telegram Stars extends this — see app/billing/stars.py.
     pro_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Адрес и подсеть, с которых пришла регистрация. Нужны, чтобы считать
+    # частоту регистраций по БД, а не по счётчику в памяти: деплой
+    # перезапускает процесс и обнулял бы защиту.
+    signup_ip: Mapped[str | None] = mapped_column(String(45), nullable=True, index=True)
+    signup_subnet: Mapped[str | None] = mapped_column(String(45), nullable=True, index=True)
     # Согласие с условиями ИИ-помощника: 18+, ответы генерирует нейросеть,
     # запросы уходят провайдеру, чей ключ подключён. Показывается один раз.
     ai_terms_accepted_at: Mapped[datetime | None] = mapped_column(

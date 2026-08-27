@@ -6,7 +6,8 @@ not rolled back, because app code calls .commit() during normal flow.
 """
 
 import asyncio
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterator
+from datetime import UTC, datetime
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -93,6 +94,38 @@ def _disable_beta_free_for_all() -> None:
     BETA_FREE_FOR_ALL=true (set during Habr-launch beta) so unit-tests see the
     default tier semantics. Re-enabled only by tests that explicitly opt-in."""
     _settings.beta_free_for_all = False
+
+
+@pytest.fixture(autouse=True)
+def _no_captcha() -> Iterator[None]:
+    """Локальный .env содержит ключи reCAPTCHA, CI — нет. Без токена форма
+    регистрации отклоняется раньше проверяемой логики, поэтому в тестах капчу
+    гасим: у неё свои тесты."""
+    site, secret = _settings.recaptcha_site_key, _settings.recaptcha_secret_key
+    _settings.recaptcha_site_key = ""
+    _settings.recaptcha_secret_key = ""
+    yield
+    _settings.recaptcha_site_key, _settings.recaptcha_secret_key = site, secret
+
+
+@pytest.fixture(autouse=True)
+def _skip_mx_lookup() -> Iterator[None]:
+    """Проверка домена ходит в DNS. В тестах это медленно и зависит от сети —
+    подменяем на «домен существует». Сама проверка покрыта в test_antibot."""
+    from app.auth import antibot
+
+    original = antibot._domain_has_mail
+    antibot._domain_has_mail = lambda domain: True  # type: ignore[assignment]
+    yield
+    antibot._domain_has_mail = original  # type: ignore[assignment]
+
+
+def signup_form_token(seconds_ago: float = 5.0) -> str:
+    """Подписанная метка «форма отрисована N секунд назад» — как в браузере."""
+    from app.auth.antibot import _sign
+
+    ts = f"{datetime.now(UTC).timestamp() - seconds_ago:.0f}"
+    return f"{ts}.{_sign(ts)}"
 
 
 @pytest.fixture

@@ -83,7 +83,9 @@
              аккаунт не создаётся. #}
           <div aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;height:0;width:0;overflow:hidden">
             <label for="website">Не заполняйте это поле</label>
-            <input type="text" name="website" id="website" tabindex="-1" autocomplete="off">
+            {# Метка времени отрисовки: форма, отправленная мгновенно, заполнена ботом. #}
+        <input type="hidden" name="form_ts" value="{{ form_token() }}">
+        <input type="text" name="website" id="website" tabindex="-1" autocomplete="off">
           </div>
           <div class="floating-label relative">
             <input type="email" name="email" id="email" required placeholder=" "

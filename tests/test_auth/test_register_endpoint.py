@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import User
+from tests.conftest import signup_form_token
 
 
 @pytest.fixture(autouse=True)
@@ -29,6 +30,7 @@ async def test_register_creates_user_and_sends_email(
             "email": "kid@school.ru",
             "password": "strongpass123",
             "agree_privacy": "on",
+            "form_ts": signup_form_token(),
         },
         follow_redirects=False,
     )
@@ -51,10 +53,12 @@ async def test_register_duplicate_email(
         "email": "dup@school.ru",
         "password": "strongpass123",
         "agree_privacy": "on",
+        "form_ts": signup_form_token(),
     }
     first = await client.post("/auth/register", data=payload)
     assert first.status_code in (200, 303)
 
+    payload["form_ts"] = signup_form_token()
     second = await client.post("/auth/register", data=payload)
     assert second.status_code == 400
     assert "уже зарегистрирован" in second.text

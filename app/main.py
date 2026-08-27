@@ -418,14 +418,14 @@ async def _lessio_anon_rate_limit(
     Только GET. POST на /u/<slug>/book имеет свою защиту через slot-conflict
     и CSRF — отдельно тут не лимитируем.
     """
-    from app.auth.rate_limit import hit
+    from app.auth.rate_limit import client_ip, hit
 
     if request.method != "GET":
         return await call_next(request)
     path = request.url.path
     if not any(path.startswith(p) for p in _ANON_LESSIO_PREFIXES):
         return await call_next(request)
-    ip = request.client.host if request.client else "unknown"
+    ip = client_ip(request) or "unknown"
     # 120 в минуту — щедро для людей, блок ботов вообще-абуза.
     if not hit(f"anon_lessio:{ip}", max_calls=120, per_seconds=60):
         return PlainTextResponse(

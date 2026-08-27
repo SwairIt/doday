@@ -7,8 +7,8 @@ from app.auth.rate_limit import reset_all
 
 async def test_register_rate_limit_kicks_in(client: AsyncClient) -> None:
     reset_all()
-    # 5 attempts allowed per minute → 6th is 429.
-    for _ in range(5):
+    # 3 попытки за 10 минут → четвёртая 429 (было 5/мин = 7200 в сутки).
+    for _ in range(3):
         r = await client.post(
             "/auth/register",
             data={

@@ -8,7 +8,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
 
 from app.auth.deps import CurrentUser, DbSession, RequiredUser
-from app.auth.rate_limit import client_key, hit
+from app.auth.rate_limit import client_ip, client_key, hit
 from app.blog.posts import CATEGORY_BY_SLUG, all_posts, featured_posts
 from app.config import get_settings
 from app.pages.changelog_data import ENTRIES as CHANGELOG_ENTRIES
@@ -170,7 +170,7 @@ async def support_submit(
     if website.strip():
         return RedirectResponse(url="/support?sent=1", status_code=303)
 
-    ip = request.client.host if request.client else None
+    ip = client_ip(request)
     if not hit(client_key(ip, "support"), max_calls=5, per_seconds=600):
         return templates.TemplateResponse(
             request,
