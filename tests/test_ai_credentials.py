@@ -467,12 +467,13 @@ async def test_yandex_is_available_and_needs_folder_id(
 
 
 def test_key_format_is_never_validated() -> None:
-    """Ключи выглядят по-разному: AIza у Google, AQVN у Yandex, sk- у прочих.
+    """Ключи выглядят по-разному: AQ.Ab у Google (раньше был AIza), AQVN у
+    Yandex, sk- у прочих.
 
     Проверять формат нельзя — принимаем любой, а прав он или нет, скажет
     сам провайдер.
     """
     from app.ai.schemas import CredentialIn
 
-    for key in ("AIzaSyABC1234567890", "AQVNabcdef1234567890", "sk-proj-1234567890"):
+    for key in ("AQ.Ab8RN6abcdef123", "AIzaSyABC1234567890", "AQVNabcdef1234567890", "sk-1234"):
         assert CredentialIn(provider="custom", api_key=key).api_key == key
