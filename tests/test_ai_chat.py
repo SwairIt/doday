@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from collections.abc import AsyncIterator
 from uuid import UUID, uuid4
 
@@ -322,7 +323,7 @@ async def test_sidebar_has_ai_link(logged_in_client: AsyncClient) -> None:
 async def test_task_detail_has_ask_ai_button(logged_in_client: AsyncClient) -> None:
     task = (await logged_in_client.post("/api/tasks", json={"title": "Алгебра № 214"})).json()
     html = (await logged_in_client.get(f"/htmx/tasks/{task['id']}/detail")).text
-    assert "Спросить ИИ" in html
+    assert "Отправить в ИИ" in html
     assert f"/app/ai?task={task['id']}" in html
 
 
@@ -380,3 +381,69 @@ async def test_service_and_chat_are_independent(
     await ai_chat.save_message(db_session, chat_user_id, role="user", content="вопрос")
     await ai_service.delete_credential(db_session, chat_user_id)
     assert await ai_chat.messages_count(db_session, chat_user_id) == 1
+
+
+async def test_answer_survives_leaving_the_page(
+    logged_in_client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Ответ пишется в базу по ходу генерации.
+
+    Раньше сохранение стояло в finally, и если человек уходил со страницы,
+    генератор обрывался — прочитанный ответ пропадал целиком.
+    """
+    await logged_in_client.post("/api/ai/terms/accept")
+    await logged_in_client.put(
+        "/api/ai/credential", json={"provider": "cloudru", "api_key": "sk-partial-1234"}
+    )
+
+    long_chunk = "а" * 150
+
+    async def half_answer(**kwargs: object) -> AsyncIterator[str]:
+        yield long_chunk
+        raise RuntimeError("клиент отвалился")
+
+    monkeypatch.setattr("app.ai.router.stream_completion", half_answer)
+    with contextlib.suppress(Exception):
+        await logged_in_client.post("/api/ai/stream", json={"prompt": "расскажи длинно"})
+
+    state = (await logged_in_client.get("/api/ai/state")).json()
+    stored = [m["content"] for m in state["messages"] if m["role"] == "assistant"]
+    assert stored, "частичный ответ обязан остаться в истории"
+    assert long_chunk in stored[-1]
+
+
+async def test_several_tasks_go_to_the_model_as_context(
+    logged_in_client: AsyncClient, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """«Выбрать несколько задач» — контекст всех уходит в запрос."""
+    from sqlalchemy import select
+
+    from app.auth.models import User
+    from app.tasks.service import create_task
+
+    await logged_in_client.post("/api/ai/terms/accept")
+    await logged_in_client.put(
+        "/api/ai/credential", json={"provider": "cloudru", "api_key": "sk-multi-1234"}
+    )
+    user = (
+        await db_session.execute(select(User).where(User.email == "logged-in@example.com"))
+    ).scalar_one()
+    first = await create_task(db_session, user.id, title="Физика параграф 12")
+    second = await create_task(db_session, user.id, title="Сочинение по Пушкину")
+    await db_session.commit()
+
+    seen: dict[str, object] = {}
+
+    async def capture(**kwargs: object) -> AsyncIterator[str]:
+        seen.update(kwargs)
+        yield "ок"
+
+    monkeypatch.setattr("app.ai.router.stream_completion", capture)
+    r = await logged_in_client.post(
+        "/api/ai/stream",
+        json={"prompt": "что делать сначала?", "task_ids": [str(first.id), str(second.id)]},
+    )
+    assert r.status_code == 200
+    system = str(seen["messages"][0]["content"])  # type: ignore[index]
+    assert "Физика параграф 12" in system
+    assert "Сочинение по Пушкину" in system

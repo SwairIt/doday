@@ -59,4 +59,8 @@ class ModelIn(BaseModel):
 
 class AskIn(BaseModel):
     prompt: str = Field(min_length=1, max_length=4000)
+    # Задача, к которой привязана ветка переписки.
     task_id: str | None = None
+    # Задачи, приложенные к вопросу как контекст: «что делать сначала»,
+    # «сколько это займёт». Историю не разделяют, только уходят модели.
+    task_ids: list[str] = Field(default_factory=list, max_length=5)

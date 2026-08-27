@@ -127,6 +127,44 @@
       <p class="text-sm text-rose-400 mb-3" x-show="error" x-text="error"></p>
       <p class="text-sm text-amber-400 mb-3" x-show="warning" x-text="warning"></p>
 
+      {# Приложенные задачи: их текст уходит модели как контекст #}
+      <div class="mb-2">
+        <div class="flex items-center gap-2 flex-wrap">
+          <button type="button"
+                  class="px-3 py-1.5 rounded-full border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-muted)] hover:text-[var(--text)] hover:border-[var(--accent)] transition"
+                  @click="toggleTaskPicker()">
+            📋 Выбрать задачи
+          </button>
+          <template x-for="t in attached" :key="t.id">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--accent)]/12 text-[var(--accent)] text-sm">
+              <span x-text="t.title.length > 40 ? t.title.slice(0, 40) + '…' : t.title"></span>
+              <button type="button" class="hover:opacity-70" @click="detach(t.id)">✕</button>
+            </span>
+          </template>
+        </div>
+
+        <div class="card p-3 mt-2" x-show="taskPickerOpen" x-cloak>
+          <input class="input w-full mb-2 !py-1.5 text-sm" placeholder="Найти задачу…"
+                 x-model="taskSearch">
+          <p class="text-xs text-[var(--text-muted)] mb-2" x-show="!filteredTasks().length">
+            Незавершённых задач не нашлось.
+          </p>
+          <div class="max-h-56 overflow-y-auto space-y-1">
+            <template x-for="t in filteredTasks()" :key="t.id">
+              <button type="button"
+                      class="w-full text-left px-2.5 py-1.5 rounded-lg text-sm hover:bg-[var(--surface-2)] flex items-center gap-2"
+                      @click="attach(t)">
+                <span class="text-[var(--text-muted)]" x-text="isAttached(t.id) ? '☑' : '☐'"></span>
+                <span x-text="t.title"></span>
+              </button>
+            </template>
+          </div>
+          <p class="text-xs text-[var(--text-muted)] mt-2">
+            Можно выбрать до пяти — их названия, описания и сроки уйдут модели вместе с вопросом.
+          </p>
+        </div>
+      </div>
+
       {# Шаблоны вопросов #}
       <div class="flex gap-2 overflow-x-auto pb-2 mb-2">
         <template x-for="t in state.templates" :key="t.label">
@@ -156,6 +194,41 @@
       state: null, messages: [], prompt: '', streamText: '',
       streaming: false, busy: false, error: '', warning: '',
       controller: null, modelOpen: false, modelDraft: '',
+      tasks: [], attached: [], taskPickerOpen: false, taskSearch: '',
+
+      async loadTasks() {
+        if (this.tasks.length) return;
+        try {
+          const r = await fetch('/api/tasks', { credentials: 'include' });
+          if (r.ok) this.tasks = await r.json();
+        } catch (e) { /* без списка задач чат всё равно работает */ }
+      },
+
+      async toggleTaskPicker() {
+        this.taskPickerOpen = !this.taskPickerOpen;
+        if (this.taskPickerOpen) await this.loadTasks();
+      },
+
+      filteredTasks() {
+        const q = this.taskSearch.trim().toLowerCase();
+        const rows = q ? this.tasks.filter(t => t.title.toLowerCase().includes(q)) : this.tasks;
+        return rows.slice(0, 50);
+      },
+
+      isAttached(id) { return this.attached.some(t => t.id === id); },
+
+      attach(task) {
+        if (this.isAttached(task.id)) { this.detach(task.id); return; }
+        // Пять — предел контекста на сервере: больше просто не уедет.
+        if (this.attached.length >= 5) {
+          this.warning = 'Больше пяти задач за раз не отправить.';
+          return;
+        }
+        this.attached.push({ id: task.id, title: task.title });
+      },
+
+      detach(id) { this.attached = this.attached.filter(t => t.id !== id); },
+
 
       async saveModel() {
         this.busy = true; this.error = '';
@@ -188,7 +261,24 @@
         this.state = await r.json();
         this.messages = this.state.messages;
         this.modelDraft = this.state.model || '';
-        this.$nextTick(() => this.scrollDown());
+
+        // Пришли из задачи: показываем её плашкой и подставляем начало вопроса,
+        // чтобы не пришлось пересказывать условие руками.
+        if (this.taskId) {
+          await this.loadTasks();
+          const task = this.tasks.find(t => t.id === this.taskId);
+          if (task) {
+            if (!this.isAttached(task.id)) this.attached.push({ id: task.id, title: task.title });
+            if (!this.prompt && !this.messages.length) {
+              this.prompt = 'Помоги с задачей «' + task.title + '»: ';
+            }
+          }
+        }
+        this.$nextTick(() => {
+          this.scrollDown();
+          const el = this.$refs.input;
+          if (el && this.prompt) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+        });
       },
 
       async acceptTerms() {
@@ -248,7 +338,11 @@
           const r = await fetch('/api/ai/stream', {
             method: 'POST', credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: text, task_id: this.taskId }),
+            body: JSON.stringify({
+              prompt: text,
+              task_id: this.taskId,
+              task_ids: this.attached.map(t => t.id),
+            }),
             signal: this.controller.signal,
           });
           if (!r.ok) {

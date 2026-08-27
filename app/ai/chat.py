@@ -112,6 +112,34 @@ async def save_message(
     return message
 
 
+async def save_answer_progress(
+    session: AsyncSession,
+    user_id: UUID,
+    *,
+    task_id: UUID | None,
+    message_id: UUID | None,
+    content: str,
+) -> UUID:
+    """Записать ответ модели прямо во время генерации.
+
+    Раньше ответ сохранялся один раз, в конце. Если человек закрывал вкладку
+    или уходил на другую страницу, генератор обрывался — и весь ответ, который
+    он уже прочитал, пропадал: в истории не оставалось ничего. Теперь строка
+    дописывается по ходу, так что в базе всегда лежит то, что было на экране.
+    """
+    if message_id is not None:
+        existing = await session.get(AiMessage, message_id)
+        if existing is not None:
+            existing.content = content
+            await session.commit()
+            return message_id
+    message = AiMessage(user_id=user_id, task_id=task_id, role="assistant", content=content)
+    session.add(message)
+    await session.commit()
+    await session.refresh(message)
+    return message.id
+
+
 async def clear_thread(session: AsyncSession, user_id: UUID, task_id: UUID | None) -> int:
     """Удалить переписку. Возвращает число удалённых сообщений."""
     rows = await history(session, user_id, task_id, limit=10_000)
@@ -119,6 +147,22 @@ async def clear_thread(session: AsyncSession, user_id: UUID, task_id: UUID | Non
         await session.delete(row)
     await session.commit()
     return len(rows)
+
+
+async def tasks_context(
+    session: AsyncSession, user_id: UUID, task_ids: list[UUID], limit: int = 5
+) -> str | None:
+    """Описание нескольких задач разом — для вопросов вида «что делать сначала».
+
+    Больше пяти не берём: контекст улетает в каждый запрос, за него платит
+    пользователь, а модель на длинном списке начинает путаться.
+    """
+    parts = []
+    for task_id in task_ids[:limit]:
+        one = await task_context(session, user_id, task_id)
+        if one:
+            parts.append(one)
+    return "\n\n".join(parts) if parts else None
 
 
 async def task_context(session: AsyncSession, user_id: UUID, task_id: UUID) -> str | None:

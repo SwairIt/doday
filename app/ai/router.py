@@ -7,6 +7,7 @@ from dataclasses import asdict
 from datetime import UTC, datetime
 from uuid import UUID
 
+import structlog
 from fastapi import APIRouter, HTTPException, Response, status
 from fastapi.responses import StreamingResponse
 
@@ -29,7 +30,14 @@ from app.ai.schemas import (
 from app.ai.service import UnknownProvider
 from app.auth.deps import DbSession, RequiredUser
 
+logger = structlog.get_logger(__name__)
+
 router = APIRouter(prefix="/api/ai", tags=["ai"])
+
+# Как часто дописывать ответ в базу во время генерации. Сотня символов —
+# примерно раз в пару секунд: и прочитанное не теряется, и база не получает
+# запись на каждое слово.
+_SAVE_EVERY_CHARS = 100
 
 
 def _to_out(cred: AiCredential) -> CredentialOut:
@@ -204,7 +212,10 @@ async def stream_answer(
             f"На сегодня всё: {exc.used} из {exc.limit} запросов. Лимит обновится завтра.",
         ) from exc
 
-    context = await ai_chat.task_context(session, user.id, task_id) if task_id else None
+    attached = [t for t in (_parse_task_id(x) for x in payload.task_ids) if t is not None]
+    if task_id is not None and task_id not in attached:
+        attached.insert(0, task_id)
+    context = await ai_chat.tasks_context(session, user.id, attached) if attached else None
     past = await ai_chat.history(session, user.id, task_id)
     try:
         messages = ai_chat.build_messages(payload.prompt, past, context)
@@ -217,31 +228,44 @@ async def stream_answer(
 
     async def events() -> AsyncIterator[str]:
         collected: list[str] = []
+        # Ответ пишем в базу прямо по ходу генерации, а не в конце. Раньше
+        # сохранение стояло в finally: человек уходил со страницы, генератор
+        # обрывался — и весь прочитанный им ответ пропадал бесследно.
+        saved_id: UUID | None = None
+        saved_len = 0
         try:
             async for chunk in stream_completion(
                 base_url=base_url, api_key=api_key, model=model, messages=messages
             ):
                 collected.append(chunk)
                 yield f"data: {chunk.replace(chr(10), chr(92) + 'n')}\n\n"
+                text = "".join(collected)
+                if len(text) - saved_len >= _SAVE_EVERY_CHARS:
+                    saved_id = await ai_chat.save_answer_progress(
+                        session, user.id, task_id=task_id, message_id=saved_id, content=text
+                    )
+                    saved_len = len(text)
         except AiProviderError as exc:
             yield f"event: error\ndata: {exc.user_message}\n\n"
             return
-        finally:
-            # Сохраняем даже частичный ответ: пользователь его уже прочитал,
-            # и в истории он должен остаться. Пустой — не пишем.
-            answer = "".join(collected).strip()
-            if answer:
-                unsafe = is_unsafe_for_children(answer)
-                stored = (
-                    "Ответ скрыт: тема не подходит для сервиса, которым пользуются школьники."
-                    if unsafe
-                    else answer
-                )
-                await ai_chat.save_message(
-                    session, user.id, role="assistant", content=stored, task_id=task_id
-                )
-                if unsafe:
-                    yield f"event: blocked\ndata: {stored}\n\n"
+
+        # Финальная запись — после цикла, а не в finally. Если соединение
+        # оборвалось, сюда мы просто не дойдём, и это нормально: прочитанное
+        # уже сохранено по ходу. Писать в finally нельзя — при обрыве там
+        # некуда yield'ить и не с чем работать: сессия уже закрывается.
+        answer = "".join(collected).strip()
+        if answer:
+            unsafe = is_unsafe_for_children(answer)
+            stored = (
+                "Ответ скрыт: тема не подходит для сервиса, которым пользуются школьники."
+                if unsafe
+                else answer
+            )
+            saved_id = await ai_chat.save_answer_progress(
+                session, user.id, task_id=task_id, message_id=saved_id, content=stored
+            )
+            if unsafe:
+                yield f"event: blocked\ndata: {stored}\n\n"
         yield "event: done\ndata: ok\n\n"
 
     return StreamingResponse(
