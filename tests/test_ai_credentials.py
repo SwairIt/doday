@@ -107,10 +107,10 @@ async def test_upsert_replaces_existing(db_session: AsyncSession, ai_user_id: UU
     )
     first_id = first.id
     second = await ai_service.upsert_credential(
-        db_session, ai_user_id, provider="mistral", api_key="sk-second-2222"
+        db_session, ai_user_id, provider="proxyapi", api_key="sk-second-2222"
     )
     assert first_id == second.id, "один ключ на пользователя — запись обновляется"
-    assert second.provider == "mistral"
+    assert second.provider == "proxyapi"
     assert second.key_last4 == "2222"
 
 
@@ -236,7 +236,7 @@ async def test_providers_endpoint(logged_in_client: AsyncClient) -> None:
     assert r.status_code == 200
     body = r.json()
     keys = {p["key"] for p in body}
-    assert {"cloudru", "mistral", "custom"} <= keys
+    assert {"cloudru", "yandex", "proxyapi", "custom"} <= keys
     assert all("hint" in p for p in body)
 
 
@@ -369,9 +369,9 @@ async def test_known_provider_does_not_resolve_dns(
 
     monkeypatch.setattr("app.ai.service.socket.getaddrinfo", boom)
     cred = await ai_service.upsert_credential(
-        db_session, ai_user_id, provider="mistral", api_key="sk-known-1111"
+        db_session, ai_user_id, provider="proxyapi", api_key="sk-known-1111"
     )
-    assert cred.provider == "mistral"
+    assert cred.provider == "proxyapi"
 
 
 # ── справочник провайдеров ────────────────────────────────────────────────
@@ -569,9 +569,12 @@ def test_provider_detail_strips_html_and_truncates() -> None:
     assert len(detail) <= 300
 
 
-def test_free_providers_go_first() -> None:
-    """Человек, который не готов платить, должен видеть бесплатное сразу —
-    а не листать список до конца."""
-    assert PROVIDERS[0].key == "ionet"
-    assert "бесплатно" in PROVIDERS[0].price
-    assert get_provider("ionet") is not None
+def test_only_russian_providers_are_offered() -> None:
+    """Запрос к зарубежному провайдеру — трансграничная передача данных.
+
+    Она требует отдельного уведомления в Роскомнадзор, а аудитория у нас
+    несовершеннолетняя. Пока это не оформлено, в списке только российские.
+    """
+    assert [p.key for p in PROVIDERS] == ["cloudru", "yandex", "proxyapi", CUSTOM_KEY]
+    for foreign in ("mistral", "deepseek", "together", "ionet", "gemini"):
+        assert get_provider(foreign) is None, foreign
