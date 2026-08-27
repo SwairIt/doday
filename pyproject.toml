@@ -189,6 +189,7 @@ ignore = [
 "app/taptower_proxy.py" = ["RUF001", "RUF002", "RUF003"]         # Russian comments
 "app/school/crypto.py" = ["RUF001", "RUF002", "RUF003"]           # Russian docstrings
 "app/auth/deps.py" = ["RUF001", "RUF002", "RUF003"]               # Russian note on session epoch
+"scripts/purge_unverified.py" = ["RUF001", "RUF002", "RUF003"]    # Russian CLI output
 "app/school/models.py" = ["RUF001", "RUF002", "RUF003"]           # Russian note on auth_token
 "app/auth/rate_limit.py" = ["RUF001", "RUF002", "RUF003"]         # Russian note on X-Forwarded-For
 "tests/test_antibot.py" = ["RUF001", "RUF002", "RUF003"]

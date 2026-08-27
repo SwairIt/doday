@@ -133,6 +133,7 @@ async def register_submit(
     user.signup_subnet = antibot.subnet_of(ip)
     session.add(user)
     await session.commit()
+    await antibot.notify_if_spike(session)
 
     settings = get_settings()
     token = create_email_verification_token(str(user.id))

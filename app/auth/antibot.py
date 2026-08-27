@@ -20,8 +20,10 @@ import hmac
 import re
 from datetime import UTC, datetime, timedelta
 from functools import lru_cache
+from time import monotonic
 
 import anyio
+import structlog
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -41,6 +43,9 @@ MIN_FORM_SECONDS = 2.0
 # Верхняя граница — защита от подделки метки времени «из будущего» и от
 # случая, когда вкладку открыли вчера и забыли.
 MAX_FORM_SECONDS = 60 * 60 * 6
+
+
+_log = structlog.get_logger(__name__)
 
 
 class SignupRejected(Exception):
@@ -275,3 +280,45 @@ async def check_domain_deliverable(email: str) -> None:
                 "Домен этой почты не существует — проверь адрес.",
                 log_code="no_mx",
             )
+
+
+# ── сигнализация ──────────────────────────────────────────────────────────
+
+# Обычный фон регистраций — единицы в час. Столько за час это уже волна.
+SPIKE_PER_HOUR = 20
+
+# Чтобы во время волны не отправить владельцу сотню писем подряд.
+_ALERT_COOLDOWN_SECONDS = 3600.0
+_last_alert_at = 0.0
+
+
+async def notify_if_spike(session: AsyncSession) -> None:
+    """Написать владельцу, если регистраций за час стало подозрительно много.
+
+    Прошлую волну в 170 аккаунтов заметили постфактум, разбирая базу вручную.
+    Best-effort: любая ошибка здесь не должна ломать регистрацию.
+    """
+    global _last_alert_at
+
+    now = monotonic()
+    if now - _last_alert_at < _ALERT_COOLDOWN_SECONDS:
+        return
+
+    since = datetime.now(UTC) - timedelta(hours=1)
+    count = await session.scalar(
+        select(func.count()).select_from(User).where(User.created_at >= since)
+    )
+    if (count or 0) < SPIKE_PER_HOUR:
+        return
+
+    _last_alert_at = now
+    settings = get_settings()
+    to = settings.root_admin_email
+    if not to:
+        return
+    try:
+        from app.auth.email import send_signup_spike_alert
+
+        await send_signup_spike_alert(to=to, count=count or 0)
+    except Exception:
+        _log.warning("signup_spike_alert_failed", count=count)

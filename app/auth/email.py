@@ -252,6 +252,34 @@ async def send_support_notification(
     )
 
 
+async def send_signup_spike_alert(*, to: str, count: int, window_hours: int = 1) -> None:
+    """Письмо владельцу о всплеске регистраций.
+
+    170 ботов в прошлый раз заметили постфактум, разбирая базу. Сигнализация
+    дешевле любой защиты: даже если очередная волна пройдёт мимо фильтров, о
+    ней будет известно в тот же час.
+    """
+    settings = get_settings()
+    msg = EmailMessage()
+    msg["From"] = f"Doday <{settings.smtp_from}>"
+    msg["To"] = to
+    msg["Subject"] = f"⚠️ Всплеск регистраций: {count} за {window_hours} ч"
+    msg.set_content(
+        f"За последний час на Doday зарегистрировалось {count} аккаунтов.\n\n"
+        "Обычный фон — единицы в час. Стоит заглянуть в базу: если это боты, "
+        "они видны по неподтверждённой почте и отсутствию задач.\n\n"
+        "Проверить и удалить: uv run python scripts/purge_unverified.py\n"
+    )
+    await aiosmtplib.send(
+        msg,
+        hostname=settings.smtp_host,
+        port=settings.smtp_port,
+        username=settings.smtp_username or None,
+        password=settings.smtp_password or None,
+        start_tls=settings.smtp_start_tls,
+    )
+
+
 async def send_support_reply_to_user(*, to: str, subject: str, title: str, body: str) -> None:
     """Письмо АВТОРУ обращения: ответ поддержки или «взяли в работу».
 
