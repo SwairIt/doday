@@ -114,9 +114,18 @@ async def test_upsert_replaces_existing(db_session: AsyncSession, ai_user_id: UU
     assert second.key_last4 == "2222"
 
 
+def _resolves_to(monkeypatch: pytest.MonkeyPatch, ip: str) -> None:
+    """Подменить резолвер: тесты не должны ходить в DNS."""
+    monkeypatch.setattr(
+        "app.ai.service.socket.getaddrinfo",
+        lambda host, port: [(2, 1, 6, "", (ip, 0))],
+    )
+
+
 async def test_custom_provider_requires_url_and_model(
-    db_session: AsyncSession, ai_user_id: UUID
+    db_session: AsyncSession, ai_user_id: UUID, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    _resolves_to(monkeypatch, "93.184.216.34")
     cred = await ai_service.upsert_credential(
         db_session,
         ai_user_id,
@@ -315,3 +324,51 @@ async def test_verify_key_400_without_key_marker_points_at_url_and_model(
     with pytest.raises(AiProviderError) as exc:
         await verify_key(base_url="https://x.test/v1", api_key="sk-1", model="m")
     assert "адрес API" in exc.value.user_message
+
+
+# ── свой провайдер не должен вести во внутреннюю сеть ─────────────────────
+
+
+@pytest.mark.parametrize(
+    "ip",
+    [
+        "127.0.0.1",  # сам сервер
+        "10.0.0.5",  # локальная сеть
+        "192.168.33.3",  # панель хостинга
+        "172.16.4.4",
+        "169.254.169.254",  # метадата облака
+    ],
+)
+async def test_custom_provider_rejects_internal_address(
+    db_session: AsyncSession, ai_user_id: UUID, monkeypatch: pytest.MonkeyPatch, ip: str
+) -> None:
+    """Адрес, по которому потом ходит наш сервер, — это SSRF, если он внутренний.
+
+    Проверялась только схема https://, так что «свой провайдер» работал
+    сканером внутренней сети: коды ответа у нас разные для 401/404/429.
+    """
+    _resolves_to(monkeypatch, ip)
+    with pytest.raises(UnknownProvider):
+        await ai_service.upsert_credential(
+            db_session,
+            ai_user_id,
+            provider="custom",
+            api_key="sk-ssrf-9999",
+            base_url="https://internal.example/v1",
+            model="m",
+        )
+
+
+async def test_known_provider_does_not_resolve_dns(
+    db_session: AsyncSession, ai_user_id: UUID, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Для провайдеров из справочника адрес наш, ходить в DNS незачем."""
+
+    def boom(host: str, port: object) -> object:
+        raise AssertionError("резолвер не должен вызываться")
+
+    monkeypatch.setattr("app.ai.service.socket.getaddrinfo", boom)
+    cred = await ai_service.upsert_credential(
+        db_session, ai_user_id, provider="mistral", api_key="sk-known-1111"
+    )
+    assert cred.provider == "mistral"

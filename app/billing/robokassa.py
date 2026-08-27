@@ -19,6 +19,7 @@
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
 import logging
 from decimal import Decimal
@@ -139,7 +140,10 @@ def verify_result(out_sum: str, inv_id: str, signature: str, shp: dict[str, str]
     # Уведомление тестового платежа подписано тестовым Паролем №2.
     password2 = s.robokassa_test_password2 if s.robokassa_test_mode else s.robokassa_password2
     expected = _hash(f"{out_sum}:{inv_id}:{password2}{shp_part}")
-    ok = expected.lower() == signature.lower()
+    # Сравнение постоянного времени: обычное == выходит из цикла на первом
+    # несовпавшем символе и в теории подсказывает подбирающему длину общего
+    # префикса.
+    ok = hmac.compare_digest(expected.lower(), signature.lower())
     if not ok:
         logger.warning("подпись Robokassa не совпала: inv_id=%s", inv_id)
     return ok

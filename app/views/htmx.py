@@ -1,5 +1,6 @@
 """HTMX-target endpoints — return HTML fragments rather than JSON."""
 
+import html
 from datetime import UTC, datetime, timedelta
 from typing import Annotated
 from uuid import UUID
@@ -455,8 +456,10 @@ async def create_section_inline(
         section = await create_section(session, user.id, project_id=project_id, name=name.strip())
     except ProjectNotFound as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "проект не найден") from e
+    # Имя секции — сырое поле формы, а ответ собирается строкой.
     return HTMLResponse(
-        f'<div class="text-xs text-emerald-400 px-3 py-1">Секция «{section.name}» создана</div>'
+        '<div class="text-xs text-emerald-400 px-3 py-1">'
+        f"Секция «{html.escape(section.name)}» создана</div>"
     )
 
 

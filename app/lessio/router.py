@@ -16,6 +16,7 @@ Booking endpoints (MVP-phase, заглушки на 503):
 
 from __future__ import annotations
 
+import html
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, Header, HTTPException, Request
@@ -184,11 +185,16 @@ async def miniapp_cabinet(
         )
 
     # MVP: cabinet.html будет в следующем chunk'e. Сейчас — placeholder.
+    # display_name приходит из формы без ограничений, а страница собирается
+    # строкой — экранируем, иначе своё же имя выполняется как скрипт внутри
+    # Telegram-webview, где доступен window.Telegram.WebApp.
+    name = html.escape(profile.display_name)
     return HTMLResponse(
-        f'<!doctype html><meta charset="utf-8"><title>{profile.display_name}</title>'
+        f'<!doctype html><meta charset="utf-8"><title>{name}</title>'
         "<style>body{font-family:sans-serif;background:#0f0a1f;color:#f5f3ff;padding:2em;}</style>"
-        f"<h1>Привет, {profile.display_name}!</h1>"
-        f"<p>Slug: <code>{profile.slug}</code> · ниша: {profile.niche}</p>"
+        f"<h1>Привет, {name}!</h1>"
+        f"<p>Slug: <code>{html.escape(profile.slug)}</code> · "
+        f"ниша: {html.escape(profile.niche)}</p>"
         '<p style="color:#a78bfa">Кабинет (booking, услуги, статистика) — '
         "в разработке. Появится после фазы валидации.</p>"
         f"<p>User id: {user.id}</p>"
@@ -268,7 +274,8 @@ async def miniapp_onboard_submit(
         )
     except OnboardError as exc:
         return HTMLResponse(
-            f'<div class="rounded-xl bg-rose-500/15 px-5 py-4 text-rose-300">❌ {exc}</div>',
+            f'<div class="rounded-xl bg-rose-500/15 px-5 py-4 text-rose-300">'
+            f"❌ {html.escape(str(exc))}</div>",
             status_code=400,
         )
     await session.commit()

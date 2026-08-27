@@ -2,9 +2,10 @@
 
 import csv
 import io
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 from fastapi.responses import Response
 
 from app.auth.deps import DbSession, RequiredUser
@@ -119,7 +120,12 @@ async def today_endpoint(user: RequiredUser, session: DbSession) -> list[TaskOut
 
 
 @router.get("/upcoming", response_model=list[TaskOut])
-async def upcoming_endpoint(user: RequiredUser, session: DbSession, days: int = 7) -> list[TaskOut]:
+async def upcoming_endpoint(
+    user: RequiredUser,
+    session: DbSession,
+    # Верхняя граница, чтобы ?days=100000 не заставлял базу перебирать годы.
+    days: Annotated[int, Query(ge=1, le=365)] = 7,
+) -> list[TaskOut]:
     return [TaskOut.model_validate(t) for t in await list_upcoming(session, user.id, days=days)]
 
 

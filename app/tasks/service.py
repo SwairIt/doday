@@ -71,6 +71,15 @@ async def create_task(
         # Ownership check; nesting depth is unrestricted (UI can drill down).
         await get_task(session, user_id, parent_task_id)
 
+    if section_id is not None:
+        from app.sections.service import get_section
+
+        # update_task checks both ownership and project match; creation didn't
+        # check anything, so a task could be filed into someone else's section.
+        section = await get_section(session, user_id, section_id)
+        if section.project_id != project_id:
+            raise ValueError("section belongs to a different project")
+
     last = (
         await session.execute(
             select(Task)
