@@ -51,6 +51,44 @@ class Provider:
 
 PROVIDERS: tuple[Provider, ...] = (
     Provider(
+        key="ionet",
+        title="io.net Intelligence",
+        base_url="https://api.intelligence.io.solutions/api/v1",
+        default_model="meta-llama/Llama-3.3-70B-Instruct",
+        signup_url="https://ai.io.net/ai/api-keys",
+        hint=(
+            "Бесплатно и без карты, открытые модели вроде Llama и Qwen. "
+            "Зарубежный: может отказать по стране запроса."
+        ),
+        price="бесплатно, без карты",
+        key_looks_like="io-v2-…",
+        steps=(
+            "Открой ai.io.net и зарегистрируйся — почта или Google, карта не нужна.",
+            "В меню слева выбери API Keys.",
+            "Нажми «Create API key», задай любое имя и скопируй ключ.",
+            "Вставь ключ в поле ниже и сохрани.",
+        ),
+    ),
+    Provider(
+        key="mistral",
+        title="Mistral",
+        base_url="https://api.mistral.ai/v1",
+        default_model="ministral-3-3b-2512",
+        signup_url="https://console.mistral.ai/api-keys",
+        hint=(
+            "Европейский провайдер, есть бесплатный тариф с ограничением частоты. "
+            "Зарубежный: может отказать по стране запроса."
+        ),
+        price="бесплатный тариф, нужен телефон",
+        key_looks_like="строка из 32 символов",
+        steps=(
+            "Зарегистрируйся на console.mistral.ai (нужен телефон для подтверждения).",
+            "Открой раздел API Keys и нажми «Create new key».",
+            "Скопируй ключ — второй раз его не покажут.",
+            "Вставь в поле ниже и сохрани.",
+        ),
+    ),
+    Provider(
         key="cloudru",
         title="Cloud.ru",
         base_url="https://foundation-models.api.cloud.ru/v1",
@@ -84,25 +122,6 @@ PROVIDERS: tuple[Provider, ...] = (
             "Нажми «Создать новый ключ» → «API-ключ». Скопируй его, он начинается на AQVN.",
             "Скопируй ID каталога — он в адресной строке консоли и выглядит как b1g….",
             "В поле «Модель» замени ID-КАТАЛОГА на свой: gpt://b1g…/yandexgpt-lite/latest",
-        ),
-    ),
-    Provider(
-        key="mistral",
-        title="Mistral",
-        base_url="https://api.mistral.ai/v1",
-        default_model="ministral-3-3b-2512",
-        signup_url="https://console.mistral.ai/api-keys",
-        hint=(
-            "Европейский провайдер, есть бесплатный тариф с ограничением частоты. "
-            "Зарубежный: может отказать по стране запроса."
-        ),
-        price="есть бесплатный тариф",
-        key_looks_like="строка из 32 символов",
-        steps=(
-            "Зарегистрируйся на console.mistral.ai (нужен телефон для подтверждения).",
-            "Открой раздел API Keys и нажми «Create new key».",
-            "Скопируй ключ — второй раз его не покажут.",
-            "Вставь в поле ниже и сохрани.",
         ),
     ),
     Provider(

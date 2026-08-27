@@ -567,3 +567,11 @@ def test_provider_detail_strips_html_and_truncates() -> None:
     detail = _sanitized_detail("<html><body>  Forbidden   </body></html>" + "x" * 600, "")
     assert "<" not in detail
     assert len(detail) <= 300
+
+
+def test_free_providers_go_first() -> None:
+    """Человек, который не готов платить, должен видеть бесплатное сразу —
+    а не листать список до конца."""
+    assert PROVIDERS[0].key == "ionet"
+    assert "бесплатно" in PROVIDERS[0].price
+    assert get_provider("ionet") is not None
