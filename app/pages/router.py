@@ -71,6 +71,34 @@ async def todoist_alternative(request: Request, user: CurrentUser) -> HTMLRespon
     return templates.TemplateResponse(request, "seo/todoist_alternative.html", {"user": user})
 
 
+@router.get("/habr-img/{name}", include_in_schema=False)
+async def habr_screenshot(name: str) -> Response:
+    """Скриншоты статьи по прямой ссылке.
+
+    Редактор Хабра в markdown-режиме вставляет только шаблон `![](url)` и
+    ждёт готовый адрес. Отдаём файлы из репозитория, чтобы их можно было
+    вставить сразу, не загружая никуда отдельно.
+
+    Имя проверяется по строгому шаблону: снаружи приходит только «s-01-...png»
+    и ничего кроме — обхода каталога тут быть не может.
+    """
+    import pathlib
+    import re
+
+    from fastapi import HTTPException, status
+
+    if not re.fullmatch(r"s-\d{2}-[a-z0-9-]+\.png", name):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "not found")
+    path = pathlib.Path("docs/habr-screenshots") / name
+    if not path.is_file():
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "not found")
+    return Response(
+        content=path.read_bytes(),
+        media_type="image/png",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
 @router.get("/marketing-preview/{slug}/raw", include_in_schema=False)
 async def marketing_preview_raw(slug: str) -> Response:
     """Serve the raw .md file as plain text — browser renders it as a text page,

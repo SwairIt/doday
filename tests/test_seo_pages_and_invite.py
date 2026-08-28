@@ -159,3 +159,17 @@ async def test_invite_modal_has_server_rendered_fallbacks(logged_in_client: Asyn
     assert "Копировать" in body
     # data-user-id attribute presence — JS reads from here.
     assert "data-user-id=" in body
+
+
+async def test_habr_screenshot_served(client: AsyncClient) -> None:
+    """Картинки статьи нужны по прямой ссылке: редактор Хабра в
+    markdown-режиме вставляет только шаблон и ждёт готовый адрес."""
+    r = await client.get("/habr-img/s-01-blog-index.png")
+    assert r.status_code == 200
+    assert r.headers["content-type"] == "image/png"
+    assert r.content[:4] == b"\x89PNG"
+
+
+async def test_habr_screenshot_rejects_anything_else(client: AsyncClient) -> None:
+    for name in ("../../.env", "..%2f..%2f.env", "secret.png", "s-99-nope.png"):
+        assert (await client.get(f"/habr-img/{name}")).status_code in (404, 400)
