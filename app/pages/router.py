@@ -91,10 +91,15 @@ async def marketing_preview_raw(slug: str) -> Response:
     path = pathlib.Path(sources.get(slug, f"docs/marketing/{slug}.md"))
     if not path.is_file():
         raise HTTPException(status.HTTP_404_NOT_FOUND, "file missing")
-    return Response(
-        content=path.read_text(encoding="utf-8"),
-        media_type="text/plain; charset=utf-8",
+    # Служебная шапка (блок цитаты с хабами и путями к скриншотам) нужна в
+    # репозитории, но не на площадке — иначе её пришлось бы стирать руками
+    # после каждой вставки.
+    body = "\n".join(
+        line
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if not line.startswith("> ") and line.strip() != ">"
     )
+    return Response(content=body, media_type="text/plain; charset=utf-8")
 
 
 @router.get("/marketing-preview/{slug}", response_class=HTMLResponse, include_in_schema=False)
