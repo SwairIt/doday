@@ -36,12 +36,35 @@ def main() -> None:
                 "(кнопка справа от поля), тогда форматирование останется чистым."
             ),
         },
+        "habr-bots-ai-seo": {
+            "title": "Хабр: 176 ботов, ИИ и 334 статьи",
+            "paste_target": "Хабр",
+            "source": "docs/articles/2026-08-27-habr-bots-ai-seo.md",
+            "platform_note": (
+                "У Хабра есть режим Markdown — включите его в редакторе и вставьте "
+                "исходник целиком со страницы /raw, тогда заголовки, таблицы и код "
+                "приедут как есть. Кнопка «Скопировать» ниже — запасной путь для "
+                "визуального редактора. После вставки загрузите шесть скриншотов из "
+                "docs/habr-screenshots и поставьте их туда, где в тексте курсивом "
+                "написано «Картинка: имя-файла.png» (сами эти строки удалите)."
+            ),
+        },
+        "english-bots-ai-seo": {
+            "title": "English: 176 bots, AI and 334 articles",
+            "paste_target": "dev.to / Reddit",
+            "source": "docs/articles/2026-08-27-english-bots-ai-seo.md",
+            "platform_note": (
+                "dev.to понимает Markdown напрямую — берите исходник со страницы /raw. "
+                "Для Reddit переключитесь в Markdown mode. Заголовок и обложку задайте "
+                "в самом редакторе, первую строку с # можно не вставлять."
+            ),
+        },
     }
 
     for slug, meta in posts.items():
-        md_path = Path(f"docs/marketing/{slug}.md")
+        md_path = Path(meta.get("source", f"docs/marketing/{slug}.md"))
         html_path = Path(f"docs/marketing/{slug}.html")
-        md_text = md_path.read_text(encoding="utf-8")
+        md_text = _strip_editorial_header(md_path.read_text(encoding="utf-8"))
         html_body = markdown.markdown(md_text, extensions=["extra", "sane_lists"])
 
         h2_headings = re.findall(r"<h2[^>]*>(.*?)</h2>", html_body, flags=re.DOTALL)
@@ -83,6 +106,19 @@ def main() -> None:
         )
         html_path.write_text(full, encoding="utf-8")
         print(f"wrote {html_path} (with {len(h2_headings)} headings in checklist)")
+
+
+def _strip_editorial_header(md_text: str) -> str:
+    """Убрать служебную шапку статьи — блок цитаты с хабами и путями к файлам.
+
+    Она нужна мне в репозитории и совершенно не нужна читателю: иначе её
+    пришлось бы вручную удалять после каждой вставки на площадку.
+    """
+    kept = [line for line in md_text.splitlines() if not line.startswith("> ") and line.strip() != ">"]
+    text = "\n".join(kept)
+    while "\n\n\n" in text:
+        text = text.replace("\n\n\n", "\n\n")
+    return text
 
 
 def _split_into_h2_sections(html_body: str) -> list[tuple[str, str]]:
