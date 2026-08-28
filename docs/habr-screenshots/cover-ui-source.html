@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { width:780px; height:440px; overflow:hidden; position:relative;
+         font-family:'Segoe UI',system-ui,sans-serif; color:#f5f3ff;
+         background:radial-gradient(120% 120% at 15% 0%, #221046 0%, #0d0820 55%, #080517 100%); }
+  .glow { position:absolute; width:560px; height:560px; right:-160px; top:-160px;
+          background:radial-gradient(circle,#7b2ff755 0%,transparent 62%); }
+  .glow2 { position:absolute; width:420px; height:420px; left:-120px; bottom:-180px;
+           background:radial-gradient(circle,#22d3ee33 0%,transparent 62%); }
+  .grid { position:absolute; inset:0; opacity:.5;
+          background-image:linear-gradient(#ffffff07 1px,transparent 1px),
+                           linear-gradient(90deg,#ffffff07 1px,transparent 1px);
+          background-size:44px 44px; }
+
+  .left { position:absolute; left:44px; top:40px; width:300px; z-index:3; }
+  .top { display:flex; align-items:center; gap:10px; margin-bottom:30px; }
+  .logo { width:32px; height:32px; border-radius:9px; display:grid; place-items:center;
+          background:linear-gradient(135deg,#7b2ff7,#a855f7); font-weight:800; font-size:18px; }
+  .brand { font-weight:700; font-size:18px; }
+  h1 { font-size:37px; line-height:1.07; font-weight:800; letter-spacing:-.022em; }
+  h1 .a { background:linear-gradient(90deg,#c084fc,#22d3ee);
+          -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .sub { margin-top:13px; font-size:14.5px; color:#b3aad6; line-height:1.5; max-width:280px; }
+  .stats { margin-top:26px; display:flex; gap:22px; }
+  .num { font-size:25px; font-weight:800; letter-spacing:-.02em; line-height:1.1; }
+  .lbl { font-size:11.5px; color:#a49bc9; margin-top:2px; }
+  .s1 .num { color:#ff7d9e; } .s2 .num { color:#c084fc; } .s3 .num { color:#5eead4; }
+  .dom { position:absolute; left:44px; bottom:34px; font-family:Consolas,monospace;
+         font-size:13px; color:#8f86b8; z-index:3; }
+
+  .shot { position:absolute; right:-48px; top:54px; width:510px; z-index:2;
+          border-radius:14px; overflow:hidden;
+          border:1px solid #ffffff22; box-shadow:0 40px 90px -30px #000, 0 0 0 1px #00000040;
+          transform:perspective(1400px) rotateY(-15deg) rotateX(4deg) rotate(-1.5deg); }
+  .bar { display:flex; align-items:center; gap:6px; padding:8px 12px; background:#1a1430; }
+  .dot { width:9px; height:9px; border-radius:50%; }
+  .url { margin-left:10px; font-family:Consolas,monospace; font-size:10.5px; color:#8f86b8; }
+  .shot img { display:block; width:100%; }
+  .fade { position:absolute; right:0; top:0; width:150px; height:100%; z-index:3;
+          background:linear-gradient(90deg,transparent,#0d0820cc); }
+</style></head>
+<body>
+  <div class="glow"></div><div class="glow2"></div><div class="grid"></div>
+
+  <div class="shot">
+    <div class="bar">
+      <div class="dot" style="background:#ff5f57"></div>
+      <div class="dot" style="background:#febc2e"></div>
+      <div class="dot" style="background:#28c840"></div>
+      <div class="url">getdoday.ru/app/ai</div>
+    </div>
+    <img src="file:///d:/New%20folder%20%2810%29/SchoolProject/docs/habr-screenshots/s-03-ai-chat.png" alt="">
+  </div>
+  <div class="fade"></div>
+
+  <div class="left">
+    <div class="top"><div class="logo">D</div><div class="brand">Doday</div></div>
+    <h1>Боты, <span class="a">дыры</span><br>и 334 статьи</h1>
+    <p class="sub">Разобрал свой продукт по швам — и рассказываю, что нашёл</p>
+    <div class="stats">
+      <div class="s1"><div class="num">176</div><div class="lbl">ботов</div></div>
+      <div class="s2"><div class="num">12</div><div class="lbl">дыр в коде</div></div>
+      <div class="s3"><div class="num">1325</div><div class="lbl">тестов</div></div>
+    </div>
+  </div>
+  <div class="dom">getdoday.ru</div>
+</body></html>

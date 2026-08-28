@@ -135,3 +135,4 @@ System Volume Information/
 .playwright-mcp/
 app/blog/.posts-cache.json
 app/blog/.posts-cache-*.tmp
+docs/habr-screenshots/habr-cover-kit.zip
