@@ -87,7 +87,7 @@ async def habr_screenshot(name: str) -> Response:
 
     from fastapi import HTTPException, status
 
-    if not re.fullmatch(r"(s-\d{2}-[a-z0-9-]+|cover-\d{3,4}x\d{3,4})\.png", name):
+    if not re.fullmatch(r"(s-\d{2}-[a-z0-9-]+|cover(-ui)?-\d{3,4}x\d{3,4})\.png", name):
         raise HTTPException(status.HTTP_404_NOT_FOUND, "not found")
     path = pathlib.Path("docs/habr-screenshots") / name
     if not path.is_file():
