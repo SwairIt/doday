@@ -126,7 +126,9 @@ def _strip_editorial_header(md_text: str) -> str:
     Она нужна мне в репозитории и совершенно не нужна читателю: иначе её
     пришлось бы вручную удалять после каждой вставки на площадку.
     """
-    kept = [line for line in md_text.splitlines() if not line.startswith("> ") and line.strip() != ">"]
+    kept = [
+        line for line in md_text.splitlines() if not line.startswith("> ") and line.strip() != ">"
+    ]
     text = "\n".join(kept)
     while "\n\n\n" in text:
         text = text.replace("\n\n\n", "\n\n")

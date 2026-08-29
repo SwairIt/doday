@@ -108,7 +108,13 @@ async def marketing_preview_raw(slug: str) -> Response:
 
     from fastapi import HTTPException, status
 
-    allowed = {"vc-ru-post", "reddit-sideproject-post", "habr-bots-ai-seo", "english-bots-ai-seo", "vc-bots-ai-seo"}
+    allowed = {
+        "vc-ru-post",
+        "reddit-sideproject-post",
+        "habr-bots-ai-seo",
+        "english-bots-ai-seo",
+        "vc-bots-ai-seo",
+    }
     if slug not in allowed:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "not found")
     # Статьи лежат в docs/articles, маркетинговые посты — в docs/marketing.
@@ -151,7 +157,13 @@ async def marketing_preview(slug: str) -> HTMLResponse:
     # Hard-coded allowlist — only these two filenames map to a route. Anything
     # else returns 404 (defence-in-depth against path traversal even though
     # the slug is constrained to a small set).
-    allowed = {"vc-ru-post", "reddit-sideproject-post", "habr-bots-ai-seo", "english-bots-ai-seo", "vc-bots-ai-seo"}
+    allowed = {
+        "vc-ru-post",
+        "reddit-sideproject-post",
+        "habr-bots-ai-seo",
+        "english-bots-ai-seo",
+        "vc-bots-ai-seo",
+    }
     if slug not in allowed:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "preview not found")
     path = pathlib.Path("docs/marketing") / f"{slug}.html"
