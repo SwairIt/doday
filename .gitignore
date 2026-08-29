@@ -136,3 +136,41 @@ System Volume Information/
 app/blog/.posts-cache.json
 app/blog/.posts-cache-*.tmp
 docs/habr-screenshots/habr-cover-kit.zip
+
+# Внутреннее — не для публичного репозитория.
+# Инструкции по инфраструктуре (адреса, доступы), маркетинговые планы,
+# юридические черновики и разбор безопасности. Файлы остаются на диске.
+CLAUDE.md
+READ-FIRST.md
+PROGRESS.md
+DEPLOY.md
+docs/YOUR-LAUNCH-PLAN.md
+docs/lessio-production-launch.md
+docs/lessio-launch-posts.md
+docs/ralph-loop-prompt.md
+docs/kimi-fps-prompt.md
+docs/payment-journey.md
+docs/ideas-2026-05-04.md
+docs/feature-gaps-2026-05-05.md
+docs/rkn-notification.md
+docs/security-2026-08-27.md
+docs/legal/
+docs/dev-notes/
+docs/superpowers/
+docs/seo/
+docs/sales/
+docs/recipes/
+docs/marketing/HOW_TO_POST.md
+docs/marketing/INDEX.md
+docs/marketing/awesome-lists.md
+docs/marketing/cold-dm.md
+docs/marketing/kwork-offers.md
+docs/marketing/reddit.md
+docs/marketing/show-hn.md
+docs/marketing/tg-pitch.md
+docs/marketing/podcast-pitch.md
+docs/marketing/english-article.md
+docs/marketing/github-profile-readme.md
+docs/marketing/2026-08-27-distribution.md
+docs/marketing/2026-08-29-posting-plan.md
+docs/marketing/2026-08-29-english-submissions.md
