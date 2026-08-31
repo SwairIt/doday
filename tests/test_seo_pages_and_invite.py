@@ -180,16 +180,18 @@ async def test_quickadd_habr_article_preview_and_raw(client: AsyncClient) -> Non
     assert preview.status_code == 200
     assert "Скопировать" in preview.text
     assert "s-07-quickadd-timezone.png" in preview.text
+    assert "s-08-quickadd-cover.png" in preview.text
 
     raw = await client.get("/marketing-preview/habr-quickadd-dates/raw")
     assert raw.status_code == 200
     assert raw.headers["content-type"].startswith("text/plain")
-    assert raw.text.startswith("# «Завтра в 18:00»")
+    assert raw.text.startswith("# Как фраза «завтра в 18:00»")
     assert raw.text.rstrip().endswith("Спасибо, что дочитали")
 
 
 async def test_quickadd_habr_screenshot_served(client: AsyncClient) -> None:
-    response = await client.get("/habr-img/s-07-quickadd-timezone.png")
-    assert response.status_code == 200
-    assert response.headers["content-type"] == "image/png"
-    assert response.content[:4] == b"\x89PNG"
+    for filename in ("s-07-quickadd-timezone.png", "s-08-quickadd-cover.png"):
+        response = await client.get(f"/habr-img/{filename}")
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "image/png"
+        assert response.content[:4] == b"\x89PNG"
