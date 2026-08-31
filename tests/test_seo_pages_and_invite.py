@@ -185,7 +185,7 @@ async def test_quickadd_habr_article_preview_and_raw(client: AsyncClient) -> Non
     raw = await client.get("/marketing-preview/habr-quickadd-dates/raw")
     assert raw.status_code == 200
     assert raw.headers["content-type"].startswith("text/plain")
-    assert raw.text.startswith("# Как фраза «завтра в 18:00»")
+    assert raw.text.startswith("# Я научил Python понимать «завтра в 18:00»")
     assert raw.text.rstrip().endswith("Спасибо, что дочитали")
 
 
