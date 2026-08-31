@@ -545,6 +545,7 @@ async def api_create_project(
 class QuickAddIn(BaseModel):
     text: str
     project_id: str | None = None  # для quick-add внутри проекта
+    timezone: str = "UTC"
 
 
 class BulkActionIn(BaseModel):
@@ -636,7 +637,10 @@ async def api_parse(payload: QuickAddIn, user: CurrentUser) -> JSONResponse:
     priority, labels) для Alpine'овых чипсов под полем."""
     if user is None:
         return JSONResponse({"error": "auth_required"}, status_code=401)
-    parsed = parse_quick_add(payload.text or "")
+    try:
+        parsed = parse_quick_add(payload.text or "", timezone_name=payload.timezone)
+    except ValueError:
+        parsed = parse_quick_add(payload.text or "")
     return JSONResponse(
         {
             "title": parsed.title,
@@ -662,7 +666,10 @@ async def api_create_task(
     text = (payload.text or "").strip()
     if not text:
         return JSONResponse({"error": "empty_text"}, status_code=400)
-    parsed = parse_quick_add(text)
+    try:
+        parsed = parse_quick_add(text, timezone_name=payload.timezone)
+    except ValueError:
+        parsed = parse_quick_add(text)
     # Default to Inbox; if request specified project_id, validate ownership.
     target_project_id = (await ensure_inbox(session, user.id)).id
     if payload.project_id:

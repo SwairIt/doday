@@ -42,6 +42,8 @@
   hx-on::after-request="if(event.detail.successful){this.reset();try{if(!localStorage.getItem('doday-fired-first-task')){window.dodayGoal&&window.dodayGoal('first_task');localStorage.setItem('doday-fired-first-task','1');}}catch(e){}}"
   class="mb-4"
 >
+  <input type="hidden" name="timezone"
+         x-init="$el.value = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'">
   <div class="card flex items-center gap-2 p-2 pl-3 shadow-sm focus-within:shadow-glow transition">
     <input
       type="text"
@@ -83,6 +85,7 @@
     Подсказки:
     <code class="px-1 rounded bg-[var(--surface-2)]">сегодня</code>
     <code class="px-1 rounded bg-[var(--surface-2)]">завтра</code>
+    <code class="px-1 rounded bg-[var(--surface-2)]">в 18:00</code>
     <code class="px-1 rounded bg-[var(--surface-2)]">пт</code>
     <code class="px-1 rounded bg-[var(--surface-2)]">след пн</code>
     <code class="px-1 rounded bg-[var(--surface-2)]">через 5 дней</code>

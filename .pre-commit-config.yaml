@@ -19,7 +19,7 @@ repos:
 
       - id: mypy
         name: mypy --strict
-        entry: uv run mypy --strict app/ scripts/
+        entry: uv run python -m mypy --strict app/ scripts/
         language: system
         pass_filenames: false
         types: [python]

@@ -49,6 +49,16 @@ def main() -> None:
                 "написано «Картинка: имя-файла.png» (сами эти строки удалите)."
             ),
         },
+        "habr-quickadd-dates": {
+            "title": "Хабр: пять тестов для парсера дат",
+            "paste_target": "Хабр",
+            "source": "docs/articles/2026-08-31-habr-quickadd-dates.md",
+            "platform_note": (
+                "Откройте страницу /raw, скопируйте Markdown целиком и вставьте "
+                "его в Markdown-режим редактора Хабра. Скриншот уже подключён "
+                "прямой ссылкой с getdoday.ru — перед публикацией проверьте превью."
+            ),
+        },
         "vc-bots-ai-seo": {
             "title": "VC.ru: 176 ботов и двенадцать дыр",
             "paste_target": "VC.ru",

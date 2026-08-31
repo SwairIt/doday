@@ -112,6 +112,7 @@ async def marketing_preview_raw(slug: str) -> Response:
         "vc-ru-post",
         "reddit-sideproject-post",
         "habr-bots-ai-seo",
+        "habr-quickadd-dates",
         "english-bots-ai-seo",
         "vc-bots-ai-seo",
     }
@@ -120,6 +121,7 @@ async def marketing_preview_raw(slug: str) -> Response:
     # Статьи лежат в docs/articles, маркетинговые посты — в docs/marketing.
     sources = {
         "habr-bots-ai-seo": "docs/articles/2026-08-27-habr-bots-ai-seo.md",
+        "habr-quickadd-dates": "docs/articles/2026-08-31-habr-quickadd-dates.md",
         "english-bots-ai-seo": "docs/articles/2026-08-27-english-bots-ai-seo.md",
         "vc-bots-ai-seo": "docs/articles/2026-08-29-vc-bots-ai-seo.md",
     }
@@ -161,6 +163,7 @@ async def marketing_preview(slug: str) -> HTMLResponse:
         "vc-ru-post",
         "reddit-sideproject-post",
         "habr-bots-ai-seo",
+        "habr-quickadd-dates",
         "english-bots-ai-seo",
         "vc-bots-ai-seo",
     }

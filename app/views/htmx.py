@@ -249,9 +249,13 @@ async def quickadd_endpoint(
     text: Annotated[str, Form()],
     project_id: Annotated[UUID | None, Form()] = None,
     section_id: Annotated[UUID | None, Form()] = None,
+    timezone: Annotated[str, Form()] = "UTC",
 ) -> Response:
     """Parse a free-form quick-add string, create the task, attach labels."""
-    parsed = parse_quick_add(text)
+    try:
+        parsed = parse_quick_add(text, timezone_name=timezone)
+    except ValueError:
+        parsed = parse_quick_add(text)
 
     target_project_id = project_id
     if parsed.project_name and target_project_id is None:

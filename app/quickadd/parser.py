@@ -6,8 +6,10 @@ project hint, label names and (optional) recurrence.
 """
 
 import re
+from calendar import monthrange
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, time, timedelta
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from app.tasks.models import TaskPriority
 
@@ -95,14 +97,38 @@ def _eod(d: date) -> datetime:
     return datetime(d.year, d.month, d.day, 23, 59, tzinfo=UTC)
 
 
-def _at(d: date, hh: int, mm: int) -> datetime:
-    return datetime.combine(d, time(hh, mm), tzinfo=UTC)
+def _at(d: date, hh: int, mm: int, timezone_name: str) -> datetime:
+    """Turn a user's wall-clock time into the UTC instant stored in the DB."""
+    try:
+        timezone = ZoneInfo(timezone_name)
+    except ZoneInfoNotFoundError as exc:
+        raise ValueError(f"unknown timezone: {timezone_name}") from exc
+    return datetime.combine(d, time(hh, mm), tzinfo=timezone).astimezone(UTC)
 
 
-def parse_quick_add(text: str, *, now: datetime | None = None) -> ParsedQuickAdd:
+def _shift_months(d: date, months: int) -> date:
+    """Add calendar months, clamping the day (31 January -> 28/29 February)."""
+    month_index = d.year * 12 + d.month - 1 + months
+    year, zero_based_month = divmod(month_index, 12)
+    month = zero_based_month + 1
+    return date(year, month, min(d.day, monthrange(year, month)[1]))
+
+
+def parse_quick_add(
+    text: str,
+    *,
+    now: datetime | None = None,
+    timezone_name: str = "UTC",
+) -> ParsedQuickAdd:
     if now is None:
         now = datetime.now(UTC)
-    today = now.date()
+    if now.tzinfo is None:
+        raise ValueError("now must be timezone-aware")
+    try:
+        timezone = ZoneInfo(timezone_name)
+    except ZoneInfoNotFoundError as exc:
+        raise ValueError(f"unknown timezone: {timezone_name}") from exc
+    today = now.astimezone(timezone).date()
     text = text.strip()
 
     # !{1..4} priority hint (highest precedence — explicit beats word). Ловим
@@ -135,17 +161,19 @@ def parse_quick_add(text: str, *, now: datetime | None = None) -> ParsedQuickAdd
 
     # Project hint: #word (first occurrence)
     project_name: str | None = None
-    pm = re.search(r"(?<!\w)#(\S+)", text)
+    pm = re.search(r"(?<!\w)#([^\s,.;:!?]+)", text)
     if pm:
         project_name = pm.group(1)
         text = (text[: pm.start()] + text[pm.end() :]).strip()
 
     # Labels: every @word
-    label_names: list[str] = [m.group(1) for m in re.finditer(r"(?<!\w)@(\S+)", text)]
-    text = re.sub(r"(?<!\w)@\S+", "", text).strip()
+    label_pattern = r"(?<!\w)@([^\s,.;:!?]+)"
+    label_names: list[str] = [m.group(1) for m in re.finditer(label_pattern, text)]
+    text = re.sub(label_pattern + r"[,.;:]?", "", text).strip()
 
     # Recurrence: «каждый день/неделю/месяц/год» / «каждую неделю» / «каждый <weekday-acc>».
     recurrence: str | None = None
+    recurrence_weekday: int | None = None
     rec_pattern = (
         r"(?i)\b(каждый|каждую|каждое)\s+("
         r"день|дня|неделю|недели|месяц|месяца|год|года|"
@@ -165,6 +193,7 @@ def parse_quick_add(text: str, *, now: datetime | None = None) -> ParsedQuickAdd
             recurrence = "yearly"
         elif unit in _WEEKDAYS_RU_ACC:
             recurrence = "weekly"
+            recurrence_weekday = _WEEKDAYS_RU_ACC[unit]
         text = (text[: rm.start()] + text[rm.end() :]).strip()
 
     due_at: datetime | None = None
@@ -224,7 +253,7 @@ def parse_quick_add(text: str, *, now: datetime | None = None) -> ParsedQuickAdd
             elif unit.startswith("недел"):
                 due_at = _eod(today + timedelta(weeks=n))
             elif unit.startswith("месяц"):
-                due_at = _eod(today + timedelta(days=30 * n))
+                due_at = _eod(_shift_months(today, n))
             text = (text[: rm2.start()] + text[rm2.end() :]).strip()
 
     # «N января», «15 декабря» etc.
@@ -277,6 +306,21 @@ def parse_quick_add(text: str, *, now: datetime | None = None) -> ParsedQuickAdd
             except ValueError:
                 pass  # invalid date — leave the literal in title
 
+    # A weekday recurrence needs its first occurrence as well as the rule.
+    # Otherwise completing it cannot create the following task.
+    if due_at is None and recurrence_weekday is not None:
+        days_ahead = (recurrence_weekday - today.weekday()) % 7 or 7
+        due_at = _eod(today + timedelta(days=days_ahead))
+
+    # Explicit wall-clock time: "завтра в 18:00" or simply "18:00".
+    # Parse this after the date so the time can be attached to that local day.
+    clock = re.search(r"(?i)(?:\bв\s*)?\b([01]?\d|2[0-3]):([0-5]\d)\b", text)
+    if clock:
+        base = due_at.date() if due_at else today
+        due_at = _at(base, int(clock.group(1)), int(clock.group(2)), timezone_name)
+        date_only = False
+        text = (text[: clock.start()] + text[clock.end() :]).strip()
+
     # Time-of-day word — overlay on existing date (or today if none yet picked).
     # Multi-word phrases scanned first (longest-first) so "после обеда" beats "обед".
     tod_phrases = sorted(_TIMES_OF_DAY.keys(), key=len, reverse=True)
@@ -285,7 +329,7 @@ def parse_quick_add(text: str, *, now: datetime | None = None) -> ParsedQuickAdd
         if wm:
             hh, mm_ = _TIMES_OF_DAY[phrase]
             base = due_at.date() if due_at else today
-            due_at = _at(base, hh, mm_)
+            due_at = _at(base, hh, mm_, timezone_name)
             date_only = False
             text = (text[: wm.start()] + text[wm.end() :]).strip()
             break

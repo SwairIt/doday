@@ -17,7 +17,10 @@
              const r = await fetch('/miniapp/api/parse', {
                method: 'POST',
                headers: {'Content-Type':'application/json'},
-               body: JSON.stringify({text: this.text}),
+                body: JSON.stringify({
+                  text: this.text,
+                  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+                }),
                credentials: 'include',
              });
              if (r.ok) this.preview = await r.json();
@@ -28,7 +31,10 @@
          if (!this.text.trim() || this.busy) return;
          this.busy = true; this.err = '';
          try {
-           const body = {text: this.text};
+            const body = {
+              text: this.text,
+              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+            };
            if (window.dodayCurrentProject) body.project_id = window.dodayCurrentProject;
            const r = await fetch('/miniapp/api/tasks', {
              method: 'POST',
@@ -64,6 +70,10 @@
   {# Live preview chips — рисуются когда parse вернул что-то осмысленное #}
   <div x-show="preview && (preview.due_at || preview.priority !== 'p4' || (preview.label_names || []).length || preview.recurrence)"
        x-cloak x-transition class="flex items-center flex-wrap gap-1.5 mt-2 text-[10px]">
+    <template x-if="preview && preview.title && preview.title !== text.trim()">
+      <span class="px-1.5 py-0.5 rounded bg-[var(--surface-2)] text-[var(--text)] font-semibold"
+            x-text="'✓ ' + preview.title"></span>
+    </template>
     <template x-if="preview && preview.priority === 'p1'">
       <span class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 font-semibold">🔴 P1</span>
     </template>
@@ -75,7 +85,7 @@
     </template>
     <template x-if="preview && preview.due_at">
       <span class="px-1.5 py-0.5 rounded bg-[var(--accent)]/20 text-[var(--accent)] font-semibold"
-            x-text="'📅 ' + (preview.due_at ? new Date(preview.due_at).toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit'}) : '')"></span>
+            x-text="'📅 ' + (preview.due_at ? (preview.due_date_only ? preview.due_at.slice(8, 10) + '.' + preview.due_at.slice(5, 7) : new Date(preview.due_at).toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})) : '')"></span>
     </template>
     <template x-if="preview && preview.recurrence">
       <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-semibold"

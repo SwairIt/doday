@@ -68,6 +68,23 @@ async def test_api_parse_returns_preview(logged_in_client: AsyncClient) -> None:
     assert "label_names" in data
 
 
+async def test_api_parse_uses_browser_timezone(logged_in_client: AsyncClient) -> None:
+    r = await logged_in_client.post(
+        "/miniapp/api/parse",
+        json={
+            "text": "Сдать реферат завтра в 18:00 !!! @школа",
+            "timezone": "Europe/Moscow",
+        },
+    )
+    assert r.status_code == 200
+    data = r.json()
+    assert data["title"] == "Сдать реферат"
+    assert data["due_at"].endswith("15:00:00+00:00")
+    assert data["due_date_only"] is False
+    assert data["priority"] == "p1"
+    assert data["label_names"] == ["школа"]
+
+
 async def test_api_parse_unauth_401(client: AsyncClient) -> None:
     r = await client.post("/miniapp/api/parse", json={"text": "test"})
     assert r.status_code == 401

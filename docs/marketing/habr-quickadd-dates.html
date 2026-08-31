@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Хабр: пять тестов для парсера дат</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 760px; margin: 0 auto; padding: 1em; line-height: 1.6; color: #222; background: #fafafa; }
+  .toolbar { position: sticky; top: 0; z-index: 10; background: #fafafa; padding: 1em 0; border-bottom: 1px solid #ddd; margin-bottom: 1em; display: flex; gap: 0.6em; align-items: center; flex-wrap: wrap; }
+  .toolbar button { padding: 0.6em 1.2em; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; font-size: 0.95em; transition: all 0.15s; }
+  .btn-primary { background: #1a73e8; color: white; }
+  .btn-primary:hover { background: #1557b0; }
+  .btn-primary.ok { background: #16a34a; }
+  .hint { font-size: 0.85em; color: #666; }
+  .instructions { background: #fffbea; border-left: 4px solid #f59e0b; padding: 1em 1.2em; margin: 1em 0 2em; border-radius: 4px; font-size: 0.92em; }
+  .instructions h3 { margin-top: 0; color: #92400e; font-size: 1.1em; }
+  .instructions ol { padding-left: 1.4em; margin: 0.5em 0; }
+  .checklist { background: #ecfdf5; border-left: 4px solid #10b981; padding: 1em 1.2em; margin: 1em 0 2em; border-radius: 4px; font-size: 0.92em; }
+  .checklist h3 { margin-top: 0; color: #065f46; font-size: 1.05em; }
+  .checklist ol { padding-left: 1.4em; margin: 0.5em 0; list-style: decimal; }
+  .checklist input[type="checkbox"] { margin-right: 0.4em; vertical-align: middle; }
+  .checklist code { background: #fff; padding: 0.1em 0.4em; border-radius: 3px; font-size: 0.95em; }
+  .article { background: white; padding: 2em; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+  .article h1 { font-size: 1.8em; border-bottom: 2px solid #eee; padding-bottom: 0.3em; margin-top: 0; }
+  .article h2 { font-size: 1.4em; margin-top: 1.8em; border-bottom: 1px solid #eee; padding-bottom: 0.2em; }
+  .article h3 { font-size: 1.15em; }
+  .section-card { background: white; border-radius: 8px; padding: 1em 1.5em; margin-bottom: 1em; box-shadow: 0 1px 4px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; }
+  .section-header { display: flex; align-items: center; gap: 0.75em; padding-bottom: 0.6em; border-bottom: 1px solid #eee; margin-bottom: 1em; flex-wrap: wrap; }
+  .section-num { display: inline-flex; align-items: center; justify-content: center; width: 1.8em; height: 1.8em; background: #2563eb; color: white; border-radius: 50%; font-weight: 700; font-size: 0.85em; flex-shrink: 0; }
+  .section-title { flex: 1; font-weight: 600; min-width: 0; }
+  .btn-copy-section { padding: 0.5em 1em; border-radius: 6px; border: 1px solid #2563eb; background: white; color: #2563eb; cursor: pointer; font-weight: 600; font-size: 0.88em; transition: all 0.15s; flex-shrink: 0; }
+  .btn-copy-section:hover { background: #2563eb; color: white; }
+  .btn-copy-section.ok { background: #16a34a; color: white; border-color: #16a34a; }
+  .section-body { font-size: 0.95em; line-height: 1.6; color: #444; }
+  .section-body h2 { font-size: 1.3em; margin: 0 0 0.5em 0; color: #1e293b; }
+  .section-body p { margin: 0.5em 0; }
+  .section-body code { background: #f4f4f4; padding: 0.1em 0.3em; border-radius: 3px; }
+  .section-body a { color: #2563eb; }
+  .article code { background: #f4f4f4; padding: 0.15em 0.4em; border-radius: 3px; font-size: 0.92em; }
+  .article pre { background: #f4f4f4; padding: 1em; overflow-x: auto; border-radius: 4px; }
+  .article blockquote { border-left: 4px solid #ccc; padding-left: 1em; color: #555; margin-left: 0; }
+  .article table { border-collapse: collapse; width: 100%; }
+  .article th, .article td { border: 1px solid #ddd; padding: 0.5em 0.8em; text-align: left; }
+  .article th { background: #f4f4f4; }
+  .article a { color: #0066cc; }
+  .article ul, .article ol { padding-left: 1.4em; }
+  .article li { margin: 0.25em 0; }
+  .article hr { border: none; border-top: 1px solid #ddd; margin: 2em 0; }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <button id="copy-btn" class="btn-primary" onclick="copyPost()">📋 Скопировать пост</button>
+  <span class="hint">→ Вставь Ctrl+V в редактор Хабр</span>
+</div>
+
+<div class="instructions">
+<h3>Как опубликовать</h3>
+<ol>
+<li>Жми синюю кнопку <strong>«📋 Скопировать пост»</strong> сверху.</li>
+<li>В редакторе Хабр удали старый текст если был, нажми <code>Ctrl+V</code>.</li>
+<li><strong>Важная особенность:</strong> Откройте страницу /raw, скопируйте Markdown целиком и вставьте его в Markdown-режим редактора Хабра. Скриншот уже подключён прямой ссылкой с getdoday.ru — перед публикацией проверьте превью.</li>
+<li>Используй чек-лист ниже чтобы не забыть ни один заголовок.</li>
+</ol>
+</div>
+
+<div class="checklist">
+<h3>Чек-лист: заголовки которые нужно сделать H2 в редакторе Хабр</h3>
+<p style="margin: 0 0 0.6em 0;">После вставки найди эти заголовки (они будут как обычный текст), выдели каждый, нажми «H2» в панели форматирования:</p>
+<ol>
+<li><label><input type="checkbox" class="hl-check"> <code>1. Сначала зафиксируйте ошибку одним тестом</code></label></li>
+<li><label><input type="checkbox" class="hl-check"> <code>2. Разделяйте календарную дату и момент времени</code></label></li>
+<li><label><input type="checkbox" class="hl-check"> <code>3. «Через месяц» — не «через 30 дней»</code></label></li>
+<li><label><input type="checkbox" class="hl-check"> <code>4. Повтору нужна первая дата</code></label></li>
+<li><label><input type="checkbox" class="hl-check"> <code>5. Не разрешайте <code>\S+</code> съедать пунктуацию</code></label></li>
+<li><label><input type="checkbox" class="hl-check"> <code>Короткий чек-лист</code></label></li>
+</ol>
+<p style="margin: 0.6em 0 0 0; font-size: 0.85em; color: #666;">Галочки сохранятся пока ты не закроешь страницу. Клики на этой странице ничего не делают с самим постом — это просто блокнот для тебя.</p>
+</div>
+
+<div style="background: #eff6ff; border-left: 4px solid #2563eb; padding: 1em 1.2em; margin: 1em 0 2em; border-radius: 4px; font-size: 0.92em;">
+<h3 style="margin-top: 0; color: #1e40af; font-size: 1.05em;">🔥 Если ОДНА большая вставка не работает (VC.ru ругается «слишком много текста»)</h3>
+<p>Копируй по <strong>СЕКЦИЯМ</strong> ниже. Каждая секция = заголовок H2 + параграфы под ним. Жми «📋 Скопировать секцию», вставляй в редактор Хабр, после вставки выдели первую строку (заголовок) и нажми H2 в их панели. Повтори для каждой из 7 секций.</p>
+</div>
+
+<div id="sections-list">
+<div class="section-card">
+  <div class="section-header">
+    <span class="section-num">1</span>
+    <span class="section-title">Введение (TL;DR + первые параграфы)</span>
+    <button class="btn-copy-section" onclick="copySection('sec-0', this)">📋 Скопировать секцию</button>
+  </div>
+  <div class="section-body" id="sec-0"><h1>«Завтра в 18:00» — это не строка: пять тестов для парсера дат</h1>
+<hr />
+<p>В планировщике Doday есть быстрое добавление задач. Пользователь пишет:</p>
+<pre><code>Сдать реферат завтра в 18:00 !!! @школа
+</code></pre>
+<p>Парсер должен вернуть название, срок, приоритет и метку. Но однажды он вернул это:</p>
+<pre><code class="language-python">title = &quot;Сдать реферат в 18:00&quot;
+due_at = &quot;2026-05-04T23:59:00+00:00&quot;
+priority = &quot;p1&quot;
+labels = [&quot;школа&quot;]
+</code></pre>
+<p>Время осталось в названии, а «завтра» было вычислено по календарю UTC. Если в Москве уже 00:30, в UTC ещё предыдущий день — задача ошибается на сутки.</p>
+<p>Это небольшой баг, но на нём удобно показать пять проверок, которые пригодятся любому парсеру человеческих дат.</p></div>
+</div>
+<div class="section-card">
+  <div class="section-header">
+    <span class="section-num">2</span>
+    <span class="section-title">1. Сначала зафиксируйте ошибку одним тестом</span>
+    <button class="btn-copy-section" onclick="copySection('sec-1', this)">📋 Скопировать секцию</button>
+  </div>
+  <div class="section-body" id="sec-1"><h2>1. Сначала зафиксируйте ошибку одним тестом</h2><p>Не подменяйте часы во всём приложении. Передайте текущее время в чистую функцию:</p>
+<pre><code class="language-python">def test_tomorrow_uses_users_timezone() -&gt; None:
+    # 3 мая, 21:30 UTC = 4 мая, 00:30 в Москве.
+    now = datetime(2026, 5, 3, 21, 30, tzinfo=UTC)
+
+    parsed = parse_quick_add(
+        &quot;Сдать реферат завтра в 18:00 !!! @школа&quot;,
+        now=now,
+        timezone_name=&quot;Europe/Moscow&quot;,
+    )
+
+    assert parsed.title == &quot;Сдать реферат&quot;
+    assert parsed.due_at == datetime(2026, 5, 5, 15, 0, tzinfo=UTC)
+    assert parsed.priority == TaskPriority.P1
+    assert parsed.label_names == [&quot;школа&quot;]
+</code></pre>
+<p>Почему ожидается 5 мая, 15:00 UTC:</p>
+<ul>
+<li>для пользователя сегодня уже 4 мая;</li>
+<li>«завтра» — 5 мая;</li>
+<li>18:00 в Москве — 15:00 UTC.</li>
+</ul>
+<p>Такой тест проверяет не регулярное выражение, а смысл всей фразы.</p></div>
+</div>
+<div class="section-card">
+  <div class="section-header">
+    <span class="section-num">3</span>
+    <span class="section-title">2. Разделяйте календарную дату и момент времени</span>
+    <button class="btn-copy-section" onclick="copySection('sec-2', this)">📋 Скопировать секцию</button>
+  </div>
+  <div class="section-body" id="sec-2"><h2>2. Разделяйте календарную дату и момент времени</h2><p><code>5 мая</code> и <code>5 мая в 18:00</code> — разные типы данных.</p>
+<p>У даты без времени нет часового пояса. День рождения, дедлайн «до пятницы» и пункт календаря не должны внезапно переезжать на четверг из-за преобразования в UTC.</p>
+<p>У времени встречи, наоборот, есть точный момент. Его удобно хранить в UTC и показывать в зоне пользователя.</p>
+<p>Правильная модель выглядит так:</p>
+<pre><code class="language-python">due_date: date | None       # «5 мая», без часового пояса
+due_at: datetime | None     # конкретный момент, хранится в UTC
+</code></pre>
+<p>В существующей базе Doday используется совместимый вариант: <code>due_at</code> плюс флаг <code>due_date_only</code>. Это работает как размеченное объединение, но требует дисциплины: значение с <code>due_date_only=True</code> нельзя считать обычным моментом времени.</p>
+<p>Для срока с часами парсер сначала собирает локальное время, затем переводит его в UTC:</p>
+<pre><code class="language-python">def at_local(day: date, hour: int, minute: int, timezone_name: str) -&gt; datetime:
+    timezone = ZoneInfo(timezone_name)
+    local = datetime.combine(day, time(hour, minute), tzinfo=timezone)
+    return local.astimezone(UTC)
+</code></pre>
+<p>Клиент передаёт не смещение <code>+03:00</code>, а IANA-имя вроде <code>Europe/Moscow</code>. Это важно для зон, где смещение меняется из-за летнего времени.</p></div>
+</div>
+<div class="section-card">
+  <div class="section-header">
+    <span class="section-num">4</span>
+    <span class="section-title">3. «Через месяц» — не «через 30 дней»</span>
+    <button class="btn-copy-section" onclick="copySection('sec-3', this)">📋 Скопировать секцию</button>
+  </div>
+  <div class="section-body" id="sec-3"><h2>3. «Через месяц» — не «через 30 дней»</h2><p>В первой версии было удобно написать:</p>
+<pre><code class="language-python">due = today + timedelta(days=30)
+</code></pre>
+<p>Но 31 января плюс 30 дней — это 2 марта, а пользователь ожидает конец февраля.</p>
+<p>Нужна календарная арифметика с ограничением номера дня:</p>
+<pre><code class="language-python">def shift_months(day: date, months: int) -&gt; date:
+    index = day.year * 12 + day.month - 1 + months
+    year, zero_based_month = divmod(index, 12)
+    month = zero_based_month + 1
+    last_day = monthrange(year, month)[1]
+    return date(year, month, min(day.day, last_day))
+</code></pre>
+<p>Обязательные примеры: 31 января, високосный февраль и переход через декабрь.</p></div>
+</div>
+<div class="section-card">
+  <div class="section-header">
+    <span class="section-num">5</span>
+    <span class="section-title">4. Повтору нужна первая дата</span>
+    <button class="btn-copy-section" onclick="copySection('sec-4', this)">📋 Скопировать секцию</button>
+  </div>
+  <div class="section-body" id="sec-4"><h2>4. Повтору нужна первая дата</h2><p>Фраза <code>тренировка каждый понедельник</code> раньше давала правило <code>weekly</code>, но не давала первый срок. Задача создавалась без даты, а после выполнения следующая не появлялась.</p>
+<pre><code class="language-python">days_ahead = (weekday - today.weekday()) % 7 or 7
+first_due = today + timedelta(days=days_ahead)
+</code></pre>
+<p>У повторяющейся задачи нужны две части: правило и первая точка отсчёта. Проверяйте обе.</p></div>
+</div>
+<div class="section-card">
+  <div class="section-header">
+    <span class="section-num">6</span>
+    <span class="section-title">5. Не разрешайте \S+ съедать пунктуацию</span>
+    <button class="btn-copy-section" onclick="copySection('sec-5', this)">📋 Скопировать секцию</button>
+  </div>
+  <div class="section-body" id="sec-5"><h2>5. Не разрешайте <code>\S+</code> съедать пунктуацию</h2><p>Шаблон <code>@(\S+)</code> превратит <code>@магазин,</code> в метку <code>магазин,</code>. Запятая станет частью данных.</p>
+<p>Безопаснее явно перечислить разделители:</p>
+<pre><code class="language-python">label_pattern = r&quot;(?&lt;!\w)@([^\s,.;:!?]+)&quot;
+</code></pre>
+<p>Здесь полезны тесты не только на запятую, но и на адрес почты: <code>foo@bar.com</code> не должен превращаться в метку.</p>
+<p><img alt="Разбор одной строки на срок, время, приоритет и метку" src="https://getdoday.ru/habr-img/s-07-quickadd-timezone.png" /></p>
+<p><em>Одна строка после исправления: время больше не остаётся в названии, а интерфейс показывает распознанные параметры до создания задачи.</em></p></div>
+</div>
+<div class="section-card">
+  <div class="section-header">
+    <span class="section-num">7</span>
+    <span class="section-title">Короткий чек-лист</span>
+    <button class="btn-copy-section" onclick="copySection('sec-6', this)">📋 Скопировать секцию</button>
+  </div>
+  <div class="section-body" id="sec-6"><h2>Короткий чек-лист</h2><p>Если вы разбираете слова <code>сегодня</code>, <code>завтра</code> и <code>через месяц</code>, проверьте:</p>
+<ul>
+<li>текущее время передаётся в функцию, а не берётся из глобальных часов;</li>
+<li>календарный день вычисляется в часовом поясе пользователя;</li>
+<li>дата без времени не притворяется UTC-моментом;</li>
+<li>локальное время переводится в UTC только после сборки даты и часов;</li>
+<li>месяц считается календарём, а не тридцатью днями;</li>
+<li>у повтора есть первая дата;</li>
+<li>пунктуация не попадает в метки и проекты;</li>
+<li>в тестах есть полночь, конец месяца и переход года.</li>
+</ul>
+<p>Исправление получилось небольшим: один чистый парсер и 47 целевых тестов. Главное изменение не в регулярках, а в контракте функции: теперь она знает, в каком календаре живёт слово «завтра».</p>
+<p>Код проекта:</p>
+<p>https://github.com/SwairIt/doday</p>
+<p>Проект и этот текст подготовлены мной в паре с ИИ-агентом. Агент помог найти граничные случаи и написать проверки; итоговые решения, запуск тестов и редактура проверены на реальном коде проекта.</p>
+<p>Ярослав Боев.</p>
+<p>Спасибо, что дочитали</p></div>
+</div>
+
+</div>
+
+<details style="margin-top: 2em; background: white; padding: 1em 1.5em; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+<summary style="cursor: pointer; font-weight: 600; color: #1a73e8;">Запасной запасной вариант: plain text с маркерами заголовков</summary>
+<p style="margin: 1em 0 0.6em 0; font-size: 0.92em; color: #555;">
+Если совсем ничего не работает — выдели текст ниже (клик в поле → Ctrl+A → Ctrl+C) и вставь в редактор Хабр.
+Заголовки помечены ▶ <code>═══ H2: ... ═══</code> ◀ — найди каждый в редакторе, выдели, нажми H2, удали маркеры.
+</p>
+<textarea readonly id="plain-textarea" style="width: 100%; height: 400px; font-family: 'SF Mono', Consolas, monospace; font-size: 0.85em; padding: 1em; border: 1px solid #ddd; border-radius: 4px; resize: vertical; line-height: 1.5;" onclick="this.select()">«ЗАВТРА В 18:00» — ЭТО НЕ СТРОКА: ПЯТЬ ТЕСТОВ ДЛЯ ПАРСЕРА ДАТ
+
+
+---
+
+В планировщике Doday есть быстрое добавление задач. Пользователь пишет:
+
+`
+Сдать реферат завтра в 18:00 !!! @школа
+`
+
+Парсер должен вернуть название, срок, приоритет и метку. Но однажды он вернул это:
+
+`python
+title = "Сдать реферат в 18:00"
+due_at = "2026-05-04T23:59:00+00:00"
+priority = "p1"
+labels = ["школа"]
+`
+
+Время осталось в названии, а «завтра» было вычислено по календарю UTC. Если в Москве уже 00:30, в UTC ещё предыдущий день — задача ошибается на сутки.
+
+Это небольшой баг, но на нём удобно показать пять проверок, которые пригодятся любому парсеру человеческих дат.
+
+
+═══ H2: 1. Сначала зафиксируйте ошибку одним тестом ═══
+
+
+Не подменяйте часы во всём приложении. Передайте текущее время в чистую функцию:
+
+`python
+def test_tomorrow_uses_users_timezone() -&gt; None:
+    # 3 мая, 21:30 UTC = 4 мая, 00:30 в Москве.
+    now = datetime(2026, 5, 3, 21, 30, tzinfo=UTC)
+
+    parsed = parse_quick_add(
+        "Сдать реферат завтра в 18:00 !!! @школа",
+        now=now,
+        timezone_name="Europe/Moscow",
+    )
+
+    assert parsed.title == "Сдать реферат"
+    assert parsed.due_at == datetime(2026, 5, 5, 15, 0, tzinfo=UTC)
+    assert parsed.priority == TaskPriority.P1
+    assert parsed.label_names == ["школа"]
+`
+
+Почему ожидается 5 мая, 15:00 UTC:
+
+• для пользователя сегодня уже 4 мая;
+• «завтра» — 5 мая;
+• 18:00 в Москве — 15:00 UTC.
+
+Такой тест проверяет не регулярное выражение, а смысл всей фразы.
+
+
+═══ H2: 2. Разделяйте календарную дату и момент времени ═══
+
+
+5 мая и 5 мая в 18:00 — разные типы данных.
+
+У даты без времени нет часового пояса. День рождения, дедлайн «до пятницы» и пункт календаря не должны внезапно переезжать на четверг из-за преобразования в UTC.
+
+У времени встречи, наоборот, есть точный момент. Его удобно хранить в UTC и показывать в зоне пользователя.
+
+Правильная модель выглядит так:
+
+`python
+due_date: date | None       # «5 мая», без часового пояса
+due_at: datetime | None     # конкретный момент, хранится в UTC
+`
+
+В существующей базе Doday используется совместимый вариант: due_at плюс флаг due_date_only. Это работает как размеченное объединение, но требует дисциплины: значение с due_date_only=True нельзя считать обычным моментом времени.
+
+Для срока с часами парсер сначала собирает локальное время, затем переводит его в UTC:
+
+`python
+def at_local(day: date, hour: int, minute: int, timezone_name: str) -&gt; datetime:
+    timezone = ZoneInfo(timezone_name)
+    local = datetime.combine(day, time(hour, minute), tzinfo=timezone)
+    return local.astimezone(UTC)
+`
+
+Клиент передаёт не смещение +03:00, а IANA-имя вроде Europe/Moscow. Это важно для зон, где смещение меняется из-за летнего времени.
+
+
+═══ H2: 3. «Через месяц» — не «через 30 дней» ═══
+
+
+В первой версии было удобно написать:
+
+`python
+due = today + timedelta(days=30)
+`
+
+Но 31 января плюс 30 дней — это 2 марта, а пользователь ожидает конец февраля.
+
+Нужна календарная арифметика с ограничением номера дня:
+
+`python
+def shift_months(day: date, months: int) -&gt; date:
+    index = day.year * 12 + day.month - 1 + months
+    year, zero_based_month = divmod(index, 12)
+    month = zero_based_month + 1
+    last_day = monthrange(year, month)[1]
+    return date(year, month, min(day.day, last_day))
+`
+
+Обязательные примеры: 31 января, високосный февраль и переход через декабрь.
+
+
+═══ H2: 4. Повтору нужна первая дата ═══
+
+
+Фраза тренировка каждый понедельник раньше давала правило weekly, но не давала первый срок. Задача создавалась без даты, а после выполнения следующая не появлялась.
+
+`python
+days_ahead = (weekday - today.weekday()) % 7 or 7
+first_due = today + timedelta(days=days_ahead)
+`
+
+У повторяющейся задачи нужны две части: правило и первая точка отсчёта. Проверяйте обе.
+
+
+═══ H2: 5. Не разрешайте `\S+` съедать пунктуацию ═══
+
+
+Шаблон @(\S+) превратит @магазин, в метку магазин,. Запятая станет частью данных.
+
+Безопаснее явно перечислить разделители:
+
+`python
+label_pattern = r"(?&lt;!\w)@([^\s,.;:!?]+)"
+`
+
+Здесь полезны тесты не только на запятую, но и на адрес почты: foo@bar.com не должен превращаться в метку.
+
+!Разбор одной строки на срок, время, приоритет и метку (https://getdoday.ru/habr-img/s-07-quickadd-timezone.png)
+
+Одна строка после исправления: время больше не остаётся в названии, а интерфейс показывает распознанные параметры до создания задачи.
+
+
+═══ H2: Короткий чек-лист ═══
+
+
+Если вы разбираете слова сегодня, завтра и через месяц, проверьте:
+
+• текущее время передаётся в функцию, а не берётся из глобальных часов;
+• календарный день вычисляется в часовом поясе пользователя;
+• дата без времени не притворяется UTC-моментом;
+• локальное время переводится в UTC только после сборки даты и часов;
+• месяц считается календарём, а не тридцатью днями;
+• у повтора есть первая дата;
+• пунктуация не попадает в метки и проекты;
+• в тестах есть полночь, конец месяца и переход года.
+
+Исправление получилось небольшим: один чистый парсер и 47 целевых тестов. Главное изменение не в регулярках, а в контракте функции: теперь она знает, в каком календаре живёт слово «завтра».
+
+Код проекта:
+
+https://github.com/SwairIt/doday
+
+Проект и этот текст подготовлены мной в паре с ИИ-агентом. Агент помог найти граничные случаи и написать проверки; итоговые решения, запуск тестов и редактура проверены на реальном коде проекта.
+
+Ярослав Боев.
+
+Спасибо, что дочитали
+</textarea>
+<button onclick="copyPlainText()" style="margin-top: 0.6em; padding: 0.5em 1em; border-radius: 4px; border: 1px solid #1a73e8; background: white; color: #1a73e8; cursor: pointer; font-weight: 600;">📋 Скопировать plain text</button>
+</details>
+
+<details style="margin-top: 1em; background: white; padding: 1em 1.5em; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+<summary style="cursor: pointer; font-weight: 600; color: #666;">Предпросмотр всего поста как одной статьи</summary>
+<article class="article" id="article" style="margin-top: 1em;">
+<h1>«Завтра в 18:00» — это не строка: пять тестов для парсера дат</h1>
+<hr />
+<p>В планировщике Doday есть быстрое добавление задач. Пользователь пишет:</p>
+<pre><code>Сдать реферат завтра в 18:00 !!! @школа
+</code></pre>
+<p>Парсер должен вернуть название, срок, приоритет и метку. Но однажды он вернул это:</p>
+<pre><code class="language-python">title = &quot;Сдать реферат в 18:00&quot;
+due_at = &quot;2026-05-04T23:59:00+00:00&quot;
+priority = &quot;p1&quot;
+labels = [&quot;школа&quot;]
+</code></pre>
+<p>Время осталось в названии, а «завтра» было вычислено по календарю UTC. Если в Москве уже 00:30, в UTC ещё предыдущий день — задача ошибается на сутки.</p>
+<p>Это небольшой баг, но на нём удобно показать пять проверок, которые пригодятся любому парсеру человеческих дат.</p>
+<h2>1. Сначала зафиксируйте ошибку одним тестом</h2>
+<p>Не подменяйте часы во всём приложении. Передайте текущее время в чистую функцию:</p>
+<pre><code class="language-python">def test_tomorrow_uses_users_timezone() -&gt; None:
+    # 3 мая, 21:30 UTC = 4 мая, 00:30 в Москве.
+    now = datetime(2026, 5, 3, 21, 30, tzinfo=UTC)
+
+    parsed = parse_quick_add(
+        &quot;Сдать реферат завтра в 18:00 !!! @школа&quot;,
+        now=now,
+        timezone_name=&quot;Europe/Moscow&quot;,
+    )
+
+    assert parsed.title == &quot;Сдать реферат&quot;
+    assert parsed.due_at == datetime(2026, 5, 5, 15, 0, tzinfo=UTC)
+    assert parsed.priority == TaskPriority.P1
+    assert parsed.label_names == [&quot;школа&quot;]
+</code></pre>
+<p>Почему ожидается 5 мая, 15:00 UTC:</p>
+<ul>
+<li>для пользователя сегодня уже 4 мая;</li>
+<li>«завтра» — 5 мая;</li>
+<li>18:00 в Москве — 15:00 UTC.</li>
+</ul>
+<p>Такой тест проверяет не регулярное выражение, а смысл всей фразы.</p>
+<h2>2. Разделяйте календарную дату и момент времени</h2>
+<p><code>5 мая</code> и <code>5 мая в 18:00</code> — разные типы данных.</p>
+<p>У даты без времени нет часового пояса. День рождения, дедлайн «до пятницы» и пункт календаря не должны внезапно переезжать на четверг из-за преобразования в UTC.</p>
+<p>У времени встречи, наоборот, есть точный момент. Его удобно хранить в UTC и показывать в зоне пользователя.</p>
+<p>Правильная модель выглядит так:</p>
+<pre><code class="language-python">due_date: date | None       # «5 мая», без часового пояса
+due_at: datetime | None     # конкретный момент, хранится в UTC
+</code></pre>
+<p>В существующей базе Doday используется совместимый вариант: <code>due_at</code> плюс флаг <code>due_date_only</code>. Это работает как размеченное объединение, но требует дисциплины: значение с <code>due_date_only=True</code> нельзя считать обычным моментом времени.</p>
+<p>Для срока с часами парсер сначала собирает локальное время, затем переводит его в UTC:</p>
+<pre><code class="language-python">def at_local(day: date, hour: int, minute: int, timezone_name: str) -&gt; datetime:
+    timezone = ZoneInfo(timezone_name)
+    local = datetime.combine(day, time(hour, minute), tzinfo=timezone)
+    return local.astimezone(UTC)
+</code></pre>
+<p>Клиент передаёт не смещение <code>+03:00</code>, а IANA-имя вроде <code>Europe/Moscow</code>. Это важно для зон, где смещение меняется из-за летнего времени.</p>
+<h2>3. «Через месяц» — не «через 30 дней»</h2>
+<p>В первой версии было удобно написать:</p>
+<pre><code class="language-python">due = today + timedelta(days=30)
+</code></pre>
+<p>Но 31 января плюс 30 дней — это 2 марта, а пользователь ожидает конец февраля.</p>
+<p>Нужна календарная арифметика с ограничением номера дня:</p>
+<pre><code class="language-python">def shift_months(day: date, months: int) -&gt; date:
+    index = day.year * 12 + day.month - 1 + months
+    year, zero_based_month = divmod(index, 12)
+    month = zero_based_month + 1
+    last_day = monthrange(year, month)[1]
+    return date(year, month, min(day.day, last_day))
+</code></pre>
+<p>Обязательные примеры: 31 января, високосный февраль и переход через декабрь.</p>
+<h2>4. Повтору нужна первая дата</h2>
+<p>Фраза <code>тренировка каждый понедельник</code> раньше давала правило <code>weekly</code>, но не давала первый срок. Задача создавалась без даты, а после выполнения следующая не появлялась.</p>
+<pre><code class="language-python">days_ahead = (weekday - today.weekday()) % 7 or 7
+first_due = today + timedelta(days=days_ahead)
+</code></pre>
+<p>У повторяющейся задачи нужны две части: правило и первая точка отсчёта. Проверяйте обе.</p>
+<h2>5. Не разрешайте <code>\S+</code> съедать пунктуацию</h2>
+<p>Шаблон <code>@(\S+)</code> превратит <code>@магазин,</code> в метку <code>магазин,</code>. Запятая станет частью данных.</p>
+<p>Безопаснее явно перечислить разделители:</p>
+<pre><code class="language-python">label_pattern = r&quot;(?&lt;!\w)@([^\s,.;:!?]+)&quot;
+</code></pre>
+<p>Здесь полезны тесты не только на запятую, но и на адрес почты: <code>foo@bar.com</code> не должен превращаться в метку.</p>
+<p><img alt="Разбор одной строки на срок, время, приоритет и метку" src="https://getdoday.ru/habr-img/s-07-quickadd-timezone.png" /></p>
+<p><em>Одна строка после исправления: время больше не остаётся в названии, а интерфейс показывает распознанные параметры до создания задачи.</em></p>
+<h2>Короткий чек-лист</h2>
+<p>Если вы разбираете слова <code>сегодня</code>, <code>завтра</code> и <code>через месяц</code>, проверьте:</p>
+<ul>
+<li>текущее время передаётся в функцию, а не берётся из глобальных часов;</li>
+<li>календарный день вычисляется в часовом поясе пользователя;</li>
+<li>дата без времени не притворяется UTC-моментом;</li>
+<li>локальное время переводится в UTC только после сборки даты и часов;</li>
+<li>месяц считается календарём, а не тридцатью днями;</li>
+<li>у повтора есть первая дата;</li>
+<li>пунктуация не попадает в метки и проекты;</li>
+<li>в тестах есть полночь, конец месяца и переход года.</li>
+</ul>
+<p>Исправление получилось небольшим: один чистый парсер и 47 целевых тестов. Главное изменение не в регулярках, а в контракте функции: теперь она знает, в каком календаре живёт слово «завтра».</p>
+<p>Код проекта:</p>
+<p>https://github.com/SwairIt/doday</p>
+<p>Проект и этот текст подготовлены мной в паре с ИИ-агентом. Агент помог найти граничные случаи и написать проверки; итоговые решения, запуск тестов и редактура проверены на реальном коде проекта.</p>
+<p>Ярослав Боев.</p>
+<p>Спасибо, что дочитали</p>
+</article>
+</details>
+
+<script>
+async function copyPost() {
+  const article = document.getElementById("article");
+  const html = article.innerHTML;
+  const text = article.innerText;
+  const btn = document.getElementById("copy-btn");
+  try {
+    if (navigator.clipboard && window.ClipboardItem) {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          "text/html": new Blob([html], { type: "text/html" }),
+          "text/plain": new Blob([text], { type: "text/plain" }),
+        })
+      ]);
+    } else {
+      const range = document.createRange();
+      range.selectNode(article);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      document.execCommand("copy");
+      sel.removeAllRanges();
+    }
+    btn.textContent = "✓ Скопировано! Теперь вставь в редактор";
+    btn.classList.add("ok");
+    setTimeout(() => { btn.textContent = "📋 Скопировать пост"; btn.classList.remove("ok"); }, 3000);
+  } catch (e) {
+    alert("Не получилось скопировать автоматически. Выдели текст в белом блоке через Ctrl+A и скопируй Ctrl+C. Ошибка: " + e.message);
+  }
+}
+
+async function copySection(sectionId, btn) {
+  const el = document.getElementById(sectionId);
+  if (!el) return;
+  const html = el.innerHTML;
+  const text = el.innerText;
+  try {
+    if (navigator.clipboard && window.ClipboardItem) {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          "text/html": new Blob([html], { type: "text/html" }),
+          "text/plain": new Blob([text], { type: "text/plain" }),
+        })
+      ]);
+    } else {
+      const range = document.createRange();
+      range.selectNode(el);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      document.execCommand("copy");
+      sel.removeAllRanges();
+    }
+    const origText = btn.textContent;
+    btn.textContent = "✓ Готово";
+    btn.classList.add("ok");
+    setTimeout(() => { btn.textContent = origText; btn.classList.remove("ok"); }, 2500);
+  } catch (e) {
+    alert("Не получилось. Выдели текст руками через Ctrl+A в блоке выше. Ошибка: " + e.message);
+  }
+}
+
+async function copyPlainText() {
+  const ta = document.getElementById("plain-textarea");
+  ta.select();
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(ta.value);
+    } else {
+      document.execCommand("copy");
+    }
+    alert("Plain text скопирован в буфер. Вставь в редактор Хабр.");
+  } catch (e) {
+    alert("Не получилось. Ошибка: " + e.message);
+  }
+}
+</script>
+</body></html>

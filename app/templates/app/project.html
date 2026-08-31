@@ -573,6 +573,8 @@
         class="mt-1.5">
         <input type="hidden" name="project_id" value="{{ project.id }}">
         <input type="hidden" name="section_id" value="{{ s.id }}">
+        <input type="hidden" name="timezone"
+               x-init="$el.value = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'">
         <button type="button"
                 x-show="!open"
                 @click="open = true; $nextTick(() => $refs.sec_input_{{ s.id|replace('-', '_') }}.focus())"

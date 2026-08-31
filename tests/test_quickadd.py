@@ -166,7 +166,43 @@ def test_parser_through_month() -> None:
     p = parse_quick_add("Подвести итоги через месяц", now=_FIXED_NOW)
     assert p.title == "Подвести итоги"
     assert p.due_at is not None
-    assert p.due_at.date() == (_FIXED_NOW + timedelta(days=30)).date()
+    assert p.due_at.date() == datetime(2026, 6, 3, tzinfo=UTC).date()
+
+
+def test_calendar_month_clamps_end_of_month() -> None:
+    now = datetime(2026, 1, 31, 12, tzinfo=UTC)
+    p = parse_quick_add("Оплатить через месяц", now=now)
+    assert p.due_at is not None
+    assert p.due_at.date() == datetime(2026, 2, 28, tzinfo=UTC).date()
+
+
+def test_tomorrow_uses_users_timezone_and_parses_explicit_time() -> None:
+    # 21:30 UTC is already 00:30 on 4 May in Moscow. "Tomorrow 18:00"
+    # therefore means 5 May 18:00 MSK = 15:00 UTC.
+    now = datetime(2026, 5, 3, 21, 30, tzinfo=UTC)
+    p = parse_quick_add(
+        "Сдать реферат завтра в 18:00 !!! @школа",
+        now=now,
+        timezone_name="Europe/Moscow",
+    )
+    assert p.title == "Сдать реферат"
+    assert p.due_at == datetime(2026, 5, 5, 15, 0, tzinfo=UTC)
+    assert p.date_only is False
+    assert p.priority is TaskPriority.P1
+    assert p.label_names == ["школа"]
+
+
+def test_weekday_recurrence_gets_first_due_date() -> None:
+    p = parse_quick_add("Тренировка каждый понедельник", now=_FIXED_NOW)
+    assert p.recurrence == "weekly"
+    assert p.due_at is not None
+    assert p.due_at.date() == datetime(2026, 5, 4, tzinfo=UTC).date()
+
+
+def test_label_does_not_swallow_punctuation() -> None:
+    p = parse_quick_add("Купить молоко @магазин, завтра", now=_FIXED_NOW)
+    assert p.label_names == ["магазин"]
+    assert p.title == "Купить молоко"
 
 
 def test_parser_day_month_words() -> None:

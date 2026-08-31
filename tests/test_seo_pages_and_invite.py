@@ -173,3 +173,23 @@ async def test_habr_screenshot_served(client: AsyncClient) -> None:
 async def test_habr_screenshot_rejects_anything_else(client: AsyncClient) -> None:
     for name in ("../../.env", "..%2f..%2f.env", "secret.png", "s-99-nope.png"):
         assert (await client.get(f"/habr-img/{name}")).status_code in (404, 400)
+
+
+async def test_quickadd_habr_article_preview_and_raw(client: AsyncClient) -> None:
+    preview = await client.get("/marketing-preview/habr-quickadd-dates")
+    assert preview.status_code == 200
+    assert "Скопировать" in preview.text
+    assert "s-07-quickadd-timezone.png" in preview.text
+
+    raw = await client.get("/marketing-preview/habr-quickadd-dates/raw")
+    assert raw.status_code == 200
+    assert raw.headers["content-type"].startswith("text/plain")
+    assert raw.text.startswith("# «Завтра в 18:00»")
+    assert raw.text.rstrip().endswith("Спасибо, что дочитали")
+
+
+async def test_quickadd_habr_screenshot_served(client: AsyncClient) -> None:
+    response = await client.get("/habr-img/s-07-quickadd-timezone.png")
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "image/png"
+    assert response.content[:4] == b"\x89PNG"
