@@ -50,7 +50,7 @@ def main() -> None:
             ),
         },
         "habr-quickadd-dates": {
-            "title": "Хабр: Python, «завтра в 18:00» и ошибка на сутки",
+            "title": "Хабр: «завтра в 18:00» и часовые пояса в Python",
             "paste_target": "Хабр",
             "source": "docs/articles/2026-08-31-habr-quickadd-dates.md",
             "platform_note": (
