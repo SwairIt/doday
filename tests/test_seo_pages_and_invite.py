@@ -180,7 +180,7 @@ async def test_quickadd_habr_article_preview_and_raw(client: AsyncClient) -> Non
     assert preview.status_code == 200
     assert "Скопировать" in preview.text
     assert "s-07-quickadd-timezone.png" in preview.text
-    assert "s-08-quickadd-cover.png" in preview.text
+    assert "s-09-quickadd-cover.png" in preview.text
 
     raw = await client.get("/marketing-preview/habr-quickadd-dates/raw")
     assert raw.status_code == 200

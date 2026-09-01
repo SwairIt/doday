@@ -6,7 +6,7 @@
 
 ---
 
-![Кот пытается понять, когда наступит «завтра в 18:00»](https://getdoday.ru/habr-img/s-08-quickadd-cover.png)
+![Резиновая уточка расследует баг парсера на границе двух дней](https://getdoday.ru/habr-img/s-09-quickadd-cover.png)
 
 В Doday задачу можно добавить одной строкой:
 
