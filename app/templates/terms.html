@@ -20,8 +20,8 @@
         <section>
           <h2 class="text-xl font-semibold mb-2">1. Стороны</h2>
           <p class="text-[var(--text-muted)]">
-            <strong>Исполнитель:</strong> Боев Ярослав Дмитриевич, плательщик налога
-            на профессиональный доход (самозанятый), ИНН <span class="font-mono">550149009405</span>.
+            <strong>Исполнитель:</strong> Боева Лариса Владимировна, плательщик налога
+            на профессиональный доход (самозанятая), ИНН <span class="font-mono">550209608999</span>.
           </p>
           <p class="text-[var(--text-muted)] mt-1">
             <strong>Заказчик:</strong> любое дееспособное физическое лицо или
@@ -123,8 +123,11 @@
         <section>
           <h2 class="text-xl font-semibold mb-2">9. Контакты</h2>
           <p class="text-[var(--text-muted)]">
-            Боев Ярослав Дмитриевич, самозанятый, ИНН <span class="font-mono">550149009405</span>.<br>
-            Адрес для связи: Московская обл., г. Королёв, мкр. Юбилейный, ул. М.К. Тихонравова, д. 40, кв. 5.<br>
+            Боева Лариса Владимировна, самозанятая, ИНН <span class="font-mono">550209608999</span>.<br>
+            Город: Королёв.<br>
+            {% if request.state.contact_phone %}
+            Телефон: <a href="tel:{{ request.state.contact_phone | replace(' ', '') | replace('-', '') }}" class="text-[var(--accent)] hover:underline">{{ request.state.contact_phone }}</a>.<br>
+            {% endif %}
             Email: <a href="mailto:doday.support@gmail.com" class="text-[var(--accent)] hover:underline">doday.support@gmail.com</a>.
           </p>
         </section>

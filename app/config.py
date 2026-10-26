@@ -9,6 +9,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # (/<ключ>.txt), поэтому держим в коде — иначе пришлось бы прописывать .env
 # на сервере. Пустое значение в .env НЕ должно его затирать: см. валидатор ниже.
 _DEFAULT_INDEXNOW_KEY = "ca6fac0a6aa2019332f54f8e4b705f5a"
+_DEFAULT_CONTACT_PHONE = "+7 905 584-29-39"
 
 
 class Settings(BaseSettings):
@@ -136,9 +137,15 @@ class Settings(BaseSettings):
     # СМЗ» — чек уходит в ФНС и покупателю автоматически.
     # Пусто → оплата картой выключена, на сайте остаются только Telegram Stars.
     # Контакты продавца для подвала сайта. Robokassa требует телефон И почту;
-    # города достаточно вместо полного адреса. Пусто → блок не рисуется.
-    contact_phone: str = ""
+    # города достаточно вместо полного адреса. Пустая переменная окружения
+    # сохраняет рабочий номер поддержки, опубликованный на сайте.
+    contact_phone: str = _DEFAULT_CONTACT_PHONE
     contact_city: str = ""
+
+    @field_validator("contact_phone")
+    @classmethod
+    def _keep_contact_phone_default(cls, v: str) -> str:
+        return v.strip() or _DEFAULT_CONTACT_PHONE
 
     robokassa_login: str = ""
     robokassa_password1: str = ""  # подпись исходящего платежа (боевой)
