@@ -145,7 +145,12 @@ class Settings(BaseSettings):
     @field_validator("contact_phone")
     @classmethod
     def _keep_contact_phone_default(cls, v: str) -> str:
-        return v.strip() or _DEFAULT_CONTACT_PHONE
+        phone = v.strip()
+        # В старом .env прода остался номер прежнего контакта. При смене
+        # продавца заменяем его новым рабочим номером поддержки.
+        if phone.replace(" ", "").replace("-", "") == "+79951554301":
+            return _DEFAULT_CONTACT_PHONE
+        return phone or _DEFAULT_CONTACT_PHONE
 
     robokassa_login: str = ""
     robokassa_password1: str = ""  # подпись исходящего платежа (боевой)
