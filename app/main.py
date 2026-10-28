@@ -31,6 +31,7 @@ from app.admin.router import (
 from app.ai.router import router as ai_router
 from app.auth.router import router as auth_router
 from app.backup.router import router as backup_router
+from app.billing import robokassa
 from app.billing.router import router as billing_router
 from app.blog.posts import warm_cache as warm_blog_cache
 from app.blog.router import router as blog_router
@@ -559,6 +560,11 @@ async def _security_headers(
     # Контакты продавца в подвале — требование Robokassa при модерации сайта.
     request.state.contact_phone = _settings.contact_phone
     request.state.contact_city = _settings.contact_city
+    request.state.card_payments_announcement_enabled = (
+        _settings.card_payments_announcement_enabled
+        and robokassa.is_configured()
+        and not _settings.robokassa_test_mode
+    )
     # Публичный ключ reCAPTCHA для виджета на форме регистрации. Виджет
     # показываем, только если заданы ОБА ключа: иначе сервер проверку не
     # делает, а человек зря решал бы капчу.

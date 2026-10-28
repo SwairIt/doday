@@ -161,6 +161,8 @@ class Settings(BaseSettings):
     robokassa_test_mode: bool = False
     robokassa_test_password1: str = ""
     robokassa_test_password2: str = ""
+    # Объявление о приёме карт включаем после проверки настоящей оплаты и чека.
+    card_payments_announcement_enabled: bool = False
 
     lessio_bot_token: str = ""
     lessio_bot_username: str = ""

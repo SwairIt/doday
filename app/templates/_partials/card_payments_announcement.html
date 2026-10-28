@@ -1,0 +1,58 @@
+{# Одно объявление для сайта и приложения. Закрытие запоминается в этом браузере. #}
+{% if request.state.card_payments_announcement_enabled %}
+<aside id="card-payments-announcement"
+       aria-labelledby="card-payments-announcement-title"
+       x-data="{
+         visible: false,
+         init() {
+           this.visible = true;
+           try {
+             this.visible = localStorage.getItem('doday-card-payments-announcement-v1') !== 'dismissed';
+           } catch (e) {}
+         },
+         dismiss() {
+           this.visible = false;
+           try {
+             localStorage.setItem('doday-card-payments-announcement-v1', 'dismissed');
+           } catch (e) {}
+         }
+       }"
+       x-show="visible"
+       x-cloak
+       class="relative mb-6 overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 p-4 text-white shadow-lg shadow-violet-950/15 sm:p-5">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
+    <div class="flex min-w-0 flex-1 items-start gap-3 pr-7 sm:pr-0">
+      <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15" aria-hidden="true">
+        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+          <rect x="3" y="5" width="18" height="14" rx="3"/>
+          <path d="M3 10h18M7 15h3" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <div class="min-w-0">
+        <h2 id="card-payments-announcement-title" class="text-sm font-bold leading-snug sm:text-base">
+          Doday Pro — теперь картой и через СБП
+        </h2>
+        <p class="mt-1 text-xs leading-relaxed text-white/90 sm:text-sm">
+          Оплачивай подписку прямо на сайте. Безлимитные проекты и задачи,
+          все темы оформления и другие возможности Pro.
+        </p>
+      </div>
+    </div>
+    <a href="/pricing"
+       class="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-violet-800 transition hover:bg-violet-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white sm:mr-7">
+      Посмотреть тарифы
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="m9 5 7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+  </div>
+  <button type="button"
+          @click="dismiss()"
+          aria-label="Закрыть объявление об оплате"
+          class="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-lg text-white/80 transition hover:bg-white/15 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white">
+    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="m6 6 12 12M6 18 18 6" stroke-linecap="round"/>
+    </svg>
+  </button>
+</aside>
+{% endif %}

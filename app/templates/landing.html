@@ -62,6 +62,11 @@
   </header>
 
   <main class="flex-1">
+    {% if request.state.card_payments_announcement_enabled %}
+    <div class="relative z-[1] max-w-5xl mx-auto px-4 sm:px-6 pt-6">
+      {% include "_partials/card_payments_announcement.html" %}
+    </div>
+    {% endif %}
 
     {# ───── 3D particle hero (scroll → checkmark assembly) ───── #}
     {% set fx_shape = 'checkmark' %}
