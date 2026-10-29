@@ -4,9 +4,10 @@
 {% set non_favorites = projects|default([]) | rejectattr('is_favorite') | list %}
 
 <aside
-  class="fixed md:sticky inset-y-0 left-0 z-40 w-72 md:w-64 bg-[var(--surface-2)] border-r border-[var(--border)]
-         transition-transform duration-200 md:translate-x-0 flex flex-col h-screen overflow-y-auto"
-  :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
+  id="app-sidebar" data-open="false" :data-open="sidebarOpen ? 'true' : 'false'"
+  :inert="mobile &amp;&amp; !sidebarOpen"
+  class="app-sidebar fixed md:sticky inset-y-0 left-0 z-40 w-72 md:w-64 bg-[var(--surface-2)] border-r border-[var(--border)]
+         transition-transform duration-200 flex flex-col h-screen overflow-y-auto"
 >
   <div class="px-6 pt-5 pb-3">
     <a href="/" class="flex items-center gap-2.5 font-bold text-xl">

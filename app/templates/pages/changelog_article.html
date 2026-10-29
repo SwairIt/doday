@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ entry.title }} — обновления Doday{% endblock %}
+{% block seo_description %}{{ entry.get('summary', entry.title) }}{% endblock %}
+{% block og_title %}{{ entry.title }}{% endblock %}
+{% block seo_url %}https://getdoday.ru/changelog/{{ entry.get('slug', entry.date) }}{% endblock %}
+{% block layout %}
+<div class="flex min-h-screen flex-col">
+  <header class="mx-auto flex w-full max-w-4xl flex-wrap items-center justify-between gap-3 px-4 py-5 sm:px-6">
+    <a href="/" class="text-xl font-bold grad-text">Doday</a>
+    <a href="/changelog" class="btn-ghost text-sm">← Все обновления</a>
+  </header>
+  <main id="main-content" class="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6 sm:py-12">
+    <article class="min-w-0">
+      <div class="mb-4 flex flex-wrap items-center gap-3 text-xs text-[var(--text-muted)]">
+        <span class="rounded-full bg-violet-500/15 px-3 py-1.5 text-violet-500">{{ entry.version }}</span>
+        <time datetime="{{ entry.date }}">{{ entry.date }}</time>
+      </div>
+      <h1 class="mb-5 break-words text-3xl font-bold leading-tight sm:text-4xl">{{ entry.title }}</h1>
+      {% if entry.get('summary') %}<p class="mb-8 text-base leading-relaxed text-[var(--text-muted)] sm:text-lg">{{ entry.summary }}</p>{% endif %}
+      <section class="card p-5 sm:p-8" aria-labelledby="release-changes">
+        <h2 id="release-changes" class="mb-5 text-xl font-semibold">Что изменилось</h2>
+        <ol class="space-y-5">
+          {% for note in entry.notes %}
+          <li class="flex min-w-0 items-start gap-3">
+            <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--accent)]/15 text-xs font-semibold text-[var(--accent)]" aria-hidden="true">{{ loop.index }}</span>
+            <p class="min-w-0 break-words text-sm leading-relaxed sm:text-base">{{ note }}</p>
+          </li>
+          {% endfor %}
+        </ol>
+      </section>
+      <div class="mt-8 flex flex-wrap gap-3"><a href="/changelog" class="btn-ghost">Все обновления</a><a href="{{ '/app/today' if user else '/auth/register' }}" class="btn-primary">{{ 'В приложение' if user else 'Попробовать Doday' }}</a></div>
+    </article>
+  </main>
+  {% include "_partials/public_footer.html" %}
+</div>
+{% endblock %}

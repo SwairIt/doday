@@ -2,7 +2,12 @@
 
 {# App shell layout: sticky sidebar (md+), drawer on mobile, sticky topbar, scrolling main canvas. #}
 {% block layout %}
-<style>[x-cloak]{display:none!important}</style>
+<style>
+[x-cloak]{display:none!important}
+.app-sidebar { transform: translateX(-100%); }
+.app-sidebar[data-open="true"] { transform: translateX(0); }
+@media (min-width:768px) { .app-sidebar { transform: none; } }
+</style>
 <script>
   document.addEventListener('alpine:init', () => {
     Alpine.store('selection', {
@@ -64,14 +69,17 @@
   });
 </script>
 
-<div class="min-h-screen flex" x-data="{ sidebarOpen: false }">
+<div class="min-h-screen flex" x-data="{ sidebarOpen: false, mobile: window.innerWidth &lt; 768 }"
+     @resize.window.debounce.100ms="mobile = window.innerWidth &lt; 768; if (!mobile) sidebarOpen = false"
+     @keydown.escape.window="sidebarOpen = false">
   {% include "_partials/sidebar.html" %}
 
   <div class="flex-1 flex flex-col min-w-0">
+    {% set page_title %}{% block view_title %}Doday{% endblock %}{% endset %}
     {% include "_partials/topbar.html" %}
 
     <main id="main-content" class="flex-1 overflow-auto">
-      <div class="max-w-3xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-40 md:pb-12 animate-fade-in">
+      <div class="{% block content_width %}max-w-3xl{% endblock %} mx-auto min-w-0 px-4 md:px-8 py-6 md:py-8 pb-40 md:pb-12 animate-fade-in">
         {% include "_partials/card_payments_announcement.html" %}
         {% block content %}{% endblock %}
       </div>
@@ -95,25 +103,29 @@
 {% include "_partials/undo_toast.html" %}
 {% include "_partials/toast.html" %}
 
-{# Приветствие после успешной оплаты. Robokassa возвращает на ?paid=1;
-   показываем тост «Pro открыт» и чистим параметр из адреса, чтобы при
-   обновлении страницы поздравление не всплывало снова. #}
+{# Успех показываем только после подтверждения сервером своего счёта. #}
 <script>
-  (function () {
+  (async function () {
     var params = new URLSearchParams(location.search);
-    if (params.get('paid') === '1') {
-      var show = function () {
-        if (window.dodayToast) {
-          window.dodayToast('Оплата прошла — Doday Pro открыт! Спасибо 💜', { icon: '⭐', duration: 6000 });
-        } else {
-          setTimeout(show, 200);
+    var invoice = params.get('payment_invoice');
+    if (!invoice || !/^[0-9]{1,19}$/.test(invoice)) return;
+    params.delete('payment_invoice');
+    history.replaceState(null, '', location.pathname + (params.toString() ? '?' + params : '') + location.hash);
+    var message = 'Подтверждение оплаты ещё ожидается. Проверьте тариф чуть позже.';
+    try {
+      for (var attempt = 0; attempt < 6; attempt++) {
+        var response = await fetch('/api/billing/cards/' + invoice + '/status', { credentials: 'same-origin', cache: 'no-store' });
+        if (!response.ok) return;
+        var payment = await response.json();
+        if (payment.status === 'succeeded') {
+          message = payment.is_test ? 'Тестовый платёж подтверждён. Настоящая подписка не выдана.' : 'Оплата подтверждена: ' + payment.product_title + '. Спасибо 💜';
+          break;
         }
-      };
-      show();
-      params.delete('paid');
-      var clean = location.pathname + (params.toString() ? '?' + params : '') + location.hash;
-      history.replaceState(null, '', clean);
-    }
+        if (payment.status !== 'pending') { message = 'Статус оплаты: ' + (payment.status === 'refunded' ? 'возврат' : 'отменена'); break; }
+        await new Promise(function (resolve) { setTimeout(resolve, 1500); });
+      }
+    } catch (_) { message = 'Не удалось проверить оплату. Проверьте тариф после восстановления связи.'; }
+    if (window.dodayToast) window.dodayToast(message, { duration: 8000 });
   })();
 </script>
 

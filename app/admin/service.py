@@ -6,6 +6,7 @@ from uuid import UUID
 
 from sqlalchemy import delete, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.elements import ColumnElement
 
 from app.admin.models import Complaint, PageView
 from app.auth.models import User
@@ -100,10 +101,12 @@ async def delete_complaint(session: AsyncSession, complaint_id: UUID) -> bool:
     return True
 
 
-async def admin_stats(session: AsyncSession) -> dict[str, Any]:
+async def admin_stats(session: AsyncSession, *, tz: str | None = None) -> dict[str, Any]:
     """Top-level numbers for the admin dashboard."""
     now = datetime.now(UTC)
-    today_start = datetime.combine(now.date(), time.min, tzinfo=UTC)
+    from app import timezones
+
+    today_start = datetime.combine(timezones.today_in(tz), time.min, tzinfo=timezones.zone_of(tz))
     week_ago = now - timedelta(days=7)
 
     users_total = (await session.execute(select(func.count()).select_from(User))).scalar_one()
@@ -200,16 +203,21 @@ async def top_pages(
     return [{"path": path, "count": n} for path, n in rows]
 
 
-async def signups_by_day(session: AsyncSession, *, days: int = 14) -> list[dict[str, Any]]:
+async def signups_by_day(
+    session: AsyncSession, *, days: int = 14, tz: str | None = None
+) -> list[dict[str, Any]]:
     """Регистрации по дням за последние N дней: [{day: 'дд.мм', count}].
 
     Заполняем и нулевые дни, чтобы график не «схлопывался» на пустых датах.
     """
-    since_date = (datetime.now(UTC) - timedelta(days=days - 1)).date()
+    from app import timezones
+
+    since_date = timezones.today_in(tz) - timedelta(days=days - 1)
+    local_day = func.date(func.timezone(timezones.normalize(tz), User.created_at))
     rows = (
         await session.execute(
-            select(func.date(User.created_at).label("d"), func.count().label("n"))
-            .where(func.date(User.created_at) >= since_date)
+            select(local_day.label("d"), func.count().label("n"))
+            .where(local_day >= since_date)
             .group_by("d")
         )
     ).all()
@@ -221,16 +229,32 @@ async def signups_by_day(session: AsyncSession, *, days: int = 14) -> list[dict[
     return out
 
 
+def abandoned_user_conditions(older_than_days: int) -> list[ColumnElement[bool]]:
+    """Only truly empty accounts can be purged, including all product modules."""
+    from app.db import Base
+
+    conditions: list[ColumnElement[bool]] = [
+        User.email_verified_at.is_(None),
+        User.is_admin.is_(False),
+        User.pro_until.is_(None),
+    ]
+    if older_than_days > 0:
+        conditions.append(User.created_at < datetime.now(UTC) - timedelta(days=older_than_days))
+    for table in Base.metadata.tables.values():
+        if table.name == User.__tablename__:
+            continue
+        for column in table.columns:
+            if any(fk.target_fullname == "users.id" for fk in column.foreign_keys):
+                conditions.append(~select(1).select_from(table).where(column == User.id).exists())
+    return conditions
+
+
 async def count_unverified(session: AsyncSession, *, older_than_days: int = 0) -> int:
     """Сколько НЕподтверждённых (не-админ) аккаунтов — вероятные боты.
 
     ``older_than_days`` > 0 считает только старше N дней (свежие регистрации,
     которые ещё могут подтвердиться, не берём)."""
-    stmt = (
-        select(func.count())
-        .select_from(User)
-        .where(User.email_verified_at.is_(None), User.is_admin.is_(False))
-    )
+    stmt = select(func.count()).select_from(User).where(*abandoned_user_conditions(older_than_days))
     if older_than_days > 0:
         cutoff = datetime.now(UTC) - timedelta(days=older_than_days)
         stmt = stmt.where(User.created_at < cutoff)
@@ -247,19 +271,7 @@ async def purge_unverified(session: AsyncSession, *, older_than_days: int = 3) -
     задачи, привязки к Telegram и профиля репетитора — ровно те же условия,
     что у автоочистки при старте.
     """
-    from app.lessio.models import LessioTutorProfile
-    from app.tasks.models import Task
-    from app.telegram.models import TelegramLink
-
-    cutoff = datetime.now(UTC) - timedelta(days=max(0, older_than_days))
-    stmt = delete(User).where(
-        User.email_verified_at.is_(None),
-        User.is_admin.is_(False),
-        User.created_at < cutoff,
-        ~select(Task.id).where(Task.user_id == User.id).exists(),
-        ~select(TelegramLink.id).where(TelegramLink.user_id == User.id).exists(),
-        ~select(LessioTutorProfile.id).where(LessioTutorProfile.user_id == User.id).exists(),
-    )
+    stmt = delete(User).where(*abandoned_user_conditions(max(0, older_than_days)))
     result = await session.execute(stmt)
     await session.commit()
     # rowcount не объявлен в типах Result, хотя есть у CursorResult —

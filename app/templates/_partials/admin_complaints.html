@@ -1,0 +1,167 @@
+<section id="support" class="scroll-mt-24">
+{# ---- Complaints ---- #}
+<div x-data="{
+       statusFilter: 'all',
+       priorityFilter: 'all',
+       search: '',
+       async send(path, method, payload) {
+         try {
+           const r = await fetch('/api/admin/complaints/' + path, {
+             method, credentials: 'include',
+             headers: {'Content-Type': 'application/json'},
+             body: payload ? JSON.stringify(payload) : undefined
+           });
+           if (r.ok) location.reload();
+           else alert('Изменение не сохранено. Код ошибки: ' + r.status);
+         } catch (_) { alert('Нет связи с сервером. Изменение не сохранено — повтори после восстановления сети.'); }
+       },
+       async patch(id, payload) { await this.send(id, 'PATCH', payload); },
+       async delComplaint(id) {
+         if (!confirm('Удалить жалобу безвозвратно?')) return;
+         await this.send(id, 'DELETE');
+       },
+       async reply(id, textarea) {
+         const body = (textarea.value || '').trim();
+         if (body.length < 1) { alert('Напиши ответ'); return; }
+         await this.send(id + '/reply', 'POST', {body});
+       },
+       matches(row) {
+         if (this.statusFilter !== 'all' && row.dataset.status !== this.statusFilter) return false;
+         if (this.priorityFilter !== 'all' && row.dataset.priority !== this.priorityFilter) return false;
+         if (this.search) {
+           const needle = this.search.toLowerCase();
+           const hay = (row.dataset.body + ' ' + row.dataset.email + ' ' + row.dataset.url).toLowerCase();
+           if (!hay.includes(needle)) return false;
+         }
+         return true;
+       },
+       refilter() {
+         document.querySelectorAll('[data-complaint]').forEach(r => {
+           r.style.display = this.matches(r) ? '' : 'none';
+         });
+       },
+     }"
+     x-init="$watch('statusFilter', () => refilter()); $watch('priorityFilter', () => refilter()); $watch('search', () => refilter())">
+  <div class="flex items-center justify-between mb-3 gap-3 flex-wrap">
+    <h2 class="text-lg font-bold">Жалобы <span class="text-[var(--text-muted)] text-sm font-normal">· {{ complaints|length }}</span></h2>
+    <div class="flex items-center gap-2 flex-wrap text-xs">
+      <select x-model="statusFilter" class="bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-1">
+        <option value="all">Все статусы</option>
+        <option value="open">🟡 Open</option>
+        <option value="in_progress">🔵 In progress</option>
+        <option value="resolved">✅ Resolved</option>
+        <option value="dismissed">⚫ Dismissed</option>
+      </select>
+      <select x-model="priorityFilter" class="bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-1">
+        <option value="all">Любой приоритет</option>
+        <option value="high">🔴 High</option>
+        <option value="normal">🟠 Normal</option>
+        <option value="low">⚪ Low</option>
+      </select>
+      <input type="search" x-model="search" placeholder="Поиск по тексту/email/url"
+             class="bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-1 w-44" />
+    </div>
+  </div>
+
+  {% if complaints %}
+    <div class="space-y-3">
+      {% for c in complaints %}
+        {% set status_color = {'open':'amber','in_progress':'sky','resolved':'emerald','dismissed':'slate'}.get(c.status, 'slate') %}
+        {% set prio_color = {'high':'rose','normal':'amber','low':'slate'}.get(c.priority, 'slate') %}
+        <article class="card min-w-0 p-4 break-words"
+                 data-complaint
+                 data-status="{{ c.status }}"
+                 data-priority="{{ c.priority }}"
+                 data-body="{{ c.body|e }}"
+                 data-email="{{ user_emails.get(c.user_id, '')|e }}"
+                 data-url="{{ (c.page_url or '')|e }}">
+          <div class="flex items-start justify-between gap-3 mb-2 flex-wrap">
+            <div class="flex items-center gap-2 text-xs flex-wrap">
+              <span class="px-2 py-0.5 rounded-full bg-{{ status_color }}-500/15 text-{{ status_color }}-400 font-semibold uppercase tracking-wider">{{ c.status }}</span>
+              <span class="px-2 py-0.5 rounded-full bg-{{ prio_color }}-500/15 text-{{ prio_color }}-400 font-semibold uppercase tracking-wider">{{ c.priority }}</span>
+              <span class="text-[var(--text-muted)]">·</span>
+              <span class="text-[var(--text-muted)] tabular-nums">{{ c.created_at.strftime('%d.%m %H:%M') }}</span>
+              {% if c.user_id %}
+                <span class="text-[var(--text-muted)]">·</span>
+                <span class="font-mono text-[var(--text)]">{{ user_emails.get(c.user_id, '?') }}</span>
+              {% else %}
+                <span class="text-[var(--text-muted)]">· аноним</span>
+              {% endif %}
+              {% if c.contact_email %}
+                <span class="text-[var(--text-muted)]">·</span>
+                <a href="mailto:{{ c.contact_email|e }}?subject=Ответ поддержки Doday"
+                   class="text-[var(--accent)] hover:underline">✉ {{ c.contact_email }}</a>
+              {% endif %}
+            </div>
+            <div class="flex flex-wrap items-center gap-1 text-xs">
+              {% if c.status != 'in_progress' %}
+                <button type="button" @click="patch('{{ c.id }}', {status: 'in_progress'})"
+                        class="px-2 py-1 rounded hover:bg-sky-500/15 text-sky-400">→ В работу</button>
+              {% endif %}
+              {% if c.status != 'resolved' %}
+                <button type="button" @click="patch('{{ c.id }}', {status: 'resolved'})"
+                        class="px-2 py-1 rounded hover:bg-emerald-500/15 text-emerald-400">✓ Закрыть</button>
+              {% endif %}
+              {% if c.status != 'dismissed' %}
+                <button type="button" @click="patch('{{ c.id }}', {status: 'dismissed'})"
+                        class="px-2 py-1 rounded hover:bg-slate-500/15 text-[var(--text-muted)]">⊘ Отклонить</button>
+              {% endif %}
+              {% if c.status != 'open' %}
+                <button type="button" @click="patch('{{ c.id }}', {status: 'open'})"
+                        class="px-2 py-1 rounded hover:bg-amber-500/15 text-amber-400">↻ Открыть</button>
+              {% endif %}
+              <button type="button" @click="delComplaint('{{ c.id }}')"
+                      class="px-2 py-1 rounded hover:bg-rose-500/15 text-rose-400">🗑</button>
+            </div>
+          </div>
+
+          <div class="text-sm whitespace-pre-wrap leading-relaxed mb-2">{{ c.body }}</div>
+
+          <div class="flex items-center gap-3 text-[11px] text-[var(--text-muted)] flex-wrap">
+            {% if c.page_url %}<span>📍 <code>{{ c.page_url }}</code></span>{% endif %}
+            {% if c.viewport %}<span>📐 {{ c.viewport }}</span>{% endif %}
+            {% if c.user_agent %}<span class="truncate max-w-xs" title="{{ c.user_agent }}">🌐 {{ c.user_agent[:40] }}…</span>{% endif %}
+          </div>
+
+          <div class="mt-2 flex items-center gap-2 text-xs">
+            <input type="text" placeholder="заметка админа..." value="{{ c.admin_note or '' }}"
+                   data-original-note="{{ c.admin_note or '' }}"
+                   @blur="if ($event.target.value !== $el.dataset.originalNote) patch('{{ c.id }}', {admin_note: $event.target.value})"
+                   class="min-w-0 flex-1 bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-1 text-xs">
+            <select @change="patch('{{ c.id }}', {priority: $event.target.value})"
+                    class="bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-1 text-xs">
+              <option value="low" {% if c.priority == 'low' %}selected{% endif %}>Low</option>
+              <option value="normal" {% if c.priority == 'normal' %}selected{% endif %}>Normal</option>
+              <option value="high" {% if c.priority == 'high' %}selected{% endif %}>High</option>
+            </select>
+          </div>
+
+          {# Ответ автору — уходит ему в колокольчик и на почту #}
+          <div class="mt-2 pt-2 border-t border-[var(--border)]">
+            {% if c.admin_reply %}
+              <div class="text-[11px] text-[var(--text-muted)] mb-1.5">
+                💬 Ты ответил: <span class="text-[var(--text)] whitespace-pre-wrap">{{ c.admin_reply }}</span>
+              </div>
+            {% endif %}
+            <div class="flex items-start gap-2">
+              <textarea rows="1" placeholder="Ответить автору…"
+                        class="min-w-0 flex-1 bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-1 text-xs resize-y"></textarea>
+              <button type="button" @click="reply('{{ c.id }}', $el.previousElementSibling)"
+                      class="px-3 py-1 rounded bg-[var(--accent)] text-white text-xs font-semibold shrink-0 hover:opacity-90">
+                Ответить
+              </button>
+            </div>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card p-8 text-center text-[var(--text-muted)]">
+      <div class="text-4xl mb-3">🤘</div>
+      Жалоб пока нет. Юзеры либо очень довольны, либо ещё не нашли как пожаловаться.
+    </div>
+  {% endif %}
+</div>
+
+
+</section>

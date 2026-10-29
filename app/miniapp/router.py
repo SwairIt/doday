@@ -13,6 +13,7 @@ from sqlalchemy import func, select
 from app import timezones
 from app.auth.deps import CurrentUser, DbSession
 from app.auth.models import User
+from app.billing.service import can_create_project, can_create_task
 from app.config import get_settings
 from app.miniapp.auth import get_telegram_user_id, validate_init_data
 from app.miniapp.static import MINIAPP_JS
@@ -540,6 +541,9 @@ async def api_create_project(
     name = payload.name.strip()
     if not name:
         return JSONResponse({"error": "empty_name"}, status_code=400)
+    allowed, reason = await can_create_project(session, user)
+    if not allowed:
+        return JSONResponse({"error": "limit_reached", "detail": reason}, status_code=402)
     project = await create_project(session, user.id, name=name[:100], color=payload.color)
     return JSONResponse(
         {
@@ -680,6 +684,9 @@ async def api_create_task(
     text = (payload.text or "").strip()
     if not text:
         return JSONResponse({"error": "empty_text"}, status_code=400)
+    allowed, reason = await can_create_task(session, user)
+    if not allowed:
+        return JSONResponse({"error": "limit_reached", "detail": reason}, status_code=402)
     try:
         parsed = parse_quick_add(text, timezone_name=timezones.normalize(payload.timezone))
     except ValueError:
@@ -890,6 +897,9 @@ async def api_create_subtask(
     ).scalar_one_or_none()
     if parent is None:
         return JSONResponse({"error": "not_found"}, status_code=404)
+    allowed, reason = await can_create_task(session, user)
+    if not allowed:
+        return JSONResponse({"error": "limit_reached", "detail": reason}, status_code=402)
     sub = await create_task(
         session,
         user.id,
@@ -1640,6 +1650,9 @@ async def api_duplicate_task(
     ).scalar_one_or_none()
     if src is None:
         return JSONResponse({"error": "not_found"}, status_code=404)
+    allowed, reason = await can_create_task(session, user)
+    if not allowed:
+        return JSONResponse({"error": "limit_reached", "detail": reason}, status_code=402)
     new = await create_task(
         session,
         user.id,

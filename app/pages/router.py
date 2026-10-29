@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Form, Request
+from fastapi import APIRouter, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
@@ -39,6 +39,7 @@ async def doday_landing(request: Request, user: CurrentUser) -> Response:
             "blog_posts": featured_posts(6),
             "blog_total": len(all_posts()),
             "blog_categories": CATEGORY_BY_SLUG,
+            "recent_updates": CHANGELOG_ENTRIES[:3],
         },
     )
 
@@ -321,6 +322,18 @@ async def changelog(request: Request, user: CurrentUser) -> HTMLResponse:
         request,
         "pages/changelog.html",
         {"user": user, "entries": CHANGELOG_ENTRIES},
+    )
+
+
+@router.get("/changelog/{slug}", response_class=HTMLResponse)
+async def changelog_article(slug: str, request: Request, user: CurrentUser) -> HTMLResponse:
+    entry = next(
+        (entry for entry in CHANGELOG_ENTRIES if entry.get("slug", entry["date"]) == slug), None
+    )
+    if entry is None:
+        raise HTTPException(404, "Обновление не найдено")
+    return templates.TemplateResponse(
+        request, "pages/changelog_article.html", {"user": user, "entry": entry, "slug": slug}
     )
 
 

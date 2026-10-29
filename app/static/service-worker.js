@@ -9,8 +9,8 @@
 // такой запрос несёт заголовок Idempotency-Key, и сервер выполнит работу
 // только один раз (см. app/idempotency/).
 
-const CACHE = 'doday-shell-v3';
-const SHELL = ['/app/today', '/manifest.webmanifest'];
+const CACHE = 'doday-shell-v4';
+const SHELL = ['/manifest.webmanifest'];
 const DB_NAME = 'doday-outbox';
 const STORE = 'requests';
 const SYNC_TAG = 'doday-outbox';
@@ -75,8 +75,24 @@ async function flush() {
   flushing = true;
   try {
     const queued = await allQueued();
+    if (!queued.length) return;
+    // Cookies can now belong to another account on a shared device.
+    // Never apply an old edit under the new account's session.
+    let currentUser;
+    try {
+      const identity = await fetch('/api/billing/me', {credentials:'same-origin', cache:'no-store'});
+      if (!identity.ok) return;
+      currentUser = (await identity.json()).user_id;
+    } catch (_) { return; }
     let sent = 0;
     for (const item of queued) {
+      // Старые версии могли ставить в очередь любые операции. Не повторяем
+      // административные действия и оплату после обновления приложения.
+      if (!queueable(new Request(item.url, {method: item.method, headers: item.headers}), new URL(item.url))) {
+        await drop(item.id);
+        continue;
+      }
+      if (item.headers['x-doday-user'] !== currentUser) continue;
       let response;
       try {
         response = await fetch(item.url, {
@@ -101,7 +117,7 @@ async function flush() {
       await drop(item.id);
       sent += 1;
     }
-    const left = (await allQueued()).length;
+    const left = (await allQueued()).filter(item => item.headers['x-doday-user'] === currentUser).length;
     await tellPages({ type: 'outbox', pending: left, sent });
   } finally {
     flushing = false;
@@ -145,7 +161,12 @@ function queueable(request, url) {
   if (url.origin !== self.location.origin) return false;
   // Вход, регистрация и оплата в очередь не попадают: их повтор через час
   // бессмысленен, а иногда и вреден.
-  return !/^\/(auth|api\/billing|miniapp\/auth)/.test(url.pathname);
+  return request.headers.has('Idempotency-Key') && request.headers.has('X-Doday-User') &&
+    /^\/(api|htmx)\/(tasks|projects|labels|sections|reminders)(\/|$)/.test(url.pathname);
+}
+
+function privatePage(path) {
+  return /^\/(api|app|auth|htmx|miniapp)(\/|$)/.test(path) || /^\/lessio\/(app|auth)(\/|$)/.test(path);
 }
 
 self.addEventListener('fetch', (e) => {
@@ -158,12 +179,14 @@ self.addEventListener('fetch', (e) => {
     // превращается в наш собственный «Offline» — и страница остаётся без
     // скриптов, хотя сеть в порядке.
     if (url.origin !== self.location.origin) return;
-    if (url.pathname.startsWith('/api/')) return;
+    if (privatePage(url.pathname)) return;
     e.respondWith(
       fetch(req)
         .then((r) => {
-          const copy = r.clone();
-          caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => null);
+          if (r.ok && !privatePage(new URL(r.url).pathname) && !/no-store|private/i.test(r.headers.get('Cache-Control') || '')) {
+            const copy = r.clone();
+            caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => null);
+          }
           return r;
         })
         .catch(() => caches.match(req).then((c) => c || new Response('Offline', { status: 503 })))
@@ -180,12 +203,12 @@ self.addEventListener('fetch', (e) => {
   async function queueIt() {
     const headers = {};
     copy.headers.forEach((v, k) => {
-      if (['content-type', 'idempotency-key', 'hx-request', 'hx-current-url'].includes(k))
+      if (['content-type', 'idempotency-key', 'x-doday-user', 'hx-request', 'hx-current-url'].includes(k))
         headers[k] = v;
     });
     const body = await copy.text();
     await enqueue({ url: req.url, method: req.method, headers, body, at: Date.now() });
-    const left = (await allQueued()).length;
+    const left = (await allQueued()).filter(item => item.headers['x-doday-user'] === headers['x-doday-user']).length;
     await tellPages({ type: 'outbox', pending: left, sent: 0 });
     if ('sync' in self.registration) {
       try {

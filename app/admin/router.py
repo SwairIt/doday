@@ -19,7 +19,8 @@ from datetime import UTC, datetime, timedelta
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Header, HTTPException, status
+from fastapi import APIRouter, Header, HTTPException, Request, status
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
 from app.admin.models import Complaint
@@ -151,6 +152,77 @@ async def submit_complaint(
 # ---- Admin: requires users.is_admin = True ---------------------------------
 
 admin_router = APIRouter(prefix="/api/admin", tags=["admin"])
+
+
+@admin_router.get("/billing/transactions")
+async def admin_transactions(request: Request, user: RequiredAdmin, session: DbSession) -> object:
+    from app.admin.billing import PaymentFilters, payment_page, request_filters
+
+    return await payment_page(session, request_filters(request, PaymentFilters), user.timezone)
+
+
+@admin_router.get("/billing/overview")
+async def admin_billing_overview(_: RequiredAdmin, session: DbSession) -> object:
+    from app.admin.billing import lifetime_summary
+
+    return await lifetime_summary(session)
+
+
+@admin_router.get("/billing/transactions.csv")
+async def admin_transactions_csv(
+    request: Request, user: RequiredAdmin, session: DbSession
+) -> Response:
+    import csv
+    import io
+    from zoneinfo import ZoneInfo
+
+    from app import timezones
+    from app.admin.billing import PaymentFilters, export_payments, request_filters
+
+    rows = await export_payments(session, request_filters(request, PaymentFilters), user.timezone)
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(
+        [
+            "Дата",
+            "Email",
+            "Продукт",
+            "Способ",
+            "Валюта",
+            "Сумма в копейках или Stars",
+            "Статус",
+            "Тестовый",
+            "Номер платежа",
+        ]
+    )
+    zone = ZoneInfo(timezones.normalize(user.timezone))
+
+    def safe(value: str) -> str:
+        return "'" + value if value.lstrip().startswith(("=", "+", "-", "@")) else value
+
+    for row in rows:
+        writer.writerow(
+            [
+                row.occurred_at.astimezone(zone).isoformat(),
+                safe(row.email),
+                safe(row.product_title),
+                row.provider,
+                row.currency,
+                row.amount,
+                row.status,
+                row.is_test,
+                safe(row.reference),
+            ]
+        )
+    return Response(
+        "\ufeff" + output.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": 'attachment; filename="doday-payments.csv"',
+            "Cache-Control": "no-store",
+            "X-Export-Limit": "5000",
+        },
+    )
 
 
 class StarPaymentAdminOut(BaseModel):

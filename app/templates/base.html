@@ -472,6 +472,11 @@
         border-color: var(--accent);
         box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent) 18%, transparent);
       }
+      @media (max-width: 767px) {
+        /* Readable form controls on phones, including compact admin filters. */
+        input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+        select, textarea { font-size: 16px !important; min-width: 0; }
+      }
 
       .card {
         background: var(--surface);
@@ -643,7 +648,10 @@
         // ключ будет тот же, и сервер поймёт, что работа уже сделана.
         document.body.addEventListener('htmx:configRequest', function (e) {
           var method = (e.detail.verb || '').toUpperCase();
-          if (method && method !== 'GET') e.detail.headers['Idempotency-Key'] = newKey();
+          if (method && method !== 'GET') {
+            e.detail.headers['Idempotency-Key'] = newKey();
+            e.detail.headers['X-Doday-User'] = {{ current_user.id|string|tojson }};
+          }
         });
 
         var badge = document.getElementById('outbox-badge');

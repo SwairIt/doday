@@ -1,0 +1,47 @@
+<section id="users" class="mb-8 min-w-0 scroll-mt-24">
+  <h2 class="mb-3 text-lg font-bold">Пользователи <span class="text-sm font-normal text-[var(--text-muted)]">· {{ users_total }} найдено</span></h2>
+  <form method="get" action="/app/root#users" class="card mb-4 grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 xl:grid-cols-5">
+    {% for key, value in billing_query.items() %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endfor %}
+    <label class="min-w-0 text-xs">Email
+      <input type="search" name="users_q" value="{{ users_filters.q }}" maxlength="160" placeholder="Поиск пользователя" class="mt-1 w-full min-w-0 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm">
+    </label>
+    {% for name,label,options in [
+      ('verified','Подтверждение почты',[('all','Все'),('yes','Подтверждена'),('no','Не подтверждена')]),
+      ('tier','Оплаченный тариф',[('all','Все тарифы'),('free','Нет действующей подписки'),('pro','Pro'),('family','Family')]),
+      ('sort','Сортировка',[('newest','Сначала новые'),('oldest','Сначала старые'),('email','Email'),('expiry','Срок подписки ↓')])
+    ] %}
+    <label class="min-w-0 text-xs">{{ label }}
+      <select name="users_{{ name }}" class="mt-1 w-full min-w-0 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm">
+        {% for value,title in options %}<option value="{{ value }}" {% if users_filters|attr(name) == value %}selected{% endif %}>{{ title }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endfor %}
+    <div class="flex items-end"><button type="submit" class="btn-primary">Найти</button></div>
+  </form>
+  <p class="mb-3 text-xs text-[var(--text-muted)]">Неподтверждённая почта сама по себе не означает, что аккаунт принадлежит боту.</p>
+  <div class="card divide-y divide-[var(--border)]">
+    {% for u in recent_users %}
+    <article class="grid min-w-0 grid-cols-1 gap-2 px-4 py-3 text-sm sm:grid-cols-[minmax(0,1fr)_auto]">
+      <div class="min-w-0"><p class="break-all font-medium">{{ u.email }}{% if u.is_admin %} <span class="text-xs text-rose-400">ADMIN</span>{% endif %}</p>
+        <p class="mt-1 text-xs text-[var(--text-muted)]">{{ 'Почта подтверждена' if u.email_verified_at else 'Почта не подтверждена' }} · регистрация {{ admin_date(u.created_at) }}</p>
+      </div>
+      <div class="text-xs sm:text-right"><span class="font-semibold">{{ paid_tier(u)|upper }}</span>
+        {% if u.pro_until %}<p class="mt-1 text-[var(--text-muted)]">Оплаченный срок: {{ admin_date(u.pro_until) }}</p>{% endif %}
+      </div>
+    </article>
+    {% else %}<p class="p-6 text-sm text-[var(--text-muted)]">Пользователи не найдены.</p>{% endfor %}
+  </div>
+  <div class="my-3 flex flex-wrap items-center justify-between gap-3 text-sm">
+    <span class="text-[var(--text-muted)]">Страница {{ users_page }} из {{ users_pages }}</span>
+    <div class="flex gap-2">{% if users_prev_url %}<a href="{{ users_prev_url }}" class="btn-ghost">← Назад</a>{% endif %}{% if users_next_url %}<a href="{{ users_next_url }}" class="btn-ghost">Далее →</a>{% endif %}</div>
+  </div>
+  {% if unverified_old > 0 %}
+  <details class="card mt-4 p-4 text-sm" x-data="{ busy: false, error: '' }">
+    <summary class="cursor-pointer text-[var(--text-muted)]">Очистка пустых аккаунтов · {{ unverified_old }} кандидатов</summary>
+    <p class="my-3 text-xs text-[var(--text-muted)]">Удаляются только старые неподтверждённые аккаунты без задач, покупок и другой активности. Действие необратимо.</p>
+    <button type="button" :disabled="busy" class="rounded-lg bg-rose-500/15 px-3 py-2 text-rose-400 disabled:opacity-50"
+            @click="if (!confirm('Удалить пустые аккаунты старше 3 дней?')) return; busy = true; error = ''; try { const r = await fetch('/api/admin/users/purge-unverified?days=3', { method: 'POST' }); if (!r.ok) throw new Error('Очистка не выполнена'); location.reload(); } catch (e) { error = e.message; busy = false; }">Удалить пустые аккаунты</button>
+    <p x-show="error" x-text="error" class="mt-2 text-rose-400" role="alert"></p>
+  </details>
+  {% endif %}
+</section>

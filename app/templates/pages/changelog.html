@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Changelog — Doday{% endblock %}
+{% block title %}Обновления — Doday{% endblock %}
+{% block seo_url %}https://getdoday.ru/changelog{% endblock %}
 {% block seo_description %}История апдейтов Doday: что и когда добавили в туду-лист. Прозрачно, по датам, на русском.{% endblock %}
 
 {% block layout %}
@@ -21,12 +22,12 @@
 
 <main class="max-w-3xl mx-auto px-4 md:px-8 py-12 md:py-16">
   <div class="text-center mb-12">
-    <p class="text-xs uppercase tracking-widest grad-text font-semibold mb-3">Changelog</p>
+    <p class="text-xs uppercase tracking-widest grad-text font-semibold mb-3">Обновления</p>
     <h1 class="text-3xl md:text-5xl font-extrabold mb-4">
       <span class="grad-text">Что нового</span> в Doday
     </h1>
     <p class="text-[var(--text-muted)] text-base md:text-lg">
-      Публичная история апдейтов. Каждая запись — то что юзер реально почувствует.
+      Новые возможности и исправления. Открой выпуск, чтобы узнать все подробности.
     </p>
   </div>
 
@@ -34,11 +35,11 @@
     {% for entry in entries %}
       <article class="card p-5 md:p-6">
         <header class="flex items-start gap-3 flex-wrap mb-3">
-          <span class="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded bg-[var(--accent)]/15 text-[var(--accent)] shrink-0">
+          <span class="text-[11px] uppercase tracking-wider font-bold px-2 py-1 rounded bg-[var(--accent)]/15 text-[var(--accent)] shrink-0">
             {{ entry.version }}
           </span>
           <time class="text-xs text-[var(--text-muted)] mt-1" datetime="{{ entry.date }}">{{ entry.date }}</time>
-          <h2 class="text-base md:text-lg font-bold w-full mt-1">{{ entry.title }}</h2>
+          <h2 class="text-base md:text-lg font-bold w-full mt-1"><a href="/changelog/{{ entry.get('slug', entry.date) }}" class="hover:text-[var(--accent)]">{{ entry.title }}</a></h2>
         </header>
         <ul class="space-y-2 text-sm leading-relaxed">
           {% for item in entry.notes %}
@@ -48,6 +49,7 @@
             </li>
           {% endfor %}
         </ul>
+        <a href="/changelog/{{ entry.get('slug', entry.date) }}" class="mt-4 inline-flex text-sm font-semibold text-[var(--accent)] hover:underline">Открыть статью →</a>
       </article>
     {% endfor %}
   </div>

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, quote, urlparse
 
 import pytest
 
@@ -29,6 +29,8 @@ def _keys(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(settings, "robokassa_password1", PASS1, raising=False)
     monkeypatch.setattr(settings, "robokassa_password2", PASS2, raising=False)
     monkeypatch.setattr(settings, "robokassa_test_mode", False, raising=False)
+    monkeypatch.setattr(settings, "robokassa_test_password1", "test_one", raising=False)
+    monkeypatch.setattr(settings, "robokassa_test_password2", "test_two", raising=False)
 
 
 def test_configured_only_with_all_keys(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -59,8 +61,9 @@ def test_payment_url_signature_matches_documented_order() -> None:
 
     query = parse_qs(urlparse(url).query)
     receipt = robokassa.build_receipt(product)
+    encoded_receipt = quote(receipt, safe="")
     expected = hashlib.md5(  # noqa: S324 — алгоритм диктует Robokassa
-        f"{LOGIN}:199.00:42:{receipt}:{PASS1}:Shp_code=pro_1m".encode()
+        f"{LOGIN}:199.00:42:{encoded_receipt}:{PASS1}:Shp_code=pro_1m".encode()
     ).hexdigest()
 
     assert query["SignatureValue"][0] == expected

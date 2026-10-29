@@ -8,13 +8,14 @@
     class="md:hidden p-2 rounded-lg hover:bg-[var(--surface-2)] transition"
     @click="sidebarOpen = true"
     aria-label="Открыть меню"
+    aria-controls="app-sidebar" :aria-expanded="sidebarOpen"
   >
     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
       <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
     </svg>
   </button>
 
-  <h1 class="text-lg font-semibold flex-1 truncate">{% block view_title %}Doday{% endblock %}</h1>
+  <div class="text-lg font-semibold flex-1 truncate">{{ page_title|default('Doday') }}</div>
 
   <a href="/app/stats"
      x-data="{ s: { current: 0, longest: 0, today_done: false }, async load() {

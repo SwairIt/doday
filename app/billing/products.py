@@ -64,7 +64,7 @@ PRODUCTS: tuple[Product, ...] = (
         code="pro_12m",
         title="Doday Pro · 12 месяцев",
         description=(
-            "Всё что в Pro 1 мес, но на год. Выгоднее на 17% — как 10 месяцев по цене 12."
+            "Всё что в Pro 1 мес, но на 365 дней. Выгоднее на 17% — 12 месяцев по цене 10."
         ),
         grants_tier="pro",
         duration_months=12,
@@ -123,7 +123,7 @@ PRODUCTS: tuple[Product, ...] = (
         code="tutor_pro_12m",
         title="Lessio Pro · 12 месяцев",
         description=(
-            "Всё что в Pro 1 мес, но на год. Выгоднее на 17% — как 10 месяцев по цене 12."
+            "Всё что в Pro 1 мес, но на 365 дней. Выгоднее на 17% — 12 месяцев по цене 10."
         ),
         grants_tier="pro",
         duration_months=12,

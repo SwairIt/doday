@@ -2,6 +2,7 @@
 Telegram Stars invoice creation, and per-user payment history."""
 
 from datetime import UTC, datetime
+from decimal import Decimal, InvalidOperation
 from typing import Literal
 from uuid import UUID
 
@@ -12,7 +13,7 @@ from sqlalchemy import desc, select
 
 from app.auth.deps import DbSession, RequiredUser
 from app.billing import robokassa
-from app.billing.models import CardPayment, StarPayment
+from app.billing.models import ArchivedPayment, CardPayment, StarPayment
 from app.billing.products import PRODUCTS, get_product
 from app.billing.service import (
     TIERS,
@@ -24,6 +25,7 @@ from app.billing.service import (
     trial_days_remaining,
 )
 from app.billing.stars import StarsError, create_invoice_link
+from app.config import get_settings
 
 
 class TierMeOut(BaseModel):
@@ -279,6 +281,7 @@ async def start_card_payment(
         product_code=product.code,
         amount_kopecks=product.rub_amount * 100,
         status="pending",
+        is_test=get_settings().robokassa_test_mode,
     )
     session.add(payment)
     # flush, а не commit: нужен выданный последовательностью InvId, но фиксируем
@@ -317,21 +320,65 @@ async def robokassa_result(request: Request, session: DbSession) -> PlainTextRes
     signature = params.get("SignatureValue", "")
     shp = {k: v for k, v in params.items() if k.startswith("Shp_")}
 
-    if not robokassa.verify_result(out_sum, inv_id, signature, shp):
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="bad signature")
+    try:
+        invoice_number = int(inv_id)
+        amount = Decimal(out_sum) * 100
+        if (
+            not 0 < invoice_number < 2**63
+            or not amount.is_finite()
+            or not 0 < amount < 2**63
+            or amount != amount.to_integral_value()
+        ):
+            raise ValueError("Invalid invoice or amount")
+    except (ValueError, InvalidOperation, OverflowError) as exc:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, detail="invalid invoice or amount"
+        ) from exc
 
     payment = (
-        await session.execute(select(CardPayment).where(CardPayment.inv_id == int(inv_id)))
+        await session.execute(
+            select(CardPayment)
+            .where(CardPayment.inv_id == invoice_number, CardPayment.provider == "robokassa")
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
     ).scalar_one_or_none()
     if payment is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="unknown invoice")
+        archived = (
+            await session.execute(
+                select(ArchivedPayment)
+                .where(
+                    ArchivedPayment.provider == "robokassa",
+                    ArchivedPayment.reference == str(invoice_number),
+                )
+                .with_for_update()
+            )
+        ).scalar_one_or_none()
+        if archived is None:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail="unknown invoice")
+        if not robokassa.verify_result(out_sum, inv_id, signature, shp, test_mode=archived.is_test):
+            raise HTTPException(400, "bad signature")
+        if int(amount) != archived.amount or shp.get("Shp_code") != archived.product_code:
+            raise HTTPException(400, "amount mismatch")
+        if archived.status == "pending":
+            archived.status = "paid"
+            archived.occurred_at = datetime.now(UTC)
+            await session.commit()
+        elif archived.status not in ("paid", "refunded"):
+            raise HTTPException(409, "invoice is not pending")
+        return PlainTextResponse(f"OK{inv_id}")
 
-    if payment.status == "succeeded":
-        return PlainTextResponse(f"OK{inv_id}")  # повторная доставка
+    if not robokassa.verify_result(out_sum, inv_id, signature, shp, test_mode=payment.is_test):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="bad signature")
 
     # Сверяем сумму: подпись верна, но клиент мог подменить цену в ссылке.
-    if round(float(out_sum) * 100) != payment.amount_kopecks:
+    if int(amount) != payment.amount_kopecks or shp.get("Shp_code") != payment.product_code:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="amount mismatch")
+
+    if payment.status in ("succeeded", "refunded"):
+        return PlainTextResponse(f"OK{inv_id}")
+    if payment.status != "pending":
+        raise HTTPException(status.HTTP_409_CONFLICT, detail="invoice is not pending")
 
     product = get_product(payment.product_code)
     if product is None:
@@ -339,19 +386,51 @@ async def robokassa_result(request: Request, session: DbSession) -> PlainTextRes
 
     payment.status = "succeeded"
     payment.paid_at = datetime.now(UTC)
-    await grant_product_access(session, payment.user_id, product)
+    if not payment.is_test:
+        await grant_product_access(session, payment.user_id, product)
     await session.commit()
     return PlainTextResponse(f"OK{inv_id}")
 
 
 @router.get("/robokassa/success", include_in_schema=False)
-async def robokassa_success() -> RedirectResponse:
+async def robokassa_success(request: Request) -> RedirectResponse:
     """Куда Robokassa возвращает пользователя после оплаты.
 
     Доступ здесь НЕ выдаём: адрес открывается вручную. Просто отправляем
     в приложение — к моменту возврата уведомление обычно уже обработано.
     """
-    return RedirectResponse(url="/app/today?paid=1", status_code=302)
+    invoice = request.query_params.get("InvId", "")
+    suffix = (
+        f"?payment_invoice={invoice}"
+        if invoice.isascii() and invoice.isdigit() and len(invoice) <= 19
+        else ""
+    )
+    return RedirectResponse(url="/app/today" + suffix, status_code=302)
+
+
+@router.get("/cards/{invoice_number}/status")
+async def card_payment_status(
+    invoice_number: int, user: RequiredUser, session: DbSession
+) -> dict[str, object]:
+    if not 0 < invoice_number < 2**63:
+        raise HTTPException(404, "Счёт не найден")
+    payment = (
+        await session.execute(
+            select(CardPayment).where(
+                CardPayment.inv_id == invoice_number,
+                CardPayment.user_id == user.id,
+                CardPayment.provider == "robokassa",
+            )
+        )
+    ).scalar_one_or_none()
+    if payment is None:
+        raise HTTPException(404, "Счёт не найден")
+    product = get_product(payment.product_code)
+    return {
+        "status": payment.status,
+        "is_test": payment.is_test,
+        "product_title": product.title if product else payment.product_code,
+    }
 
 
 @router.get("/robokassa/fail", include_in_schema=False)

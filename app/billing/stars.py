@@ -28,15 +28,16 @@ import logging
 import secrets
 from datetime import UTC, datetime, timedelta
 from typing import Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import httpx
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import User
-from app.billing.models import StarPayment
+from app.billing.models import ArchivedPayment, StarPayment
 from app.billing.products import BY_CODE, Product, get_product
 from app.billing.service import grant_product_access
 from app.config import get_settings
@@ -230,6 +231,31 @@ async def apply_successful_payment(
     if product is None:
         logger.error("unknown product in successful payment: %s", product_code)
         return None
+    if stars_amount != product.stars_amount:
+        logger.error("successful payment amount mismatch: product=%s", product_code)
+        return None
+
+    if await session.get(User, user_id) is None:
+        # A valid old invoice can still be paid after account deletion.
+        # Keep the transaction in the ledger without recreating the account.
+        await session.execute(
+            pg_insert(ArchivedPayment)
+            .values(
+                id=uuid4(),
+                buyer_id=user_id,
+                provider="stars",
+                reference=telegram_payment_charge_id,
+                product_code=product_code,
+                currency="XTR",
+                amount=stars_amount,
+                status="paid",
+                occurred_at=datetime.now(UTC),
+                is_test=False,
+            )
+            .on_conflict_do_nothing(index_elements=["provider", "reference"])
+        )
+        logger.warning("Stars payment belongs to a deleted account: %s", user_id)
+        return None
 
     # Idempotency: try-insert; if charge_id seen before, fetch existing and exit.
     payment = StarPayment(
@@ -298,8 +324,25 @@ async def refund_payment(
     bot token that issued the original invoice (Lessio products → @LessioBot;
     Doday products → @DodayTaskBot).
     """
+    payment = (
+        await session.execute(
+            select(StarPayment)
+            .where(StarPayment.id == payment.id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
+    ).scalar_one()
     if payment.status == "refunded":
         return True  # idempotent admin click
+    if payment.status != "paid":
+        return False
+    # Serialize refunds and grants for the same customer.
+    await session.execute(
+        select(User)
+        .where(User.id == payment.user_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
     bot_token = _bot_token_for_product(payment.product_code)
 
     url = f"https://api.telegram.org/bot{bot_token}/refundStarPayment"
@@ -325,7 +368,12 @@ async def refund_payment(
         if product.grants_tier is not None and product.duration_months is not None:
             user = await session.get(User, payment.user_id)
             if user is not None and user.pro_until is not None:
-                user.pro_until = user.pro_until - timedelta(days=30 * product.duration_months)
+                from app.billing.service import subscription_days
+
+                if user.pro_until.year < 2099:
+                    user.pro_until = user.pro_until - timedelta(
+                        days=subscription_days(product.duration_months)
+                    )
                 if user.pro_until <= datetime.now(UTC):
                     user.pro_until = None
                     user.tier = "free"
@@ -347,7 +395,11 @@ async def refund_payment(
                 if product.duration_months is None:
                     await session.delete(ent)
                 elif ent.expires_at is not None:
-                    ent.expires_at = ent.expires_at - timedelta(days=30 * product.duration_months)
+                    from app.billing.service import subscription_days
+
+                    ent.expires_at = ent.expires_at - timedelta(
+                        days=subscription_days(product.duration_months)
+                    )
                     if ent.expires_at <= datetime.now(UTC):
                         await session.delete(ent)
     return True

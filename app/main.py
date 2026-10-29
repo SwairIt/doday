@@ -331,19 +331,12 @@ def _privacy_cleanup_on_startup() -> None:
                         "AND created_at < now() - interval '1 day'"
                     )
                 )
-                await conn.execute(
-                    text(
-                        "DELETE FROM users u "
-                        "WHERE u.email_verified_at IS NULL "
-                        "AND u.is_admin = false "
-                        "AND u.created_at < now() - interval '30 days' "
-                        "AND NOT EXISTS (SELECT 1 FROM tasks t WHERE t.user_id = u.id) "
-                        "AND NOT EXISTS "
-                        "(SELECT 1 FROM telegram_links l WHERE l.user_id = u.id) "
-                        "AND NOT EXISTS "
-                        "(SELECT 1 FROM lessio_tutor_profiles p WHERE p.user_id = u.id)"
-                    )
-                )
+                from sqlalchemy import delete
+
+                from app.admin.service import abandoned_user_conditions
+                from app.auth.models import User
+
+                await conn.execute(delete(User).where(*abandoned_user_conditions(30)))
                 # Ключи идемпотентности. Смысл у них короткий: клиент
                 # повторяет неотправленный запрос минуты, в худшем случае —
                 # часы. Через сутки ключ уже никому не нужен, а таблица
@@ -573,6 +566,10 @@ async def _security_headers(
     request.state.captcha_sitekey = _settings.recaptcha_site_key if is_enabled() else ""
     request.state.captcha_script = SCRIPT_URL
     response = await call_next(request)
+    if request.url.path.startswith(
+        ("/app/", "/api/admin", "/auth/", "/htmx/", "/miniapp/", "/lessio/app/")
+    ) or request.scope.get("session", {}).get("user_id"):
+        response.headers["Cache-Control"] = "no-store"
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     # Tap Tower Mini App (/taptower/*) is loaded inside Telegram's frame, so
     # framing must be allowed — do not send X-Frame-Options for these paths.
@@ -968,6 +965,9 @@ async def sitemap_xml(session: AsyncSession = Depends(get_session)) -> Response:
     doday_article_paths = [f"/help/{a['slug']}" for a in ARTICLES]
     lessio_article_paths = [f"/lessio/help/{a['slug']}" for a in LESSIO_ARTICLES]
     lessio_blog_paths = [f"/lessio/blog/{p['slug']}" for p in LESSIO_BLOG_POSTS]
+    from app.pages.changelog_data import ENTRIES
+
+    changelog_paths = [f"/changelog/{entry.get('slug', entry['date'])}" for entry in ENTRIES]
 
     active_tutor_slugs = (
         (
@@ -983,7 +983,13 @@ async def sitemap_xml(session: AsyncSession = Depends(get_session)) -> Response:
     url_priority: list[tuple[str, str]] = (
         [(p, "1.0") for p in static_high_paths]
         + [(p, "0.8") for p in static_medium_paths]
-        + [(p, "0.6") for p in doday_article_paths + lessio_article_paths + lessio_blog_paths]
+        + [
+            (p, "0.6")
+            for p in doday_article_paths
+            + lessio_article_paths
+            + lessio_blog_paths
+            + changelog_paths
+        ]
         + [(p, "0.7") for p in tutor_paths]
     )
 

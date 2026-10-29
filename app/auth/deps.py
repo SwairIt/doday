@@ -29,6 +29,9 @@ async def get_current_user(request: Request, session: DbSession) -> User | None:
     if int(request.session.get("epoch", 0)) != user.session_epoch:
         request.session.clear()
         return None
+    owner = request.headers.get("X-Doday-User")
+    if request.method not in ("GET", "HEAD", "OPTIONS") and owner and owner != str(user.id):
+        raise HTTPException(409, "Аккаунт изменился. Обновите страницу перед сохранением.")
     # Пояс пользователя — на весь оставшийся запрос. Отсюда его берут
     # шаблонные фильтры («Сегодня», «Завтра», «просрочено»), которым аргумент
     # прокинуть некуда. Сервисы пояс получают явно, параметром tz.

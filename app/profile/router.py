@@ -53,6 +53,9 @@ async def my_data(user: RequiredUser, session: DbSession) -> dict[str, object]:
 @router.post("/delete")
 async def delete_account(request: Request, user: RequiredUser, session: DbSession) -> Response:
     """Cascade-delete the user. Tasks/projects/labels go with them via ON DELETE CASCADE."""
+    from app.billing.archive import archive_user_payments
+
+    await archive_user_payments(session, user.id)
     await session.execute(delete(User).where(User.id == user.id))
     await session.commit()
     request.session.clear()

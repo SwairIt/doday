@@ -23,6 +23,12 @@ from app.tasks.models import Task
 logger = logging.getLogger(__name__)
 
 
+def subscription_days(months: int) -> int:
+    """Annual plans last 365 days; shorter plans use 30-day months."""
+    years, remainder = divmod(months, 12)
+    return years * 365 + remainder * 30
+
+
 class TierLimits(TypedDict):
     max_active_projects: int | None  # None = unlimited
     max_active_tasks: int | None
@@ -270,6 +276,8 @@ def purchase_state(user: User, product: Product) -> str:
         return "buy"
     user_rank = _TIER_RANK.get(paid_tier(user), 0)
     prod_rank = _TIER_RANK.get(product.grants_tier, 0)
+    if _has_lifetime(user) and user_rank > 0 and product.duration_months is not None:
+        return "owned"
     if user_rank < prod_rank:
         return "buy"  # апгрейд на тариф выше
     if user_rank > prod_rank:
@@ -343,7 +351,14 @@ async def grant_product_access(session: AsyncSession, user_id: UUID, product: Pr
     :param user_id: кому выдаём
     :param product: позиция каталога из app.billing.products
     """
-    user = await session.get(User, user_id)
+    user = (
+        await session.execute(
+            select(User)
+            .where(User.id == user_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
+    ).scalar_one_or_none()
     if user is None:
         logger.error("оплаченный пользователь не найден: %s", user_id)
         return
@@ -351,15 +366,21 @@ async def grant_product_access(session: AsyncSession, user_id: UUID, product: Pr
     # Тарифные продукты (Doday Tasks, Lessio) двигают глобальный тариф.
     # Продукты-вертикали (ПДД) тариф не трогают — у них grants_tier is None.
     if product.grants_tier is not None:
-        user.tier = product.grants_tier
+        # An older invoice can arrive after a newer Family purchase.
+        # Preserve the currently active higher tier when extending access.
+        if product.duration_months is None or _TIER_RANK.get(
+            product.grants_tier, 0
+        ) >= _TIER_RANK.get(paid_tier(user), 0):
+            user.tier = product.grants_tier
         if product.duration_months is None:
             # Пожизненно — ставим 2099 год, а не None: None означает «Pro
             # никогда не было» в остальном коде.
             user.pro_until = datetime(2099, 12, 31, tzinfo=UTC)
         else:
             now = datetime.now(UTC)
-            base = user.pro_until if (user.pro_until and user.pro_until > now) else now
-            user.pro_until = base + timedelta(days=30 * product.duration_months)
+            if not (user.pro_until and user.pro_until.year >= 2099):
+                base = user.pro_until if (user.pro_until and user.pro_until > now) else now
+                user.pro_until = base + timedelta(days=subscription_days(product.duration_months))
 
     if product.grants_entitlement is not None:
         await grant_entitlement(session, user_id, product)
@@ -390,7 +411,7 @@ async def grant_entitlement(session: AsyncSession, user_id: UUID, product: Produ
     else:
         now = datetime.now(UTC)
         base = ent.expires_at if (ent and ent.expires_at and ent.expires_at > now) else now
-        new_expiry = base + timedelta(days=30 * product.duration_months)
+        new_expiry = base + timedelta(days=subscription_days(product.duration_months))
 
     if ent is None:
         session.add(

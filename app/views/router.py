@@ -1383,34 +1383,74 @@ async def upcoming_view(request: Request, user: RequiredUser, session: DbSession
 @router.get("/root", response_class=HTMLResponse)
 async def admin_root_view(request: Request, session: DbSession) -> HTMLResponse:
     """Admin panel — total control: complaints, users, stats. Requires is_admin."""
+    from urllib.parse import urlencode
+
+    from sqlalchemy import select
+
+    from app.admin.billing import PaymentFilters, lifetime_summary, payment_page, request_filters
     from app.admin.service import (
         admin_stats,
         count_unverified,
         list_complaints,
-        list_recent_users,
         signups_by_day,
         top_pages,
     )
+    from app.admin.users import UserFilters, user_page
     from app.auth.deps import get_current_user, require_admin, require_user
+    from app.billing.products import PRODUCTS
+    from app.billing.service import paid_tier
 
     user = await require_user(await get_current_user(request, session))
     user = await require_admin(user)
 
     complaints = await list_complaints(session, limit=200)
-    stats = await admin_stats(session)
-    recent_users = await list_recent_users(session, limit=2000)  # практически все
+    stats = await admin_stats(session, tz=user.timezone)
+    billing_filters = request_filters(request, PaymentFilters, "billing_")
+    users_filters = request_filters(request, UserFilters, "users_")
+    billing = await payment_page(session, billing_filters, user.timezone)
+    billing_lifetime = await lifetime_summary(session)
+    recent_users, users_total, users_page, users_pages = await user_page(session, users_filters)
+    billing_filters.page = billing.page
+    users_filters.page = users_page
+    billing_query = {
+        "billing_" + key: str(value)
+        for key, value in billing_filters.model_dump(mode="json").items()
+        if value is not None and value != ""
+    }
+    users_query = {
+        "users_" + key: str(value)
+        for key, value in users_filters.model_dump(mode="json").items()
+        if value is not None and value != ""
+    }
+
+    def page_url(key: str, page: int, anchor: str) -> str:
+        return (
+            "/app/root?"
+            + urlencode({**billing_query, **users_query, key: str(page)})
+            + "#"
+            + anchor
+        )
+
+    def admin_date(value: datetime) -> str:
+        return (
+            timezones.as_utc(value)
+            .astimezone(timezones.zone_of(user.timezone))
+            .strftime("%d.%m.%Y %H:%M")
+        )
+
     pages_top = await top_pages(session, days=7, limit=12)
-    signups = await signups_by_day(session, days=14)
+    signups = await signups_by_day(session, days=14, tz=user.timezone)
     # Сколько неподтверждённых старше 3 дней снесёт кнопка чистки.
     unverified_old = await count_unverified(session, older_than_days=3)
 
     # Map complaint.user_id → user.email for display
-    user_emails: dict[UUID, str] = {}
-    for c in complaints:
-        if c.user_id and c.user_id not in user_emails:
-            u = await session.get(User, c.user_id)
-            if u:
-                user_emails[c.user_id] = u.email
+    ids = {c.user_id for c in complaints if c.user_id}
+    user_emails = {
+        uid: email
+        for uid, email in (
+            await session.execute(select(User.id, User.email).where(User.id.in_(ids)))
+        ).all()
+    }
 
     return templates.TemplateResponse(
         request,
@@ -1426,6 +1466,35 @@ async def admin_root_view(request: Request, session: DbSession) -> HTMLResponse:
             "pages_top": pages_top,
             "signups": signups,
             "unverified_old": unverified_old,
+            "billing": billing,
+            "billing_lifetime": billing_lifetime,
+            "billing_filters": billing_filters,
+            "billing_products": PRODUCTS,
+            "billing_query": billing_query,
+            "users_query": users_query,
+            "billing_export_url": "/api/admin/billing/transactions.csv?"
+            + urlencode(
+                {k: v for k, v in billing_filters.model_dump(mode="json").items() if v is not None}
+            ),
+            "billing_prev_url": page_url("billing_page", billing.page - 1, "billing")
+            if billing.page > 1
+            else None,
+            "billing_next_url": page_url("billing_page", billing.page + 1, "billing")
+            if billing.page < billing.pages
+            else None,
+            "users_filters": users_filters,
+            "users_total": users_total,
+            "users_page": users_page,
+            "users_pages": users_pages,
+            "users_prev_url": page_url("users_page", users_page - 1, "users")
+            if users_page > 1
+            else None,
+            "users_next_url": page_url("users_page", users_page + 1, "users")
+            if users_page < users_pages
+            else None,
+            "admin_date": admin_date,
+            "admin_timezone": timezones.normalize(user.timezone),
+            "paid_tier": paid_tier,
         },
     )
 

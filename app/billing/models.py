@@ -11,8 +11,10 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import (
     BigInteger,
+    Boolean,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     Sequence,
     String,
@@ -122,6 +124,9 @@ class CardPayment(Base):
         unique=True,
     )
     provider: Mapped[str] = mapped_column(String(20), nullable=False)
+    is_test: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
     # Идентификатор платежа на стороне провайдера — ключ идемпотентности вебхука.
     provider_payment_id: Mapped[str] = mapped_column(String(64), nullable=False)
     # Код позиции каталога — см. app.billing.products.PRODUCTS.
@@ -144,4 +149,26 @@ class CardPayment(Base):
     # Идемпотентность в паре: у разных провайдеров идентификаторы могут совпасть.
     __table_args__ = (
         UniqueConstraint("provider", "provider_payment_id", name="uq_card_payment_provider_id"),
+        Index("ix_card_payments_status_paid_at", "status", "paid_at"),
+    )
+
+
+class ArchivedPayment(Base):
+    """Financial history without account contact data, after account deletion."""
+
+    __tablename__ = "archived_payments"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    # Pseudonymous ID, deliberately not a foreign key to the deleted account.
+    buyer_id: Mapped[UUID] = mapped_column(nullable=False, index=True)
+    provider: Mapped[str] = mapped_column(String(20), nullable=False)
+    reference: Mapped[str] = mapped_column(String(200), nullable=False)
+    product_code: Mapped[str] = mapped_column(String(50), nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False)
+    amount: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    refunded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    is_test: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    __table_args__ = (
+        UniqueConstraint("provider", "reference", name="uq_archived_payment_provider_reference"),
     )

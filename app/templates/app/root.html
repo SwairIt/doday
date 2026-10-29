@@ -1,36 +1,39 @@
 {% extends "app_base.html" %}
 {% block title %}Root — Doday{% endblock %}
-{% block view_title %}Root · админ-панель{% endblock %}
+{% block view_title %}Панель владельца{% endblock %}
+{% block content_width %}max-w-7xl{% endblock %}
 {% block content %}
-<div class="mb-6 flex items-center justify-between gap-3">
-  <div>
-    <h1 class="text-2xl sm:text-3xl font-bold mb-1">Root · тотальный контроль</h1>
-    <p class="text-[var(--text-muted)] text-sm">Жалобы, юзеры, статистика. Видна только админам (<code>users.is_admin = true</code>).</p>
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div class="min-w-0">
+    <h1 class="text-2xl sm:text-3xl font-bold mb-1">Панель владельца</h1>
+    <p class="text-[var(--text-muted)] text-sm">Покупки, выручка, пользователи и обращения в поддержку.</p>
   </div>
   <span class="px-3 py-1 rounded-full text-xs font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/30 shrink-0">ADMIN</span>
 </div>
 
+{% include "_partials/admin_billing.html" %}
+
 {# ---- Stats grid ---- #}
 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-  <div class="card p-4">
+  <div class="card min-w-0 p-4">
     <div class="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Юзеров</div>
     <div class="text-2xl font-bold tabular-nums">{{ stats.users_total }}</div>
-    <div class="text-[10px] text-[var(--text-muted)] mt-1">+{{ stats.users_today }} сегодня · +{{ stats.users_week }} неделя</div>
+    <div class="text-[11px] text-[var(--text-muted)] mt-1">+{{ stats.users_today }} сегодня · +{{ stats.users_week }} неделя</div>
   </div>
-  <div class="card p-4">
-    <div class="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Подтверждённых</div>
+  <div class="card min-w-0 p-4">
+    <div class="break-words text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Подтверждённых</div>
     <div class="text-2xl font-bold tabular-nums">{{ stats.users_verified }}</div>
-    <div class="text-[10px] text-[var(--text-muted)] mt-1">{{ ((stats.users_verified * 100 // stats.users_total) if stats.users_total else 0) }}% от всех</div>
+    <div class="text-[11px] text-[var(--text-muted)] mt-1">{{ ((stats.users_verified * 100 // stats.users_total) if stats.users_total else 0) }}% от всех</div>
   </div>
-  <div class="card p-4">
+  <div class="card min-w-0 p-4">
     <div class="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Задач всего</div>
     <div class="text-2xl font-bold tabular-nums">{{ stats.tasks_total }}</div>
-    <div class="text-[10px] text-[var(--text-muted)] mt-1">+{{ stats.tasks_today }} сегодня</div>
+    <div class="text-[11px] text-[var(--text-muted)] mt-1">+{{ stats.tasks_today }} сегодня</div>
   </div>
   <div class="card p-4 {% if stats.complaints_open > 0 %}border-amber-500/40{% endif %}">
     <div class="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Жалоб открытых</div>
     <div class="text-2xl font-bold tabular-nums {% if stats.complaints_open > 0 %}text-amber-400{% endif %}">{{ stats.complaints_open }}</div>
-    <div class="text-[10px] text-[var(--text-muted)] mt-1">из {{ stats.complaints_total }} всего</div>
+    <div class="text-[11px] text-[var(--text-muted)] mt-1">из {{ stats.complaints_total }} всего</div>
   </div>
 </div>
 
@@ -38,16 +41,16 @@
 <section class="mb-8">
   <h2 class="text-lg font-bold mb-3">Аналитика <span class="text-[var(--text-muted)] text-sm font-normal">· куда заходят</span></h2>
 
-  <div class="grid grid-cols-3 gap-3 mb-4">
-    <div class="card p-4">
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+    <div class="card min-w-0 p-4">
       <div class="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Просмотров сегодня</div>
       <div class="text-2xl font-bold tabular-nums">{{ stats.views_today }}</div>
     </div>
-    <div class="card p-4">
+    <div class="card min-w-0 p-4">
       <div class="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Просмотров за неделю</div>
       <div class="text-2xl font-bold tabular-nums">{{ stats.views_week }}</div>
     </div>
-    <div class="card p-4">
+    <div class="card min-w-0 p-4">
       <div class="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Заходило юзеров (нед.)</div>
       <div class="text-2xl font-bold tabular-nums">{{ stats.visitors_week }}</div>
     </div>
@@ -55,7 +58,7 @@
 
   <div class="grid md:grid-cols-2 gap-4">
     {# Топ страниц #}
-    <div class="card p-4">
+    <div class="card min-w-0 p-4">
       <div class="text-sm font-semibold mb-3">Топ страниц <span class="text-[var(--text-muted)] font-normal text-xs">· 7 дней</span></div>
       {% if pages_top %}
         {% set pmax = pages_top[0].count %}
@@ -76,7 +79,7 @@
     </div>
 
     {# Регистрации по дням #}
-    <div class="card p-4">
+    <div class="card min-w-0 p-4">
       <div class="text-sm font-semibold mb-3">Регистрации по дням <span class="text-[var(--text-muted)] font-normal text-xs">· 14 дней</span></div>
       {% set smax = (signups | map(attribute='count') | max) or 1 %}
       <div class="flex items-end gap-1" style="height:96px">
@@ -86,7 +89,7 @@
                title="{{ d.day }}: {{ d.count }}"></div>
         {% endfor %}
       </div>
-      <div class="flex justify-between text-[9px] text-[var(--text-muted)] mt-1">
+      <div class="flex justify-between text-[11px] text-[var(--text-muted)] mt-1">
         <span>{{ signups[0].day }}</span>
         <span>{{ signups[-1].day }} · сегодня</span>
       </div>
@@ -94,225 +97,6 @@
   </div>
 </section>
 
-{# ---- Complaints ---- #}
-<div x-data="{
-       statusFilter: 'all',
-       priorityFilter: 'all',
-       search: '',
-       async patch(id, payload) {
-         const r = await fetch('/api/admin/complaints/' + id, {
-           method: 'PATCH', credentials: 'include',
-           headers: {'Content-Type': 'application/json'},
-           body: JSON.stringify(payload)
-         });
-         if (r.ok) location.reload();
-         else alert('Не получилось: ' + r.status);
-       },
-       async delComplaint(id) {
-         if (!confirm('Удалить жалобу безвозвратно?')) return;
-         const r = await fetch('/api/admin/complaints/' + id, {method:'DELETE', credentials:'include'});
-         if (r.ok || r.status === 204) location.reload();
-       },
-       async reply(id, textarea) {
-         const body = (textarea.value || '').trim();
-         if (body.length < 1) { alert('Напиши ответ'); return; }
-         const r = await fetch('/api/admin/complaints/' + id + '/reply', {
-           method: 'POST', credentials: 'include',
-           headers: {'Content-Type': 'application/json'},
-           body: JSON.stringify({body})
-         });
-         if (r.ok) location.reload();
-         else alert('Не получилось: ' + r.status);
-       },
-       matches(row) {
-         if (this.statusFilter !== 'all' && row.dataset.status !== this.statusFilter) return false;
-         if (this.priorityFilter !== 'all' && row.dataset.priority !== this.priorityFilter) return false;
-         if (this.search) {
-           const needle = this.search.toLowerCase();
-           const hay = (row.dataset.body + ' ' + row.dataset.email + ' ' + row.dataset.url).toLowerCase();
-           if (!hay.includes(needle)) return false;
-         }
-         return true;
-       },
-       refilter() {
-         document.querySelectorAll('[data-complaint]').forEach(r => {
-           r.style.display = this.matches(r) ? '' : 'none';
-         });
-       },
-     }"
-     x-init="$watch('statusFilter', () => refilter()); $watch('priorityFilter', () => refilter()); $watch('search', () => refilter())">
-  <div class="flex items-center justify-between mb-3 gap-3 flex-wrap">
-    <h2 class="text-lg font-bold">Жалобы <span class="text-[var(--text-muted)] text-sm font-normal">· {{ complaints|length }}</span></h2>
-    <div class="flex items-center gap-2 flex-wrap text-xs">
-      <select x-model="statusFilter" class="bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-1">
-        <option value="all">Все статусы</option>
-        <option value="open">🟡 Open</option>
-        <option value="in_progress">🔵 In progress</option>
-        <option value="resolved">✅ Resolved</option>
-        <option value="dismissed">⚫ Dismissed</option>
-      </select>
-      <select x-model="priorityFilter" class="bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-1">
-        <option value="all">Любой приоритет</option>
-        <option value="high">🔴 High</option>
-        <option value="normal">🟠 Normal</option>
-        <option value="low">⚪ Low</option>
-      </select>
-      <input type="search" x-model="search" placeholder="Поиск по тексту/email/url"
-             class="bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-1 w-44" />
-    </div>
-  </div>
-
-  {% if complaints %}
-    <div class="space-y-3">
-      {% for c in complaints %}
-        {% set status_color = {'open':'amber','in_progress':'sky','resolved':'emerald','dismissed':'slate'}.get(c.status, 'slate') %}
-        {% set prio_color = {'high':'rose','normal':'amber','low':'slate'}.get(c.priority, 'slate') %}
-        <article class="card p-4"
-                 data-complaint
-                 data-status="{{ c.status }}"
-                 data-priority="{{ c.priority }}"
-                 data-body="{{ c.body|e }}"
-                 data-email="{{ user_emails.get(c.user_id, '')|e }}"
-                 data-url="{{ (c.page_url or '')|e }}">
-          <div class="flex items-start justify-between gap-3 mb-2 flex-wrap">
-            <div class="flex items-center gap-2 text-xs flex-wrap">
-              <span class="px-2 py-0.5 rounded-full bg-{{ status_color }}-500/15 text-{{ status_color }}-400 font-semibold uppercase tracking-wider">{{ c.status }}</span>
-              <span class="px-2 py-0.5 rounded-full bg-{{ prio_color }}-500/15 text-{{ prio_color }}-400 font-semibold uppercase tracking-wider">{{ c.priority }}</span>
-              <span class="text-[var(--text-muted)]">·</span>
-              <span class="text-[var(--text-muted)] tabular-nums">{{ c.created_at.strftime('%d.%m %H:%M') }}</span>
-              {% if c.user_id %}
-                <span class="text-[var(--text-muted)]">·</span>
-                <span class="font-mono text-[var(--text)]">{{ user_emails.get(c.user_id, '?') }}</span>
-              {% else %}
-                <span class="text-[var(--text-muted)]">· аноним</span>
-              {% endif %}
-              {% if c.contact_email %}
-                <span class="text-[var(--text-muted)]">·</span>
-                <a href="mailto:{{ c.contact_email|e }}?subject=Ответ поддержки Doday"
-                   class="text-[var(--accent)] hover:underline">✉ {{ c.contact_email }}</a>
-              {% endif %}
-            </div>
-            <div class="flex items-center gap-1 text-xs shrink-0">
-              {% if c.status != 'in_progress' %}
-                <button type="button" @click="patch('{{ c.id }}', {status: 'in_progress'})"
-                        class="px-2 py-1 rounded hover:bg-sky-500/15 text-sky-400">→ В работу</button>
-              {% endif %}
-              {% if c.status != 'resolved' %}
-                <button type="button" @click="patch('{{ c.id }}', {status: 'resolved'})"
-                        class="px-2 py-1 rounded hover:bg-emerald-500/15 text-emerald-400">✓ Закрыть</button>
-              {% endif %}
-              {% if c.status != 'dismissed' %}
-                <button type="button" @click="patch('{{ c.id }}', {status: 'dismissed'})"
-                        class="px-2 py-1 rounded hover:bg-slate-500/15 text-[var(--text-muted)]">⊘ Отклонить</button>
-              {% endif %}
-              {% if c.status != 'open' %}
-                <button type="button" @click="patch('{{ c.id }}', {status: 'open'})"
-                        class="px-2 py-1 rounded hover:bg-amber-500/15 text-amber-400">↻ Открыть</button>
-              {% endif %}
-              <button type="button" @click="delComplaint('{{ c.id }}')"
-                      class="px-2 py-1 rounded hover:bg-rose-500/15 text-rose-400">🗑</button>
-            </div>
-          </div>
-
-          <div class="text-sm whitespace-pre-wrap leading-relaxed mb-2">{{ c.body }}</div>
-
-          <div class="flex items-center gap-3 text-[10px] text-[var(--text-muted)] flex-wrap">
-            {% if c.page_url %}<span>📍 <code>{{ c.page_url }}</code></span>{% endif %}
-            {% if c.viewport %}<span>📐 {{ c.viewport }}</span>{% endif %}
-            {% if c.user_agent %}<span class="truncate max-w-xs" title="{{ c.user_agent }}">🌐 {{ c.user_agent[:40] }}…</span>{% endif %}
-          </div>
-
-          <div class="mt-2 flex items-center gap-2 text-xs">
-            <input type="text" placeholder="заметка админа..." value="{{ c.admin_note or '' }}"
-                   @blur="if ($event.target.value !== '{{ (c.admin_note or '')|e }}') patch('{{ c.id }}', {admin_note: $event.target.value})"
-                   class="flex-1 bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-1 text-xs">
-            <select @change="patch('{{ c.id }}', {priority: $event.target.value})"
-                    class="bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-1 text-xs">
-              <option value="low" {% if c.priority == 'low' %}selected{% endif %}>Low</option>
-              <option value="normal" {% if c.priority == 'normal' %}selected{% endif %}>Normal</option>
-              <option value="high" {% if c.priority == 'high' %}selected{% endif %}>High</option>
-            </select>
-          </div>
-
-          {# Ответ автору — уходит ему в колокольчик и на почту #}
-          <div class="mt-2 pt-2 border-t border-[var(--border)]">
-            {% if c.admin_reply %}
-              <div class="text-[11px] text-[var(--text-muted)] mb-1.5">
-                💬 Ты ответил: <span class="text-[var(--text)] whitespace-pre-wrap">{{ c.admin_reply }}</span>
-              </div>
-            {% endif %}
-            <div class="flex items-start gap-2">
-              <textarea rows="1" placeholder="Ответить автору…"
-                        class="flex-1 bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-1 text-xs resize-y"></textarea>
-              <button type="button" @click="reply('{{ c.id }}', $el.previousElementSibling)"
-                      class="px-3 py-1 rounded bg-[var(--accent)] text-white text-xs font-semibold shrink-0 hover:opacity-90">
-                Ответить
-              </button>
-            </div>
-          </div>
-        </article>
-      {% endfor %}
-    </div>
-  {% else %}
-    <div class="card p-8 text-center text-[var(--text-muted)]">
-      <div class="text-4xl mb-3">🤘</div>
-      Жалоб пока нет. Юзеры либо очень довольны, либо ещё не нашли как пожаловаться.
-    </div>
-  {% endif %}
-</div>
-
-{# ---- Users: живые vs боты, фильтр, чистка ---- #}
-<div class="mt-10" x-data="{
-       filter: 'all',
-       purging: false,
-       async purge() {
-         if (!confirm('Удалить {{ unverified_old }} неподтверждённых аккаунтов старше 3 дней? Подтверждённых и админов не трогает.')) return;
-         this.purging = true;
-         const r = await fetch('/api/admin/users/purge-unverified?days=3', {method:'POST', credentials:'include'});
-         if (r.ok) { const d = await r.json(); alert('Удалено: ' + d.deleted); location.reload(); }
-         else { alert('Не получилось: ' + r.status); this.purging = false; }
-       }
-     }">
-  <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
-    <h2 class="text-lg font-bold">Юзеры
-      <span class="text-[var(--text-muted)] text-sm font-normal">·
-        всего {{ stats.users_total }} ·
-        <span class="text-emerald-400">✓ {{ stats.users_verified }} живых</span> ·
-        ○ {{ stats.users_total - stats.users_verified }} неподтв.
-      </span>
-    </h2>
-    <div class="flex items-center gap-1.5 text-xs">
-      <button type="button" @click="filter='all'" :class="filter==='all' ? 'bg-[var(--accent)]/20 text-[var(--accent)]' : 'hover:bg-[var(--surface-2)]'" class="px-2.5 py-1 rounded transition">Все</button>
-      <button type="button" @click="filter='verified'" :class="filter==='verified' ? 'bg-emerald-500/20 text-emerald-400' : 'hover:bg-[var(--surface-2)]'" class="px-2.5 py-1 rounded transition">✓ Живые</button>
-      <button type="button" @click="filter='unverified'" :class="filter==='unverified' ? 'bg-amber-500/20 text-amber-400' : 'hover:bg-[var(--surface-2)]'" class="px-2.5 py-1 rounded transition">○ Боты</button>
-    </div>
-  </div>
-
-  {% if unverified_old > 0 %}
-    <div class="mb-3 flex items-center gap-3 flex-wrap text-sm card p-3 border border-amber-500/30 bg-amber-500/5">
-      <span class="text-[var(--text-muted)]">Неподтверждённых старше 3 дней (вероятные боты): <strong class="text-amber-400">{{ unverified_old }}</strong></span>
-      <button type="button" @click="purge()" :disabled="purging"
-              class="ml-auto px-3 py-1.5 rounded bg-rose-500/15 text-rose-300 hover:bg-rose-500/25 text-xs font-semibold transition disabled:opacity-50">
-        <span x-show="!purging">🗑 Удалить их</span><span x-show="purging" x-cloak>Удаляю…</span>
-      </button>
-    </div>
-  {% endif %}
-
-  <div class="card divide-y divide-[var(--border)]">
-    {% for u in recent_users %}
-      <div class="px-4 py-3 flex items-center gap-3 text-sm"
-           x-show="filter==='all' || filter==='{{ 'verified' if u.email_verified_at else 'unverified' }}'">
-        <span class="font-mono text-[var(--text)] flex-1 min-w-0 truncate">{{ u.email }}</span>
-        <span class="text-xs px-2 py-0.5 rounded-full {% if u.tier == 'pro' %}bg-amber-500/15 text-amber-400{% elif u.tier == 'family' %}bg-fuchsia-500/15 text-fuchsia-400{% else %}bg-[var(--surface-2)] text-[var(--text-muted)]{% endif %}">{{ u.tier }}</span>
-        {% if u.email_verified_at %}
-          <span class="text-emerald-400 text-xs" title="Email подтверждён">✓</span>
-        {% else %}
-          <span class="text-[var(--text-muted)] text-xs" title="Email НЕ подтверждён">○</span>
-        {% endif %}
-        {% if u.is_admin %}<span class="text-xs px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-400">admin</span>{% endif %}
-        <span class="text-xs text-[var(--text-muted)] tabular-nums shrink-0">{{ u.created_at.strftime('%d.%m %H:%M') }}</span>
-      </div>
-    {% endfor %}
-  </div>
-</div>
+{% include "_partials/admin_users.html" %}
+{% include "_partials/admin_complaints.html" %}
 {% endblock %}

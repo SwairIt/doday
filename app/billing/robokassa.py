@@ -43,7 +43,12 @@ class RobokassaError(RuntimeError):
 def is_configured() -> bool:
     """Настроен ли приём карт. Если нет — на сайте показываем только Stars."""
     s = get_settings()
-    return bool(s.robokassa_login and s.robokassa_password1 and s.robokassa_password2)
+    passwords = (
+        (s.robokassa_test_password1, s.robokassa_test_password2)
+        if s.robokassa_test_mode
+        else (s.robokassa_password1, s.robokassa_password2)
+    )
+    return bool(s.robokassa_login and all(passwords))
 
 
 def _hash(raw: str) -> str:
@@ -96,7 +101,7 @@ def build_payment_url(product: Product, inv_id: int, email: str | None = None) -
 
     s = get_settings()
     out_sum = _amount(product)
-    receipt = build_receipt(product)
+    receipt = quote(build_receipt(product), safe="")
 
     # Порядок полей в подписи задан Robokassa и нарушать его нельзя:
     # MerchantLogin:OutSum:InvId:Receipt:Пароль#1:Shp_-параметры по алфавиту.
@@ -114,8 +119,8 @@ def build_payment_url(product: Product, inv_id: int, email: str | None = None) -
         "SignatureValue": signature,
         "Culture": "ru",
         "Encoding": "utf-8",
-        # Чек уходит url-encoded, но в подпись он входит в исходном виде.
-        "Receipt": quote(receipt, safe=""),
+        # Подписываем URL-кодированное значение; urlencode кодирует транспорт.
+        "Receipt": receipt,
         **shp,
     }
     if email:
@@ -126,7 +131,9 @@ def build_payment_url(product: Product, inv_id: int, email: str | None = None) -
     return f"{PAYMENT_URL}?{urlencode(params, safe=':{}[],"')}"
 
 
-def verify_result(out_sum: str, inv_id: str, signature: str, shp: dict[str, str]) -> bool:
+def verify_result(
+    out_sum: str, inv_id: str, signature: str, shp: dict[str, str], *, test_mode: bool | None = None
+) -> bool:
     """Проверяет подпись уведомления об оплате (ResultURL).
 
     Считается на Пароле №2 — тем самым, который знает только сервер. Порядок:
@@ -138,7 +145,10 @@ def verify_result(out_sum: str, inv_id: str, signature: str, shp: dict[str, str]
     s = get_settings()
     shp_part = "".join(f":{k}={v}" for k, v in sorted(shp.items()))
     # Уведомление тестового платежа подписано тестовым Паролем №2.
-    password2 = s.robokassa_test_password2 if s.robokassa_test_mode else s.robokassa_password2
+    use_test = s.robokassa_test_mode if test_mode is None else test_mode
+    password2 = s.robokassa_test_password2 if use_test else s.robokassa_password2
+    if not password2 or not signature:
+        return False
     expected = _hash(f"{out_sum}:{inv_id}:{password2}{shp_part}")
     # Сравнение постоянного времени: обычное == выходит из цикла на первом
     # несовпавшем символе и в теории подсказывает подбирающему длину общего

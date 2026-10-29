@@ -1,0 +1,105 @@
+<nav class="mb-6 flex flex-wrap gap-2 text-sm" aria-label="Разделы админки">
+  <a href="#billing" class="btn-primary">Покупки и выручка</a>
+  <a href="#users" class="btn-ghost">Пользователи</a>
+  <a href="#support" class="btn-ghost">Обращения</a>
+</nav>
+<section id="billing" class="mb-8 scroll-mt-24 min-w-0">
+  <h2 class="mb-3 text-lg font-bold">Подписки и выручка за всё время</h2>
+  <div class="mb-3 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-4">
+    {% for label, value, hint in [
+      ('Покупателей', billing_lifetime.buyers, 'Уникальные покупатели, включая возвраты'),
+      ('Оплаченных покупок', billing_lifetime.payments, 'Карты и Telegram Stars, без тестовых'),
+      ('Выручка в рублях', billing_lifetime.rub_net_label, 'Оплаты минус отмеченные возвраты'),
+      ('Telegram Stars', billing_lifetime.stars_net|string ~ ' ⭐', 'Отдельно от рублей, за вычетом возвратов')
+    ] %}
+    <div class="card min-w-0 p-4">
+      <p class="text-xs text-[var(--text-muted)]">{{ label }}</p>
+      <p class="my-2 break-words text-2xl font-bold tabular-nums">{{ value }}</p>
+      <p class="text-xs text-[var(--text-muted)]">{{ hint }}</p>
+    </div>
+    {% endfor %}
+  </div>
+  <p class="mb-5 text-xs leading-relaxed text-[var(--text-muted)]">
+    Активных оплаченных Pro / Family: <strong>{{ billing_lifetime.active_subscriptions }}</strong>.
+    Выручка показана до комиссий и налогов — это не чистая прибыль. Stars не пересчитываются в рубли.
+  </p>
+  <div class="card min-w-0 p-4 sm:p-5">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <h3 class="font-semibold">Журнал платежей <span class="font-normal text-[var(--text-muted)]">· {{ billing.total }}</span></h3>
+      <a href="{{ billing_export_url }}" class="btn-ghost text-sm">Скачать CSV</a>
+    </div>
+    <form method="get" action="/app/root#billing" class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      {% for key, value in users_query.items() %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endfor %}
+      <label class="min-w-0 text-xs">Поиск по email или номеру
+        <input name="billing_q" type="search" value="{{ billing_filters.q }}" maxlength="160" placeholder="Email, номер счёта, ID" class="mt-1 w-full min-w-0 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm">
+      </label>
+      {% for name, label, options in [
+        ('provider', 'Способ оплаты', [('all','Все способы'),('robokassa','Карта / СБП'),('stars','Telegram Stars')]),
+        ('status', 'Статус', [('all','Все статусы'),('paid','Оплачен'),('pending','Ожидает оплаты'),('refunded','Возврат'),('canceled','Отменён')]),
+        ('mode', 'Режим', [('live','Настоящие оплаты'),('test','Тестовые оплаты'),('all','Все режимы')]),
+        ('sort', 'Сортировка', [('newest','Сначала новые'),('oldest','Сначала старые'),('amount_desc','Сумма ↓ внутри валюты'),('amount_asc','Сумма ↑ внутри валюты'),('email','Email'),('product','Продукт')])
+      ] %}
+      <label class="min-w-0 text-xs">{{ label }}
+        <select name="billing_{{ name }}" class="mt-1 w-full min-w-0 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm">
+          {% for value, title in options %}<option value="{{ value }}" {% if billing_filters|attr(name) == value %}selected{% endif %}>{{ title }}</option>{% endfor %}
+        </select>
+      </label>
+      {% endfor %}
+      <label class="min-w-0 text-xs">Продукт
+        <select name="billing_product" class="mt-1 w-full min-w-0 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm">
+          <option value="">Все продукты</option>
+          {% for product in billing_products %}<option value="{{ product.code }}" {% if billing_filters.product == product.code %}selected{% endif %}>{{ product.title }}</option>{% endfor %}
+        </select>
+      </label>
+      {% for name, label in [('since', 'С даты'), ('until', 'По дату включительно')] %}
+      <label class="min-w-0 text-xs">{{ label }}
+        <input name="billing_{{ name }}" type="date" value="{{ billing_filters|attr(name) or '' }}" class="mt-1 w-full min-w-0 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm">
+      </label>
+      {% endfor %}
+      <label class="text-xs">Строк на странице
+        <select name="billing_per_page" class="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm">
+          {% for n in [10,25,50,100] %}<option value="{{ n }}" {% if billing_filters.per_page == n %}selected{% endif %}>{{ n }}</option>{% endfor %}
+        </select>
+      </label>
+      <div class="flex flex-wrap items-end gap-2 sm:col-span-2 xl:col-span-3">
+        <button class="btn-primary" type="submit">Применить</button>
+        <a href="/app/root#billing" class="btn-ghost">Сбросить</a>
+      </div>
+    </form>
+    <div class="my-4 flex flex-wrap gap-x-5 gap-y-2 rounded-xl bg-[var(--surface-2)] p-3 text-sm">
+      <span>По фильтру: <strong>{{ billing.summary.payments }}</strong> оплат</span>
+      <span><strong>{{ billing.summary.buyers }}</strong> покупателей</span>
+      <span><strong>{{ billing.summary.rub_net_label }}</strong></span>
+      <span><strong>{{ billing.summary.stars_net }} ⭐</strong></span>
+      <span>Ожидают: <strong>{{ billing.summary.pending }}</strong></span>
+      <span>Возвращено: <strong>{{ billing.summary.rub_refunded_label }} · {{ billing.summary.stars_refunded }} ⭐</strong></span>
+    </div>
+    <p class="mb-3 text-xs text-[var(--text-muted)]">Даты — {{ admin_timezone }}. Период относится к дате оплаты (для неоплаченных — создания счёта). CSV содержит до 5000 строк с теми же фильтрами.</p>
+    <div class="max-w-full overflow-x-auto rounded-xl border border-[var(--border)]" tabindex="0" role="region" aria-label="Журнал платежей, прокручивается по горизонтали">
+      <table class="w-full min-w-[960px] text-left text-sm">
+        <thead class="bg-[var(--surface-2)] text-xs text-[var(--text-muted)]"><tr>
+          {% for label in ['Дата','Покупатель','Продукт','Сумма','Статус','Номер'] %}<th scope="col" class="px-3 py-3 font-medium">{{ label }}</th>{% endfor %}
+        </tr></thead>
+        <tbody class="divide-y divide-[var(--border)]">
+          {% for payment in billing.items %}
+          <tr class="align-top">
+            <td class="whitespace-nowrap px-3 py-3 text-xs tabular-nums">{{ admin_date(payment.occurred_at) }}</td>
+            <td class="min-w-[200px] max-w-[240px] break-all px-3 py-3">{{ payment.email }}</td>
+            <td class="px-3 py-3"><span class="block">{{ payment.product_title }}</span><span class="text-xs text-[var(--text-muted)]">{{ 'Telegram Stars' if payment.provider == 'stars' else 'Карта / СБП' }}{% if payment.is_test %} · ТЕСТ{% endif %}</span></td>
+            <td class="whitespace-nowrap px-3 py-3 font-semibold tabular-nums">{{ payment.amount_label }}</td>
+            <td class="px-3 py-3"><span class="rounded-full px-2 py-1 text-xs {{ 'bg-emerald-500/15 text-emerald-500' if payment.status == 'paid' else 'bg-[var(--surface-2)] text-[var(--text-muted)]' }}">{{ {'paid':'Оплачен','pending':'Ожидает','refunded':'Возврат','canceled':'Отменён'}.get(payment.status,payment.status) }}</span></td>
+            <td class="max-w-[180px] break-all px-3 py-3 font-mono text-xs">{{ payment.reference }}</td>
+          </tr>
+          {% else %}<tr><td colspan="6" class="px-4 py-10 text-center text-[var(--text-muted)]">По этим фильтрам платежей нет.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
+      <span class="text-[var(--text-muted)]">Страница {{ billing.page }} из {{ billing.pages }} · найдено {{ billing.total }}</span>
+      <div class="flex gap-2">
+        {% if billing_prev_url %}<a href="{{ billing_prev_url }}" class="btn-ghost">← Назад</a>{% endif %}
+        {% if billing_next_url %}<a href="{{ billing_next_url }}" class="btn-ghost">Далее →</a>{% endif %}
+      </div>
+    </div>
+  </div>
+</section>
