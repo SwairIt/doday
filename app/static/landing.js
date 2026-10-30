@@ -1,3 +1,5 @@
+import './landing-video.js';
+
 // The page and native video controls work without the animation package.
 const menuButton = document.getElementById('landing-menu-toggle');
 const menu = document.getElementById('landing-mobile-menu');
@@ -33,32 +35,6 @@ document.querySelectorAll('[data-gallery-theme]').forEach(button => {
     ['light', 'dark'].forEach(name => { document.getElementById(`gallery-${name}`).hidden = theme !== name; });
   });
 });
-
-const video = document.getElementById('landing-video');
-const playButton = document.getElementById('landing-video-start');
-if (video && playButton) {
-  playButton.addEventListener('click', async () => {
-    try {
-      if (!video.getAttribute('src')) {
-        // Safari may ignore preload=none. No source means no eager media load.
-        video.src = video.dataset.src;
-        video.tabIndex = 0;
-        video.load();
-      }
-      await video.play();
-      playButton.hidden = true;
-      video.focus({ preventScroll: true });
-    } catch (_) {
-      // Keep the browser's own controls available if playback is refused.
-      playButton.hidden = true;
-      video.focus();
-    }
-  });
-  video.addEventListener('play', () => { playButton.hidden = true; });
-  video.addEventListener('ended', () => { playButton.hidden = false; });
-  video.addEventListener('error', () => { playButton.hidden = true; });
-  playButton.hidden = false;
-}
 
 // Enhancement only: no initially invisible content or scroll interception.
 if (!matchMedia('(prefers-reduced-motion:reduce)').matches && !navigator.connection?.saveData) {

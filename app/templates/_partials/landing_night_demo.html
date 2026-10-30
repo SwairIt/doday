@@ -1,0 +1,22 @@
+<section id="demo" class="max-w-5xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28" aria-labelledby="night-demo-title">
+  <div class="text-center mb-8">
+    <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Doday в действии</p>
+    <h2 id="night-demo-title" class="text-3xl md:text-4xl font-bold mb-3">От мысли — к выполненной задаче</h2>
+    <p class="text-[var(--text-muted)] text-lg max-w-2xl mx-auto">15 секунд внутри Doday: добавь дело, разложи проект по шагам и открой задачу. В тёмной теме, как и эта страница.</p>
+  </div>
+  <div class="night-demo-player card overflow-hidden relative">
+    <video id="landing-video" class="block w-full" controls playsinline preload="none" tabindex="-1"
+           poster="/static/landing/video-poster-dark.webp" data-src="/static/landing/doday-in-action-dark.mp4"
+           aria-label="Демонстрация Doday в тёмной теме" aria-describedby="night-demo-description">
+      <track kind="captions" src="/static/landing/demo.vtt" srclang="ru" label="Русские" default>
+      Ваш браузер не поддерживает видео. <a href="/static/landing/doday-in-action-dark.mp4">Открыть MP4</a>
+    </video>
+    <button id="landing-video-start" type="button" class="night-demo-start" aria-label="Смотреть демонстрацию Doday" hidden>
+      <span class="btn-primary inline-flex items-center justify-center gap-2 !min-h-12 !px-5">
+        <svg aria-hidden="true" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m9 5 11 7-11 7V5Z"/></svg>
+        Смотреть · 15 секунд
+      </span>
+    </button>
+  </div>
+  <p id="night-demo-description" class="text-sm text-[var(--text-muted)] mt-4 text-center">Реальная запись приложения с демонстрационными задачами. Без автозапуска и звука. <a class="underline underline-offset-4" href="/static/landing/doday-in-action-dark.mp4">Открыть видео отдельно</a></p>
+</section>

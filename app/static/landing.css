@@ -36,6 +36,14 @@ body.landing-page {
 .lp-menu-button { display:none; width:44px; height:44px; place-items:center; border:1px solid var(--border); border-radius:10px; background:transparent; cursor:pointer; }
 .lp-menu-button svg { width:20px; height:20px; }
 .lp-menu-button[hidden] { display:none; }
+@media (max-width:420px) {
+  .lp-header .lp-header-inner { gap:6px; }
+  .lp-header .lp-brand { font-size:21px; gap:6px; }
+  .lp-header .lp-mark { width:26px; }
+  .lp-header .lp-cta-full { display:none; }
+  .lp-header .lp-cta-short { display:inline; }
+  .lp-header .lp-account .lp-button.small { padding-inline:10px; }
+}
 .lp-mobile-menu { border-top:1px solid var(--border); padding:12px 24px 22px; background:var(--bg); max-height:calc(100dvh - 72px); overflow-y:auto; }
 .lp-mobile-menu:not([hidden]) { display:grid; grid-template-columns:1fr 1fr; gap:5px 16px; }
 .lp-mobile-menu a { padding:12px 0; font-size:15px; }

@@ -12,6 +12,7 @@ from app.auth.rate_limit import client_ip, client_key, hit
 from app.blog.posts import CATEGORY_BY_SLUG, all_posts, featured_posts
 from app.config import get_settings
 from app.pages.changelog_data import ENTRIES as CHANGELOG_ENTRIES
+from app.pages.landing_schedule import landing_schedule
 from app.pages.roadmap_data import SECTIONS as ROADMAP_SECTIONS
 
 router = APIRouter()
@@ -30,9 +31,15 @@ async def doday_landing(request: Request, user: CurrentUser) -> Response:
     preview = request.query_params.get("preview") == "1"
     if user is not None and not preview:
         return RedirectResponse(url="/app/today", status_code=302)
+    schedule = landing_schedule(
+        mode=request.cookies.get("doday-theme", "schedule"),
+        light_start=request.cookies.get("doday-theme-light-start", "09:00"),
+        dark_start=request.cookies.get("doday-theme-dark-start", "19:00"),
+        system_theme=request.cookies.get("doday-system-theme", "light"),
+    )
     return templates.TemplateResponse(
         request,
-        "landing.html",
+        schedule.template_name,
         {
             "user": user,
             "beta_free_for_all": get_settings().beta_free_for_all,
@@ -40,7 +47,10 @@ async def doday_landing(request: Request, user: CurrentUser) -> Response:
             "blog_total": len(all_posts()),
             "blog_categories": CATEGORY_BY_SLUG,
             "recent_updates": CHANGELOG_ENTRIES[:3],
+            "landing_variant": schedule.variant,
+            "landing_switch_in_seconds": schedule.seconds_until_switch,
         },
+        headers={"Cache-Control": "no-store"},
     )
 
 

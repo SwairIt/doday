@@ -10,14 +10,7 @@
     <section class="card p-5">
       <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">Тема</h2>
       <p class="text-sm text-[var(--text-muted)] mb-4">Выбор внешнего вида интерфейса.</p>
-      <div class="flex gap-2 flex-wrap" x-data>
-        <button @click="localStorage.setItem('doday-theme', 'light'); window.dodayApplyTheme && window.dodayApplyTheme()"
-                class="btn-ghost !py-2 !px-3 text-sm">☀️ Светлая</button>
-        <button @click="localStorage.setItem('doday-theme', 'dark'); window.dodayApplyTheme && window.dodayApplyTheme()"
-                class="btn-ghost !py-2 !px-3 text-sm">🌙 Тёмная</button>
-        <button @click="localStorage.setItem('doday-theme', 'system'); window.dodayApplyTheme && window.dodayApplyTheme()"
-                class="btn-ghost !py-2 !px-3 text-sm">⚙️ Системная</button>
-      </div>
+      <button type="button" data-theme-open class="btn-ghost !py-2 !px-3 text-sm">Настроить тему и расписание</button>
     </section>
 
     <section class="card p-5">

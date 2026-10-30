@@ -2,6 +2,7 @@
 
 import os
 import subprocess
+import time
 from collections.abc import Awaitable, Callable
 from pathlib import Path
 from urllib.parse import urlparse
@@ -549,6 +550,7 @@ async def _security_headers(
     request.state.yandex_verification = _settings.yandex_verification
     request.state.google_site_verification = _settings.google_site_verification
     request.state.asset_version = _GIT_SHA
+    request.state.theme_now_ms = int(time.time() * 1000)
     # Expose Telegram-канал URL — если пустой, footer не показывает иконку.
     request.state.telegram_channel_url = _settings.telegram_channel_url
     # Контакты продавца в подвале — требование Robokassa при модерации сайта.

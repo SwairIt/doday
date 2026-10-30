@@ -35,3 +35,8 @@ The installer advertised 0.8.221 but npm returned ETARGET, so this project pins
 the available 0.8.220. A transitive Undici security fix is pinned with an override.
 Node/video tooling is confined to this directory; the FastAPI deployment does
 not install it. Only finished assets and the Motion browser bundle are served.
+
+`night/` is the independently editable dark variant, with a new recording of
+the application in its dark theme. From that folder, use the same pinned CLI:
+`npx hyperframes@0.8.220 check`, `snapshot --review`, `preview --background`,
+and `render --quality delivery --output ../../../app/static/landing/doday-in-action-dark.mp4`.

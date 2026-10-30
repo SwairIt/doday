@@ -2,7 +2,13 @@
 
 import re
 
+import pytest
 from httpx import AsyncClient
+
+
+@pytest.fixture(autouse=True)
+def daylight_landing(client: AsyncClient) -> None:
+    client.cookies.set("doday-theme", "light")
 
 
 async def test_landing_keeps_every_existing_section(client: AsyncClient) -> None:
@@ -44,10 +50,9 @@ async def test_landing_video_requires_a_user_action(client: AsyncClient) -> None
     assert "particles_fx" not in body
 
 
-async def test_demo_video_supports_partial_download(client: AsyncClient) -> None:
-    response = await client.get(
-        "/static/landing/doday-in-action.mp4", headers={"Range": "bytes=0-31"}
-    )
+@pytest.mark.parametrize("video_name", ["doday-in-action.mp4", "doday-in-action-dark.mp4"])
+async def test_demo_video_supports_partial_download(client: AsyncClient, video_name: str) -> None:
+    response = await client.get(f"/static/landing/{video_name}", headers={"Range": "bytes=0-31"})
     assert response.status_code == 206
     assert response.headers["content-type"] == "video/mp4"
     assert response.headers["content-range"].startswith("bytes 0-31/")

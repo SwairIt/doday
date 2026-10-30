@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru">
+<html lang="ru"{% if landing_variant %} data-landing-variant="{{ landing_variant }}"{% endif %}>
 <head>
     <meta charset="utf-8">
     <script>
@@ -165,39 +165,15 @@
       };
     </script>
 
+    <script src="/static/theme-core.js?v={{ request.state.asset_version }}" data-server-now="{{ request.state.theme_now_ms }}"></script>
     <script>
-      (function() {
-        // Theme modes: 'light' / 'dark' / 'system' (default).
-        // 'system' = no explicit preference, follows prefers-color-scheme dynamically.
-        function applyTheme() {
-          try {
-            var mode = localStorage.getItem('doday-theme') || 'system';
-            var resolved;
-            if (mode === 'light' || mode === 'dark') {
-              resolved = mode;
-            } else {
-              resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-            }
-            document.documentElement.setAttribute('data-theme', resolved);
-            document.documentElement.setAttribute('data-theme-mode', mode);
-          } catch (e) {
-            document.documentElement.setAttribute('data-theme', 'dark');
-          }
-        }
-        applyTheme();
-        // Re-apply when system preference flips and user is in 'system' mode.
-        try {
-          var mq = window.matchMedia('(prefers-color-scheme: dark)');
-          if (mq.addEventListener) mq.addEventListener('change', applyTheme);
-        } catch (e) {}
-        try {
-          var accent = localStorage.getItem('doday-accent');
-          if (accent) document.documentElement.setAttribute('data-accent', accent);
-        } catch (e) {}
-        // Expose globally so the topbar/profile buttons can call it.
-        window.dodayApplyTheme = applyTheme;
-      })();
+      try {
+        var accent = localStorage.getItem('doday-accent');
+        if (accent) document.documentElement.setAttribute('data-accent', accent);
+      } catch (_) {}
     </script>
+    <link rel="stylesheet" href="/static/theme-picker.css?v={{ request.state.asset_version }}">
+    <script defer src="/static/theme-picker.js?v={{ request.state.asset_version }}"></script>
 
     <style>
       /* Атрибут hidden должен скрывать. Звучит странно, но без !important он
@@ -708,5 +684,6 @@
         {% block content %}{% endblock %}
       </main>
     {% endblock %}
+    {% include "_partials/theme_dialog.html" %}
 </body>
 </html>

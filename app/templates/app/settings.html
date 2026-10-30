@@ -227,7 +227,8 @@
 
   <section class="card p-6">
     <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-4">Тема оформления</h2>
-    <p class="text-sm text-[var(--text-muted)] mb-4">Светлая/тёмная — иконкой луны в правом верхнем углу. Цветовая палитра — здесь:</p>
+    <p class="text-sm text-[var(--text-muted)] mb-4">Выбери светлую, тёмную, системную тему или своё расписание. Цветовая палитра — ниже:</p>
+    <button type="button" data-theme-open class="btn-ghost !py-2 !px-3 text-sm mb-4">Настроить тему и расписание</button>
     {# is_pro приходит из view (билеется через has_pro_features → учитывает trial) #}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3" x-data="{ current: localStorage.getItem('doday-accent') || 'default' }">
       {% set palettes = [

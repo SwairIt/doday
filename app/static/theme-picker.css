@@ -1,0 +1,36 @@
+.theme-button { display:inline-flex; flex-shrink:0; align-items:center; justify-content:center; width:44px; height:44px; padding:0; border:1px solid var(--border); border-radius:12px; background:var(--surface); color:var(--text); cursor:pointer; font:inherit; line-height:1; }
+.theme-button:hover { background:var(--surface-2); }
+.theme-button svg { width:20px; height:20px; }
+.appearance-dialog { padding:24px; width:min(440px,calc(100vw - 24px)); max-height:calc(100dvh - 32px); margin:auto; overflow-y:auto; box-sizing:border-box; border:1px solid var(--border); border-radius:22px; background:var(--surface); color:var(--text); box-shadow:0 24px 100px rgb(0 0 0 / 24%); font-family:'Inter',sans-serif; }
+.appearance-dialog::backdrop { background:rgb(9 6 20 / 55%); }
+html:has(.appearance-dialog[open]) { overflow:hidden; }
+.appearance-dialog * { box-sizing:border-box; }
+.appearance-heading { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:20px; }
+.appearance-heading h2 { font-size:23px; line-height:1.25; font-weight:650; letter-spacing:-.6px; margin:0 0 7px; }
+.appearance-heading p { font-size:13px; line-height:1.5; color:var(--text-muted); margin:0; }
+.appearance-heading .theme-button { width:36px; height:36px; font-size:26px; border:0; background:transparent; }
+.appearance-options { display:grid; gap:8px; border:0; padding:0; margin:0; }
+.appearance-option { display:flex; align-items:center; gap:12px; position:relative; min-height:64px; padding:11px 13px; border:1px solid var(--border); border-radius:13px; cursor:pointer; }
+.appearance-option:has(input:checked) { border-color:var(--accent); background:color-mix(in srgb,var(--accent) 8%,var(--surface)); }
+.appearance-option:has(input:focus-visible) { outline:2px solid var(--accent); outline-offset:2px; }
+.appearance-option input { position:absolute; width:1px; height:1px; opacity:0; }
+.appearance-option strong { display:block; font-size:14px; line-height:1.4; font-weight:600; }
+.appearance-option small { display:block; font-size:12px; line-height:1.5; color:var(--text-muted); margin-top:2px; }
+.appearance-icon { font-size:25px; width:29px; text-align:center; color:var(--accent); }
+.appearance-check { margin-left:auto; color:var(--accent); opacity:0; font-size:17px; }
+.appearance-option:has(input:checked) .appearance-check { opacity:1; }
+.appearance-schedule { margin:18px 0 0; border:0; padding:0; }
+.appearance-schedule legend { font-weight:600; font-size:13px; margin-bottom:10px; }
+.appearance-times { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px; }
+.appearance-times label { display:grid; min-width:0; gap:6px; font-size:12px; color:var(--text-muted); }
+.appearance-times input { width:100%; min-width:0; height:46px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); border-radius:10px; padding:8px 10px; font:inherit; font-size:16px; }
+.appearance-schedule p { font-size:11px; line-height:1.5; color:var(--text-muted); margin:9px 0 0; }
+.appearance-reset { color:var(--accent); border:0; background:transparent; padding:10px 0; font:inherit; font-size:12px; cursor:pointer; min-height:40px; }
+.appearance-error { color:var(--danger,#ef4444); font-size:12px; line-height:1.5; margin:8px 0 0; }
+.appearance-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
+.appearance-actions button { min-height:44px; padding:10px 18px; border-radius:11px; font:inherit; font-size:14px; font-weight:550; cursor:pointer; }
+.appearance-cancel { background:transparent; color:var(--text-muted); border:1px solid var(--border); }
+.appearance-save { background:var(--accent); color:#fff; border:1px solid transparent; }
+[data-theme="dark"] .appearance-save { background:#7c3aed; color:white; }
+.appearance-sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+@media(max-width:360px) { .appearance-dialog { padding:18px; } .appearance-heading h2 { font-size:21px; } .appearance-option { gap:8px; padding:10px; } }

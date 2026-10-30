@@ -1,0 +1,14 @@
+<dialog id="appearance-dialog" class="appearance-dialog" aria-labelledby="appearance-title" aria-describedby="appearance-description">
+  <form id="appearance-form">
+    <div class="appearance-heading"><div><h2 id="appearance-title">Как тебе удобнее?</h2><p id="appearance-description">Оформление Doday на этом устройстве.</p></div><button type="button" data-theme-close class="theme-button" aria-label="Закрыть настройки темы">×</button></div>
+    <fieldset class="appearance-options"><legend class="appearance-sr-only">Режим темы</legend>
+      <label class="appearance-option"><input type="radio" name="appearance-mode" value="schedule"><span class="appearance-icon" aria-hidden="true">◷</span><span><strong>По расписанию</strong><small>Светлая днём, тёмная вечером</small></span><span class="appearance-check" aria-hidden="true">✓</span></label>
+      <label class="appearance-option"><input type="radio" name="appearance-mode" value="system"><span class="appearance-icon" aria-hidden="true">◐</span><span><strong>Как на устройстве</strong><small>Следовать системной теме</small></span><span class="appearance-check" aria-hidden="true">✓</span></label>
+      <label class="appearance-option"><input type="radio" name="appearance-mode" value="light"><span class="appearance-icon" aria-hidden="true">☀</span><span><strong>Светлая</strong><small>Всегда немного больше света</small></span><span class="appearance-check" aria-hidden="true">✓</span></label>
+      <label class="appearance-option"><input type="radio" name="appearance-mode" value="dark"><span class="appearance-icon" aria-hidden="true">☾</span><span><strong>Тёмная</strong><small>Мягкий свет и тёмный фон</small></span><span class="appearance-check" aria-hidden="true">✓</span></label>
+    </fieldset>
+    <fieldset id="appearance-schedule" class="appearance-schedule"><legend>Твоё расписание</legend><div class="appearance-times"><label>Светлая с<input type="time" id="appearance-light-start" name="light-start" value="09:00" required></label><label>Тёмная с<input type="time" id="appearance-dark-start" name="dark-start" value="19:00" required></label></div><p>Время московское (МСК). Тема переключится сама.</p><button type="button" class="appearance-reset" data-theme-reset>Вернуть 09:00 и 19:00</button></fieldset>
+    <p id="appearance-error" class="appearance-error" role="alert" hidden>Начало светлой и тёмной темы должно отличаться.</p>
+    <div class="appearance-actions"><button type="button" data-theme-close class="appearance-cancel">Отмена</button><button type="submit" class="appearance-save">Сохранить</button></div>
+  </form>
+</dialog>

@@ -95,6 +95,10 @@ package-lock.json
 /media/landing-demo/.thumbnails/
 /media/landing-demo/assets/capture.webm
 /media/landing-demo/CLAUDE.md
+/media/landing-demo/night/.hyperframes/
+/media/landing-demo/night/.thumbnails/
+/media/landing-demo/night/assets/capture.webm
+/media/landing-demo/night/CLAUDE.md
 
 # ── Dev / debug screenshots ───────────────────────────────────────────────
 # Root-level images — historically these were design-audit screenshots,
