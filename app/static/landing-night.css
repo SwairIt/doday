@@ -10,6 +10,11 @@
   background: rgb(13 8 32 / 18%);
 }
 .night-demo-start:focus-visible { outline-offset: -4px; }
+.night-header-links > a { white-space:nowrap; }
+@media(min-width:1024px) and (max-width:1199px) {
+  .night-header-links { gap:16px; }
+  .night-header-links a[href="/qa/"] { display:none; }
+}
 @media(max-width:420px) {
   .landing-night header a[href="/auth/login"] { display:none; }
 }
