@@ -1,0 +1,31 @@
+<template>
+<style>
+  @font-face{font-family:DodayInter;src:url('assets/fonts/inter-cyrillic-1.woff2');font-weight:100 900;unicode-range:U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+  @font-face{font-family:DodayInter;src:url('assets/fonts/inter-latin-2.woff2');font-weight:100 900;unicode-range:U+0000-00FF,U+2000-206F}
+  #root{position:absolute;inset:0;background:#fffefa;color:#292929;font-family:DodayInter,Inter,sans-serif;overflow:hidden}
+  .tour-header{position:absolute;left:104px;right:104px;top:58px;display:flex;align-items:center;justify-content:space-between;gap:32px}
+  .tour-title{font-size:48px;font-weight:600;letter-spacing:-2px;line-height:1.2;margin:0}
+  .tour-number{font-size:30px;line-height:1.2;color:#7053cc;font-weight:500}
+  #tour-viewport{position:absolute;left:96px;right:96px;top:160px;bottom:70px;overflow:hidden;border:1px solid #ded8ea;border-radius:18px;background:#eeebf5}
+  #tour-camera{position:absolute;inset:0;transform-origin:50% 35%}
+  #tour-video{display:block;width:100%;height:100%;object-fit:cover;object-position:top}
+  .tour-header.clip{inset:auto;left:104px;right:104px;top:58px}
+</style>
+<div data-hf-id="hf-6jku" id="root" data-composition-id="tour" data-width="1920" data-height="1080" data-duration="12">
+  <div data-hf-id="hf-dmvb" id="tour-viewport" data-layout-allow-occlusion="Intentional crop of the lower app chrome">
+    <div data-hf-id="hf-p6km" id="tour-camera" data-layout-allow-overflow="Camera zoom is deliberately cropped by the product viewport"><video data-hf-id="hf-l26s" id="tour-video" class="clip" src="assets/product-flow.mp4" muted data-start="0" data-duration="12" data-track-index="0" data-beat="recorded product action"></video></div>
+  </div>
+  <div data-hf-id="hf-evtz" id="tour-add" class="tour-header clip" data-start="0" data-duration="4.8" data-track-index="1"><h1 data-hf-id="hf-vmfg" class="tour-title">Запиши дело. Дату подхватим.</h1><span data-hf-id="hf-o6jm" class="tour-number">01 / 03</span></div>
+  <div data-hf-id="hf-y5uy" id="tour-plan" class="tour-header clip" data-start="4.8" data-duration="4.1" data-track-index="1"><h1 data-hf-id="hf-bj5e" class="tour-title">Большой проект — по шагам.</h1><span data-hf-id="hf-yvct" class="tour-number">02 / 03</span></div>
+  <div data-hf-id="hf-gyvp" id="tour-focus" class="tour-header clip" data-start="8.9" data-duration="3.1" data-track-index="1"><h1 data-hf-id="hf-xy5h" class="tour-title">А сейчас — одна задача.</h1><span data-hf-id="hf-gl5w" class="tour-number">03 / 03</span></div>
+</div>
+<script>
+  // Single-world camera adapted from the installed ui-focus-zoom primitive.
+  const tl=gsap.timeline({paused:true});
+  tl.fromTo('#tour-camera',{scale:1,x:0},{scale:1.12,x:-85,duration:.65,ease:'power2.inOut'},.35);
+  tl.to('#tour-camera',{scale:1,x:0,duration:.55,ease:'power2.inOut'},4.15);
+  tl.fromTo('#tour-plan .tour-title',{y:12,opacity:0},{y:0,opacity:1,duration:.35,ease:'power2.out'},4.8);
+  tl.fromTo('#tour-focus .tour-title',{y:12,opacity:0},{y:0,opacity:1,duration:.35,ease:'power2.out'},8.9);
+  window.__timelines.tour=tl;
+</script>
+</template>

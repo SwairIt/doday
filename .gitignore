@@ -90,6 +90,11 @@ Desktop.ini
 # ── Node (if Tailwind build ever added) ───────────────────────────────────
 node_modules/
 package-lock.json
+!/media/landing-demo/package-lock.json
+/media/landing-demo/.hyperframes/
+/media/landing-demo/.thumbnails/
+/media/landing-demo/assets/capture.webm
+/media/landing-demo/CLAUDE.md
 
 # ── Dev / debug screenshots ───────────────────────────────────────────────
 # Root-level images — historically these were design-audit screenshots,

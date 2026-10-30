@@ -1,0 +1,19 @@
+{
+  "name": "landing-demo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npx --yes hyperframes@0.8.220 preview",
+    "check": "npx --yes hyperframes@0.8.220 check",
+    "render": "npx --yes hyperframes@0.8.220 render",
+    "publish": "npx --yes hyperframes@0.8.220 publish"
+  },
+  "dependencies": {
+    "esbuild": "0.25.12",
+    "hyperframes": "0.8.220",
+    "motion": "14.8.0"
+  },
+  "overrides": {
+    "undici": "7.30.1"
+  }
+}

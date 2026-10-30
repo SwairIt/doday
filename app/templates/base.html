@@ -606,8 +606,9 @@
     </script>
     {% endif %}
 <link rel="stylesheet" href="/static/mobile.css?v={{ request.state.asset_version|default('20261030') }}">
+{% block page_head %}{% endblock %}
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
     {# Skip-to-content для screen-reader / keyboard навигации. Виден только при
        focus (Tab из адресной строки) — невидим иначе. #}
     <a href="#main-content"

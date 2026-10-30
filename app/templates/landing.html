@@ -9,928 +9,189 @@
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Doday","url":"https://getdoday.ru/","logo":"https://getdoday.ru/favicon.ico","founder":{"@type":"Person","name":"SwairIt","url":"https://github.com/SwairIt"},"sameAs":["https://github.com/SwairIt","https://all.getdoday.ru/"]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Doday","url":"https://getdoday.ru/","inLanguage":"ru","potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://getdoday.ru/help?q={search_term_string}"},"query-input":"required name=search_term_string"}}</script>
 {% endblock %}
+{% block page_head %}
+<link rel="stylesheet" href="/static/landing.css?v={{ request.state.asset_version }}">
+{% endblock %}
+{% block body_class %}landing-page{% endblock %}
+{% from "_partials/landing_data.html" import features, school_steps, faqs %}
+{% macro arrow() %}<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14m-6-6 6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>{% endmacro %}
+{% macro icon(path) %}<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="{{ path }}" stroke-linecap="round" stroke-linejoin="round"/></svg>{% endmacro %}
 {% block layout %}
-<style>
-  .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease; }
-  .reveal.in { opacity: 1; transform: translateY(0); }
-  .reveal-delay-100 { transition-delay: .1s; }
-  .reveal-delay-200 { transition-delay: .2s; }
-  .reveal-delay-300 { transition-delay: .3s; }
-  @keyframes float-slow { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-  .float-slow { animation: float-slow 6s ease-in-out infinite; }
-  @keyframes shimmer-bg { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
-  .shimmer { background-size: 200% 200%; animation: shimmer-bg 8s ease infinite; }
-  details > summary { list-style: none; cursor: pointer; }
-  details > summary::-webkit-details-marker { display: none; }
-  details[open] .faq-chevron { transform: rotate(180deg); }
-  .faq-chevron { transition: transform .2s ease; }
-</style>
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); });
-    }, { threshold: 0.12 });
-    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
-  });
-</script>
-
 <div class="min-h-screen flex flex-col">
   {% include "_partials/beta_banner.html" %}
-  <header class="sticky top-0 z-30 glass">
-    <nav class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-2">
-      <a href="/" class="flex items-center gap-2 sm:gap-2.5 font-bold text-lg sm:text-xl min-w-0">
-        <span class="grad-bg w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-white font-extrabold shadow-glow flex-shrink-0">D</span>
-        <span class="grad-text">Doday</span>
-      </a>
-      <div class="hidden lg:flex items-center gap-6 text-sm text-[var(--text-muted)]">
-        <a href="#features" class="hover:text-[var(--text)] transition">Возможности</a>
-        <a href="#workflow" class="hover:text-[var(--text)] transition">Как это работает</a>
-        <a href="/qa/" class="hover:text-[var(--text)] transition flex items-center gap-1">Razbery<span class="text-[10px] uppercase tracking-wider bg-indigo-500/20 text-indigo-300 rounded px-1.5 py-0.5">NEW</span></a>
-        <a href="#pricing" class="hover:text-[var(--text)] transition">Тарифы</a>
-        <a href="/blog" class="hover:text-[var(--text)] transition">Блог</a>
-        <a href="/help" class="hover:text-[var(--text)] transition">Помощь</a>
+  <header class="lp-header">
+    <nav class="lp-wrap lp-header-inner" aria-label="Основная навигация">
+      <a class="lp-brand" href="/" aria-label="Doday — главная"><span class="lp-mark" aria-hidden="true">D</span>Doday</a>
+      <div class="lp-links">
+        <a href="#features">Возможности</a><a href="#school">Для учёбы</a><a href="#pricing">Тарифы</a>
+        <a href="/blog">Блог</a><a class="lp-extra-link" href="/help">Помощь</a>
       </div>
-      <div class="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
-        {% if user %}
-          <a href="/app/today" class="btn-primary whitespace-nowrap text-sm sm:text-base !py-2 !px-3 sm:!py-[11px] sm:!px-5">Мои задачи</a>
-        {% else %}
-          <a href="/auth/login" class="btn-ghost whitespace-nowrap text-sm sm:text-base !py-2 !px-3 sm:!py-[11px] sm:!px-5">Войти</a>
-          <a href="/auth/register" class="btn-primary whitespace-nowrap text-sm sm:text-base !py-2 !px-3 sm:!py-[11px] sm:!px-5"><span class="hidden sm:inline">Начать </span>бесплатно</a>
-        {% endif %}
-      </div>
+      <div class="lp-account"><a href="/auth/login">Войти</a><a href="/auth/register" class="lp-button small" aria-label="Начать бесплатно"><span class="lp-cta-full">Начать бесплатно</span><span class="lp-cta-short">Бесплатно</span></a></div>
+      <button id="landing-menu-toggle" class="lp-menu-button" type="button" aria-label="Открыть меню" aria-expanded="false" aria-controls="landing-mobile-menu" hidden>
+        {{ icon('M4 7h16M4 12h16M4 17h16') }}
+      </button>
     </nav>
+    <nav id="landing-mobile-menu" class="lp-mobile-menu" aria-label="Мобильное меню" hidden>
+      <a href="#features">Возможности</a><a href="#workflow">Как это работает</a><a href="#school">Для учёбы</a>
+      <a href="#pricing">Тарифы</a><a href="/blog">Блог</a><a href="/help">Помощь</a><a href="/auth/login">Войти в аккаунт</a><a href="#ecosystem">Ещё от Doday</a>
+    </nav>
+    <noscript><nav class="lp-wrap lp-mobile-menu" aria-label="Разделы"><a href="#features">Возможности</a><a href="#pricing">Тарифы</a><a href="/auth/login">Войти</a><a href="/help">Помощь</a></nav></noscript>
   </header>
 
-  <main class="flex-1">
+  <main id="main-content">
     {% if request.state.card_payments_announcement_enabled %}
-    <div class="relative z-[1] max-w-5xl mx-auto px-4 sm:px-6 pt-6">
-      {% include "_partials/card_payments_announcement.html" %}
-    </div>
+      <div class="lp-wrap" style="padding-top:20px">{% include "_partials/card_payments_announcement.html" %}</div>
     {% endif %}
 
-    {# ───── 3D particle hero (scroll → checkmark assembly) ───── #}
-    {% set fx_shape = 'checkmark' %}
-    {% set fx_mode = 'scroll' %}
-    {% set fx_count = 3800 %}
-    {% include "_partials/particles_fx.html" %}
-
-    {# ───── HERO ───── #}
-    <section class="relative z-[1] max-w-5xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-16 sm:pb-24 text-center">
-      <div class="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div class="absolute top-10 left-1/4 w-72 h-72 bg-violet-500/20 rounded-full blur-3xl float-slow"></div>
-        <div class="absolute top-32 right-1/4 w-72 h-72 bg-fuchsia-500/20 rounded-full blur-3xl float-slow" style="animation-delay: -3s"></div>
+    <section class="lp-hero lp-wrap" aria-labelledby="landing-title">
+      <p class="lp-eyebrow"><span class="lp-dot" aria-hidden="true"></span>Для учёбы, работы и обычной жизни</p>
+      <h1 id="landing-title">Дела — по местам.<br><span>День — для себя.</span></h1>
+      <p class="lp-intro">Задачи, домашка и планы на неделю — в одном понятном пространстве. Открой «Сегодня» и начни с главного.</p>
+      <div class="lp-hero-actions">
+        <a href="/auth/register" class="lp-button">Начать бесплатно {{ arrow() }}</a>
+        <a href="#demo" class="lp-button secondary">{{ icon('m9 5 11 7-11 7V5Z') }}Посмотреть Doday</a>
       </div>
-
-      <p class="reveal inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium glass mb-8 sm:mb-10">
-        <span class="w-2 h-2 rounded-full grad-bg flex-shrink-0"></span>
-        {% if beta_free_for_all %}
-          <span>Бета: все функции бесплатно, без карты</span>
-        {% else %}
-          <span>Бесплатно навсегда — без карты, без рекламы</span>
-        {% endif %}
-      </p>
-
-      <h1 class="reveal text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 leading-[1.05]">
-        Тудулист, в котором<br>
-        <span class="grad-text shimmer bg-clip-text">приятно жить</span>
-      </h1>
-
-      <p class="reveal text-base sm:text-lg md:text-xl text-[var(--text-muted)] max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed">
-        Домашка сама подтягивается из дневника, расписание уроков под рукой, напоминания приходят
-        в Telegram. Плюс проекты, канбан, календарь и помодоро — для учёбы, дома и работы. Без рекламы и без писем «вернись к нам».
-      </p>
-
-      <div class="reveal flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-center gap-3 sm:gap-4">
-        <a href="/auth/register" class="btn-primary text-base px-7 py-3.5 justify-center">
-          Создать аккаунт
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-          </svg>
-        </a>
-        <a href="#features" class="btn-ghost text-base px-7 py-3.5 justify-center">Посмотреть возможности</a>
-      </div>
-
-      <div class="reveal mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-[var(--text-muted)]">
-        <span class="inline-flex items-center gap-2"><svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Без карты и триалов</span>
-        <span class="inline-flex items-center gap-2"><svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Открытый исходный код</span>
-        <span class="inline-flex items-center gap-2"><svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Экспорт в JSON, Markdown, iCal</span>
+      <p class="lp-fine">Без карты · Без рекламы · Бесплатный тариф навсегда</p>
+      <div class="lp-hero-stage" data-landing-reveal>
+        <picture class="lp-screen">
+          <source media="(max-width:640px)" srcset="/static/landing/today-mobile.webp">
+          <img src="/static/landing/today-hero-desktop.webp" width="1440" height="900" fetchpriority="high" alt="Doday: задачи по учёбе и личные дела на экране «Сегодня»">
+        </picture>
+        <div class="lp-stage-note"><span>Настоящий Doday. Демонстрационные задачи.</span><span>В браузере, на телефоне и в Telegram</span></div>
       </div>
     </section>
 
-    {# ───── MOCK SCREENSHOT ───── #}
-    <section class="reveal max-w-5xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
-      <div class="relative">
-        <div class="absolute inset-x-0 -top-8 h-32 grad-bg blur-3xl opacity-25 -z-10"></div>
-        <div class="card overflow-hidden shadow-card">
-          <div class="flex items-center gap-2 px-4 py-3 border-b border-[var(--border)] bg-[var(--surface-2)]">
-            <span class="w-3 h-3 rounded-full bg-rose-400/60 flex-shrink-0"></span>
-            <span class="w-3 h-3 rounded-full bg-amber-400/60 flex-shrink-0"></span>
-            <span class="w-3 h-3 rounded-full bg-emerald-400/60 flex-shrink-0"></span>
-            <span class="ml-3 text-xs text-[var(--text-muted)] truncate">doday.app · Сегодня</span>
-          </div>
-          <div class="grid md:grid-cols-[220px_1fr]">
-            <aside class="p-4 border-r border-[var(--border)] bg-[var(--surface-2)] hidden md:block space-y-1">
-              <div class="text-xs uppercase font-semibold text-[var(--text-muted)] px-3 py-2">Главное</div>
-              <div class="px-3 py-2 rounded-lg flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-slate-400"></span>Inbox <span class="ml-auto text-[var(--text-muted)] text-xs">3</span></div>
-              <div class="px-3 py-2 rounded-lg flex items-center gap-2 grad-bg text-white font-medium">Сегодня <span class="ml-auto text-white/80 text-xs">5</span></div>
-              <div class="px-3 py-2 rounded-lg flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-fuchsia-400"></span>Ближайшие</div>
-              <div class="px-3 py-2 rounded-lg flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-violet-400"></span>Календарь</div>
-              <div class="text-xs uppercase font-semibold text-[var(--text-muted)] px-3 py-2 mt-3">Проекты</div>
-              <div class="px-3 py-2 rounded-lg flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-violet-400"></span>Учёба</div>
-              <div class="px-3 py-2 rounded-lg flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-400"></span>Работа</div>
-              <div class="px-3 py-2 rounded-lg flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-400"></span>Дом</div>
-            </aside>
-            <div class="p-4 sm:p-6 space-y-3 min-w-0">
-              <h3 class="text-lg sm:text-2xl font-bold mb-1">
-                Сегодня
-                <span class="block sm:inline text-[var(--text-muted)] text-xs sm:text-base font-normal">· пятница, 3 мая</span>
-              </h3>
-              <p class="text-xs text-[var(--text-muted)] mb-4">🎯 Цель: 5 задач · выполнено 1</p>
-              <div class="flex items-center gap-3 p-3 rounded-xl border border-[var(--border)] hover:border-[var(--accent)] transition min-w-0">
-                <span class="w-5 h-5 rounded-full border-2 border-rose-400 flex-shrink-0"></span>
-                <span class="flex-1 min-w-0 truncate">Контрольная по алгебре</span>
-                <span class="text-xs px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-400 font-medium flex-shrink-0">!1</span>
-              </div>
-              <div class="flex items-center gap-2 p-3 rounded-xl border border-[var(--border)] hover:border-[var(--accent)] transition flex-wrap min-w-0">
-                <span class="w-5 h-5 rounded-full border-2 border-amber-400 flex-shrink-0"></span>
-                <span class="flex-1 min-w-0 truncate">Прогуляться 30 мин</span>
-                <span class="text-xs px-2 py-0.5 rounded-md bg-violet-500/15 text-violet-400 flex-shrink-0">@дом</span>
-                <span class="text-xs px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 flex-shrink-0 hidden sm:inline-block">↻ ежедневно</span>
-              </div>
-              <div class="flex items-center gap-3 p-3 rounded-xl border border-[var(--border)] opacity-60 min-w-0">
-                <span class="w-5 h-5 rounded-full grad-bg flex items-center justify-center flex-shrink-0">
-                  <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                </span>
-                <span class="flex-1 min-w-0 line-through truncate">Купить хлеб</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <section id="at-a-glance" class="lp-wrap lp-proof" aria-label="Коротко о Doday">
+      <div><strong>0 ₽ для старта</strong><span>Free остаётся бесплатным</span></div>
+      <div><strong>Твой способ</strong><span>Список, доска или календарь</span></div>
+      <div><strong>На русском</strong><span>Даже «завтра» в названии задачи</span></div>
+      <div><strong>Всегда под рукой</strong><span>Браузер, PWA и Telegram</span></div>
     </section>
 
-    {# ───── STATS ───── #}
-    <section class="reveal max-w-5xl mx-auto px-4 sm:px-6 pb-20 sm:pb-24">
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-        {% for n, label in [
-          ('14', 'дней Pro в подарок'),
-          ('60+', 'фич, которые реально нужны'),
-          ('310+', 'автотестов покрывают код'),
-          ('0₽', 'минимальная цена входа'),
+    <section id="features" class="lp-wrap lp-section">
+      <div class="lp-heading" data-landing-reveal>
+        <div><p class="lp-eyebrow">Меньше держать в голове</p><h2>Место для всех твоих «надо бы».</h2></div>
+        <p>От одной задачи на завтра до большого проекта. Подключай возможности по мере надобности.</p>
+      </div>
+      <div class="lp-feature-lead">
+        <article class="lp-feature-card" data-landing-reveal>
+          <div class="lp-icon">{{ icon('M9 11l3 3 8-8M21 12a9 9 0 1 1-9-9') }}</div>
+          <h3>Просто запиши.<br>Остальное разложим.</h3>
+          <p>«Прочитать главу завтра @учёба» — Doday распознает дату и метку. Лови мысль, пока она не убежала.</p>
+          <div class="lp-inline-task"><span class="lp-check" aria-hidden="true"></span><span>Прочитать главу</span><span class="lp-chip">Завтра · учёба</span></div>
+        </article>
+        <article class="lp-feature-card" data-landing-reveal>
+          <div class="lp-icon">{{ icon('M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2Z') }}</div>
+          <h3>Видно день.<br>И то, что дальше.</h3>
+          <p>Один список для сегодняшних дел, календарь для недели и канбан для проекта. Выбирай удобный вид.</p>
+          <div class="lp-inline-task"><span class="lp-check" aria-hidden="true"></span><span>Подготовить презентацию</span><span class="lp-chip">В работе</span></div>
+        </article>
+      </div>
+      <div class="lp-feature-mini">
+        {% for title, body, path in [
+          ('Время на главное', 'Помодоро на 25 минут прямо в задаче. Один небольшой шаг вместо бесконечного списка.', 'M12 8v4l3 2M9 2h6M12 5a8 8 0 1 0 0 16 8 8 0 0 0 0-16Z'),
+          ('Задачи вместе', 'Общие проекты с друзьями и семьёй, комментарии и назначение исполнителей.', 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm11 18v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75'),
+          ('Твои данные — твои', 'Скачивай задачи в JSON, CSV или Markdown. Исходный код тоже открыт.', 'M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3M12 3v12m-4-4 4 4 4-4')
         ] %}
-          <div>
-            <div class="text-4xl md:text-5xl font-bold grad-text mb-2">{{ n }}</div>
-            <div class="text-sm text-[var(--text-muted)]">{{ label }}</div>
-          </div>
+          <div>{{ icon(path) }}<div><h3>{{ title }}</h3><p>{{ body }}</p></div></div>
         {% endfor %}
       </div>
+      <details class="lp-disclosure"><summary>Все возможности Doday <span class="lp-plus" aria-hidden="true">+</span></summary>
+        <div class="lp-all-features">{% for title, body, path in features %}<div><h3>{{ title }}</h3><p>{{ body }}</p></div>{% endfor %}</div>
+      </details>
     </section>
 
-    {# ───── FEATURES ───── #}
-    <section id="features" class="max-w-7xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
-      <div class="text-center mb-16">
-        <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Возможности</p>
-        <h2 class="text-3xl md:text-4xl font-bold mb-3">Всё, что нужно. Ничего лишнего.</h2>
-        <p class="text-[var(--text-muted)] text-lg max-w-2xl mx-auto">
-          Минимум кнопок, максимум скорости. Без обучения и без курса «как правильно вести задачи».
-        </p>
-      </div>
-
-      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {% set features = [
-          ("Сегодня + Просрочено", "Один экран показывает то, что важно сейчас: задачи на сегодня и всё, что не успел вчера. Считает дневную цель.", "M9 12l2 2 4-4M21 12a9 9 0 11-18 0 9 9 0 0118 0z"),
-          ("Проекты, секции, цвета", "Группируй по контекстам. Перетаскивай в сайдбаре. Каждый проект может стать канбан-доской в один клик.", "M3 7l3-4h12l3 4M3 7v13a1 1 0 001 1h16a1 1 0 001-1V7M3 7h18"),
-          ("Канбан с drag&drop", "Перетаскивай задачи между секциями, переименовывай колонки двойным кликом, переставляй порядок столбцов.", "M4 6h4v14H4zm6 0h4v14h-4zm6 0h4v14h-4z"),
-          ("Календарь с переносом", "Месячная сетка, drag задачи в любой день — дедлайн обновится. Виден weekend, сегодня, праздники.", "M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"),
-          ("Быстрый ввод естественным языком", "«Купить молоко завтра !!! @дом» — Doday сам вытащит дату, приоритет и лейбл. Поддержка «след пн», «через неделю», «15 декабря».", "M12 4v16m8-8H4"),
-          ("Подзадачи без лимитов", "Любая глубина вложенности. Раскрывай и сворачивай в один клик. Задача внутри задачи внутри задачи — пожалуйста.", "M5 12h14M5 12l4-4m-4 4l4 4M19 4v16"),
-          ("Лейблы и кастомные фильтры", "Сохраняй любые комбинации условий (приоритет + проект + дата + текст) как фильтр. Появится в сайдбаре.", "M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"),
-          ("Pomodoro-таймер", "На каждой задаче. 25 минут работы, 5 минут отдыха, счётчик завершённых сессий. Уведомления через Browser Notification.", "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"),
-          ("Домашка из дневника — сама", "Подключи МЭШ или Школьный портал МО — задания превращаются в задачи с датой сдачи и предметом. Синк каждые 15 минут.", "M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422A12.083 12.083 0 0121 13.5c0 2.5-1 4.5-3 6M12 14v7"),
-          ("Расписание уроков", "Предметы с цветами и эмодзи, слоты по дням недели, школьный стрик за каждый день без пропусков и достижения за 7, 30 и 100 дней.", "M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"),
-          ("Напоминания в Telegram", "Отдельно от дедлайна: «напомни в 20:30 проверить портфель». Приходят в @DodayTaskBot. Утром в 7:00 — email-дайджест со списком на день. Бот и дайджест входят в тариф Pro.", "M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"),
-          ("Активность и статистика", "Лента событий за 30 дней, графики продуктивности, стрики, трекер привычек и настроения. Видишь рост, а не только список.", "M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"),
-          ("Bulk-действия", "Выдели N задач — изменяй приоритет, дату, проект, лейблы; завершай и удаляй пачкой. Esc снимает выделение.", "M5 13l4 4L19 7"),
-          ("Шаблоны проектов", "8 готовых сценариев (учёба, работа, переезд, путешествие). Свои шаблоны — в Pro.", "M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2v16z"),
-          ("Вместе: друзья и семья", "Пригласи одноклассника в проект по подготовке к ЕГЭ или родителя — чтобы видел прогресс. Комментарии к задачам, Family на 5 аккаунтов.", "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"),
-          ("Импорт-экспорт без замка", "JSON-бэкап всего аккаунта. Markdown проекта. CSV для Excel. Твои данные — твои.", "M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"),
-        ] %}
-        {% for title, body, icon in features %}
-          <div class="reveal card p-7 transition-transform hover:-translate-y-1 hover:shadow-card">
-            <div class="w-12 h-12 rounded-xl grad-bg flex items-center justify-center mb-5 shadow-glow">
-              <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="{{ icon }}"/>
-              </svg>
-            </div>
-            <h3 class="text-xl font-semibold mb-2">{{ title }}</h3>
-            <p class="text-[var(--text-muted)] leading-relaxed text-sm">{{ body }}</p>
-          </div>
-        {% endfor %}
+    <section id="school" class="lp-wrap lp-section">
+      <div class="lp-school" data-landing-reveal>
+        <div class="lp-copy"><p class="lp-eyebrow">Отдельная забота — об учёбе</p><h2>Вечер для себя.<br>А не для поисков домашки.</h2><p>МЭШ или Школьный портал МО могут передавать задания в Doday. С предметами, датами сдачи и расписанием под рукой.</p><a class="lp-text-link" href="/for-students">Doday для школьников и студентов ↗</a></div>
+        <ol class="lp-school-list">{% for n, title, body in school_steps %}<li><div><h3>{{ title }}</h3><p>{{ body }}</p></div></li>{% endfor %}</ol>
       </div>
     </section>
 
-    {# ───── WORKFLOW SHOWCASE ───── #}
-    {# ───── ДЛЯ ШКОЛЫ ───── #}
-    <section id="school" class="max-w-6xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
-      <div class="text-center mb-14">
-        <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Для школы и учёбы</p>
-        <h2 class="text-3xl md:text-4xl font-bold mb-3">Домашка быстрее. Ни одно дз не пропущено.</h2>
-        <p class="text-[var(--text-muted)] text-lg max-w-2xl mx-auto">
-          Doday убирает то, на что уходит половина вечера: «а что задано?», «а когда сдавать?», «а я не забыл?».
-        </p>
-      </div>
-      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {% set school_steps = [
-          ("1", "Подключи дневник", "МЭШ или Школьный портал МО. Задания сами становятся задачами с предметом и датой сдачи — переписывать руками больше не нужно."),
-          ("2", "Смотри расписание", "Предметы с цветами, слоты по дням, праздники и каникулы. Экран «Сегодня» показывает, что сдавать завтра и что уже горит."),
-          ("3", "Получай напоминания", "В Telegram в выбранное время и утренний email-дайджест в 7:00 — телефон в другой комнате их всё равно покажет. Обе функции входят в тариф Pro."),
-          ("4", "Держи стрик", "Каждый день без пропусков — огонёк 🔥. Помодоро на задачу, статистика по предметам, достижения за 7, 30 и 100 дней."),
-        ] %}
-        {% for n, title, body in school_steps %}
-          <div class="reveal card p-7 relative">
-            <div class="absolute -top-4 -left-4 w-10 h-10 rounded-full grad-bg flex items-center justify-center text-white font-bold shadow-glow">{{ n }}</div>
-            <h3 class="text-xl font-bold mb-2 mt-1">{{ title }}</h3>
-            <p class="text-sm text-[var(--text-muted)] leading-relaxed">{{ body }}</p>
-          </div>
-        {% endfor %}
-      </div>
-      <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
-        <a href="/for-students" class="btn-primary">Doday для школьников и студентов</a>
-        <a href="/blog/c/domashka" class="btn-ghost">Как делать домашку быстрее — статьи</a>
-      </div>
-    </section>
-
-    <section id="workflow" class="max-w-6xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
-      <div class="text-center mb-14">
-        <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Как это работает</p>
-        <h2 class="text-3xl md:text-4xl font-bold">Три шага, которые меняют день</h2>
-      </div>
-
-      <div class="space-y-20">
-
-        <div class="grid md:grid-cols-2 gap-10 items-center">
-          <div class="reveal">
-            <div class="text-sm font-mono text-[var(--text-muted)] mb-2">01</div>
-            <h3 class="text-2xl font-bold mb-3">Утром — открой «Сегодня»</h3>
-            <p class="text-[var(--text-muted)] leading-relaxed">
-              Doday показывает только то, что нужно сегодня и что просрочено вчера.
-              Цель на день — сверху, прогресс-бар заполняется по мере завершений.
-              Никакого «открой 12 списков и реши, с чего начать».
-            </p>
-            <ul class="mt-4 space-y-1.5 text-sm text-[var(--text-muted)]">
-              <li class="flex items-center gap-2"><svg class="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg> Шорткат <kbd class="px-1.5 py-0.5 rounded bg-[var(--surface-2)] text-xs">g + t</kbd></li>
-              <li class="flex items-center gap-2"><svg class="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg> Просрочка вверху, чтобы не забыть</li>
-              <li class="flex items-center gap-2"><svg class="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg> Streak'и подсветят регулярность</li>
-            </ul>
-          </div>
-          <div class="reveal reveal-delay-200">
-            <div class="card p-5 shadow-card">
-              <div class="flex items-center justify-between mb-4">
-                <h4 class="text-lg font-bold">Сегодня</h4>
-                <span class="text-xs text-[var(--text-muted)]">5 / 8 · 62%</span>
-              </div>
-              <div class="h-1.5 rounded-full bg-[var(--surface-2)] overflow-hidden mb-5">
-                <div class="h-full grad-bg" style="width: 62%"></div>
-              </div>
-              <div class="space-y-2">
-                <div class="flex items-center gap-3 p-2.5 rounded-lg bg-rose-500/5 border border-rose-500/30">
-                  <span class="text-rose-400 text-xs font-bold">!1</span>
-                  <span class="text-sm flex-1">Закрыть отчёт за квартал</span>
-                </div>
-                <div class="flex items-center gap-3 p-2.5 rounded-lg bg-[var(--surface-2)]">
-                  <span class="w-4 h-4 rounded-full border-2 border-amber-400"></span>
-                  <span class="text-sm flex-1">Созвониться с Машей</span>
-                  <span class="text-xs text-[var(--text-muted)]">14:00</span>
-                </div>
-                <div class="flex items-center gap-3 p-2.5 rounded-lg opacity-60">
-                  <span class="w-4 h-4 rounded-full grad-bg"></span>
-                  <span class="text-sm flex-1 line-through">Завтрак</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="grid md:grid-cols-2 gap-10 items-center">
-          <div class="reveal md:order-2">
-            <div class="text-sm font-mono text-[var(--text-muted)] mb-2">02</div>
-            <h3 class="text-2xl font-bold mb-3">Большую штуку — на канбан</h3>
-            <p class="text-[var(--text-muted)] leading-relaxed">
-              Любой проект превращается в kanban-доску одним кликом. Перетаскивай карточки между
-              «К выполнению / В работе / Готово», переименовывай столбцы двойным кликом,
-              добавляй новые. Всё сохраняется автоматически.
-            </p>
-          </div>
-          <div class="reveal md:order-1">
-            <div class="card p-4 shadow-card">
-              <div class="grid grid-cols-3 gap-2">
-                {% set cols = [
-                  ('Сделать', 'sky', 3),
-                  ('В работе', 'amber', 2),
-                  ('Готово', 'emerald', 4),
-                ] %}
-                {% for col_name, col_color, col_n in cols %}
-                  <div class="bg-[var(--surface-2)] rounded-lg p-2">
-                    <div class="flex items-center gap-1.5 mb-2">
-                      <span class="w-2 h-2 rounded-full bg-{{ col_color }}-400"></span>
-                      <span class="text-[10px] font-semibold uppercase">{{ col_name }}</span>
-                      <span class="text-[10px] text-[var(--text-muted)] ml-auto">{{ col_n }}</span>
-                    </div>
-                    <div class="space-y-1.5">
-                      {% for _ in range(col_n) %}
-                        <div class="bg-[var(--surface)] rounded p-1.5 text-[10px] leading-tight">Карточка</div>
-                      {% endfor %}
-                    </div>
-                  </div>
-                {% endfor %}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="grid md:grid-cols-2 gap-10 items-center">
-          <div class="reveal">
-            <div class="text-sm font-mono text-[var(--text-muted)] mb-2">03</div>
-            <h3 class="text-2xl font-bold mb-3">Вечером — посмотри статистику</h3>
-            <p class="text-[var(--text-muted)] leading-relaxed">
-              График завершений за две недели, текущий streak в днях подряд, лучший день
-              недели. Ничего нет про «продуктивность 80%» — только цифры, которые ты сам
-              можешь интерпретировать.
-            </p>
-          </div>
-          <div class="reveal reveal-delay-200">
-            <div class="card p-5 shadow-card">
-              <div class="flex items-center gap-3 mb-4">
-                <div>
-                  <div class="text-3xl font-bold grad-text">7</div>
-                  <div class="text-[10px] uppercase text-[var(--text-muted)]">Дней подряд</div>
-                </div>
-                <div class="ml-auto text-right">
-                  <div class="text-xs text-[var(--text-muted)]">🔥 Лучший рекорд</div>
-                  <div class="text-lg font-bold">12</div>
-                </div>
-              </div>
-              <div class="flex items-end gap-1 h-20">
-                {% for h in [40, 65, 30, 80, 45, 90, 70, 55, 85, 60, 75, 50, 95, 88] %}
-                  <div class="flex-1 bg-violet-400/30 rounded-t" style="height: {{ h }}%"></div>
-                {% endfor %}
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    {# ───── PRICING ───── #}
-    <section id="pricing" class="max-w-6xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
-      <div class="text-center mb-14">
-        <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Тарифы</p>
-        <h2 class="text-3xl md:text-4xl font-bold mb-3">Честно: бесплатно работает на полную</h2>
-        <p class="text-[var(--text-muted)] text-lg max-w-2xl mx-auto">
-          Free — навсегда и без карты: до 10 проектов, 500 активных задач, календарь, канбан, помодоро,
-          расписание и напоминания. Хочешь безлимит и премиум — Pro или Family. Отписка одной кнопкой.
-        </p>
-      </div>
-
-      <div class="grid md:grid-cols-3 gap-6">
-
-        <div class="reveal card p-7 flex flex-col">
-          <div class="flex items-baseline gap-2 mb-1">
-            <h3 class="text-xl font-bold">Free</h3>
-            <span class="text-xs px-2 py-0.5 rounded-full bg-[var(--surface-2)] text-[var(--text-muted)]">навсегда</span>
-          </div>
-          <div class="my-5">
-            <span class="text-4xl font-bold">0 ₽</span>
-            <span class="text-sm text-[var(--text-muted)]">/ навсегда</span>
-          </div>
-          <ul class="space-y-2.5 text-sm flex-1 mb-6">
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>10 проектов, 500 активных задач</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>Канбан, помодоро, статистика</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>Календарь, лента активности</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>3 кастомных фильтра, лента активности</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>Markdown, iCal-экспорт, корзина 14 дней</li>
-          </ul>
-          <a href="/auth/register" class="btn-ghost text-center w-full">Начать бесплатно</a>
-        </div>
-
-        <div class="reveal reveal-delay-100 card p-7 flex flex-col border-2 border-[var(--accent)] relative">
-          <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full grad-bg text-white text-xs font-semibold shadow-glow">
-            Популярно
-          </div>
-          <h3 class="text-xl font-bold mb-1 grad-text">Pro</h3>
-          <div class="my-5">
-            <span class="text-4xl font-bold">199 ₽</span>
-            <span class="text-sm text-[var(--text-muted)]">/ месяц</span>
-          </div>
-          <ul class="space-y-2.5 text-sm flex-1 mb-6">
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><strong>Безлимит</strong> проектов, задач, фильтров</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>Свои шаблоны проектов</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>Премиум-темы Forest и Minimal</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>Корзина 30 дней (vs 14 в Free)</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>Bulk-add 200 строк за раз (vs 50)</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>Telegram-бот и утренний email-дайджест</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>1 990 ₽ за год или 9 900 ₽ навсегда (founder)</li>
-          </ul>
-          <a href="/pricing" class="btn-primary text-center w-full">Оформить Pro</a>
-          <p class="text-xs text-[var(--text-muted)] text-center mt-2">Карта, СБП или Telegram Stars. Отписка одной кнопкой</p>
-        </div>
-
-        <div class="reveal reveal-delay-200 card p-7 flex flex-col">
-          <div class="flex items-baseline gap-2 mb-1">
-            <h3 class="text-xl font-bold">Family</h3>
-            <span class="text-xs px-2 py-0.5 rounded-full bg-fuchsia-500/15 text-fuchsia-400">для семьи</span>
-          </div>
-          <div class="my-5">
-            <span class="text-4xl font-bold">299 ₽</span>
-            <span class="text-sm text-[var(--text-muted)]">/ месяц, до 5 человек</span>
-          </div>
-          <ul class="space-y-2.5 text-sm flex-1 mb-6">
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>Всё из Pro для каждого члена семьи</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>Общий проект «Семья» для дома и быта</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>Родитель видит прогресс ребёнка без слежки</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>2 990 ₽ за год — как 10 месяцев по цене 12</li>
-          </ul>
-          <a href="/pricing" class="btn-ghost text-center w-full">Подробнее о Family</a>
-        </div>
-
-      </div>
-    </section>
-
-    {# ───── SCREENSHOTS ───── #}
-    {# Пока нет реальных скринов с iPhone — фиолетовые SVG-mockup'ы #}
-    {# в стилистике приложения. Заменить на реальные PNG'и когда будут. #}
-    <section id="screenshots" class="max-w-6xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
-      <div class="text-center mb-14">
-        <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Как выглядит</p>
-        <h2 class="text-3xl md:text-4xl font-bold mb-3">Тёмный, светлый — на твой вкус</h2>
-        <p class="text-[var(--text-muted)] text-lg max-w-2xl mx-auto">
-          Четыре главных экрана. Внутри — то же самое, никаких сюрпризов после регистрации.
-        </p>
-      </div>
-
-      <div class="grid md:grid-cols-2 gap-6">
-
-        <div class="reveal card p-5">
-          <div class="flex items-center gap-2 mb-3">
-            <span class="text-xs px-2 py-0.5 rounded-md bg-violet-500/15 text-violet-400 font-medium">/app/today</span>
-            <span class="text-sm font-medium ml-1">Сегодня</span>
-          </div>
-          <svg viewBox="0 0 480 280" class="w-full h-auto rounded-lg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Скриншот экрана Сегодня">
-            <defs>
-              <linearGradient id="ss1" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="#1f1638"/><stop offset="1" stop-color="#0d0820"/>
-              </linearGradient>
-              <linearGradient id="ssg1" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#d946ef"/>
-              </linearGradient>
-            </defs>
-            <rect width="480" height="280" rx="12" fill="url(#ss1)"/>
-            <rect x="20" y="20" width="160" height="14" rx="3" fill="#a78bfa" opacity="0.85"/>
-            <rect x="20" y="42" width="100" height="8" rx="2" fill="#6b6587"/>
-            <rect x="20" y="62" width="220" height="4" rx="2" fill="#2a2048"/>
-            <rect x="20" y="62" width="135" height="4" rx="2" fill="url(#ssg1)"/>
-            <g>
-              <rect x="20" y="86" width="440" height="48" rx="8" fill="#161028" stroke="#2a2048"/>
-              <circle cx="44" cy="110" r="9" fill="none" stroke="#fb7185" stroke-width="2"/>
-              <rect x="62" y="100" width="240" height="8" rx="2" fill="#ddd6fe"/>
-              <rect x="62" y="115" width="80" height="6" rx="2" fill="#6b6587"/>
-              <rect x="410" y="102" width="40" height="16" rx="8" fill="#fb7185" opacity="0.2"/>
-              <text x="430" y="113" font-family="Inter,Arial" font-size="9" font-weight="700" fill="#fb7185" text-anchor="middle">!1</text>
-            </g>
-            <g>
-              <rect x="20" y="146" width="440" height="48" rx="8" fill="#161028" stroke="#2a2048"/>
-              <circle cx="44" cy="170" r="9" fill="none" stroke="#fbbf24" stroke-width="2"/>
-              <rect x="62" y="160" width="200" height="8" rx="2" fill="#ddd6fe"/>
-              <rect x="62" y="175" width="60" height="6" rx="2" fill="#6b6587"/>
-              <rect x="380" y="162" width="64" height="14" rx="6" fill="#a78bfa" opacity="0.2"/>
-            </g>
-            <g>
-              <rect x="20" y="206" width="440" height="48" rx="8" fill="#0d0820" opacity="0.5"/>
-              <circle cx="44" cy="230" r="9" fill="url(#ssg1)"/>
-              <path d="M40 230 L43 233 L48 226" stroke="#fff" stroke-width="2" fill="none"/>
-              <line x1="62" y1="230" x2="240" y2="230" stroke="#6b6587" stroke-width="1"/>
-              <rect x="62" y="220" width="180" height="8" rx="2" fill="#6b6587" opacity="0.5"/>
-            </g>
-          </svg>
-        </div>
-
-        <div class="reveal reveal-delay-100 card p-5">
-          <div class="flex items-center gap-2 mb-3">
-            <span class="text-xs px-2 py-0.5 rounded-md bg-violet-500/15 text-violet-400 font-medium">/app/calendar</span>
-            <span class="text-sm font-medium ml-1">Календарь</span>
-          </div>
-          <svg viewBox="0 0 480 280" class="w-full h-auto rounded-lg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Скриншот экрана Календарь">
-            <defs>
-              <linearGradient id="ss2" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="#1f1638"/><stop offset="1" stop-color="#0d0820"/>
-              </linearGradient>
-              <linearGradient id="ssg2" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#d946ef"/>
-              </linearGradient>
-            </defs>
-            <rect width="480" height="280" rx="12" fill="url(#ss2)"/>
-            <rect x="20" y="20" width="120" height="14" rx="3" fill="#a78bfa"/>
-            <g font-family="Inter,Arial" font-size="9" fill="#6b6587" text-anchor="middle">
-              {% for d, x in [('пн', 50), ('вт', 110), ('ср', 170), ('чт', 230), ('пт', 290), ('сб', 350), ('вс', 410)] %}
-              <text x="{{ x }}" y="58">{{ d }}</text>
-              {% endfor %}
-            </g>
-            {% for row in range(4) %}
-              {% for col in range(7) %}
-              <rect x="{{ 20 + col * 60 }}" y="{{ 70 + row * 50 }}" width="56" height="46" rx="6" fill="#161028" stroke="#2a2048"/>
-              {% endfor %}
-            {% endfor %}
-            <rect x="200" y="120" width="56" height="46" rx="6" fill="url(#ssg2)" opacity="0.85"/>
-            <text x="228" y="148" font-family="Inter,Arial" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">8</text>
-            <circle cx="44" cy="92" r="2" fill="#a78bfa"/>
-            <circle cx="50" cy="92" r="2" fill="#a78bfa"/>
-            <circle cx="164" cy="142" r="2" fill="#fb7185"/>
-            <circle cx="170" cy="142" r="2" fill="#fbbf24"/>
-            <circle cx="344" cy="192" r="2" fill="#34d399"/>
-          </svg>
-        </div>
-
-        <div class="reveal reveal-delay-200 card p-5">
-          <div class="flex items-center gap-2 mb-3">
-            <span class="text-xs px-2 py-0.5 rounded-md bg-violet-500/15 text-violet-400 font-medium">/app/projects/<i>id</i></span>
-            <span class="text-sm font-medium ml-1">Канбан-доска</span>
-          </div>
-          <svg viewBox="0 0 480 280" class="w-full h-auto rounded-lg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Скриншот канбан-доски">
-            <defs>
-              <linearGradient id="ss3" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="#1f1638"/><stop offset="1" stop-color="#0d0820"/>
-              </linearGradient>
-            </defs>
-            <rect width="480" height="280" rx="12" fill="url(#ss3)"/>
-            <rect x="20" y="20" width="180" height="12" rx="3" fill="#a78bfa"/>
-            {% for col, color, label, items in [
-              (0, '#38bdf8', 'Сделать', 4),
-              (1, '#fbbf24', 'В работе', 3),
-              (2, '#34d399', 'Готово', 5),
-            ] %}
-            <g transform="translate({{ 20 + col * 150 }}, 50)">
-              <rect width="140" height="220" rx="8" fill="#161028" stroke="#2a2048"/>
-              <circle cx="14" cy="20" r="4" fill="{{ color }}"/>
-              <text x="24" y="24" font-family="Inter,Arial" font-size="10" font-weight="700" fill="#ddd6fe">{{ label }}</text>
-              <text x="125" y="24" font-family="Inter,Arial" font-size="10" fill="#6b6587" text-anchor="end">{{ items }}</text>
-              {% for i in range(items) %}
-              <rect x="8" y="{{ 36 + i * 32 }}" width="124" height="26" rx="4" fill="#0d0820" stroke="#2a2048"/>
-              <rect x="14" y="{{ 44 + i * 32 }}" width="{{ 70 + (i * 7) % 40 }}" height="4" rx="2" fill="#a78bfa" opacity="0.6"/>
-              <rect x="14" y="{{ 52 + i * 32 }}" width="{{ 30 + (i * 11) % 30 }}" height="3" rx="1" fill="#6b6587"/>
-              {% endfor %}
-            </g>
-            {% endfor %}
-          </svg>
-        </div>
-
-        <div class="reveal reveal-delay-300 card p-5">
-          <div class="flex items-center gap-2 mb-3">
-            <span class="text-xs px-2 py-0.5 rounded-md bg-violet-500/15 text-violet-400 font-medium">/app/stats</span>
-            <span class="text-sm font-medium ml-1">Статистика и стрики</span>
-          </div>
-          <svg viewBox="0 0 480 280" class="w-full h-auto rounded-lg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Скриншот статистики">
-            <defs>
-              <linearGradient id="ss4" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="#1f1638"/><stop offset="1" stop-color="#0d0820"/>
-              </linearGradient>
-              <linearGradient id="barG" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#d946ef"/>
-              </linearGradient>
-            </defs>
-            <rect width="480" height="280" rx="12" fill="url(#ss4)"/>
-            <text x="24" y="40" font-family="Inter,Arial" font-size="13" font-weight="700" fill="#ddd6fe">🔥 Streak: 14 дней</text>
-            <text x="24" y="60" font-family="Inter,Arial" font-size="10" fill="#6b6587">Рекорд: 31 день</text>
-            {% set bars = [2,5,3,8,6,4,7,9,5,3,6,8,10,7] %}
-            {% for h in bars %}
-              {% set bh = h * 14 %}
-              {% set bx = 24 + loop.index0 * 32 %}
-              {% set by = 230 - bh %}
-              <rect x="{{ bx }}" y="{{ by }}" width="24" height="{{ bh }}" rx="4"
-                    fill="{{ 'url(#barG)' if h > 0 else '#2a2048' }}" opacity="{{ '1' if h > 0 else '0.4' }}"/>
-            {% endfor %}
-            <text x="24" y="250" font-family="Inter,Arial" font-size="8" fill="#6b6587">14 дней назад</text>
-            <text x="390" y="250" font-family="Inter,Arial" font-size="8" fill="#6b6587">Сегодня</text>
-          </svg>
-        </div>
-
-      </div>
-      <p class="text-center text-xs text-[var(--text-muted)] mt-6">Это иллюстрации — реальное приложение работает живо, перетаскивай и нажимай.</p>
-    </section>
-
-    {# ───── COMPARISON ───── #}
-    <section id="comparison" class="max-w-5xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
-      <div class="text-center mb-12">
-        <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Сравнение</p>
-        <h2 class="text-3xl md:text-4xl font-bold mb-3">Бесплатно — навсегда. Не trial.</h2>
-        <p class="text-[var(--text-muted)] text-lg max-w-2xl mx-auto">
-          Многие конкуренты в Free режут даже базовое: лимит на 5 проектов, фильтры под платой, ассистент без планировщика. Doday Free — настоящее Free.
-        </p>
-      </div>
-
-      {% set rows = [
-        ('Активных проектов', '10', '5', '9 списков'),
-        ('Задач в проекте', '500 на аккаунт', '300 на проект', '99 на список'),
-        ('Канбан-доски', '✓', '— только Pro', '✓'),
-        ('Подзадачи без лимита', '✓', '✓', '✓'),
-        ('Кастомные фильтры', '3 (Pro: ∞)', '— только Pro', '— только Pro'),
-        ('Свои шаблоны проектов', '✓ (эксп.)', '— только Pro', '— только Pro'),
-        ('Граф связей задач', '✓ (эксп.)', '✗', '✗'),
-        ('Помодоро встроен', '✓', '✗', '— только Pro'),
-        ('Стрики (дни подряд)', '✓', '✗', '— только Pro'),
-        ('Трекер привычек', '✓ (эксп.)', '✗', '✗'),
-        ('Трекер настроения', '✓ (эксп.)', '✗', '✗'),
-        ('Трекер времени', '✓ (эксп.)', '✗', '— только Pro'),
-        ('Бейджи / XP', '✓ (эксп.)', '✗', '✗'),
-        ('Календарь-фид (.ics)', '✓ (эксп.)', '✗', '✓'),
-        ('Russian-natural-language', '«завтра», «след пн»', 'английский лучше', 'английский лучше'),
-        ('Реклама', 'нет', 'нет', 'нет'),
-        ('Открытый исходник', '✓ MIT', '✗', '✗'),
-        ('Хостинг данных', 'РФ, PostgreSQL', 'США', 'Сингапур'),
+    <section id="workflow" class="lp-wrap lp-section">
+      <div class="lp-heading"><div><p class="lp-eyebrow">Как проходит день с Doday</p><h2>Чуть больше порядка.<br>В твоём темпе.</h2></div></div>
+      {% for n, title, body, image, tone, alt in [
+        ('01', 'Утром — только главное', 'Открой «Сегодня»: задачи уже собраны из разных проектов. Выбери первую, а всё остальное дождётся своей очереди.', 'today-desktop.webp', 'lilac', 'Настоящий экран «Сегодня» с учебными и личными задачами'),
+        ('02', 'Большой проект — по шагам', 'Разложи подготовку к экзамену или рабочий проект по колонкам. Перетаскивай задачи и смотри, как дело движется.', 'board-desktop.webp', '', 'Канбан Doday: колонки «Планы», «В работе» и «Готово»'),
+        ('03', 'Вечером — заметить прогресс', 'Загляни в статистику. Даже маленькие выполненные дела складываются в результат — и в хорошую привычку.', 'stats-desktop.webp', 'green', 'Статистика выполненных задач в Doday')
       ] %}
+      <article class="lp-workflow-row" data-landing-reveal><div class="lp-copy"><span class="lp-step-number">{{ n }} / ТВОЙ ДЕНЬ</span><h3>{{ title }}</h3><p>{{ body }}</p></div><div class="lp-shot {{ tone }}"><picture><source media="(max-width:640px)" srcset="/static/landing/{{ image|replace('-desktop','-mobile') }}"><img src="/static/landing/{{ image }}" alt="{{ alt }}" width="1440" height="900" loading="lazy" decoding="async"></picture></div></article>
+      {% endfor %}
+    </section>
 
-      {# Desktop / tablet: full table #}
-      <div class="hidden md:block card overflow-x-auto">
-        <table class="w-full text-sm min-w-[640px]">
-          <thead>
-            <tr class="border-b border-[var(--border)] text-left">
-              <th class="px-5 py-4 font-semibold text-[var(--text-muted)] uppercase text-xs tracking-wider">Что есть</th>
-              <th class="px-5 py-4 font-semibold text-center">
-                <span class="grad-text">Doday Free</span>
-                <div class="text-xs text-[var(--text-muted)] font-normal mt-0.5">0 ₽ навсегда</div>
-              </th>
-              <th class="px-5 py-4 font-semibold text-center text-[var(--text-muted)]">
-                Todoist Free
-                <div class="text-xs text-[var(--text-muted)] font-normal mt-0.5">по их публичному прайсу</div>
-              </th>
-              <th class="px-5 py-4 font-semibold text-center text-[var(--text-muted)]">
-                TickTick Free
-                <div class="text-xs text-[var(--text-muted)] font-normal mt-0.5">по их публичному прайсу</div>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for name, doday, todoist, tt in rows %}
-            <tr class="border-b border-[var(--border)] last:border-0 hover:bg-[var(--surface-2)] transition">
-              <td class="px-5 py-3 font-medium">{{ name }}</td>
-              <td class="px-5 py-3 text-center">
-                {% if doday == '✓' %}<svg class="w-5 h-5 text-emerald-400 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                {% elif doday == '✗' %}<span class="text-rose-400">✗</span>
-                {% else %}<span class="text-emerald-400 font-medium">{{ doday }}</span>{% endif %}
-              </td>
-              <td class="px-5 py-3 text-center text-[var(--text-muted)]">
-                {% if todoist == '✓' %}<svg class="w-5 h-5 text-emerald-400/60 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                {% elif todoist == '✗' %}<span class="text-rose-400/60">✗</span>
-                {% else %}{{ todoist }}{% endif %}
-              </td>
-              <td class="px-5 py-3 text-center text-[var(--text-muted)]">
-                {% if tt == '✓' %}<svg class="w-5 h-5 text-emerald-400/60 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                {% elif tt == '✗' %}<span class="text-rose-400/60">✗</span>
-                {% else %}{{ tt }}{% endif %}
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+    <section id="demo" class="lp-wrap lp-section" aria-labelledby="demo-title">
+      <div class="lp-demo"><div class="lp-copy"><p class="lp-eyebrow">Посмотри в действии</p><h2 id="demo-title">Меньше объяснений.<br>Больше самого Doday.</h2><p>Короткое видео: добавляем дело, открываем доску проекта и подробности задачи. Без звука — можно посмотреть где угодно.</p></div>
+        <div><div class="lp-player">
+          <video id="landing-video" controls playsinline preload="none" tabindex="-1" data-src="/static/landing/doday-in-action.mp4" poster="/static/landing/video-poster.webp" width="1920" height="1080" aria-label="Демонстрация Doday: добавить задачу, открыть доску и подробности">
+            <track kind="captions" srclang="ru" label="Русский" src="/static/landing/demo.vtt" default>
+            Твой браузер не поддерживает видео. <a href="/static/landing/doday-in-action.mp4">Скачать демонстрацию Doday</a>.
+          </video>
+          <button type="button" id="landing-video-start" class="lp-player-start" aria-label="Смотреть демонстрацию Doday" hidden><span>{{ icon('m9 5 11 7-11 7V5Z') }}</span><strong>15 секунд с Doday</strong></button>
+        </div><p class="lp-video-caption">Запись настоящего приложения с демонстрационными данными. Видео запускается только по нажатию. <a href="/static/landing/doday-in-action.mp4" class="lp-video-link">Открыть видео отдельно ↗</a></p></div>
       </div>
+    </section>
 
-      {# Mobile: 3 stacked cards (no horizontal scroll). Same data as the table. #}
-      <div class="md:hidden space-y-4">
-        {% set products = [
-          ('Doday Free', '0 ₽ навсегда', 'doday-free', 'grad', 0),
-          ('Todoist Free', 'по их публичному прайсу', 'todoist-free', 'muted', 1),
-          ('TickTick Free', 'по их публичному прайсу', 'ticktick-free', 'muted', 2),
+    <section id="pricing" class="lp-wrap lp-section">
+      <div class="lp-heading"><div><p class="lp-eyebrow">Понятные тарифы</p><h2>Начни бесплатно.<br>Оставайся, если удобно.</h2></div><p>Базовые инструменты остаются с тобой. Pro и Family — когда захочется больше возможностей.</p></div>
+      <div class="lp-plans">
+        {% for name, description, price, period, note, items, cta, href, featured in [
+          ('Free', 'Для своих дел и первого проекта.', '0 ₽', 'навсегда', 'Без карты и пробного периода.', ['10 проектов и 500 активных задач', 'Список, канбан и календарь', 'Помодоро и статистика', '3 собственных фильтра', 'Экспорт данных и корзина 14 дней'], 'Создать аккаунт', '/auth/register', false),
+          ('Pro', 'Больше пространства для твоих планов.', '199 ₽', 'за 30 дней', '1 990 ₽ за год · 9 900 ₽ навсегда', ['Безлимитные проекты, задачи и фильтры', 'Свои шаблоны и премиум-темы', 'Telegram-бот и утренний дайджест', 'Корзина 30 дней', 'Массовое добавление до 200 задач'], 'Выбрать Pro', '/pricing', true),
+          ('Family', 'Чтобы планировать и делиться вместе.', '299 ₽', 'за 30 дней', 'До 5 человек · 2 990 ₽ за год', ['Возможности Pro для всей семьи', 'Общие проекты и домашние дела', 'Совместная подготовка к учёбе', 'Прогресс задач в общих проектах', 'Один тариф для близких'], 'Подробнее о Family', '/pricing', false)
         ] %}
-        {% for prod_name, prod_sub, prod_id, prod_style, col_idx in products %}
-          <div id="{{ prod_id }}" class="card p-5 {% if col_idx == 0 %}ring-1 ring-[var(--accent)]/40 shadow-glow{% endif %}">
-            <div class="mb-4">
-              <div class="font-semibold text-base {% if prod_style == 'grad' %}grad-text{% else %}text-[var(--text-muted)]{% endif %}">{{ prod_name }}</div>
-              <div class="text-xs text-[var(--text-muted)]">{{ prod_sub }}</div>
-            </div>
-            <ul class="space-y-2.5 text-sm">
-              {% for name, doday, todoist, tt in rows %}
-                {% set value = [doday, todoist, tt][col_idx] %}
-                <li class="flex items-start gap-3">
-                  <span class="shrink-0 w-5 mt-0.5">
-                    {% if value == '✓' %}
-                      <svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                    {% elif value == '✗' %}
-                      <span class="text-rose-400 text-base">✗</span>
-                    {% else %}
-                      <span class="w-1.5 h-1.5 mt-2 rounded-full bg-[var(--text-muted)] inline-block"></span>
-                    {% endif %}
-                  </span>
-                  <span class="flex-1 min-w-0">
-                    <span class="text-[var(--text-muted)]">{{ name }}:</span>
-                    {% if value not in ('✓', '✗') %}
-                      <span class="{% if col_idx == 0 %}text-emerald-400 font-medium{% else %}text-[var(--text)]{% endif %}">{{ value }}</span>
-                    {% endif %}
-                  </span>
-                </li>
-              {% endfor %}
-            </ul>
-          </div>
+        <article class="lp-plan{% if featured %} featured{% endif %}" data-landing-reveal><div class="lp-plan-top"><h3>{{ name }}</h3>{% if featured %}<span class="lp-chip">Больше возможностей</span>{% endif %}</div><p class="lp-plan-description">{{ description }}</p><p class="lp-price">{{ price }} <span>/ {{ period }}</span></p><p class="lp-fine">{{ note }}</p><ul>{% for item in items %}<li>{{ item }}</li>{% endfor %}</ul><a class="lp-button{% if not featured %} secondary{% endif %}" href="{{ href }}">{{ cta }}</a></article>
         {% endfor %}
       </div>
-      <p class="text-xs text-[var(--text-muted)] mt-3 text-center">
-        Сведения о конкурентах — на дату публикации, по их собственным сравнительным таблицам. Может меняться, проверь у них.
-      </p>
+      <p class="lp-pricing-note">Платные тарифы оплачиваются разовым платежом на выбранный срок, без автоматических списаний. Карта, СБП или Telegram Stars. Подробности и условия — на странице тарифов.</p>
     </section>
 
-    {# ───── TESTIMONIAL PLACEHOLDER ───── #}
-    {# Прозрачно: «Будь первым» — лучше чем фейковые отзывы. #}
-    <section id="testimonials" class="max-w-4xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
-      <div class="text-center mb-10">
-        <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Отзывы</p>
-        <h2 class="text-3xl md:text-4xl font-bold mb-3">Здесь будут отзывы пользователей</h2>
-        <p class="text-[var(--text-muted)] text-lg max-w-2xl mx-auto">
-          Doday запустился совсем недавно — пока мы не публикуем фейковых «5 звёзд»
-          с фотобанка. Будем добавлять настоящие отзывы по мере появления.
-        </p>
-      </div>
-
-      <div class="grid md:grid-cols-3 gap-5">
-        {% for i in range(3) %}
-        <div class="reveal card p-6 border-2 border-dashed border-[var(--border)] bg-transparent text-center">
-          <div class="w-12 h-12 mx-auto rounded-full bg-[var(--surface-2)] flex items-center justify-center mb-4">
-            <svg class="w-5 h-5 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-            </svg>
-          </div>
-          <p class="text-sm text-[var(--text-muted)] italic mb-4">
-            «Место для твоего отзыва»
-          </p>
-          <a href="/support" class="text-xs text-[var(--accent)] hover:underline">
-            Отправить отзыв →
-          </a>
-        </div>
-        {% endfor %}
-      </div>
+    <section id="screenshots" class="lp-wrap lp-section">
+      <div class="lp-heading"><div><p class="lp-eyebrow">Приятно открыть. Удобно пользоваться.</p><h2>Светлая или тёмная.<br>На твоей стороне.</h2></div><div class="lp-gallery-toolbar" role="group" aria-label="Тема на снимке приложения"><button type="button" data-gallery-theme="light" aria-pressed="true" aria-controls="gallery-light">Светлая</button><button type="button" data-gallery-theme="dark" aria-pressed="false" aria-controls="gallery-dark">Тёмная</button></div></div>
+      <div class="lp-gallery">{% for theme, title in [('light','Светлая тема'),('dark','Тёмная тема')] %}<figure id="gallery-{{ theme }}"{% if theme == 'dark' %} hidden{% endif %}><picture><source media="(max-width:640px)" srcset="/static/landing/today-mobile{% if theme == 'dark' %}-dark{% endif %}.webp"><img src="/static/landing/today{% if theme == 'dark' %}-dark{% endif %}-desktop.webp" width="1440" height="900" loading="lazy" decoding="async" alt="{{ title }} Doday с демонстрационными задачами"></picture><figcaption>{{ title }}. Тот же список дел — другое настроение.</figcaption></figure>{% endfor %}</div>
     </section>
 
-    {# ───── 3 STEPS — START IN A MINUTE ───── #}
-    <section id="three-steps" class="max-w-5xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
-      <div class="text-center mb-14">
-        <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Старт за минуту</p>
-        <h2 class="text-3xl md:text-4xl font-bold mb-3">Три шага — и ты внутри</h2>
-        <p class="text-[var(--text-muted)] text-lg max-w-2xl mx-auto">
-          Никакой анкеты на 12 полей. Никакого «выбери 5 целей и оцени себя».
-        </p>
-      </div>
-
-      <div class="grid md:grid-cols-3 gap-6">
-        {% set steps = [
-          ('1', '⏱️ 15 сек', 'Email и пароль', 'Без СМС, без капчи. Подтверди почту по ссылке.'),
-          ('2', '🎯 10 сек', 'Учёба, работа, жизнь?', 'Доday подберёт стартовые задачи и виджеты под твой случай. Можно пропустить.'),
-          ('3', '✏️ 20 сек', 'Первая задача', 'Пиши «купить хлеб завтра !!! @дом». Doday сам поймёт дату, приоритет и лейбл.'),
-        ] %}
-        {% for n, time, title, body in steps %}
-          <div class="reveal card p-7 relative">
-            <div class="absolute -top-4 -left-4 w-10 h-10 rounded-full grad-bg flex items-center justify-center text-white font-bold shadow-glow">{{ n }}</div>
-            <div class="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold mb-2">{{ time }}</div>
-            <h3 class="text-xl font-bold mb-2">{{ title }}</h3>
-            <p class="text-sm text-[var(--text-muted)] leading-relaxed">{{ body }}</p>
-          </div>
-        {% endfor %}
-      </div>
-
-      <div class="text-center mt-10">
-        <a href="/auth/register" class="btn-primary px-7 py-3.5">
-          Начать прямо сейчас
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-          </svg>
-        </a>
-      </div>
+    <section id="comparison" class="lp-wrap lp-section">
+      <div class="lp-heading"><div><p class="lp-eyebrow">Выбери то, что подходит тебе</p><h2>Хорошие инструменты.<br>Разный подход.</h2></div><p>Сравнили бесплатные версии по базовым возможностям. Списки и доски доступны во всех трёх.</p></div>
+      <div class="lp-comparison-grid">{% for name, slug, rows in [
+        ('Doday Free','doday-free',[('Проекты / списки','10 проектов'),('Задачи','500 на аккаунт'),('Виды','Список, канбан, календарь'),('Фильтры','3'),('Исходный код','Открытый, MIT')]),
+        ('Todoist Beginner','todoist-free',[('Проекты / списки','5 личных проектов'),('Добавление задач','Smart Quick Add'),('Виды','Список и доска'),('Фильтры','3'),('История активности','1 неделя')]),
+        ('TickTick Free','ticktick-free',[('Проекты / списки','9 списков'),('Задачи','99 на список'),('Виды','Список и канбан'),('Напоминания','Есть'),('Синхронизация','Между устройствами')])
+      ] %}<article class="lp-compare" id="{{ slug }}"><h3>{{ name }}</h3><dl>{% for key,value in rows %}<div><dt>{{ key }}</dt><dd>{{ value }}</dd></div>{% endfor %}</dl></article>{% endfor %}</div>
+      <p class="lp-fine">Сверено 30.10.2026 с <a class="lp-text-link" href="https://www.todoist.com/pricing" rel="noopener" target="_blank">Todoist</a> и <a class="lp-text-link" href="https://ticktick.com/about/upgrade" rel="noopener" target="_blank">TickTick</a>. Условия сервисов могут меняться.</p>
     </section>
 
-    {# ───── FAQ ───── #}
-    {# ───── БЛОГ ───── #}
-    {% if blog_posts %}
-    <section id="blog" class="max-w-7xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
-      <div class="text-center mb-14">
-        <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Блог</p>
-        <h2 class="text-3xl md:text-4xl font-bold mb-3">Учиться проще — читай, как</h2>
-        <p class="text-[var(--text-muted)] text-lg max-w-2xl mx-auto">
-          Домашка, ОГЭ и ЕГЭ, прокрастинация, колледж и вуз, честные сравнения планировщиков и разборы задач.
-          {{ blog_total }} {{ 'статья' if blog_total % 10 == 1 and blog_total % 100 != 11 else 'статьи' if 2 <= blog_total % 10 <= 4 and not 12 <= blog_total % 100 <= 14 else 'статей' }} без воды.
-        </p>
-      </div>
-      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {% for p in blog_posts %}
-          <a href="/blog/{{ p.slug }}" class="reveal card p-6 flex flex-col gap-3 transition-transform hover:-translate-y-1 hover:shadow-card hover:border-[var(--accent)]">
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-2xl leading-none">{{ p.emoji }}</span>
-              <span class="text-[11px] uppercase tracking-wider font-semibold text-[var(--accent)] bg-[var(--surface-2)] rounded-full px-2.5 py-1">{{ blog_categories[p.category].name if p.category in blog_categories else p.category }}</span>
-            </div>
-            <h3 class="text-lg font-bold leading-snug">{{ p.title }}</h3>
-            <p class="text-sm text-[var(--text-muted)] leading-relaxed flex-1">{{ p.summary }}</p>
-            <div class="text-xs text-[var(--text-muted)] inline-flex items-center gap-1">
-              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              {{ p.reading_min }} мин чтения
-            </div>
-          </a>
-        {% endfor %}
-      </div>
-      <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
-        <a href="/blog" class="btn-primary">Все статьи блога</a>
-        <a href="/blog/c/razbery" class="btn-ghost">Разборы задач от Razbery</a>
-      </div>
-    </section>
-    {% endif %}
-
-    {# ───── ЭКОСИСТЕМА ───── #}
-    <section id="ecosystem" class="max-w-6xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
-      <div class="text-center mb-12">
-        <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">Ещё от Doday Studio</p>
-        <h2 class="text-3xl md:text-4xl font-bold">Не только задачи</h2>
-      </div>
-      <div class="grid md:grid-cols-3 gap-6">
-        {% set eco = [
-          ("/qa/", "🧠", "Razbery", "Школьное Q&A 5–11 класс: задаёшь вопрос — получаешь разбор с объяснением, а не «ответ: 42». Бесплатно."),
-          ("/pdd/", "🚗", "Doday ПДД", "Билеты ПДД с разбором каждого вопроса, тренажёр ошибок, экзамен и марафон."),
-          ("/lessio", "📅", "Lessio", "Кабинет записи для репетиторов, тренеров и психологов — прямо в Telegram."),
-        ] %}
-        {% for href, icon, title, body in eco %}
-          <a href="{{ href }}" class="reveal card p-7 flex flex-col gap-3 transition-transform hover:-translate-y-1 hover:shadow-card hover:border-[var(--accent)]">
-            <span class="text-3xl">{{ icon }}</span>
-            <h3 class="text-xl font-bold">{{ title }}</h3>
-            <p class="text-sm text-[var(--text-muted)] leading-relaxed">{{ body }}</p>
-          </a>
-        {% endfor %}
-      </div>
+    <section id="testimonials" class="lp-wrap lp-section">
+      <div class="lp-letter"><div class="lp-copy"><p>Doday — тихий помощник для дел. Место, куда можно спокойно выгрузить планы и вернуться к тому, что важно сейчас. Без рекламы и гонки за идеальной продуктивностью.</p><div class="lp-letter-author"><span class="lp-avatar" aria-hidden="true">D</span><span>Независимый проект · открытый исходный код</span></div></div><div class="lp-letter-aside"><p class="lp-eyebrow">Обратная связь</p><h2>Твой опыт сделает Doday лучше.</h2><p>Здесь появятся настоящие отзывы. Пока — расскажи, что удобно, чего не хватает и что хочется изменить.</p><a href="/support" class="lp-button secondary">Поделиться впечатлением ↗</a></div></div>
     </section>
 
-    <section id="faq" class="max-w-3xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28">
-      <div class="text-center mb-12">
-        <p class="text-sm uppercase tracking-widest grad-text font-semibold mb-3">FAQ</p>
-        <h2 class="text-3xl md:text-4xl font-bold">Что обычно спрашивают</h2>
-      </div>
-
-      <div class="space-y-3">
-        {% set faqs = [
-          ('Сколько стоит?', 'Free-тариф — бесплатно навсегда, без рекламы и слежки: задачи, проекты, календарь, помодоро. Pro снимает лимиты и открывает премиум-темы, дайджест и бота — от 199₽ в месяц. Оплата картой, СБП или Telegram Stars.'),
-          ('Что если не платить за Pro?', 'Ничего не пропадёт. На Free остаются задачи, проекты, календарь и помодоро — навсегда и бесплатно. Pro только снимает лимиты (проектов и задач) и добавляет премиум-функции. Всё уже созданное остаётся доступным.'),
-          ('Можно ли скачать свои данные?', 'Конечно. На странице профиля есть «Скачать резервную копию» — JSON со всеми проектами, задачами, лейблами, комментариями. Импортировать обратно тоже можно. Никакого vendor-lock-а.'),
-          ('Как Doday работает на телефоне?', 'Адаптивная вёрстка под все размеры экрана. Можно установить как PWA (Поделиться → На главный экран на iPhone, Меню → Установить на Android) — будет вести себя как нативное приложение, без адресной строки браузера.'),
-          ('Можно как Todoist? Я привык к их синтаксису.', 'Quick-add понимает «купить молоко завтра !!! @дом» — дата, приоритет, лейбл. А ещё «через неделю», «след пн», «15 декабря», «#проект», «срочно», «вечером», «каждый день». Подсказки прямо под полем.'),
-          ('Где данные хранятся?', 'Российский PostgreSQL у нас на сервере. Бэкапы каждый день. На своём железе тоже можно — код открыт на GitHub под MIT.'),
-          ('Какие уведомления есть?', 'Напоминания к задачам приходят в Telegram через @DodayTaskBot — отдельно от дедлайна, в то время, которое ты выбрал. Утром в 7:00 по Москве — email-дайджест со списком на день (включается в настройках). В браузере — Notification API для помодоро и колокольчик в приложении.'),
-          ('Есть Telegram-версия?', 'Да. Бот @DodayTaskBot понимает /add «физика §12 завтра», /today, /upcoming, /done и присылает напоминания. Внутри бота работает Mini App — Сегодня, Входящие и календарь прямо в Telegram, привязка к аккаунту в один тап.'),
-          ('Подходит для школы и домашки?', 'Для этого и сделано. Подключи МЭШ или Школьный портал Московской области — домашние задания сами станут задачами с датой сдачи и предметом. Расписание уроков, школьный стрик, напоминания в Telegram, помодоро на каждую задачу. Как это ускоряет домашку — в статьях блога.'),
-          ('Что если найду баг или что-то не работает?', 'В app-навигации тапни «?» в правом-нижнем углу — откроется drawer с кнопкой «🐞 Сообщить о проблеме». Жалоба сразу попадает в админку и я фиксю в течение дня.'),
-          ('А реально все 60+ фич нужны?', 'Нет — у каждого свой набор. Кому-то достаточно Inbox + Сегодня. Кому-то нужны канбан, повторы, фильтры, помодоро и статистика. Сделано так, чтобы лишнее не мешало.'),
-          ('Есть что почитать про учёбу?', 'Да — в блоге сотни статей: как быстро делать домашку, готовиться к ОГЭ и ЕГЭ, не прокрастинировать, выбирать колледж и вуз, а ещё честные сравнения планировщиков и разборы задач от Razbery.'),
-        ] %}
-        {% for q, a in faqs %}
-          <details class="reveal card p-5 group">
-            <summary class="flex items-center justify-between gap-4">
-              <span class="font-medium">{{ q }}</span>
-              <svg class="faq-chevron w-4 h-4 text-[var(--text-muted)] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-              </svg>
-            </summary>
-            <p class="text-sm text-[var(--text-muted)] mt-3 leading-relaxed">{{ a }}</p>
-          </details>
-        {% endfor %}
-      </div>
+    <section id="three-steps" class="lp-wrap lp-section">
+      <div class="lp-heading"><div><p class="lp-eyebrow">Без долгого знакомства</p><h2>Три шага.<br>И голова чуть свободнее.</h2></div><a href="/auth/register" class="lp-text-link">Попробовать бесплатно ↗</a></div>
+      <div class="lp-start">{% for number,title,body in [('01','Создай аккаунт','Email, пароль и подтверждение почты. Банковская карта не нужна.'),('02','Выбери своё','Учёба, работа или личные дела. Начни с готового проекта или создай свой.'),('03','Добавь первое дело','Напиши «прочитать главу завтра». Дальше — по одному шагу, в своём темпе.')] %}<div><span>{{ number }}</span><h3>{{ title }}</h3><p>{{ body }}</p></div>{% endfor %}</div>
     </section>
 
-    {# ───── FINAL CTA ───── #}
-    <section class="max-w-3xl mx-auto px-6 pb-28 text-center">
-      <div class="reveal card p-5 sm:p-8 md:p-12 relative overflow-hidden">
-        <div class="absolute -top-24 -right-24 w-64 h-64 grad-bg rounded-full blur-3xl opacity-30"></div>
-        <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-fuchsia-500 rounded-full blur-3xl opacity-20"></div>
-        <h2 class="text-3xl md:text-4xl font-bold mb-4 relative">Хватит планировать в голове</h2>
-        <p class="text-lg text-[var(--text-muted)] mb-8 relative max-w-xl mx-auto">
-          Полминуты на регистрацию, подтверждение по email — и поехали. Бесплатно навсегда, без карты.
-        </p>
-        <a href="/auth/register" class="btn-primary w-full sm:w-auto text-sm sm:text-base px-4 sm:px-8 py-4 relative">
-          Создать аккаунт бесплатно
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-          </svg>
-        </a>
-      </div>
+    <section id="blog" class="lp-wrap lp-section">
+      <div class="lp-heading"><div><p class="lp-eyebrow">Почитать на досуге</p><h2>Про учёбу, планы<br>и жизнь между ними.</h2></div><a class="lp-text-link" href="/blog">Весь блог ↗</a></div>
+      {% if blog_posts %}<div class="lp-blog-grid">{% for p in blog_posts[:3] %}<a class="lp-article" href="/blog/{{ p.slug }}"><div class="lp-article-meta">{{ blog_categories[p.category].name if p.category in blog_categories else p.category }} · {{ p.reading_min }} мин</div><h3>{{ p.title }}</h3><p>{{ p.summary }}</p><span class="lp-text-link">Читать статью ↗</span></a>{% endfor %}</div>{% else %}<p class="lp-intro" style="margin:0!important">Как справляться с домашкой, готовиться к экзаменам и находить время на себя. Статьи — в блоге Doday.</p>{% endif %}
     </section>
-    <section id="updates" class="mx-auto w-full max-w-5xl px-4 pb-16 sm:px-6 sm:pb-24">
-      <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div><p class="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--accent)]">Развиваем Doday</p><h2 class="text-2xl font-bold sm:text-3xl">Последние обновления</h2></div>
-        <a href="/changelog" class="text-sm font-semibold text-[var(--accent)] hover:underline">Вся история →</a>
-      </div>
-      <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-        {% for update in recent_updates %}
-        <a href="/changelog/{{ update.get('slug', update.date) }}" class="card group flex min-w-0 flex-col p-5 transition hover:border-violet-500/50">
-          <time datetime="{{ update.date }}" class="mb-3 text-xs text-[var(--text-muted)]">{{ update.date }}</time>
-          <h3 class="mb-3 break-words text-lg font-semibold leading-snug group-hover:text-[var(--accent)]">{{ update.title }}</h3>
-          <p class="mb-5 flex-1 text-sm leading-relaxed text-[var(--text-muted)]">{{ update.get('summary', update.notes[0]) }}</p>
-          <span class="text-sm font-semibold text-[var(--accent)]">Что изменилось →</span>
-        </a>
-        {% endfor %}
-      </div>
+
+    <section id="ecosystem" class="lp-wrap lp-section">
+      <div class="lp-heading"><div><p class="lp-eyebrow">Ещё от Doday Studio</p><h2>У разных дел —<br>свои помощники.</h2></div></div>
+      <div class="lp-ecosystem">{% for href,mark,title,body in [('/qa/','Р','Razbery','Вопросы по школьным предметам и разборы с объяснениями. Чтобы понять решение, а не просто списать ответ.'),('/pdd/','П','Doday ПДД','Билеты, экзамен и работа над ошибками. Для тех, у кого в планах водительские права.'),('/lessio','L','Lessio','Запись на занятия для репетиторов, тренеров и психологов — с кабинетом в Telegram.')] %}<a class="lp-product" href="{{ href }}"><span class="lp-product-mark" aria-hidden="true">{{ mark }}</span><h3>{{ title }}</h3><p>{{ body }}</p><span class="lp-text-link">Познакомиться ↗</span></a>{% endfor %}</div>
+    </section>
+
+    <section id="faq" class="lp-wrap lp-section lp-faq-layout">
+      <div class="lp-copy"><p class="lp-eyebrow">Если остались вопросы</p><h2>Давай разберёмся.</h2><p>Не нашёл ответ? Напиши — поможем.</p><a href="/help" class="lp-text-link">Вся база знаний ↗</a></div>
+      <div class="lp-faq">{% for question,answer in faqs %}<details><summary>{{ question }}<span class="lp-plus" aria-hidden="true">+</span></summary><p>{{ answer }}</p></details>{% endfor %}</div>
+    </section>
+
+    <section class="lp-wrap lp-closing" aria-labelledby="closing-title"><h2 id="closing-title">Оставь дела в Doday.<br>А себе — немного воздуха.</h2><p>Добавь первую задачу. Остальные планы можно разложить по ходу.</p><a href="/auth/register" class="lp-button">Создать аккаунт бесплатно {{ arrow() }}</a></section>
+
+    <section id="updates" class="lp-wrap lp-section lp-updates">
+      <div class="lp-heading"><div><p class="lp-eyebrow">Становимся удобнее</p><h2>Последние обновления</h2></div><a class="lp-text-link" href="/changelog">Вся история ↗</a></div>
+      <div class="lp-updates-grid">{% for update in recent_updates %}<a class="lp-update" href="/changelog/{{ update.get('slug',update.date) }}"><time datetime="{{ update.date }}">{{ update.date }}</time><h3>{{ update.title }}</h3><p>{{ update.get('summary',update.notes[0]) }}</p><span class="lp-text-link">Что изменилось ↗</span></a>{% endfor %}</div>
     </section>
   </main>
-
   {% include "_partials/public_footer.html" %}
 </div>
+<script type="module" src="/static/landing.js?v={{ request.state.asset_version }}"></script>
 {% endblock %}
