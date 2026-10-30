@@ -21,6 +21,7 @@ from app.billing.service import grant_product_access, subscription_days
 from app.config import get_settings
 from app.db import get_session
 from app.main import app
+from app.pages.changelog_data import ENTRIES
 from app.projects.models import Project
 from app.tasks.models import Task
 
@@ -347,8 +348,13 @@ async def test_annual_refund_reverses_full_year_once(db_session, monkeypatch):
 
 async def test_updates_link_article_legacy_and_unknown(client):
     landing = await client.get("/")
+    latest = ENTRIES[0]
+    latest_path = f"/changelog/{latest.get('slug', latest['date'])}"
+    assert latest_path in landing.text
+    assert (await client.get(latest_path)).status_code == 200
     slug = "/changelog/subscriptions-owner-dashboard-and-mobile"
-    assert slug in landing.text
+    # Older releases stay available after leaving the three-card landing feed.
+    assert slug in (await client.get("/changelog")).text
     article = await client.get(slug)
     assert article.status_code == 200 and "Что изменилось" in article.text
     assert (await client.get("/changelog/2026-05-11")).status_code == 200

@@ -21,14 +21,16 @@ async def test_focus_mode_wired(logged_in_client: AsyncClient) -> None:
     assert "if (e.key === 'f')" in body or "key === 'f'" in body
 
 
-async def test_theme_cycle_button_present(logged_in_client: AsyncClient) -> None:
+async def test_theme_picker_replaces_cycle_button(logged_in_client: AsyncClient) -> None:
     body = (await logged_in_client.get("/app/today")).text
-    assert "doday-theme" in body
-    assert "system" in body  # cycle includes System
-    # Three SVG variants for the three modes.
-    assert "mode === 'system'" in body
-    assert "mode === 'light'" in body
-    assert "mode === 'dark'" in body
+    assert 'aria-controls="appearance-dialog"' in body
+    assert 'id="appearance-dialog"' in body
+    for mode in ("schedule", "system", "light", "dark"):
+        assert f'name="appearance-mode" value="{mode}"' in body
+    assert "/static/theme-core.js" in body
+    assert "/static/theme-picker.js" in body
+    assert 'name="light-start"' in body
+    assert 'name="dark-start"' in body
 
 
 async def test_tab_badge_script_included(logged_in_client: AsyncClient) -> None:
