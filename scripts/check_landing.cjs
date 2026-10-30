@@ -59,7 +59,7 @@ const output=process.argv[3]||'.tmp_landing_review';
       await animated.route('**/*',r=>new URL(r.request().url()).origin===base?r.continue():r.abort());
       const motionPage=await animated.newPage();motionPage.on('pageerror',e=>errors.push(engine+' motion: '+e.message));
       await motionPage.goto(base,{waitUntil:'domcontentloaded'});await motionPage.locator('.lp-feature-card').first().scrollIntoViewIfNeeded();await motionPage.waitForTimeout(650);
-      assert.ok(await motionPage.locator('.lp-feature-card').first().evaluate(e=>Number(getComputedStyle(e).opacity)>=.99));
+      await motionPage.waitForFunction(()=>Number(getComputedStyle(document.querySelector('.lp-feature-card')).opacity)>=.99,{},{timeout:5000});
       await animated.close();report.push(engine+' Motion enhancement');
     }finally{await browser.close()}
   }
