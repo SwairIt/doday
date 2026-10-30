@@ -79,9 +79,11 @@
     {% if project %}
       <input type="hidden" name="project_id" value="{{ project.id }}">
     {% endif %}
-    <button type="submit" class="btn-primary px-3 py-2 text-sm whitespace-nowrap shrink-0"><span class="hidden sm:inline">Добавить</span><span class="sm:hidden">+</span></button>
+    <button type="submit" aria-label="Добавить задачу" class="btn-primary min-w-11 px-3 py-2 text-sm whitespace-nowrap shrink-0"><span class="hidden sm:inline">Добавить</span><span class="sm:hidden" aria-hidden="true">+</span></button>
   </div>
-  <div class="mt-1.5 text-xs text-[var(--text-muted)] px-2 leading-relaxed">
+  <details class="mt-1.5 text-xs text-[var(--text-muted)] px-2 leading-relaxed" x-init="$el.open = window.innerWidth >= 768">
+    <summary class="cursor-pointer py-2 sm:hidden">Как задать дату, приоритет и проект</summary>
+    <div class="py-1">
     Подсказки:
     <code class="px-1 rounded bg-[var(--surface-2)]">сегодня</code>
     <code class="px-1 rounded bg-[var(--surface-2)]">завтра</code>
@@ -95,7 +97,8 @@
     · приоритет <code class="px-1 rounded bg-[var(--surface-2)]">!</code>—<code class="px-1 rounded bg-[var(--surface-2)]">!!!!</code>
     · лейбл <code class="px-1 rounded bg-[var(--surface-2)]">@название</code>
     · проект <code class="px-1 rounded bg-[var(--surface-2)]">#название</code>
-  </div>
+    </div>
+  </details>
 </form>
 <div id="quickadd-list"></div>
 

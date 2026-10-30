@@ -1,38 +1,23 @@
-<nav class="mb-6 flex flex-wrap gap-2 text-sm" aria-label="Разделы админки">
-  <a href="#billing" class="btn-primary">Покупки и выручка</a>
-  <a href="#users" class="btn-ghost">Пользователи</a>
-  <a href="#support" class="btn-ghost">Обращения</a>
-</nav>
-<section id="billing" class="mb-8 scroll-mt-24 min-w-0">
-  <h2 class="mb-3 text-lg font-bold">Подписки и выручка за всё время</h2>
-  <div class="mb-3 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-4">
-    {% for label, value, hint in [
-      ('Покупателей', billing_lifetime.buyers, 'Уникальные покупатели, включая возвраты'),
-      ('Оплаченных покупок', billing_lifetime.payments, 'Карты и Telegram Stars, без тестовых'),
-      ('Выручка в рублях', billing_lifetime.rub_net_label, 'Оплаты минус отмеченные возвраты'),
-      ('Telegram Stars', billing_lifetime.stars_net|string ~ ' ⭐', 'Отдельно от рублей, за вычетом возвратов')
-    ] %}
-    <div class="card min-w-0 p-4">
-      <p class="text-xs text-[var(--text-muted)]">{{ label }}</p>
-      <p class="my-2 break-words text-2xl font-bold tabular-nums">{{ value }}</p>
-      <p class="text-xs text-[var(--text-muted)]">{{ hint }}</p>
-    </div>
-    {% endfor %}
-  </div>
-  <p class="mb-5 text-xs leading-relaxed text-[var(--text-muted)]">
-    Активных оплаченных Pro / Family: <strong>{{ billing_lifetime.active_subscriptions }}</strong>.
-    Выручка показана до комиссий и налогов — это не чистая прибыль. Stars не пересчитываются в рубли.
-  </p>
+<section id="billing" class="mb-8 scroll-mt-24 min-w-0" x-show="!mobile || rootTab === 'billing'">
   <div class="card min-w-0 p-4 sm:p-5">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-      <h3 class="font-semibold">Журнал платежей <span class="font-normal text-[var(--text-muted)]">· {{ billing.total }}</span></h3>
-      <a href="{{ billing_export_url }}" class="btn-ghost text-sm">Скачать CSV</a>
+      <h2 class="font-semibold" aria-label="Журнал платежей"><span class="sm:hidden">Операции</span><span class="hidden sm:inline">Журнал платежей</span> <span class="font-normal text-[var(--text-muted)]">· {{ billing.total }}</span></h2>
+      <a href="{{ billing_export_url }}" aria-label="Скачать платежи в CSV" class="btn-ghost !px-3 text-sm"><span class="hidden sm:inline">Скачать </span>CSV ↓</a>
     </div>
-    <form method="get" action="/app/root#billing" class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <form method="get" action="/app/root#billing" class="min-w-0 space-y-3">
       {% for key, value in users_query.items() %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endfor %}
-      <label class="min-w-0 text-xs">Поиск по email или номеру
+      <div class="flex items-end gap-2">
+      <label class="min-w-0 flex-1 text-xs">Поиск по email или номеру
         <input name="billing_q" type="search" value="{{ billing_filters.q }}" maxlength="160" placeholder="Email, номер счёта, ID" class="mt-1 w-full min-w-0 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm">
       </label>
+      <button type="submit" class="btn-primary !px-3 text-sm">Найти</button>
+      </div>
+      <details class="owner-filters rounded-xl border border-[var(--border)]" x-init="$el.open = !mobile">
+      <summary class="flex cursor-pointer items-center justify-between gap-2 px-3 py-2.5 text-sm font-medium">
+        <span>Фильтры и сортировка</span>
+        <span class="text-xs text-[var(--text-muted)]">{% if billing_filters.provider != 'all' or billing_filters.status != 'all' or billing_filters.mode != 'live' or billing_filters.product or billing_filters.since or billing_filters.until %}Настроены · {% endif %}<span class="owner-filters-chevron" aria-hidden="true">⌄</span></span>
+      </summary>
+      <div class="grid min-w-0 grid-cols-1 gap-3 border-t border-[var(--border)] p-3 sm:grid-cols-2 xl:grid-cols-4">
       {% for name, label, options in [
         ('provider', 'Способ оплаты', [('all','Все способы'),('robokassa','Карта / СБП'),('stars','Telegram Stars')]),
         ('status', 'Статус', [('all','Все статусы'),('paid','Оплачен'),('pending','Ожидает оплаты'),('refunded','Возврат'),('canceled','Отменён')]),
@@ -63,19 +48,41 @@
       </label>
       <div class="flex flex-wrap items-end gap-2 sm:col-span-2 xl:col-span-3">
         <button class="btn-primary" type="submit">Применить</button>
-        <a href="/app/root#billing" class="btn-ghost">Сбросить</a>
+        <a href="/app/root?{{ users_query|urlencode }}#billing" class="btn-ghost">Сбросить</a>
       </div>
+      </div>
+      </details>
     </form>
-    <div class="my-4 flex flex-wrap gap-x-5 gap-y-2 rounded-xl bg-[var(--surface-2)] p-3 text-sm">
+    <div class="my-4 grid grid-cols-2 gap-x-3 gap-y-2 rounded-xl bg-[var(--surface-2)] p-3 text-xs leading-relaxed sm:flex sm:flex-wrap sm:gap-x-5 sm:text-sm">
       <span>По фильтру: <strong>{{ billing.summary.payments }}</strong> оплат</span>
       <span><strong>{{ billing.summary.buyers }}</strong> покупателей</span>
       <span><strong>{{ billing.summary.rub_net_label }}</strong></span>
       <span><strong>{{ billing.summary.stars_net }} ⭐</strong></span>
       <span>Ожидают: <strong>{{ billing.summary.pending }}</strong></span>
-      <span>Возвращено: <strong>{{ billing.summary.rub_refunded_label }} · {{ billing.summary.stars_refunded }} ⭐</strong></span>
+      <span class="col-span-2">Возвращено: <strong>{{ billing.summary.rub_refunded_label }} · {{ billing.summary.stars_refunded }} ⭐</strong></span>
     </div>
-    <p class="mb-3 text-xs text-[var(--text-muted)]">Даты — {{ admin_timezone }}. Период относится к дате оплаты (для неоплаченных — создания счёта). CSV содержит до 5000 строк с теми же фильтрами.</p>
-    <div class="max-w-full overflow-x-auto rounded-xl border border-[var(--border)]" tabindex="0" role="region" aria-label="Журнал платежей, прокручивается по горизонтали">
+    <details class="mb-4 text-xs leading-relaxed text-[var(--text-muted)]"><summary class="cursor-pointer py-2">О датах и выгрузке · {{ admin_timezone }}</summary><p class="py-2">Период относится к дате оплаты (для неоплаченных — создания счёта). CSV содержит до 5000 строк с теми же фильтрами.</p></details>
+    <div class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:hidden" aria-label="Карточки платежей">
+      {% for payment in billing.items %}
+      <article class="payment-card min-w-0 rounded-xl border border-[var(--border)] p-3.5">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <span class="rounded-full px-2 py-1 text-xs font-medium {{ 'payment-status-paid' if payment.status == 'paid' else 'bg-[var(--surface-2)] text-[var(--text-muted)]' }}">{{ {'paid':'Оплачен','pending':'Ожидает','refunded':'Возврат','canceled':'Отменён'}.get(payment.status,payment.status) }}</span>
+          <time class="text-[11px] tabular-nums text-[var(--text-muted)]" datetime="{{ payment.occurred_at.isoformat() }}">{{ admin_date(payment.occurred_at) }}</time>
+        </div>
+        <div class="mt-3 flex items-start justify-between gap-3">
+          <h4 class="min-w-0 flex-1 break-words text-sm font-semibold leading-relaxed">{{ payment.product_title }}</h4>
+          <p class="max-w-[55%] break-words text-right text-base font-bold leading-relaxed tabular-nums">{{ payment.amount_label }}</p>
+        </div>
+        <p class="mt-2 break-all text-sm leading-relaxed">{{ payment.email }}</p>
+        <p class="mt-1 text-xs text-[var(--text-muted)]">{{ 'Telegram Stars' if payment.provider == 'stars' else 'Карта / СБП' }}{% if payment.is_test %}<span class="ml-2 rounded bg-amber-500/15 px-1.5 py-0.5 font-semibold text-amber-600">Тест</span>{% endif %}</p>
+        <details class="mt-2 border-t border-[var(--border)] pt-1 text-xs">
+          <summary class="cursor-pointer py-2.5 text-[var(--text-muted)]">Номер операции</summary>
+          <code class="block select-all break-all rounded-lg bg-[var(--surface-2)] p-2 leading-relaxed">{{ payment.reference }}</code>
+        </details>
+      </article>
+      {% else %}<p class="col-span-full rounded-xl bg-[var(--surface-2)] px-4 py-8 text-center text-sm text-[var(--text-muted)]">По этим фильтрам платежей нет. Попробуй изменить условия поиска.</p>{% endfor %}
+    </div>
+    <div class="hidden max-w-full overflow-x-auto rounded-xl border border-[var(--border)] xl:block" tabindex="0" role="region" aria-label="Журнал платежей, прокручивается по горизонтали">
       <table class="w-full min-w-[960px] text-left text-sm">
         <thead class="bg-[var(--surface-2)] text-xs text-[var(--text-muted)]"><tr>
           {% for label in ['Дата','Покупатель','Продукт','Сумма','Статус','Номер'] %}<th scope="col" class="px-3 py-3 font-medium">{{ label }}</th>{% endfor %}

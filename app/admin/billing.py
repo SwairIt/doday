@@ -27,7 +27,7 @@ class PaymentFilters(BaseModel):
     mode: Literal["live", "test", "all"] = "live"
     sort: Literal["newest", "oldest", "amount_desc", "amount_asc", "email", "product"] = "newest"
     page: int = Field(default=1, ge=1, le=100000)
-    per_page: int = Field(default=25, ge=10, le=100)
+    per_page: int = Field(default=10, ge=10, le=100)
 
     @model_validator(mode="after")
     def valid_period(self) -> "PaymentFilters":

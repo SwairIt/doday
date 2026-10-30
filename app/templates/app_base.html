@@ -6,7 +6,7 @@
 [x-cloak]{display:none!important}
 .app-sidebar { transform: translateX(-100%); }
 .app-sidebar[data-open="true"] { transform: translateX(0); }
-@media (min-width:768px) { .app-sidebar { transform: none; } }
+@media (min-width:1024px) { .app-sidebar { transform: none; } }
 </style>
 <script>
   document.addEventListener('alpine:init', () => {
@@ -69,8 +69,8 @@
   });
 </script>
 
-<div class="min-h-screen flex" x-data="{ sidebarOpen: false, mobile: window.innerWidth &lt; 768 }"
-     @resize.window.debounce.100ms="mobile = window.innerWidth &lt; 768; if (!mobile) sidebarOpen = false"
+<div class="min-h-screen flex" x-data="{ sidebarOpen: false, mobile: window.innerWidth &lt; 1024 }"
+     @resize.window.debounce.100ms="mobile = window.innerWidth &lt; 1024; if (!mobile) sidebarOpen = false"
      @keydown.escape.window="sidebarOpen = false">
   {% include "_partials/sidebar.html" %}
 
@@ -79,7 +79,7 @@
     {% include "_partials/topbar.html" %}
 
     <main id="main-content" class="flex-1 overflow-auto">
-      <div class="{% block content_width %}max-w-3xl{% endblock %} mx-auto min-w-0 px-4 md:px-8 py-6 md:py-8 pb-40 md:pb-12 animate-fade-in">
+      <div class="{% block content_width %}max-w-3xl{% endblock %} mx-auto min-w-0 px-4 lg:px-8 py-5 lg:py-8 pb-28 lg:pb-12 animate-fade-in">
         {% include "_partials/card_payments_announcement.html" %}
         {% block content %}{% endblock %}
       </div>

@@ -1,10 +1,13 @@
-<section id="users" class="mb-8 min-w-0 scroll-mt-24">
+<section id="users" class="mb-8 min-w-0 scroll-mt-24" x-show="!mobile || rootTab === 'users'">
   <h2 class="mb-3 text-lg font-bold">Пользователи <span class="text-sm font-normal text-[var(--text-muted)]">· {{ users_total }} найдено</span></h2>
-  <form method="get" action="/app/root#users" class="card mb-4 grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 xl:grid-cols-5">
+  <form method="get" action="/app/root#users" class="card mb-4 space-y-3 p-4">
     {% for key, value in billing_query.items() %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endfor %}
-    <label class="min-w-0 text-xs">Email
+    <div class="flex items-end gap-2"><label class="min-w-0 flex-1 text-xs">Email
       <input type="search" name="users_q" value="{{ users_filters.q }}" maxlength="160" placeholder="Поиск пользователя" class="mt-1 w-full min-w-0 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm">
-    </label>
+    </label><button type="submit" class="btn-primary !px-3 text-sm">Найти</button></div>
+    <details class="owner-filters rounded-xl border border-[var(--border)]" x-init="$el.open = !mobile">
+    <summary class="flex cursor-pointer items-center justify-between gap-2 px-3 py-2.5 text-sm font-medium">Отбор и сортировка <span class="owner-filters-chevron" aria-hidden="true">⌄</span></summary>
+    <div class="grid grid-cols-1 gap-3 border-t border-[var(--border)] p-3 sm:grid-cols-2 xl:grid-cols-4">
     {% for name,label,options in [
       ('verified','Подтверждение почты',[('all','Все'),('yes','Подтверждена'),('no','Не подтверждена')]),
       ('tier','Оплаченный тариф',[('all','Все тарифы'),('free','Нет действующей подписки'),('pro','Pro'),('family','Family')]),
@@ -16,7 +19,8 @@
       </select>
     </label>
     {% endfor %}
-    <div class="flex items-end"><button type="submit" class="btn-primary">Найти</button></div>
+    <div class="flex items-end gap-2"><button type="submit" class="btn-primary">Применить</button><a href="/app/root?{{ billing_query|urlencode }}#users" class="btn-ghost">Сбросить</a></div>
+    </div></details>
   </form>
   <p class="mb-3 text-xs text-[var(--text-muted)]">Неподтверждённая почта сама по себе не означает, что аккаунт принадлежит боту.</p>
   <div class="card divide-y divide-[var(--border)]">

@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#7c3aed">
   <title>{% block title %}Doday{% endblock %}</title>
@@ -29,13 +29,13 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   {# Tailwind CDN — same as web-app для visual-consistency #}
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/static/vendor/tailwind-3.4.17.js"></script>
 
   {# Alpine для микро-state в шаблонах #}
-  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script defer src="/static/vendor/alpine-3.14.7.min.js"></script>
 
   {# HTMX — для swap'ов список задач, без full reload #}
-  <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
+  <script src="/static/vendor/htmx-2.0.4.min.js" defer></script>
 
   <style>
     /* Тема выбирается юзером на /miniapp/me. localStorage.dodayTheme принимает
@@ -339,6 +339,7 @@
     /* Sheet open animation использует spring */
     [x-transition\:enter] { transition-timing-function: var(--spring-soft) !important; }
   </style>
+<link rel="stylesheet" href="/static/mobile.css?v={{ request.state.asset_version|default('20261030') }}">
 </head>
 <body>
   <main class="px-4 pt-4 page-mount">
@@ -410,7 +411,7 @@
   {# Confetti library — load only on Today (одной странице где может
      произойти 100% celebration). Lazy-load в footer чтобы не тормозить
      first paint. #}
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js" defer></script>
+  <script src="/static/vendor/confetti-1.9.2.min.js" defer></script>
 
   <script src="/miniapp/assets/miniapp.js" defer></script>
 </body>

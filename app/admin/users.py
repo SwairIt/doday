@@ -16,7 +16,7 @@ class UserFilters(BaseModel):
     tier: Literal["all", "free", "pro", "family"] = "all"
     sort: Literal["newest", "oldest", "email", "expiry"] = "newest"
     page: int = Field(default=1, ge=1, le=100000)
-    per_page: int = Field(default=25, ge=10, le=100)
+    per_page: int = Field(default=10, ge=10, le=100)
 
 
 async def user_page(

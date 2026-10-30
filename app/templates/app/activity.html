@@ -36,15 +36,15 @@
                 {% endif %}
               </div>
               <div class="flex-1 min-w-0">
-                <div class="text-sm">
+                <div class="text-sm [overflow-wrap:anywhere]">
                   {% if it.kind == 'created' %}<span class="text-[var(--text-muted)]">Создал</span>
                   {% elif it.kind == 'completed' %}<span class="text-[var(--text-muted)]">Завершил</span>
                   {% else %}<span class="text-[var(--text-muted)]">Комментарий к</span>
                   {% endif %}
                   <strong class="text-[var(--text)]">«{{ it.title }}»</strong>
                   <span class="text-[var(--text-muted)]">в</span>
-                  <span class="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-{{ it.color }}-500/15 text-{{ it.color }}-400">
-                    <span class="w-1.5 h-1.5 rounded-full bg-{{ it.color }}-500"></span>{{ it.project }}
+                  <span class="inline-flex max-w-full items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-{{ it.color }}-500/15 text-{{ it.color }}-400">
+                    <span class="shrink-0 w-1.5 h-1.5 rounded-full bg-{{ it.color }}-500"></span><span class="min-w-0 break-words">{{ it.project }}</span>
                   </span>
                 </div>
                 {% if it.extra %}

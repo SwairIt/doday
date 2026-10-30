@@ -19,8 +19,8 @@
   <link rel="icon" href="/favicon.ico">
   <link rel="alternate" type="application/atom+xml" title="Блог Lessio" href="/lessio/blog/feed.xml">
 
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <script src="/static/vendor/tailwind-3.4.17.js"></script>
+  <script src="/static/vendor/alpine-3.14.7.min.js" defer></script>
 
   <style>
     body {
@@ -55,6 +55,7 @@
   </style>
 
   {% block head_extra %}{% endblock %}
+<link rel="stylesheet" href="/static/mobile.css?v={{ request.state.asset_version|default('20261030') }}">
 </head>
 <body class="antialiased">
 

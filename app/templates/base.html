@@ -82,11 +82,9 @@
       }
     </script>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="/static/fonts/inter.css" rel="stylesheet">
 
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/static/vendor/tailwind-3.4.17.js"></script>
     <script>
       tailwind.config = {
         darkMode: ['class', '[data-theme="dark"]'],
@@ -129,9 +127,9 @@
       }
     </script>
 
-    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
-    <script defer src="https://unpkg.com/alpinejs@3.14.7/dist/cdn.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+    <script src="/static/vendor/htmx-2.0.4.min.js"></script>
+    <script defer src="/static/vendor/alpine-3.14.7.min.js"></script>
+    <script src="/static/vendor/sortable-1.15.6.min.js"></script>
 
     <script>
       // Tiny markdown renderer used by descriptions, comments, and anywhere
@@ -319,6 +317,7 @@
       main, header, nav, footer { position: relative; z-index: 1; }
 
       .glass {
+        background: var(--surface);
         background: color-mix(in oklab, var(--surface) 72%, transparent);
         backdrop-filter: saturate(180%) blur(14px);
         -webkit-backdrop-filter: saturate(180%) blur(14px);
@@ -606,6 +605,7 @@
       })();
     </script>
     {% endif %}
+<link rel="stylesheet" href="/static/mobile.css?v={{ request.state.asset_version|default('20261030') }}">
 </head>
 <body>
     {# Skip-to-content для screen-reader / keyboard навигации. Виден только при

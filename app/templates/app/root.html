@@ -3,15 +3,28 @@
 {% block view_title %}Панель владельца{% endblock %}
 {% block content_width %}max-w-7xl{% endblock %}
 {% block content %}
+<div class="owner-dashboard" x-data="{
+  rootTab: ['overview','billing','users','support'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'overview',
+  syncTab() {
+    const next = location.hash.slice(1);
+    if (['overview','billing','users','support'].includes(next)) this.rootTab = next;
+    if (this.mobile) this.$nextTick(() => window.scrollTo({top: 0, behavior: 'instant'}));
+  }
+}" @hashchange.window="syncTab()">
 <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
   <div class="min-w-0">
-    <h1 class="text-2xl sm:text-3xl font-bold mb-1">Панель владельца</h1>
-    <p class="text-[var(--text-muted)] text-sm">Покупки, выручка, пользователи и обращения в поддержку.</p>
+    <h1 class="text-2xl sm:text-3xl font-bold mb-1" x-text="mobile ? {overview:'Панель владельца', billing:'Платежи', users:'Пользователи', support:'Поддержка'}[rootTab] : 'Панель владельца'">Панель владельца</h1>
+    <p class="text-[var(--text-muted)] text-sm" x-show="!mobile || rootTab === 'overview'">Покупки, выручка, пользователи и обращения в поддержку.</p>
   </div>
-  <span class="px-3 py-1 rounded-full text-xs font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/30 shrink-0">ADMIN</span>
+  <span class="hidden lg:inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/30 shrink-0">ADMIN</span>
 </div>
 
-{% include "_partials/admin_billing.html" %}
+<nav class="mb-6 hidden flex-wrap gap-2 text-sm lg:flex" aria-label="Разделы панели владельца">
+  <a href="#overview" class="btn-ghost">Обзор</a><a href="#billing" class="btn-ghost">Платежи</a>
+  <a href="#users" class="btn-ghost">Пользователи</a><a href="#support" class="btn-ghost">Поддержка</a>
+</nav>
+<section id="overview" x-show="!mobile || rootTab === 'overview'" class="scroll-mt-24">
+{% include "_partials/admin_billing_overview.html" %}
 
 {# ---- Stats grid ---- #}
 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
@@ -97,6 +110,9 @@
   </div>
 </section>
 
+</section>
+{% include "_partials/admin_billing.html" %}
 {% include "_partials/admin_users.html" %}
 {% include "_partials/admin_complaints.html" %}
+</div>
 {% endblock %}

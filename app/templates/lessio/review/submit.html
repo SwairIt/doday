@@ -6,7 +6,7 @@
   <title>Оцените встречу · {{ tutor.display_name }}</title>
   <meta name="robots" content="noindex,nofollow">
   <link rel="icon" href="/favicon.ico">
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/static/vendor/tailwind-3.4.17.js"></script>
   <style>
     body {
       background: linear-gradient(180deg, #0f0a1f 0%, #2e1065 100%);
@@ -16,6 +16,7 @@
     }
     .star-input { font-size: 2.5rem; line-height: 1; cursor: pointer; }
   </style>
+<link rel="stylesheet" href="/static/mobile.css?v={{ request.state.asset_version|default('20261030') }}">
 </head>
 <body>
 <main class="mx-auto max-w-md py-12 px-5">
@@ -62,7 +63,7 @@
     Отзыв будет виден на странице {{ tutor.display_name }} после премодерации.
   </p>
 
-  <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <script src="/static/vendor/alpine-3.14.7.min.js" defer></script>
 </main>
 {% include "lessio/_metrika.html" %}
 </body>

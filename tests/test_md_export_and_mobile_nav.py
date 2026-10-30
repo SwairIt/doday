@@ -63,8 +63,9 @@ async def test_export_md_unknown_project_404(logged_in_client: AsyncClient) -> N
 async def test_mobile_nav_present(logged_in_client: AsyncClient) -> None:
     page = await logged_in_client.get("/app/today")
     assert page.status_code == 200
-    # Bottom-nav has md:hidden + Inbox/Сегодня/Календарь labels visible to phones.
-    assert "md:hidden" in page.text
+    # The bottom navigation now covers tablets up to the lg breakpoint too.
+    assert 'aria-label="Основная навигация"' in page.text
+    assert "app-mobile-nav lg:hidden" in page.text
     # All five nav labels appear.
     for label in ["Inbox", "Сегодня", "Дальше", "Календарь", "Профиль"]:
         assert label in page.text

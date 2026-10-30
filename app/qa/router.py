@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Annotated
 from fastapi import APIRouter, Form, HTTPException, Query, Request, status
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
+from pydantic import ValidationError as SchemaValidationError
 from sqlalchemy import select
 
 from app.auth.deps import CurrentUser, DbSession, RequiredAdmin, RequiredUser
@@ -548,11 +549,14 @@ async def ask_submit(
     body_md: Annotated[str, Form()],
     grade: Annotated[int | None, Form()] = None,
 ) -> Response:
-    payload = QuestionCreate(subject_slug=subject_slug, grade=grade, title=title, body_md=body_md)
     try:
+        payload = QuestionCreate(
+            subject_slug=subject_slug, grade=grade, title=title, body_md=body_md
+        )
         q = await service.create_question(session, user, payload)
-    except QAError as exc:
+    except (QAError, SchemaValidationError) as exc:
         await session.rollback()
+        await session.refresh(user)
         subjects = await service.list_subjects(session)
         stats = await service.ensure_user_stats(session, user)
         return _templates.TemplateResponse(
@@ -563,12 +567,14 @@ async def ask_submit(
                 "user_stats": stats,
                 "subjects": subjects,
                 "preselected_subject": subject_slug,
-                "error": str(exc),
+                "error": "Проверь поля формы: выбери предмет, заполни заголовок и условие задачи."
+                if isinstance(exc, SchemaValidationError)
+                else str(exc),
                 "form_title": title,
                 "form_body_md": body_md,
                 "form_grade": grade,
             },
-            status_code=422 if isinstance(exc, ValidationError) else 400,
+            status_code=422 if isinstance(exc, (ValidationError, SchemaValidationError)) else 400,
         )
     await session.commit()
     return RedirectResponse(f"/qa/q/{q.id}-{q.slug}", status_code=303)

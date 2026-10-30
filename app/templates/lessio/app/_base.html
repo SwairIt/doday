@@ -8,8 +8,8 @@
   <link rel="icon" href="/favicon.ico">
   <link rel="manifest" href="/lessio/app/manifest.webmanifest">
   <meta name="theme-color" content="#7c3aed">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <script src="/static/vendor/tailwind-3.4.17.js"></script>
+  <script src="/static/vendor/alpine-3.14.7.min.js" defer></script>
   <style>
     body {
       background: linear-gradient(180deg, #0f0a1f 0%, #1a0f3d 60%, #2e1065 100%);
@@ -48,6 +48,7 @@
     .drawer-enter { animation: drawerIn .2s ease-out; }
     [x-cloak] { display: none !important; }
   </style>
+<link rel="stylesheet" href="/static/mobile.css?v={{ request.state.asset_version|default('20261030') }}">
 </head>
 <body class="antialiased" x-data="{ sidebarOpen: false }">
 

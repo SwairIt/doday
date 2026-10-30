@@ -28,3 +28,17 @@ async def test_base_links_manifest(logged_in_client: AsyncClient) -> None:
     body = (await logged_in_client.get("/app/today")).text
     assert 'rel="manifest"' in body
     assert "/service-worker.js" in body
+
+
+async def test_shared_assets_cache_without_account_cookie(logged_in_client: AsyncClient) -> None:
+    for path in [
+        "/static/mobile.css",
+        "/static/vendor/alpine-3.14.7.min.js",
+        "/static/fonts/inter.css",
+    ]:
+        response = await logged_in_client.get(path)
+        assert response.status_code == 200
+        assert response.headers["cache-control"] == "public, max-age=86400"
+        assert "set-cookie" not in response.headers
+    personal = await logged_in_client.get("/app/today")
+    assert personal.headers["cache-control"] == "no-store"

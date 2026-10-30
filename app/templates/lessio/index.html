@@ -63,7 +63,7 @@
   </script>
 
   <link rel="icon" href="/favicon.ico">
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/static/vendor/tailwind-3.4.17.js"></script>
   <style>
     body {
       background: linear-gradient(180deg, #0f0a1f 0%, #1a0f3d 60%, #2e1065 100%);
@@ -86,6 +86,7 @@
       font-size: 22px;
     }
   </style>
+<link rel="stylesheet" href="/static/mobile.css?v={{ request.state.asset_version|default('20261030') }}">
 </head>
 <body class="antialiased">
 

@@ -1,21 +1,21 @@
-<section id="support" class="scroll-mt-24">
+<section id="support" class="scroll-mt-24" x-show="!mobile || rootTab === 'support'">
 {# ---- Complaints ---- #}
 <div x-data="{
        statusFilter: 'all',
        priorityFilter: 'all',
        search: '',
-       async send(path, method, payload) {
+       async send(path, method, payload, reload = true) {
          try {
            const r = await fetch('/api/admin/complaints/' + path, {
              method, credentials: 'include',
              headers: {'Content-Type': 'application/json'},
              body: payload ? JSON.stringify(payload) : undefined
            });
-           if (r.ok) location.reload();
+           if (r.ok) { if (reload) location.reload(); else if (window.dodayToast) window.dodayToast('Заметка сохранена'); return true; }
            else alert('Изменение не сохранено. Код ошибки: ' + r.status);
          } catch (_) { alert('Нет связи с сервером. Изменение не сохранено — повтори после восстановления сети.'); }
        },
-       async patch(id, payload) { await this.send(id, 'PATCH', payload); },
+       async patch(id, payload, reload = true) { return await this.send(id, 'PATCH', payload, reload); },
        async delComplaint(id) {
          if (!confirm('Удалить жалобу безвозвратно?')) return;
          await this.send(id, 'DELETE');
@@ -43,23 +43,23 @@
      }"
      x-init="$watch('statusFilter', () => refilter()); $watch('priorityFilter', () => refilter()); $watch('search', () => refilter())">
   <div class="flex items-center justify-between mb-3 gap-3 flex-wrap">
-    <h2 class="text-lg font-bold">Жалобы <span class="text-[var(--text-muted)] text-sm font-normal">· {{ complaints|length }}</span></h2>
-    <div class="flex items-center gap-2 flex-wrap text-xs">
-      <select x-model="statusFilter" class="bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-1">
+    <h2 class="text-lg font-bold">Поддержка <span class="text-[var(--text-muted)] text-sm font-normal">· {{ complaints|length }}</span></h2>
+    <div class="grid w-full grid-cols-1 gap-2 text-xs sm:grid-cols-3">
+      <select x-model="statusFilter" aria-label="Статус обращения" class="w-full bg-[var(--surface-2)] border border-[var(--border)] rounded-lg px-3 py-2">
         <option value="all">Все статусы</option>
-        <option value="open">🟡 Open</option>
-        <option value="in_progress">🔵 In progress</option>
-        <option value="resolved">✅ Resolved</option>
-        <option value="dismissed">⚫ Dismissed</option>
+        <option value="open">Открытые</option>
+        <option value="in_progress">В работе</option>
+        <option value="resolved">Закрытые</option>
+        <option value="dismissed">Отклонённые</option>
       </select>
-      <select x-model="priorityFilter" class="bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-1">
+      <select x-model="priorityFilter" aria-label="Приоритет обращения" class="w-full bg-[var(--surface-2)] border border-[var(--border)] rounded-lg px-3 py-2">
         <option value="all">Любой приоритет</option>
-        <option value="high">🔴 High</option>
-        <option value="normal">🟠 Normal</option>
-        <option value="low">⚪ Low</option>
+        <option value="high">Высокий</option>
+        <option value="normal">Обычный</option>
+        <option value="low">Низкий</option>
       </select>
-      <input type="search" x-model="search" placeholder="Поиск по тексту/email/url"
-             class="bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-1 w-44" />
+      <input type="search" x-model="search" aria-label="Поиск обращений" placeholder="Текст, email или страница"
+             class="w-full min-w-0 bg-[var(--surface-2)] border border-[var(--border)] rounded-lg px-3 py-2" />
     </div>
   </div>
 
@@ -73,12 +73,12 @@
                  data-status="{{ c.status }}"
                  data-priority="{{ c.priority }}"
                  data-body="{{ c.body|e }}"
-                 data-email="{{ user_emails.get(c.user_id, '')|e }}"
+                 data-email="{{ (user_emails.get(c.user_id, '') ~ ' ' ~ (c.contact_email or ''))|e }}"
                  data-url="{{ (c.page_url or '')|e }}">
           <div class="flex items-start justify-between gap-3 mb-2 flex-wrap">
             <div class="flex items-center gap-2 text-xs flex-wrap">
-              <span class="px-2 py-0.5 rounded-full bg-{{ status_color }}-500/15 text-{{ status_color }}-400 font-semibold uppercase tracking-wider">{{ c.status }}</span>
-              <span class="px-2 py-0.5 rounded-full bg-{{ prio_color }}-500/15 text-{{ prio_color }}-400 font-semibold uppercase tracking-wider">{{ c.priority }}</span>
+              <span class="px-2 py-0.5 rounded-full bg-{{ status_color }}-500/15 text-{{ status_color }}-400 font-semibold">{{ {'open':'Открыто','in_progress':'В работе','resolved':'Закрыто','dismissed':'Отклонено'}.get(c.status,c.status) }}</span>
+              <span class="px-2 py-0.5 rounded-full bg-{{ prio_color }}-500/15 text-{{ prio_color }}-400 font-semibold">{{ {'low':'Низкий','normal':'Обычный','high':'Высокий'}.get(c.priority,c.priority) }}</span>
               <span class="text-[var(--text-muted)]">·</span>
               <span class="text-[var(--text-muted)] tabular-nums">{{ c.created_at.strftime('%d.%m %H:%M') }}</span>
               {% if c.user_id %}
@@ -111,7 +111,7 @@
                         class="px-2 py-1 rounded hover:bg-amber-500/15 text-amber-400">↻ Открыть</button>
               {% endif %}
               <button type="button" @click="delComplaint('{{ c.id }}')"
-                      class="px-2 py-1 rounded hover:bg-rose-500/15 text-rose-400">🗑</button>
+                      aria-label="Удалить обращение" class="min-w-11 px-2 py-1 rounded hover:bg-rose-500/15 text-rose-400">🗑</button>
             </div>
           </div>
 
@@ -124,15 +124,15 @@
           </div>
 
           <div class="mt-2 flex items-center gap-2 text-xs">
-            <input type="text" placeholder="заметка админа..." value="{{ c.admin_note or '' }}"
+            <input type="text" aria-label="Заметка администратора" placeholder="Заметка администратора" value="{{ c.admin_note or '' }}"
                    data-original-note="{{ c.admin_note or '' }}"
-                   @blur="if ($event.target.value !== $el.dataset.originalNote) patch('{{ c.id }}', {admin_note: $event.target.value})"
+                   @blur="if ($el.value !== $el.dataset.originalNote) { const note = $el.value; const saved = await patch('{{ c.id }}', {admin_note: note}, false); if (saved) $el.dataset.originalNote = note; }"
                    class="min-w-0 flex-1 bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-1 text-xs">
-            <select @change="patch('{{ c.id }}', {priority: $event.target.value})"
+            <select aria-label="Изменить приоритет" @change="patch('{{ c.id }}', {priority: $event.target.value})"
                     class="bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-1 text-xs">
-              <option value="low" {% if c.priority == 'low' %}selected{% endif %}>Low</option>
-              <option value="normal" {% if c.priority == 'normal' %}selected{% endif %}>Normal</option>
-              <option value="high" {% if c.priority == 'high' %}selected{% endif %}>High</option>
+              <option value="low" {% if c.priority == 'low' %}selected{% endif %}>Низкий</option>
+              <option value="normal" {% if c.priority == 'normal' %}selected{% endif %}>Обычный</option>
+              <option value="high" {% if c.priority == 'high' %}selected{% endif %}>Высокий</option>
             </select>
           </div>
 
@@ -143,8 +143,8 @@
                 💬 Ты ответил: <span class="text-[var(--text)] whitespace-pre-wrap">{{ c.admin_reply }}</span>
               </div>
             {% endif %}
-            <div class="flex items-start gap-2">
-              <textarea rows="1" placeholder="Ответить автору…"
+            <div class="flex flex-col items-stretch gap-2 sm:flex-row sm:items-start">
+              <textarea rows="3" aria-label="Ответ автору обращения" placeholder="Ответить автору…"
                         class="min-w-0 flex-1 bg-[var(--surface-2)] border border-[var(--border)] rounded px-2 py-1 text-xs resize-y"></textarea>
               <button type="button" @click="reply('{{ c.id }}', $el.previousElementSibling)"
                       class="px-3 py-1 rounded bg-[var(--accent)] text-white text-xs font-semibold shrink-0 hover:opacity-90">

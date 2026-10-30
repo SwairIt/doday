@@ -37,7 +37,7 @@
   {"@context":"https://schema.org","@type":"Person","name":"SwairIt","alternateName":["SwairIt","SwairIt"],"url":"https://all.getdoday.ru/","jobTitle":"Разработчик, автор Doday","knowsAbout":["Python","FastAPI","веб-разработка","информационная безопасность","поисковая оптимизация"],"sameAs":["https://github.com/SwairIt","https://getdoday.ru/","https://all.getdoday.ru/"],"worksFor":{"@type":"Organization","name":"Doday","url":"https://getdoday.ru/"}}
   </script>
 
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/static/vendor/tailwind-3.4.17.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -74,6 +74,7 @@
     .card-hover { transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
     .card-hover:hover { transform: translateY(-3px); }
   </style>
+<link rel="stylesheet" href="/static/mobile.css?v={{ request.state.asset_version|default('20261030') }}">
 </head>
 <body class="antialiased">
 

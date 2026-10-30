@@ -548,6 +548,7 @@ async def _security_headers(
     request.state.ya_metrika_id = _settings.ya_metrika_id
     request.state.yandex_verification = _settings.yandex_verification
     request.state.google_site_verification = _settings.google_site_verification
+    request.state.asset_version = _GIT_SHA
     # Expose Telegram-канал URL — если пустой, footer не показывает иконку.
     request.state.telegram_channel_url = _settings.telegram_channel_url
     # Контакты продавца в подвале — требование Robokassa при модерации сайта.
@@ -566,7 +567,13 @@ async def _security_headers(
     request.state.captcha_sitekey = _settings.recaptcha_site_key if is_enabled() else ""
     request.state.captcha_script = SCRIPT_URL
     response = await call_next(request)
-    if request.url.path.startswith(
+    if request.url.path.startswith("/static/") and response.status_code in (200, 304):
+        # These files are shared by all accounts. Keep them in the browser cache
+        # without retaining a session cookie in a reusable asset response.
+        if "set-cookie" in response.headers:
+            del response.headers["set-cookie"]
+        response.headers["Cache-Control"] = "public, max-age=86400"
+    elif request.url.path.startswith(
         ("/app/", "/api/admin", "/auth/", "/htmx/", "/miniapp/", "/lessio/app/")
     ) or request.scope.get("session", {}).get("user_id"):
         response.headers["Cache-Control"] = "no-store"

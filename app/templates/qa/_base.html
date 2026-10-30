@@ -17,8 +17,8 @@
   <meta name="twitter:card" content="summary_large_image">
 
   <link rel="icon" href="/favicon.ico">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <script src="/static/vendor/tailwind-3.4.17.js"></script>
+  <script src="/static/vendor/alpine-3.14.7.min.js" defer></script>
 
   {# KaTeX for math rendering #}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
@@ -51,6 +51,7 @@
   </style>
 
   {% block head_extra %}{% endblock %}
+<link rel="stylesheet" href="/static/mobile.css?v={{ request.state.asset_version|default('20261030') }}">
 </head>
 <body class="antialiased">
 

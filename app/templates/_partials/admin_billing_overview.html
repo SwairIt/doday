@@ -1,0 +1,19 @@
+  <h2 class="mb-3 text-base font-bold sm:text-lg">Подписки и выручка <span class="block text-xs font-normal text-[var(--text-muted)] sm:inline">за всё время</span></h2>
+  <div class="mb-3 grid grid-cols-2 gap-2 sm:gap-3 xl:grid-cols-4">
+    {% for label, value, hint in [
+      ('Покупателей', billing_lifetime.buyers, 'Уникальные покупатели, включая возвраты'),
+      ('Оплаченных покупок', billing_lifetime.payments, 'Карты и Telegram Stars, без тестовых'),
+      ('Выручка в рублях', billing_lifetime.rub_net_label, 'Оплаты минус отмеченные возвраты'),
+      ('Telegram Stars', billing_lifetime.stars_net|string ~ ' ⭐', 'Отдельно от рублей, за вычетом возвратов')
+    ] %}
+    <div class="card min-w-0 p-3 sm:p-4">
+      <p class="text-xs text-[var(--text-muted)]">{{ label }}</p>
+      <p class="my-2 break-words text-xl font-bold leading-tight tabular-nums sm:text-2xl">{{ value }}</p>
+      <p class="hidden text-xs text-[var(--text-muted)] sm:block">{{ hint }}</p>
+    </div>
+    {% endfor %}
+  </div>
+  <p class="mb-5 text-xs leading-relaxed text-[var(--text-muted)]">
+    Активных оплаченных Pro / Family: <strong>{{ billing_lifetime.active_subscriptions }}</strong>.
+    Выручка показана до комиссий и налогов — это не чистая прибыль. Stars не пересчитываются в рубли.
+  </p>

@@ -2,10 +2,10 @@
    `pt-[env(safe-area-inset-top)]` — на iOS PWA padding-top растёт под status
    bar (10px на iPhone X+, 0 в обычном Safari). Без этого виджеты сверху
    страницы лезут под статусбар. #}
-<header class="sticky top-0 z-20 glass border-b border-[var(--border)] px-4 md:px-6 py-3 flex items-center gap-3 pt-[max(env(safe-area-inset-top),0.75rem)]">
+<header class="app-topbar sticky top-0 z-20 glass border-b border-[var(--border)] px-4 md:px-6 py-3 flex items-center gap-3 pt-[max(env(safe-area-inset-top),0.75rem)]">
   <button
     type="button"
-    class="md:hidden p-2 rounded-lg hover:bg-[var(--surface-2)] transition"
+    class="lg:hidden p-2 rounded-lg hover:bg-[var(--surface-2)] transition"
     @click="sidebarOpen = true"
     aria-label="Открыть меню"
     aria-controls="app-sidebar" :aria-expanded="sidebarOpen"
@@ -15,7 +15,7 @@
     </svg>
   </button>
 
-  <div class="text-lg font-semibold flex-1 truncate">{{ page_title|default('Doday') }}</div>
+  <div class="min-w-0 text-base sm:text-lg font-semibold flex-1 truncate">{% if current_view|default('') == 'root' %}<span class="lg:hidden">Root</span><span class="hidden lg:inline">{{ page_title }}</span>{% else %}{{ page_title|default('Doday') }}{% endif %}</div>
 
   <a href="/app/stats"
      x-data="{ s: { current: 0, longest: 0, today_done: false }, async load() {
@@ -32,7 +32,7 @@
   {# Mobile search — компактная иконка-кнопка, экономит место. #}
   <button
     type="button"
-    class="md:hidden p-2 rounded-lg hover:bg-[var(--surface-2)] transition"
+    class="lg:hidden p-2 rounded-lg hover:bg-[var(--surface-2)] transition"
     onclick="document.dispatchEvent(new CustomEvent('open-search'))"
     title="Поиск"
     aria-label="Поиск"
@@ -45,7 +45,7 @@
   {# Desktop search — полноразмерная с подсказкой о ⌘K. #}
   <button
     type="button"
-    class="hidden md:inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--border)]
+    class="hidden lg:inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--border)]
            text-[var(--text-muted)] text-sm hover:bg-[var(--surface-2)] transition"
     onclick="document.dispatchEvent(new CustomEvent('open-search'))"
     title="Поиск (⌘K)"
@@ -71,9 +71,9 @@
     </button>
 
     <div x-show="open" x-cloak @click.outside="open = false" x-transition
-         class="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] card p-0 shadow-xl z-50 overflow-hidden">
+         class="app-notification-panel fixed left-4 right-4 top-20 w-auto lg:absolute lg:left-auto lg:top-auto lg:right-0 lg:mt-2 lg:w-80 max-w-[calc(100vw-2rem)] card p-0 shadow-xl z-50 overflow-hidden">
       <div class="px-4 py-2.5 border-b border-[var(--border)] font-semibold text-sm">Уведомления</div>
-      <div class="max-h-96 overflow-y-auto">
+      <div class="app-notification-list max-h-96 overflow-y-auto">
         <template x-if="!items.length">
           <div class="px-4 py-8 text-center text-xs text-[var(--text-muted)]">Пока пусто</div>
         </template>

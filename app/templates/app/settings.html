@@ -10,12 +10,12 @@
 <div class="space-y-6">
   <section class="card p-6">
     <h2 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-4">Аккаунт</h2>
-    <div class="flex items-center gap-4">
-      <div class="w-14 h-14 rounded-2xl grad-bg flex items-center justify-center text-white font-bold text-xl shadow-glow">
+    <div class="flex flex-wrap items-center gap-3 sm:gap-4">
+      <div class="shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl grad-bg flex items-center justify-center text-white font-bold text-xl shadow-glow">
         {{ current_user.email[0]|upper }}
       </div>
-      <div class="flex-1 min-w-0">
-        <div class="font-semibold truncate">{{ current_user.email }}</div>
+      <div class="flex-1 min-w-0 basis-40">
+        <div class="font-semibold break-all">{{ current_user.email }}</div>
         <div class="text-sm text-[var(--text-muted)]">
           {% if current_user.email_verified_at %}
             <span class="text-emerald-400">✓ почта подтверждена</span>
@@ -265,7 +265,7 @@
               </div>
             {% endif %}
           </div>
-          <div class="text-sm font-medium flex items-center gap-1.5">
+          <div class="text-sm font-medium flex flex-wrap items-center gap-1.5 min-w-0 break-words">
             {{ theme_name }}
             {% if pro_only %}
               <span class="text-[9px] px-1 py-0.5 rounded bg-[var(--accent)]/20 text-[var(--accent)] font-bold uppercase">Pro</span>
@@ -602,7 +602,7 @@
 
       {# QRCode generator (qrcode-generator 1.4.4 ~5KB MIT) — нужен для отрисовки
          QR-кода в Telegram-блоке. Грузится один раз с jsdelivr CDN. #}
-      <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+      <script src="/static/vendor/qrcode-1.4.4.js"></script>
 
       {# 4. Push to mobile — soon #}
       <div class="flex items-center gap-3 p-3 rounded-xl border border-[var(--border)] bg-[var(--surface-2)]/40 opacity-75">
